@@ -284,7 +284,7 @@ class MockQuizRepository {
     }
 
     fun getLiteQuizSet(
-        totalQuestions: Int = 7,
+        totalQuestions: Int = 10,
         hardCountRange: IntRange = 1..2
     ): List<MockQuizQuestion> {
         if (totalQuestions <= 0) return emptyList()

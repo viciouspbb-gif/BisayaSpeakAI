@@ -93,6 +93,8 @@ import androidx.activity.compose.BackHandler
 import android.app.Activity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.navigation.NavHostController
+import com.bisayaspeak.ai.ui.navigation.AppRoute
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -101,6 +103,7 @@ fun ListeningScreen(
     isPremium: Boolean = false,
     onNavigateBack: () -> Unit,
     onShowRewardedAd: (() -> Unit) -> Unit = {},
+    navController: NavHostController,
     viewModel: ListeningViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -117,6 +120,8 @@ fun ListeningScreen(
     val showResult by viewModel.showResult.collectAsState()
     val isCorrect by viewModel.isCorrect.collectAsState()
     val shouldShowAd by viewModel.shouldShowAd.collectAsState()
+    val lessonResult by viewModel.lessonResult.collectAsState()
+    val clearedLevel by viewModel.clearedLevel.collectAsState()
     
     LaunchedEffect(Unit) {
         sessionManager.startSession()
@@ -130,6 +135,17 @@ fun ListeningScreen(
             sessionManager.onSessionComplete(activity) {
                 viewModel.onAdShown()
             }
+        }
+    }
+
+    LaunchedEffect(lessonResult, clearedLevel, session?.completed) {
+        val result = lessonResult
+        val levelCleared = clearedLevel
+        if (session?.completed == true && result != null && levelCleared != null) {
+            navController.navigate("result_screen/${result.correctCount}/${result.xpEarned}/$levelCleared") {
+                popUpTo(AppRoute.Listening.route) { inclusive = true }
+            }
+            viewModel.clearLessonCompletion()
         }
     }
     
@@ -188,11 +204,16 @@ fun ListeningScreen(
                 .background(Color.Black)
         ) {
             if (session?.completed == true) {
-                ListeningResultScreen(
-                    session = session!!,
-                    onRestart = { viewModel.startSession(level) },
-                    onBack = onNavigateBack
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.loading),
+                        color = Color.White
+                    )
+                }
             } else if (currentQuestion != null && session != null) {
                 val question = currentQuestion
                 LazyColumn(

@@ -26,21 +26,28 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bisayaspeak.ai.data.model.LearningLevel
-import com.bisayaspeak.ai.data.repository.mock.MockQuizRepository
-import com.bisayaspeak.ai.ui.components.SmartAdBanner
-import com.bisayaspeak.ai.ui.util.PracticeSessionManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.BackHandler
 import android.app.Activity
+import androidx.navigation.NavHostController
 import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.data.model.LearningLevel
+import com.bisayaspeak.ai.data.model.LessonResult
+import com.bisayaspeak.ai.data.repository.UsageRepository
+import com.bisayaspeak.ai.data.repository.mock.MockQuizRepository
+import com.bisayaspeak.ai.ui.components.SmartAdBanner
+import com.bisayaspeak.ai.ui.navigation.AppRoute
+import com.bisayaspeak.ai.ui.util.PracticeSessionManager
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,10 +56,14 @@ fun QuizScreen(
     onNavigateBack: () -> Unit = {},
     onQuizStart: () -> Unit = {},
     onQuizComplete: () -> Unit = {},
-    isPremium: Boolean = false
+    onLessonFinished: (LessonResult) -> Unit = {},
+    isPremium: Boolean = false,
+    navController: NavHostController
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+    val usageRepository = remember { UsageRepository(context.applicationContext) }
+    val coroutineScope = rememberCoroutineScope()
     
     // セッション管理
     val sessionManager = remember { PracticeSessionManager(isPremium) }
@@ -60,11 +71,12 @@ fun QuizScreen(
     val repository = remember { MockQuizRepository() }
     val isLiteBuild = BuildConfig.IS_LITE_BUILD
     val questions = remember(level, isLiteBuild) {
-        if (isLiteBuild) {
-            repository.getLiteQuizSet(totalQuestions = 7)
+        val source = if (isLiteBuild) {
+            repository.getLiteQuizSet(totalQuestions = 10)
         } else {
-            repository.getQuestionsByLevel(level).shuffled().take(5)
+            repository.getQuestionsByLevel(level)
         }
+        source.shuffled().take(10)
     }
 
     var currentIndex by remember { mutableStateOf(0) }
@@ -73,9 +85,38 @@ fun QuizScreen(
     var correctCount by remember { mutableStateOf(0) }
     var hasStarted by remember { mutableStateOf(false) }
     var completionReported by remember { mutableStateOf(false) }
+    var lessonReported by remember { mutableStateOf(false) }
     val total = questions.size
 
     val current = questions.getOrNull(currentIndex)
+    
+    fun handleLessonCompletion() {
+        if (lessonReported) return
+        lessonReported = true
+        val baseXp = correctCount * 10
+        val bonus = if (correctCount == total && total == 10) 50 else 0
+        val xp = baseXp + bonus
+        val leveledUp = correctCount >= 8
+        val result = LessonResult(
+            correctCount = correctCount,
+            totalQuestions = total,
+            xpEarned = xp,
+            leveledUp = leveledUp
+        )
+        coroutineScope.launch {
+            val currentLevel = usageRepository.getCurrentLevel().first()
+            usageRepository.addXP(result.xpEarned)
+            var clearedLevel = currentLevel
+            if (result.leveledUp) {
+                usageRepository.incrementLevel()
+                clearedLevel += 1
+            }
+            onLessonFinished(result)
+            navController.navigate("result_screen/${result.correctCount}/${result.xpEarned}/$clearedLevel") {
+                popUpTo(AppRoute.Quiz.route) { inclusive = true }
+            }
+        }
+    }
 
     LaunchedEffect(total, hasStarted) {
         if (!hasStarted && total > 0) {
@@ -148,37 +189,17 @@ fun QuizScreen(
         }
     ) { padding ->
         if (current == null) {
-            // 結果表示
-            Column(
+            // 最終問題処理後にナビゲーションで別画面へ遷移するため、ここでは簡易表示のみ
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .padding(padding),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "クイズ完了！",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = "結果画面へ移動しています...",
                     color = Color.White
                 )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = "${correctCount} / ${total} 問正解",
-                    fontSize = 18.sp,
-                    color = Color.White
-                )
-                Spacer(Modifier.height(24.dp))
-                Button(
-                    onClick = onNavigateBack,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text("ホームに戻る")
-                }
             }
         } else {
             val scrollState = rememberScrollState()
@@ -272,7 +293,7 @@ fun QuizScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (selectedIndex == current.correctIndex) 
+                            containerColor = if (selectedIndex == current.correctIndex)
                                 Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
                         )
                     ) {
@@ -284,7 +305,7 @@ fun QuizScreen(
                                 fontSize = 18.sp,
                                 color = if (selectedIndex == current.correctIndex) Color(0xFF2E7D32) else Color(0xFFC62828)
                             )
-                            
+
                             // 不正解時は正解を明示
                             if (selectedIndex != current.correctIndex) {
                                 Spacer(Modifier.height(8.dp))
@@ -295,12 +316,12 @@ fun QuizScreen(
                                     color = Color(0xFF2E7D32)
                                 )
                             }
-                            
+
                             // 解説
                             current.explanationJa?.let {
                                 Spacer(Modifier.height(8.dp))
                                 Text(
-                                    text = it, 
+                                    text = it,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.Black
                                 )
@@ -316,8 +337,8 @@ fun QuizScreen(
                                 selectedIndex = null
                                 showFeedback = false
                             } else {
-                                // 結果画面へ
-                                currentIndex++
+                                handleLessonCompletion()
+                                currentIndex = total
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),

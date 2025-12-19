@@ -43,6 +43,7 @@ import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.home.FeatureId
 import com.bisayaspeak.ai.ui.home.HomeScreen
 import com.bisayaspeak.ai.ui.home.HomeUiState
+import com.bisayaspeak.ai.ui.screens.LessonResultScreen
 import com.bisayaspeak.ai.ui.screens.ListeningScreen
 import com.bisayaspeak.ai.ui.screens.PracticeCategoryScreen
 import com.bisayaspeak.ai.ui.screens.PracticeQuizScreen
@@ -60,7 +61,7 @@ import com.bisayaspeak.ai.auth.AuthManager
 import com.bisayaspeak.ai.ui.account.LoginType
 import com.google.firebase.auth.FirebaseAuth
 
-private enum class AppRoute(val route: String) {
+enum class AppRoute(val route: String) {
     Home("home"),
     Translation("translation"),
     Flashcards("flashcards"),
@@ -75,7 +76,8 @@ private enum class AppRoute(val route: String) {
     SignIn("signin"),
     SignUp("signup"),
     Feedback("feedback"),
-    Upgrade("upgrade")
+    Upgrade("upgrade"),
+    LessonResult("result_screen/{correctCount}/{earnedXP}/{clearedLevel}")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -229,6 +231,32 @@ fun AppNavGraph(
             )
         }
 
+        composable(
+            route = AppRoute.LessonResult.route,
+            arguments = listOf(
+                navArgument("correctCount") { type = NavType.IntType },
+                navArgument("earnedXP") { type = NavType.IntType },
+                navArgument("clearedLevel") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val correctCount = backStackEntry.arguments?.getInt("correctCount") ?: 0
+            val earnedXP = backStackEntry.arguments?.getInt("earnedXP") ?: 0
+            val clearedLevel = backStackEntry.arguments?.getInt("clearedLevel") ?: 1
+            LessonResultScreen(
+                correctCount = correctCount,
+                earnedXP = earnedXP,
+                clearedLevel = clearedLevel,
+                onNavigateHome = {
+                    navController.navigate(AppRoute.Home.route) {
+                        popUpTo(AppRoute.Home.route) { inclusive = true }
+                    }
+                },
+                onPracticeAgain = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         if (!isLiteBuild) {
             composable(AppRoute.Translation.route) {
                 BannerScreenContainer(isPremium = isPremium) {
@@ -325,7 +353,8 @@ fun AppNavGraph(
                             onEarned = { _, _ -> onAdWatched() },
                             onDismissed = onAdWatched
                         )
-                    }
+                    },
+                    navController = navController
                 )
             }
         }
@@ -347,7 +376,8 @@ fun AppNavGraph(
                             }
                         }
                     },
-                    isPremium = isPremium
+                    isPremium = isPremium,
+                    navController = navController
                 )
             }
         }
