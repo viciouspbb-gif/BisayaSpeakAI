@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bisaya Speak AI</string>
+    
+    <!-- Level Selection Screen -->
+    <string name="level_selection_title">Pilia ang Lebel</string>
+    <string name="level_selection_subtitle">Pilia ang imong lebel</string>
+    <string name="level_selection_description">Ang sulod sa pagkat-on ug sukdanan sa pagsusi magamit sumala sa imong lebel</string>
+    <string name="level_beginner">Sinugdanan</string>
+    <string name="level_intermediate">Intermediate</string>
+    <string name="level_advanced">Advanced</string>
+    <string name="level_beginner_desc">Kat-ona ang sukaranan nga mga pulong ug hugpong sa mga pulong</string>
+    <string name="level_intermediate_desc">Praktikal nga mga hugpong sa pulong alang sa adlaw-adlaw nga panag-istoryahanay, merkado, transportasyon, ug uban pa</string>
+    <string name="level_advanced_desc">Komplikado nga panag-istoryahanay ug advanced nga pagpahayag</string>
+    
+    <!-- Practice Screen -->
+    <string name="practice_title_format">%s - Pagpraktis</string>
+    <string name="server_status_checking">Gisusi</string>
+    <string name="server_status_online">Konektado sa Server</string>
+    <string name="server_status_offline">Wala Konektado sa Server</string>
+    <string name="server_offline_warning">Dili makakonekta sa server. Mahimong dili magamit ang pronunciation diagnosis.</string>
+    <string name="retry">Sulayi Pag-usab</string>
+    
+    <!-- Recording Screen -->
+    <string name="recording_title">Pagpraktis sa Pagbigkas</string>
+    <string name="back">Balik</string>
+    <string name="remaining_count">Nahibilin: %d ka beses</string>
+    <string name="ad_watch_count">Ads nga gitan-aw: %d/3</string>
+    <string name="watch_ad_for_bonus">Tan-awa ang ad para sa +3</string>
+    <string name="pronounce_this">Palihug bigkasa kini nga pulong</string>
+    <string name="pronunciation">Pagbigkas</string>
+    <string name="japanese_translation">Hapon</string>
+    <string name="english_translation">Ingles</string>
+    <string name="play_reference">Paminawa ang ehemplo</string>
+    <string name="stop_reference">Hunonga</string>
+    
+    <!-- Recording Buttons -->
+    <string name="tap_to_record">I-tap aron mag-record</string>
+    <string name="recording">Nag-record…</string>
+    <string name="recording_completed">Human na ang pag-record</string>
+    <string name="stop_recording">Hunonga</string>
+    <string name="play_recording">I-play</string>
+    <string name="diagnose">Susiha</string>
+    <string name="record_again">Mag-record pag-usab</string>
+    
+    <!-- Analyzing -->
+    <string name="analyzing">Gisusi sa AI ang imong pagbigkas...</string>
+    <string name="please_wait">Palihug paghulat</string>
+    
+    <!-- Error -->
+    <string name="error_occurred">May nahitabo nga sayop</string>
+    <string name="try_again">Sulayi pag-usab</string>
+    
+    <!-- Result Screen -->
+    <string name="result_title">Resulta sa Pagsusi</string>
+    <string name="your_score">Ang Imong Score</string>
+    <string name="excellent">Maayo kaayo!</string>
+    <string name="good">Maayo!</string>
+    <string name="not_bad">Dili dautan</string>
+    <string name="needs_improvement">Kinahanglan og gamay nga pagpraktis</string>
+    <string name="keep_practicing">Padayon sa pagpraktis</string>
+    <string name="detailed_feedback">Detalyado nga Feedback</string>
+    <string name="detailed_analysis">Detalyado nga Pagsusi</string>
+    <string name="tips">Mga Tip</string>
+    <string name="back_to_practice">Balik sa Pagpraktis</string>
+    <string name="try_again_button">Sulayi Pag-usab</string>
+    
+    <!-- Listening Practice -->
+    <string name="listening_practice">Pagpraktis sa Pagpaminaw</string>
+    <string name="question_format">Pangutana %1$d/%2$d</string>
+    <string name="score_format">Score: %d</string>
+    <string name="tap_to_listen">I-tap aron maminaw</string>
+    <string name="playing">Nagtugtog...</string>
+    <string name="select_words">Pilia ang mga pulong</string>
+    <string name="correct">✅ Sakto!</string>
+    <string name="incorrect">❌ Sayop</string>
+    <string name="correct_answer">Sakto nga tubag: %s</string>
+    <string name="meaning">Kahulogan: %s</string>
+    <string name="next">Sunod</string>
+    <string name="completed">Human na!</string>
+    <string name="score_result">Score</string>
+    <string name="accuracy">Katukma: %d%%</string>
+    <string name="try_again_listening">Sulayi Pag-usab</string>
+    <string name="back_button">Balik</string>
+    <string name="mistakes_warning">❌ 2 ka sayop na</string>
+    <string name="watch_ad_reset">Tan-awa ang ad aron i-reset ang ihap sa sayop?</string>
+    <string name="continue_after_reset">Makapadayon ka human sa reset!</string>
+    <string name="watch_ad">Tan-awa ang Ad</string>
+    <string name="later">Sunod</string>
+    
+    <!-- AI Conversation -->
+    <string name="ai_conversation">AI Panag-istoryahanay</string>
+    <string name="scenario_conversation">Scenario Panag-istoryahanay</string>
+    <string name="topic_conversation">Topic Panag-istoryahanay</string>
+    <string name="end_conversation">Tapuson</string>
+    <string name="type_message">I-type ang mensahe...</string>
+    <string name="send">Ipadala</string>
+    <string name="conversation_ended">Natapos ang panag-istoryahanay</string>
+    <string name="conversation_summary">Sumaryo sa Panag-istoryahanay</string>
+    <string name="new_conversation">Bag-ong Panag-istoryahanay</string>
+    
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Kanselahon</string>
+    <string name="close">Siradhi</string>
+    
+    <!-- Level Selection Screen - Additional -->
+    <string name="premium_plan">⭐ Premium Plan</string>
+    <string name="unlimited_learning">Pagkat-on nga walay kinutuban</string>
+    <string name="ai_conversation_title">🤖 AI Panag-istoryahanay</string>
+    <string name="ai_conversation_desc">Pagpraktis og Bisaya uban sa AI</string>
+    <string name="unlimited">✨ Walay Kinutuban</string>
+    <string name="remaining_count_format">Nahibilin: %1$d/%2$d</string>
+    <string name="listening_practice_title">🎧 Pagpraktis sa Pagpaminaw</string>
+    <string name="listening_practice_desc">Paminaw ug han-ay ang mga pulong</string>
+    <string name="pronunciation_practice">Pagpraktis sa Pagbigkas</string>
+    <string name="level_beginner_short">Sinugdanan</string>
+    <string name="level_intermediate_short">Intermediate</string>
+    <string name="level_advanced_short">Advanced</string>
+    <string name="level_intermediate_premium">Intermediate ⭐</string>
+    <string name="level_advanced_premium">Advanced ⭐</string>
+    
+    <!-- Feedback Feature -->
+    <string name="feedback">Feedback</string>
+    <string name="send_feedback">Ipadala ang Feedback</string>
+    <string name="feedback_dialog_title">Ipadala ang feedback?</string>
+    <string name="feedback_dialog_message">Mabuksan ang Google Form. Palihug ipaambit ang imong opinyon.</string>
+    <string name="feedback_thank_you">Salamat sa imong feedback!</string>
+    <string name="feedback_error">Napakyas ang pagpadala sa feedback</string>
+</resources>

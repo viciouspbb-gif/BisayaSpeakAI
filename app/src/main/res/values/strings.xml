@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LearnBisaya</string>
+    
+    <!-- Level Selection Screen -->
+    <string name="level_selection_title">Select Level</string>
+    <string name="level_selection_subtitle">Choose your level</string>
+    <string name="level_selection_description">Learning content and evaluation criteria will be applied according to your level</string>
+    <string name="level_beginner">Beginner</string>
+    <string name="level_intermediate">Intermediate</string>
+    <string name="level_advanced">Advanced</string>
+    <string name="level_beginner_desc">Learn basic words and phrases</string>
+    <string name="level_intermediate_desc">Practical phrases for daily conversation, market, transportation, etc.</string>
+    <string name="level_advanced_desc">Complex conversations and advanced expressions</string>
+    
+    <!-- Practice Screen -->
+    <string name="practice_title_format">%s - Practice</string>
+    <string name="server_status_checking">Checking</string>
+    <string name="server_status_online">Server Connected</string>
+    <string name="server_status_offline">Server Disconnected</string>
+    <string name="server_offline_warning">Cannot connect to server. Pronunciation diagnosis may not be available.</string>
+    <string name="retry">Retry</string>
+    
+    <!-- Recording Screen -->
+    <string name="recording_title">Pronunciation Practice</string>
+    <string name="back">Back</string>
+    <string name="remaining_count">Remaining: %d times</string>
+    <string name="ad_watch_count">Ads watched: %d/3</string>
+    <string name="watch_ad_for_bonus">Watch ad for +3</string>
+    <string name="pronounce_this">Please pronounce this word</string>
+    <string name="pronunciation">Pronunciation</string>
+    <string name="japanese_translation">Japanese</string>
+    <string name="english_translation">English</string>
+    <string name="play_reference">Play reference</string>
+    <string name="stop_reference">Stop</string>
+    
+    <!-- Recording Buttons -->
+    <string name="tap_to_record">Tap to record</string>
+    <string name="recording">Recording…</string>
+    <string name="recording_completed">Recording completed</string>
+    <string name="stop_recording">Stop</string>
+    <string name="play_recording">Play</string>
+    <string name="diagnose">Diagnose</string>
+    <string name="record_again">Record again</string>
+    
+    <!-- Analyzing -->
+    <string name="analyzing">AI is analyzing your pronunciation...</string>
+    <string name="please_wait">Please wait</string>
+    
+    <!-- AI Conversation -->
+    <string name="enter_bisaya">Enter Bisaya</string>
+    <string name="enter_japanese">Enter Japanese</string>
+    <string name="send">Send</string>
+    <string name="speak_now">Speak now</string>
+    <string name="voice_input">Voice input</string>
+    <string name="translating">Translating...</string>
+    
+    <!-- Error -->
+    <string name="error_occurred">An error occurred</string>
+    <string name="try_again">Try again</string>
+    <string name="error_server_starting">Server is starting up.\nPlease try again.\n\n※Initial access may take some time.</string>
+    <string name="error_network">Network error occurred.\nPlease check your internet connection.</string>
+    <string name="error_server_error">Server error occurred.\nPlease try again later.</string>
+    <string name="error_diagnosis">An error occurred during diagnosis.\nPlease try again.</string>
+    
+    <!-- Result Screen -->
+    <string name="result_title">Diagnosis Result</string>
+    <string name="your_score">Your Score</string>
+    <string name="excellent">Excellent!</string>
+    <string name="good">Good!</string>
+    <string name="not_bad">Not bad</string>
+    <string name="needs_improvement">Needs more practice</string>
+    <string name="keep_practicing">Keep practicing</string>
+    <string name="detailed_feedback">Detailed Feedback</string>
+    <string name="detailed_analysis">Detailed Analysis</string>
+    <string name="tips">Tips</string>
+    <string name="back_to_practice">Back to Practice</string>
+    <string name="try_again_button">Try Again</string>
+    
+    <!-- Listening Practice -->
+    <string name="listening_practice">Listening Practice</string>
+    <string name="question_format">Question %1$d/%2$d</string>
+    <string name="score_format">Score: %d</string>
+    <string name="tap_to_listen">Tap to listen</string>
+    <string name="playing">Playing...</string>
+    <string name="select_words">Select words</string>
+    <string name="correct">✅ Correct!</string>
+    <string name="incorrect">❌ Incorrect</string>
+    <string name="correct_answer">Correct answer: %s</string>
+    <string name="meaning">Meaning: %s</string>
+    <string name="next">Next</string>
+    <string name="completed">Completed!</string>
+    <string name="score_result">Score</string>
+    <string name="accuracy">Accuracy: %d%%</string>
+    <string name="try_again_listening">Try Again</string>
+    <string name="back_button">戻る</string>
+    <string name="listening_helper_text">最初は聞き流すだけで大丈夫です。</string>
+    <string name="mistakes_warning">❌ 2 mistakes made</string>
+    <string name="watch_ad_reset">Watch ad to reset mistake count?</string>
+    <string name="continue_after_reset">You can continue playing after reset!</string>
+    <string name="watch_ad">Watch Ad</string>
+    <string name="later">Later</string>
+    
+    <!-- AI Conversation -->
+    <string name="ai_conversation">AI Conversation</string>
+    <string name="scenario_conversation">Scenario Conversation</string>
+    <string name="topic_conversation">Topic Conversation</string>
+    <string name="end_conversation">End</string>
+    <string name="type_message">Type a message...</string>
+    <string name="conversation_ended">Conversation ended</string>
+    <string name="conversation_summary">Conversation Summary</string>
+    <string name="new_conversation">New Conversation</string>
+    
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    
+    <!-- Level Selection Screen - Additional -->
+    <string name="premium_plan">⭐ Premium Plan</string>
+    <string name="unlimited_learning">Learn without limits</string>
+    <string name="ai_conversation_title">🤖 AI Conversation</string>
+    <string name="ai_conversation_desc">Practice Bisaya with AI</string>
+    <string name="unlimited">✨ Unlimited</string>
+    <string name="remaining_count_format">Remaining: %1$d/%2$d</string>
+    <string name="listening_practice_title">🎧 Listening Practice</string>
+    <string name="listening_practice_desc">Listen and arrange words</string>
+    <string name="pronunciation_practice">Pronunciation Practice</string>
+    <string name="level_beginner_short">Beginner</string>
+    <string name="level_intermediate_short">Intermediate</string>
+    <string name="level_advanced_short">Advanced</string>
+    <string name="level_intermediate_premium">Intermediate ⭐</string>
+    <string name="level_advanced_premium">Advanced ⭐</string>
+    
+    <!-- Feedback Feature -->
+    <string name="feedback">Feedback</string>
+    <string name="send_feedback">Send Feedback</string>
+    <string name="feedback_dialog_title">Send feedback?</string>
+    <string name="feedback_dialog_message">Google Form will open. Please share your thoughts.</string>
+    <string name="feedback_form_url">https://docs.google.com/forms/d/e/1FAIpQLSfSADAbBjv_YKaIjwCoxICyPKHw0H2ESYfvlTGMP0FGqtmCSQ/viewform</string>
+    <string name="version_info_title">Update Info / Version</string>
+    <string name="version_info_message">Version %1$s
+Main updates: Bug fixes and UI improvements</string>
+    <string name="feedback_thank_you">Thank you for your feedback!</string>
+    <string name="feedback_error">Failed to send feedback</string>
+    
+    <!-- AI Conversation Help Dialog -->
+    <string name="ai_help_title">How to Use AI Conversation</string>
+    <string name="ai_help_chat_title">💬 Chat in Bisaya</string>
+    <string name="ai_help_chat_desc">• Type Bisaya in the main input field\n• Use quick phrases</string>
+    <string name="ai_help_voice_title">🎤 Easy Voice Input</string>
+    <string name="ai_help_voice_desc">• Open "Translate from Japanese"\n• Tap the microphone button 🎤\n• Speak in Japanese/English/Tagalog\n• Automatically translates to Bisaya and sends</string>
+    <string name="ai_help_listen_title">🔊 Listen to Audio</string>
+    <string name="ai_help_listen_desc">• Tap the 🔊 button on AI messages\n• Plays audio in Bisaya\n• Helps with pronunciation learning</string>
+    <string name="ai_help_tips_title">📖 Learning Tips</string>
+    <string name="ai_help_tips_desc">When you don\'t know Bisaya, try conversing in your own language. Learn from the AI\'s Bisaya and translated content!</string>
+    <string name="ai_help_understood">Got it</string>
+    
+    <!-- Playback Speed -->
+    <string name="speed_slow">Slow</string>
+    <string name="speed_normal">Normal</string>
+    <string name="speed_fast">Fast</string>
+    
+    <!-- Recording Screen -->
+    <string name="remaining_zero">Remaining: 0 times</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">Learn Bisaya AI</string>
+    <string name="translation">Translation</string>
+    <string name="translation_subtitle">Japanese ⇄ Bisaya</string>
+    <string name="practice">Practice</string>
+    <string name="practice_subtitle">Pronunciation</string>
+    <string name="listening">Listening</string>
+    <string name="listening_subtitle">Listening</string>
+    <string name="quiz">Quiz</string>
+    <string name="quiz_subtitle">AI Quiz</string>
+    <string name="flashcards">Flashcards</string>
+    <string name="flashcards_subtitle">Learn core words</string>
+    <string name="roleplay">RolePlay</string>
+    <string name="roleplay_subtitle">Conversation</string>
+    <string name="favorites">Favorites</string>
+    <string name="favorites_subtitle">Favorites</string>
+    <string name="dictionary">Dictionary</string>
+    <string name="dictionary_subtitle">Dictionary</string>
+    <string name="account">Account</string>
+    <string name="account_subtitle">Account</string>
+    
+    <!-- Translate Screen -->
+    <string name="bisaya_translate">Bisaya Translate</string>
+    <string name="input_language">Input</string>
+    <string name="output_language">Translation</string>
+    <string name="japanese">Japanese</string>
+    <string name="english">English</string>
+    <string name="bisaya">Bisaya</string>
+    <string name="enter_text">Enter text</string>
+    <string name="translate">Translate</string>
+    <string name="translation_result">Translation Result</string>
+    <string name="copy">Copy</string>
+    <string name="speak">Speak</string>
+    <string name="conversation_mode_premium">Conversation Mode (Premium)</string>
+    <string name="realtime_voice_translation">Start realtime voice translation</string>
+    <string name="unlock_premium_translation">Unlock realtime translation with Premium</string>
+    <string name="original_text">Original Text</string>
+    <string name="swap_languages">Swap languages</string>
+    
+    <!-- Practice Category Screen -->
+    <string name="category">Category</string>
+    
+    <!-- Quiz Screen -->
+    <string name="quiz_completed">Quiz Completed!</string>
+    <string name="questions_correct">%1$d / %2$d correct</string>
+    <string name="back_to_home">Back to Home</string>
+    
+    <!-- Account Screen -->
+    <string name="account_info">Account Information</string>
+    <string name="premium_test">Premium Test</string>
+    <string name="premium_test_desc">Debug build only: Force toggle premium state</string>
+    <string name="login">Login</string>
+    <string name="login_existing_account">Login / Sign in with existing account</string>
+    <string name="create_account">Create Account</string>
+    <string name="logout">Logout</string>
+    <string name="premium_info">Premium Information</string>
+    
+    <!-- Dictionary Screen -->
+    <string name="search_words">Search words...</string>
+    <string name="play_audio">Play Audio</string>
+    <string name="add_to_favorites">Add to Favorites</string>
+    
+    <!-- Favorites Screen -->
+    <string name="no_favorites">No favorites yet</string>
+    <string name="add_favorites_hint">Add words from Dictionary</string>
+    
+    <!-- Role Play Screen -->
+    <string name="select_scenario">Select Scenario</string>
+    <string name="start_conversation">Start Conversation</string>
+    <string name="free_version">Free Version</string>
+    <string name="premium_version">Premium Version</string>
+    
+    <!-- Common UI -->
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="warning">Warning</string>
+    <string name="confirm">Confirm</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="save">Save</string>
+    <string name="search">Search</string>
+    <string name="filter">Filter</string>
+    <string name="sort">Sort</string>
+    <string name="settings">Settings</string>
+    <string name="help">Help</string>
+    <string name="about">About</string>
+    <string name="version">Version</string>
+    <string name="update">Update</string>
+    <string name="share">Share</string>
+    <string name="rate">Rate</string>
+    <string name="contact">Contact</string>
+    
+    <!-- Upgrade Screen -->
+    <string name="upgrade_title">Upgrade</string>
+    <string name="upgrade_subtitle">Choose the plan that fits your learning needs</string>
+    <string name="upgrade_footer_note">All plans include a free trial period. Cancel anytime.</string>
+    
+    <!-- Plans -->
+    <string name="plan_pro_title">Pro Unlock</string>
+    <string name="plan_pro_description">Unlock all practice modes and features</string>
+    <string name="plan_pro_price">$4.99/month</string>
+    
+    <string name="plan_premium_ai_title">Premium AI</string>
+    <string name="plan_premium_ai_description">Advanced AI features for accelerated learning</string>
+    <string name="plan_premium_ai_price">$9.99/month</string>
+    
+    <!-- Features -->
+    <string name="feature_pro_1">Unlimited practice sessions</string>
+    <string name="feature_pro_2">Access to all difficulty levels</string>
+    <string name="feature_pro_3">No ads</string>
+    <string name="feature_pro_4">Offline mode support</string>
+    
+    <string name="feature_premium_ai_1">All Pro features included</string>
+    <string name="feature_premium_ai_2">AI conversation practice</string>
+    <string name="feature_premium_ai_3">Personalized feedback</string>
+    <string name="feature_premium_ai_4">Advanced pronunciation analysis</string>
+    <string name="feature_premium_ai_5">Priority support</string>
+    
+    <!-- Buttons -->
+    <string name="purchase_now">Purchase Now</string>
+    <string name="plan_active">Active</string>
+    <string name="recommended">Recommended</string>
+    
+    <!-- Monetization -->
+    <string name="unlock_pro_btn">Go Pro: No ads &amp; unlimited</string>
+    <string name="premium_monthly_btn">Premium Monthly</string>
+    <string name="premium_yearly_btn">Premium Yearly</string>
+    <string name="locked_toast_pro">Unlock with Pro</string>
+    <string name="locked_toast_premium">Available in Premium</string>
+    <string name="upgrade_suggestion_title">Upgrade to Premium?</string>
+    <string name="upgrade_suggestion_message">Unlock all features and remove ads</string>
+    <string name="upgrade_now">Upgrade Now</string>
+    <string name="maybe_later">Maybe Later</string>
+</resources>
