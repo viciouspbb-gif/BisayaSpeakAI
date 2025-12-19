@@ -5,14 +5,17 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.bisayaspeak.ai.data.listening.ListeningQuestions
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.listening.ListeningQuestion
+import com.bisayaspeak.ai.data.listening.ListeningQuestions
 import com.bisayaspeak.ai.data.listening.ListeningSession
 import com.bisayaspeak.ai.data.model.DifficultyLevel
-import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.data.model.LessonResult
+import com.bisayaspeak.ai.data.repository.UsageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -39,6 +42,12 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
     private val _isCorrect = MutableStateFlow(false)
     val isCorrect: StateFlow<Boolean> = _isCorrect.asStateFlow()
     
+    private val _lessonResult = MutableStateFlow<LessonResult?>(null)
+    val lessonResult: StateFlow<LessonResult?> = _lessonResult.asStateFlow()
+    
+    private val _clearedLevel = MutableStateFlow<Int?>(null)
+    val clearedLevel: StateFlow<Int?> = _clearedLevel.asStateFlow()
+    
     // 広告表示フラグ（セッション完了時のみ）
     private val _shouldShowAd = MutableStateFlow(false)
     val shouldShowAd: StateFlow<Boolean> = _shouldShowAd.asStateFlow()
@@ -55,6 +64,7 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
     val consecutiveCorrect: StateFlow<Int> = _consecutiveCorrect.asStateFlow()
     
     private var tts: TextToSpeech? = null
+    private val usageRepository = UsageRepository(application)
     private var startTime: Long = 0
     
     companion object {
@@ -94,7 +104,7 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
     fun startSession(level: DifficultyLevel) {
         val isLiteBuild = BuildConfig.IS_LITE_BUILD
         val selectedQuestions = if (isLiteBuild) {
-            ListeningQuestions.getLiteSession(totalQuestions = 6)
+            ListeningQuestions.getLiteSession(totalQuestions = QUESTIONS_PER_SESSION)
         } else {
             val allQuestions = ListeningQuestions.getQuestionsByLevel(level)
             val usedIds = _usedQuestionIds.value[level] ?: emptySet()
@@ -139,6 +149,8 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
         )
         _consecutiveCorrect.value = 0
         _shouldShowAd.value = false
+        _lessonResult.value = null
+        _clearedLevel.value = null
         // セッション開始時は初期速度にリセット
         _speechRate.value = 0.7f
         updateSpeechRate()
@@ -154,6 +166,7 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
         if (currentSession.currentQuestionIndex >= currentSession.questions.size) {
             // セッション完了
             _session.value = currentSession.copy(completed = true)
+            finalizeLesson(currentSession)
             
             // セッション完了時に広告フラグを立てる（統一ルール：1セット完了 = 1回広告）
             _shouldShowAd.value = true
@@ -339,6 +352,40 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
         Log.d("ListeningViewModel", "Ad shown, flag reset")
     }
     
+    private fun finalizeLesson(currentSession: ListeningSession) {
+        val totalQuestions = currentSession.questions.size
+        if (totalQuestions == 0) return
+        val correct = currentSession.score
+        val result = calculateLessonResult(correct, totalQuestions)
+        if (_lessonResult.value == null) {
+            _lessonResult.value = result
+            viewModelScope.launch {
+                val currentLevel = usageRepository.getCurrentLevel().first()
+                usageRepository.addXP(result.xpEarned)
+                val clearedLevel = if (result.leveledUp) {
+                    usageRepository.incrementLevel()
+                    currentLevel + 1
+                } else {
+                    currentLevel
+                }
+                _clearedLevel.value = clearedLevel
+            }
+        }
+    }
+    
+    private fun calculateLessonResult(correctCount: Int, totalQuestions: Int): LessonResult {
+        val baseXp = correctCount * 10
+        val bonus = if (correctCount == totalQuestions && totalQuestions == QUESTIONS_PER_SESSION) 50 else 0
+        val xp = baseXp + bonus
+        val leveledUp = correctCount >= 8
+        return LessonResult(
+            correctCount = correctCount,
+            totalQuestions = totalQuestions,
+            xpEarned = xp,
+            leveledUp = leveledUp
+        )
+    }
+    
     /**
      * 既出問題をリセット（デバッグ用）
      */
@@ -359,6 +406,11 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
         val allQuestions = ListeningQuestions.getQuestionsByLevel(level)
         val usedIds = _usedQuestionIds.value[level] ?: emptySet()
         return Pair(usedIds.size, allQuestions.size)
+    }
+    
+    fun clearLessonCompletion() {
+        _lessonResult.value = null
+        _clearedLevel.value = null
     }
     
     override fun onCleared() {
