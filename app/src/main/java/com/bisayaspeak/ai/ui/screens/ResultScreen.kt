@@ -2,6 +2,7 @@ package com.bisayaspeak.ai.ui.screens
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
@@ -104,6 +107,14 @@ fun ResultScreen(
         ) {
             // スコアゲージ（コンパクト版）
             item {
+                MascotRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
+            }
+
+            item {
                 ScoreGaugeCard(
                     score = result.score.toDouble(),
                     rating = getRating(result.score),
@@ -147,6 +158,30 @@ fun ResultScreen(
                 TipsCard(tips = result.tips)
             }
         }
+    }
+}
+
+@Composable
+private fun MascotRow(
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.char_owl),
+            contentDescription = "Bisaya learning owl",
+            modifier = Modifier.size(150.dp),
+            contentScale = ContentScale.Fit
+        )
+        Image(
+            painter = painterResource(id = R.drawable.char_tarsier),
+            contentDescription = "Bisaya learning tarsier",
+            modifier = Modifier.size(150.dp),
+            contentScale = ContentScale.Fit
+        )
     }
 }
 
