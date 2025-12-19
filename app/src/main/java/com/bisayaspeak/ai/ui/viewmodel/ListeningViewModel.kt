@@ -81,11 +81,24 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
     private fun initTTS() {
         tts = TextToSpeech(getApplication()) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val result = tts?.setLanguage(Locale.JAPANESE)
-                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    Log.w("ListeningViewModel", "Japanese TTS not supported, falling back to default")
+                val tagalogLocale = Locale("fil", "PH")
+                val fallbackLocale = Locale("in", "ID")
+                val primaryResult = tts?.setLanguage(tagalogLocale)
+                val primarySupported = primaryResult != TextToSpeech.LANG_MISSING_DATA &&
+                        primaryResult != TextToSpeech.LANG_NOT_SUPPORTED
+                if (!primarySupported) {
+                    Log.w("ListeningViewModel", "Tagalog TTS not supported, trying Indonesian fallback")
+                    val fallbackResult = tts?.setLanguage(fallbackLocale)
+                    val fallbackSupported = fallbackResult != TextToSpeech.LANG_MISSING_DATA &&
+                            fallbackResult != TextToSpeech.LANG_NOT_SUPPORTED
+                    if (!fallbackSupported) {
+                        Log.w("ListeningViewModel", "Indonesian TTS not supported, falling back to default locale")
+                        tts?.language = Locale.US
+                    }
                 }
                 updateSpeechRate()
+            } else {
+                Log.e("ListeningViewModel", "TTS initialization failed: $status")
             }
         }
     }

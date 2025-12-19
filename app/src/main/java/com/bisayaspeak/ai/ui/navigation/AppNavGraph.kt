@@ -18,6 +18,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,9 +41,10 @@ import com.bisayaspeak.ai.ui.account.AccountUiState
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdMobManager
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.ui.home.FeatureId
 import com.bisayaspeak.ai.ui.home.HomeScreen
-import com.bisayaspeak.ai.ui.home.HomeUiState
+import com.bisayaspeak.ai.ui.home.HomeViewModel
 import com.bisayaspeak.ai.ui.screens.LessonResultScreen
 import com.bisayaspeak.ai.ui.screens.ListeningScreen
 import com.bisayaspeak.ai.ui.screens.PracticeCategoryScreen
@@ -110,7 +112,8 @@ fun AppNavGraph(
     }
 
     // 簡易的な UI State
-    val homeUiState = remember { HomeUiState(todayXp = 0, todayGoalXp = 100) }
+    val homeViewModel: HomeViewModel = viewModel()
+    val homeStatus by homeViewModel.homeStatus.collectAsState()
     val accountUiState = remember(isPremium, currentUser, isLiteBuild) { 
         AccountUiState(
             email = currentUser?.email ?: "",
@@ -126,7 +129,16 @@ fun AppNavGraph(
         composable(AppRoute.Home.route) {
             BannerScreenContainer(isPremium = isPremium) {
                 HomeScreen(
-                    uiState = homeUiState,
+                    homeStatus = homeStatus,
+                    isLiteBuild = isLiteBuild,
+                    onStartLearning = {
+                        val destination = if (homeStatus.currentLevel < 3) {
+                            AppRoute.Listening.route
+                        } else {
+                            AppRoute.Quiz.route
+                        }
+                        navController.navigate(destination)
+                    },
                     onClickFeature = { feature ->
                         when (feature) {
                             // Premium機能（ロック済み）は何もしない
