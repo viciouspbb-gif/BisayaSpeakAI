@@ -1,31 +1,40 @@
 package com.bisayaspeak.ai.ui.viewmodel
 
 import android.app.Application
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.data.local.Question
 import com.bisayaspeak.ai.data.listening.ListeningQuestion
-import com.bisayaspeak.ai.data.listening.ListeningQuestions
 import com.bisayaspeak.ai.data.listening.ListeningSession
 import com.bisayaspeak.ai.data.listening.QuestionType
 import com.bisayaspeak.ai.data.model.DifficultyLevel
 import com.bisayaspeak.ai.data.model.LessonResult
 import com.bisayaspeak.ai.data.repository.UsageRepository
+import com.bisayaspeak.ai.data.repository.QuestionRepository
+import com.bisayaspeak.ai.data.repository.UserProgressRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.util.Locale
 import java.util.Random
+import kotlin.math.roundToInt
 
-class ListeningViewModel(application: Application) : AndroidViewModel(application) {
+class ListeningViewModel(
+    application: Application,
+    private val questionRepository: QuestionRepository,
+    private val userProgressRepository: UserProgressRepository
+) : AndroidViewModel(application) {
     
     private val _session = MutableStateFlow<ListeningSession?>(null)
     val session: StateFlow<ListeningSession?> = _session.asStateFlow()
-    
     private val _currentQuestion = MutableStateFlow<ListeningQuestion?>(null)
     val currentQuestion: StateFlow<ListeningQuestion?> = _currentQuestion.asStateFlow()
     
@@ -54,9 +63,6 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
     private val _shouldShowAd = MutableStateFlow(false)
     val shouldShowAd: StateFlow<Boolean> = _shouldShowAd.asStateFlow()
     
-    // 既出問題を記録（レベル別）
-    private val _usedQuestionIds = MutableStateFlow<Map<DifficultyLevel, Set<String>>>(emptyMap())
-    
     // 正解率に応じた音声速度
     private val _speechRate = MutableStateFlow(0.7f)
     val speechRate: StateFlow<Float> = _speechRate.asStateFlow()
@@ -65,9 +71,15 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
     private val _consecutiveCorrect = MutableStateFlow(0)
     val consecutiveCorrect: StateFlow<Int> = _consecutiveCorrect.asStateFlow()
     
+    private val _comboCount = MutableStateFlow(0)
+    val comboCount: StateFlow<Int> = _comboCount.asStateFlow()
+    
     private var tts: TextToSpeech? = null
+    private val soundPool: SoundPool
+    private var correctSoundId: Int = 0
     private val usageRepository = UsageRepository(application)
     private var startTime: Long = 0
+    private var currentLevel: Int = 1
     
     companion object {
         private const val QUESTIONS_PER_SESSION = 10 // 1セッションあたりの問題数
@@ -81,7 +93,34 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
     }
     
     init {
+        soundPool = SoundPool.Builder()
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            .setMaxStreams(1)
+            .build()
+        loadComboSound()
         initTTS()
+    }
+    
+    private fun loadComboSound() {
+        try {
+            val afd = getApplication<Application>().resources.openRawResourceFd(R.raw.correct_sound)
+            correctSoundId = soundPool.load(afd.fileDescriptor, afd.startOffset, afd.length, 1)
+            afd.close()
+        } catch (e: IOException) {
+            Log.e("ListeningViewModel", "Failed to load combo sound", e)
+        }
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        soundPool.release()
+        tts?.shutdown()
+        tts = null
     }
     
     private fun initTTS() {
@@ -109,6 +148,12 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
     
+    private fun playComboSound(combo: Int) {
+        if (correctSoundId == 0) return
+        val pitch = (1f + (combo - 1) * 0.08f).coerceIn(1f, 1.6f)
+        soundPool.play(correctSoundId, 1f, 1f, 1, 0, pitch)
+    }
+    
     /**
      * 音声速度を更新
      */
@@ -117,38 +162,32 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
         Log.d("ListeningViewModel", "Speech rate updated to ${_speechRate.value}")
     }
     
-    /**
-     * セッション開始
-     */
-    fun startSession(level: DifficultyLevel) {
-        val isLiteBuild = BuildConfig.IS_LITE_BUILD
-        val selectedQuestions = if (isLiteBuild) {
-            ListeningQuestions.getLiteSession(totalQuestions = QUESTIONS_PER_SESSION)
-        } else {
-            val usedIds = _usedQuestionIds.value[level] ?: emptySet()
-            val source = prepareQuestionSource(level, usedIds)
-            val mixed = buildMixedQuestionSet(source)
-            val newUsedIds = usedIds + mixed.map { it.id }
-            _usedQuestionIds.value = _usedQuestionIds.value + (level to newUsedIds)
-            Log.d("ListeningViewModel", "Session started (mixed types) with ${mixed.size} questions for $level")
-            mixed
+    fun loadQuestions(level: Int) {
+        viewModelScope.launch {
+            currentLevel = level
+            val difficulty = level.toDifficultyLevel()
+            val questions = questionRepository.getQuestionsByLevel(level)
+            val listeningQuestions = questions.map { it.toListeningQuestion() }
+
+            _session.value = ListeningSession(
+                difficulty = difficulty,
+                questions = listeningQuestions,
+                currentQuestionIndex = 0,
+                score = 0,
+                mistakes = 0,
+                completed = false
+            )
+            _consecutiveCorrect.value = 0
+            _comboCount.value = 0
+            _shouldShowAd.value = false
+            _lessonResult.value = null
+            _speechRate.value = 0.7f
+            updateSpeechRate()
+
+            if (listeningQuestions.isNotEmpty()) {
+                loadNextQuestion()
+            }
         }
-        
-        _session.value = ListeningSession(
-            difficulty = level,
-            questions = selectedQuestions,
-            currentQuestionIndex = 0,
-            score = 0,
-            mistakes = 0
-        )
-        _consecutiveCorrect.value = 0
-        _shouldShowAd.value = false
-        _lessonResult.value = null
-        _clearedLevel.value = null
-        // セッション開始時は初期速度にリセット
-        _speechRate.value = 0.7f
-        updateSpeechRate()
-        loadNextQuestion()
     }
     
     /**
@@ -298,6 +337,9 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
             // 連続正解数を増やす
             val newConsecutiveCorrect = _consecutiveCorrect.value + 1
             _consecutiveCorrect.value = newConsecutiveCorrect
+            val newCombo = _comboCount.value + 1
+            _comboCount.value = newCombo
+            playComboSound(newCombo)
             
             // 3問連続正解で速度を上げる（難易度アップ）
             if (newConsecutiveCorrect % CORRECT_STREAK_FOR_SPEEDUP == 0) {
@@ -316,6 +358,7 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
             
             // 連続正解数をリセット
             _consecutiveCorrect.value = 0
+            _comboCount.value = 0
             
             // 速度を下げる（難易度ダウン）
             val newRate = (_speechRate.value - 0.1f).coerceAtLeast(MIN_SPEECH_RATE)
@@ -363,6 +406,12 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
                     currentLevel
                 }
                 _clearedLevel.value = clearedLevel
+
+                val starsEarned = calculateStars(correct, totalQuestions)
+                userProgressRepository.markLevelCompleted(this@ListeningViewModel.currentLevel, starsEarned)
+                if (starsEarned > 0) {
+                    userProgressRepository.unlockLevel(this@ListeningViewModel.currentLevel + 1)
+                }
             }
         }
     }
@@ -379,89 +428,41 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
             leveledUp = leveledUp
         )
     }
-    
-    private fun prepareQuestionSource(
-        level: DifficultyLevel,
-        usedIds: Set<String>
-    ): List<ListeningQuestion> {
-        val levelQuestions = ListeningQuestions.getQuestionsByLevel(level)
-        val unusedLevelQuestions = levelQuestions.filterNot { it.id in usedIds }
-        val baseSource = when {
-            unusedLevelQuestions.size >= QUESTIONS_PER_SESSION -> unusedLevelQuestions
-            levelQuestions.size >= QUESTIONS_PER_SESSION -> levelQuestions
-            else -> ListeningQuestions.getAllQuestions()
+
+    private fun calculateStars(correctCount: Int, totalQuestions: Int): Int {
+        return when {
+            totalQuestions == 0 -> 0
+            correctCount == totalQuestions -> 3
+            correctCount >= (totalQuestions * 0.7f).roundToInt() -> 2
+            correctCount >= (totalQuestions * 0.4f).roundToInt() -> 1
+            else -> 0
         }
-        if (unusedLevelQuestions.isEmpty() && levelQuestions.size < QUESTIONS_PER_SESSION) {
-            // 全問消費済 → リセット
-            _usedQuestionIds.value = _usedQuestionIds.value - level
-        }
-        return baseSource
     }
     
-    private fun buildMixedQuestionSet(source: List<ListeningQuestion>): List<ListeningQuestion> {
-        if (source.isEmpty()) return emptyList()
-        val random = Random(System.currentTimeMillis())
-        val distinctSource = source.distinctBy { it.id }.toMutableList()
-        if (distinctSource.size < QUESTIONS_PER_SESSION) {
-            val additional = ListeningQuestions.getAllQuestions()
-                .filterNot { existing -> distinctSource.any { it.id == existing.id } }
-                .shuffled(random)
-            distinctSource += additional
-        }
-        val pool = distinctSource.shuffled(random).toMutableList()
-        
-        fun take(count: Int): MutableList<ListeningQuestion> {
-            val actualCount = minOf(count, pool.size)
-            val taken = pool.take(actualCount).toMutableList()
-            pool.removeAll(taken)
-            if (taken.size < count) {
-                val refill = ListeningQuestions.getAllQuestions()
-                    .filterNot { existing -> taken.any { it.id == existing.id } }
-                    .shuffled(random)
-                    .take(count - taken.size)
-                taken += refill
+    private fun Int.toDifficultyLevel(): DifficultyLevel = when {
+        this <= 10 -> DifficultyLevel.BEGINNER
+        this <= 20 -> DifficultyLevel.INTERMEDIATE
+        else -> DifficultyLevel.ADVANCED
+    }
+
+    private fun Question.toListeningQuestion(): ListeningQuestion {
+        val tokens = sentence.split(" ").filter { it.isNotBlank() }
+        return ListeningQuestion(
+            id = "db_$id",
+            phrase = sentence,
+            words = tokens,
+            correctOrder = tokens,
+            meaning = meaning,
+            type = when (type.uppercase()) {
+                "TRANSLATION" -> QuestionType.TRANSLATION
+                "ORDERING" -> QuestionType.ORDERING
+                else -> QuestionType.LISTENING
             }
-            return taken
-        }
-        
-        val listening = take(LISTENING_COUNT).map { it.copy(type = QuestionType.LISTENING) }
-        val translation = take(TRANSLATION_COUNT).map { it.copy(type = QuestionType.TRANSLATION) }
-        val ordering = take(ORDERING_COUNT).map { it.copy(type = QuestionType.ORDERING) }
-        
-        val combined = (listening + translation + ordering).shuffled(random)
-        return combined.take(QUESTIONS_PER_SESSION)
+        )
     }
-    
-    /**
-     * 既出問題をリセット（デバッグ用）
-     */
-    fun resetUsedQuestions(level: DifficultyLevel? = null) {
-        if (level != null) {
-            _usedQuestionIds.value = _usedQuestionIds.value - level
-            Log.d("ListeningViewModel", "Reset used questions for $level")
-        } else {
-            _usedQuestionIds.value = emptyMap()
-            Log.d("ListeningViewModel", "Reset all used questions")
-        }
-    }
-    
-    /**
-     * 既出問題の統計を取得
-     */
-    fun getUsedQuestionsStats(level: DifficultyLevel): Pair<Int, Int> {
-        val allQuestions = ListeningQuestions.getQuestionsByLevel(level)
-        val usedIds = _usedQuestionIds.value[level] ?: emptySet()
-        return Pair(usedIds.size, allQuestions.size)
-    }
-    
+
     fun clearLessonCompletion() {
         _lessonResult.value = null
         _clearedLevel.value = null
-    }
-    
-    override fun onCleared() {
-        super.onCleared()
-        tts?.stop()
-        tts?.shutdown()
     }
 }

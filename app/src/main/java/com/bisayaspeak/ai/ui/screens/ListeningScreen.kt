@@ -101,7 +101,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.bisayaspeak.ai.R
 import androidx.compose.material.icons.filled.Star
@@ -124,12 +123,12 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ListeningScreen(
-    level: DifficultyLevel,
+    level: Int,
     isPremium: Boolean = false,
     onNavigateBack: () -> Unit,
     onShowRewardedAd: (() -> Unit) -> Unit = {},
     navController: NavHostController,
-    viewModel: ListeningViewModel = viewModel()
+    viewModel: ListeningViewModel
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -145,32 +144,33 @@ fun ListeningScreen(
     val shouldShowAd by viewModel.shouldShowAd.collectAsState()
     val lessonResult by viewModel.lessonResult.collectAsState()
     val clearedLevel by viewModel.clearedLevel.collectAsState()
+    val comboCount by viewModel.comboCount.collectAsState()
 
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
     DisposableEffect(context) {
-        var localTts: TextToSpeech? = null
-        val instance = TextToSpeech(context) { status ->
+        var ttsInit: TextToSpeech? = null
+        ttsInit = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val engine = localTts ?: return@TextToSpeech
-                val preferred = Locale("fil")
-                val fallback = Locale("id")
-                val result = engine.setLanguage(preferred)
-                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    engine.setLanguage(fallback)
+                ttsInit?.let { instance ->
+                    var result = instance.setLanguage(Locale("id"))
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        result = instance.setLanguage(Locale("fil"))
+                    }
+                    instance.setPitch(0.7f)
+                    instance.setSpeechRate(0.85f)
                 }
             }
         }
-        localTts = instance
-        tts = instance
+        tts = ttsInit
         onDispose {
-            localTts?.stop()
-            localTts?.shutdown()
+            ttsInit?.stop()
+            ttsInit?.shutdown()
         }
     }
     
-    LaunchedEffect(Unit) {
+    LaunchedEffect(level) {
         sessionManager.startSession()
-        viewModel.startSession(level)
+        viewModel.loadQuestions(level)
     }
     
     // セッション完了時の広告表示（統一ルール：1セット完了 = 1回広告）
@@ -268,41 +268,75 @@ fun ListeningScreen(
                 }
             } else if (currentQuestion != null && session != null) {
                 val question = currentQuestion
-                val scrollState = rememberScrollState()
+                val availableWords = remember(shuffledWords, selectedWords) {
+                    val usedCounts = selectedWords.groupingBy { it }.eachCount().toMutableMap()
+                    val remaining = mutableListOf<String>()
+                    for (word in shuffledWords) {
+                        val remainingCount = usedCounts[word] ?: 0
+                        if (remainingCount > 0) {
+                            usedCounts[word] = remainingCount - 1
+                        } else {
+                            remaining += word
+                        }
+                    }
+                    remaining
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     ListeningHeader(session = session)
-                    ListeningAudioCoachRow(
+                    QuestionArea(
+                        question = question,
                         session = session,
-                        questionType = question.type,
                         isPlaying = isPlaying,
-                        onPlayAudio = { viewModel.playAudio() }
+                        onPlayAudio = {
+                            val phrase = question.pronunciation ?: question.phrase
+                            tts?.speak(phrase, TextToSpeech.QUEUE_FLUSH, null, null)
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .verticalScroll(scrollState),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        ListeningAnswerArea(
-                            question = question,
+                    AnimatedVisibility(visible = comboCount > 0) {
+                        Text(
+                            text = "🔥 ${comboCount} Combo!",
+                            color = Color(0xFFFFA726),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(Color(0x33FFA726))
+                                .padding(vertical = 10.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    ListeningAnswerArea(
+                        question = question,
+                        selectedWords = selectedWords,
+                        shuffledWords = shuffledWords,
+                        showResult = showResult,
+                        isCorrect = isCorrect,
+                        onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
+                        onSelectWord = { word ->
+                            tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
+                            viewModel.selectWord(word)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        FlexboxWordGrid(
+                            words = availableWords,
                             selectedWords = selectedWords,
-                            shuffledWords = shuffledWords,
                             showResult = showResult,
-                            isCorrect = isCorrect,
-                            onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
                             onSelectWord = { word ->
                                 tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
                                 viewModel.selectWord(word)
-                            },
-                            modifier = Modifier.fillMaxWidth()
+                            }
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
@@ -431,9 +465,9 @@ private fun ListeningHeader(session: ListeningSession) {
 }
 
 @Composable
-private fun ListeningAudioCoachRow(
+private fun QuestionArea(
+    question: ListeningQuestion,
     session: ListeningSession,
-    questionType: QuestionType,
     isPlaying: Boolean,
     onPlayAudio: () -> Unit,
     modifier: Modifier = Modifier
@@ -472,7 +506,7 @@ private fun ListeningAudioCoachRow(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val title = when (questionType) {
+                val title = when (question.type) {
                     QuestionType.LISTENING -> "フクロウ先生の音声ヒント"
                     QuestionType.TRANSLATION -> "翻訳ミッション"
                     QuestionType.ORDERING -> "語順ミッション"
@@ -483,7 +517,7 @@ private fun ListeningAudioCoachRow(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
-                if (questionType == QuestionType.LISTENING) {
+                if (question.type == QuestionType.LISTENING) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -522,22 +556,33 @@ private fun ListeningAudioCoachRow(
                         }
                     }
                 } else {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.4f)
-                    ) {
-                        Text(
-                            text = if (questionType == QuestionType.TRANSLATION) {
-                                "日本語から正しいセブアノ語を組み立ててみよう。音声ヒントはありません。"
-                            } else {
-                                "語順問題です。提示された単語を並べ替えて正しいフレーズを作ろう。"
-                            },
-                            color = Color(0xFF3D2C5E),
-                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
-                            fontSize = 14.sp
-                        )
+                    val missionLabel = if (question.type == QuestionType.TRANSLATION) "翻訳ミッション" else "並べ替えミッション"
+                    val helperText = if (question.type == QuestionType.TRANSLATION) {
+                        "この日本語をセブアノ語にしよう。"
+                    } else {
+                        "日本語の意味に合う語順を組み立てよう。"
                     }
+                    Text(
+                        text = missionLabel,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = question.meaning,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = helperText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
@@ -652,13 +697,6 @@ private fun ListeningAnswerArea(
                 }
             }
         }
-
-        FlexboxWordGrid(
-            words = shuffledWords,
-            selectedWords = selectedWords,
-            showResult = showResult,
-            onSelectWord = onSelectWord
-        )
 
         AnimatedVisibility(visible = showResult) {
             Card(

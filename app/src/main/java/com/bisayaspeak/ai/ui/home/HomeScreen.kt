@@ -31,17 +31,24 @@ import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -83,25 +90,30 @@ fun HomeScreen(
     onClickProfile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showProDialog by remember { mutableStateOf(false) }
+
     val quickActions = if (isLiteBuild) {
         listOf(
             FeatureItem(
                 id = FeatureId.LISTENING,
                 title = stringResource(R.string.listening),
                 subtitle = stringResource(R.string.listening_subtitle),
-                icon = Icons.Filled.Hearing
+                icon = Icons.Filled.Hearing,
+                isLocked = false
             ),
             FeatureItem(
                 id = FeatureId.QUIZ,
                 title = stringResource(R.string.quiz),
                 subtitle = stringResource(R.string.quiz_subtitle),
-                icon = Icons.Filled.Quiz
+                icon = Icons.Filled.Quiz,
+                isLocked = true
             ),
             FeatureItem(
                 id = FeatureId.FLASHCARDS,
                 title = stringResource(R.string.flashcards),
                 subtitle = stringResource(R.string.flashcards_subtitle),
-                icon = Icons.Filled.MenuBook
+                icon = Icons.Filled.MenuBook,
+                isLocked = true
             )
         )
     } else {
@@ -110,19 +122,22 @@ fun HomeScreen(
                 id = FeatureId.LISTENING,
                 title = stringResource(R.string.listening),
                 subtitle = stringResource(R.string.listening_subtitle),
-                icon = Icons.Filled.Hearing
+                icon = Icons.Filled.Hearing,
+                isLocked = false
             ),
             FeatureItem(
                 id = FeatureId.QUIZ,
                 title = stringResource(R.string.quiz),
                 subtitle = stringResource(R.string.quiz_subtitle),
-                icon = Icons.Filled.Quiz
+                icon = Icons.Filled.Quiz,
+                isLocked = true
             ),
             FeatureItem(
                 id = FeatureId.PRONUNCIATION,
                 title = stringResource(R.string.practice),
                 subtitle = stringResource(R.string.practice_subtitle),
-                icon = Icons.Filled.Mic
+                icon = Icons.Filled.Mic,
+                isLocked = true
             )
         )
     }
@@ -193,12 +208,31 @@ fun HomeScreen(
             quickActions.forEach { feature ->
                 QuickActionButton(
                     item = feature,
-                    onClick = { onClickFeature(feature.id) },
+                    onClick = {
+                        if (feature.isLocked) {
+                            showProDialog = true
+                        } else {
+                            onClickFeature(feature.id)
+                        }
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 4.dp)
                 )
             }
+        }
+
+        if (showProDialog) {
+            AlertDialog(
+                onDismissRequest = { showProDialog = false },
+                confirmButton = {
+                    TextButton(onClick = { showProDialog = false }) {
+                        Text("OK")
+                    }
+                },
+                title = { Text("PRO版限定機能") },
+                text = { Text("このトレーニングはPRO版限定です（近日公開）") }
+            )
         }
     }
 }
@@ -351,6 +385,7 @@ private fun QuickActionButton(
     Card(
         modifier = modifier
             .height(110.dp)
+            .alpha(if (item.isLocked) 0.6f else 1f)
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
@@ -358,28 +393,43 @@ private fun QuickActionButton(
         ),
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(12.dp)
         ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = item.title,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp)
-            )
-
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.title,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(36.dp)
                 )
-            )
+
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                )
+            }
+
+            if (item.isLocked) {
+                Icon(
+                    imageVector = Icons.Filled.Lock,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(20.dp)
+                )
+            }
         }
     }
 }

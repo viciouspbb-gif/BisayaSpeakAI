@@ -1,0 +1,452 @@
+[
+  {
+    "level": 1,
+    "questions": [
+      { "cebuano": "Maayong buntag", "japanese": "おはようございます", "audio": "m_buntag" },
+      { "cebuano": "Maayong hapon", "japanese": "こんにちは（午後）", "audio": "m_hapon" },
+      { "cebuano": "Maayong gabii", "japanese": "こんばんは", "audio": "m_gabii" },
+      { "cebuano": "Salamat", "japanese": "ありがとう", "audio": "salamat" },
+      { "cebuano": "Walay sapayan", "japanese": "どういたしまして", "audio": "w_sapayan" },
+      { "cebuano": "Kumusta?", "japanese": "元気ですか？", "audio": "kumusta" },
+      { "cebuano": "Maayo man", "japanese": "元気です", "audio": "maayo_man" },
+      { "cebuano": "Tagpila kini?", "japanese": "これはいくらですか？", "audio": "tagpila" },
+      { "cebuano": "Ambi", "japanese": "ちょうだい / ください", "audio": "ambi" },
+      { "cebuano": "Tagpila?", "japanese": "いくら？", "audio": "tagpila_short" }
+    ]
+  },
+  {
+    "level": 2,
+    "questions": [
+      { "cebuano": "Unsa imong ngalan?", "japanese": "お名前は何ですか？", "audio": "unsa_ngalan" },
+      { "cebuano": "Ako si Ricky", "japanese": "私はリッキーです", "audio": "ako_si_ricky" },
+      { "cebuano": "Taga-asa ka?", "japanese": "どこから来ましたか？", "audio": "taga_asa" },
+      { "cebuano": "Taga-Japan ko", "japanese": "日本から来ました", "audio": "taga_japan" },
+      { "cebuano": "Pila imong edad?", "japanese": "何歳ですか？", "audio": "pila_edad" },
+      { "cebuano": "Asa ka padulong?", "japanese": "どこへ行くのですか？", "audio": "asa_padulong" },
+      { "cebuano": "Diri lang", "japanese": "ちょっとそこまで", "audio": "diri_lang" },
+      { "cebuano": "Kaon na ta", "japanese": "ご飯を食べましょう", "audio": "kaon_na_ta" },
+      { "cebuano": "Lami kaayo!", "japanese": "とても美味しい！", "audio": "lami_kaayo" },
+      { "cebuano": "Busog nako", "japanese": "お腹いっぱいです", "audio": "busog_nako" }
+    ]
+  },
+  {
+    "level": 3,
+    "questions": [
+      { "cebuano": "Asa ang banyo?", "japanese": "トイレはどこですか？", "audio": "asa_banyo" },
+      { "cebuano": "Palihug", "japanese": "お願いします", "audio": "palihug" },
+      { "cebuano": "Dili ko kasabot", "japanese": "理解できません", "audio": "dili_kasabot" },
+      { "cebuano": "Unsaon pag-ingon...?", "japanese": "〜はなんて言いますか？", "audio": "unsaon_pag_ingon" },
+      { "cebuano": "Usba palihug", "japanese": "もう一度お願いします", "audio": "usba_palihug" },
+      { "cebuano": "Hinay-hinay lang", "japanese": "ゆっくりお願いします", "audio": "hinay_hinay" },
+      { "cebuano": "Oo", "japanese": "はい", "audio": "oo" },
+      { "cebuano": "Dili", "japanese": "いいえ", "audio": "dili" },
+      { "cebuano": "Ambambot", "japanese": "わかりません（知りません）", "audio": "ambot" },
+      { "cebuano": "Gimingaw ko nimo", "japanese": "あなたが恋しいです", "audio": "gimingaw" }
+    ]
+  },
+  {
+    "level": 4,
+    "questions": [
+      { "cebuano": "Kinsa ka?", "japanese": "あなたは誰ですか？", "audio": "kinsa_ka" },
+      { "cebuano": "Kinsa siya?", "japanese": "彼は（彼女は）誰ですか？", "audio": "kinsa_siya" },
+      { "cebuano": "Unsa ni?", "japanese": "これは何ですか？", "audio": "unsa_ni" },
+      { "cebuano": "Unsa to?", "japanese": "あれは何でしたか？", "audio": "unsa_to" },
+      { "cebuano": "Pila man?", "japanese": "いくつですか？", "audio": "pila_man" },
+      { "cebuano": "Kanus-a?", "japanese": "いつですか？", "audio": "kanus_a" },
+      { "cebuano": "Ngano man?", "japanese": "なぜですか？", "audio": "ngano_man" },
+      { "cebuano": "Giunsa nimo?", "japanese": "どうやったのですか？", "audio": "giunsa_nimo" },
+      { "cebuano": "Hain man?", "japanese": "どっちですか？", "audio": "hain_man" },
+      { "cebuano": "Tinuod?", "japanese": "本当？", "audio": "tinuod" }
+    ]
+  },
+  {
+    "level": 5,
+    "questions": [
+      { "cebuano": "Gikapoy ko", "japanese": "疲れました", "audio": "gikapoy" },
+      { "cebuano": "Gigutom ko", "japanese": "お腹が空きました", "audio": "gigutom" },
+      { "cebuano": "Giuhaw ko", "japanese": "喉が渇きました", "audio": "giuhaw" },
+      { "cebuano": "Katulgon nako", "japanese": "眠いです", "audio": "katulgon" },
+      { "cebuano": "Sakit akong ulo", "japanese": "頭が痛いです", "audio": "sakit_ulo" },
+      { "cebuano": "Sakit akong tiyan", "japanese": "お腹が痛いです", "audio": "sakit_tiyan" },
+      { "cebuano": "Init kaayo", "japanese": "とても暑いです", "audio": "init_kaayo" },
+      { "cebuano": "Bugnaw diri", "japanese": "ここは寒いです（涼しい）", "audio": "bugnaw_diri" },
+      { "cebuano": "Ayaw lang", "japanese": "結構です（気にしないで）", "audio": "ayaw_lang" },
+      { "cebuano": "Ambi na", "japanese": "それ、ちょうだい", "audio": "ambi_na" }
+    ]
+  },
+  {
+    "level": 6,
+    "questions": [
+      { "cebuano": "Gwapa kaayo ka", "japanese": "あなたはとても綺麗です", "audio": "gwapa_kaayo" },
+      { "cebuano": "Gwapo ka", "japanese": "あなたはハンサムです", "audio": "gwapo_ka" },
+      { "cebuano": "Maayo kaayo ka", "japanese": "あなたはとても上手です", "audio": "maayo_kaayo_ka" },
+      { "cebuano": "Sige lang", "japanese": "大丈夫ですよ / 構いません", "audio": "sige_lang" },
+      { "cebuano": "Puhon", "japanese": "いつか（将来的に）", "audio": "puhon" },
+      { "cebuano": "Hinaot unta", "japanese": "そう願っています", "audio": "hinaot_unta" },
+      { "cebuano": "Basig unya", "japanese": "たぶん後で", "audio": "basig_unya" },
+      { "cebuano": "Kadiyot lang", "japanese": "ちょっと待って", "audio": "kadiyot_lang" },
+      { "cebuano": "Huwat lang", "japanese": "待っていて", "audio": "huwat_lang" },
+      { "cebuano": "Dali ra", "japanese": "すぐだよ / 簡単だよ", "audio": "dali_ra" }
+    ]
+  },
+  {
+    "level": 7,
+    "questions": [
+      { "cebuano": "Unsaon nako pag-adto sa...?", "japanese": "〜へはどうやって行きますか？", "audio": "unsaon_pag_adto" },
+      { "cebuano": "Layô ba ang...?", "japanese": "〜は遠いですか？", "audio": "layo_ba" },
+      { "cebuano": "Duol ra", "japanese": "すぐ近くです", "audio": "duol_ra" },
+      { "cebuano": "Liko sa tuo", "japanese": "右に曲がって", "audio": "liko_tuo" },
+      { "cebuano": "Liko sa wala", "japanese": "左に曲がって", "audio": "liko_wala" },
+      { "cebuano": "Deretso lang", "japanese": "まっすぐ行って", "audio": "deretso" },
+      { "cebuano": "Hunong diri", "japanese": "ここで止まって", "audio": "hunong_diri" },
+      { "cebuano": "Tagpila ang plete?", "japanese": "運賃はいくらですか？", "audio": "plete" },
+      { "cebuano": "Naa moy...?", "japanese": "〜はありますか？", "audio": "naa_moy" },
+      { "cebuano": "Wala na", "japanese": "もうありません", "audio": "wala_na" }
+    ]
+  },
+  {
+    "level": 8,
+    "questions": [
+      { "cebuano": "Ganahan ko nimo", "japanese": "あなたが好きです", "audio": "ganahan_nimo" },
+      { "cebuano": "Gihigugma ko ikaw", "japanese": "愛しています", "audio": "gihigugma" },
+      { "cebuano": "Lipay kaayo ko", "japanese": "とても幸せです", "audio": "lipay_kaayo" },
+      { "cebuano": "Ayaw pag-ana", "japanese": "そんなことしないで", "audio": "ayaw_pag_ana" },
+      { "cebuano": "Isog ka", "japanese": "あなたは勇敢です（または怒っている）", "audio": "isog_ka" },
+      { "cebuano": "Hadlok ko", "japanese": "怖いです", "audio": "hadlok_ko" },
+      { "cebuano": "Ayaw kabalaka", "japanese": "心配しないで", "audio": "ayaw_kabalaka" },
+      { "cebuano": "Salig nako", "japanese": "私を信じて", "audio": "salig_nako" },
+      { "cebuano": "Pasayloa ko", "japanese": "ごめんなさい（許して）", "audio": "pasayloa" },
+      { "cebuano": "Ok ra", "japanese": "大丈夫だよ", "audio": "ok_ra" }
+    ]
+  },
+  {
+    "level": 9,
+    "questions": [
+      { "cebuano": "Unsa imong kalingawan?", "japanese": "趣味は何ですか？", "audio": "kalingawan" },
+      { "cebuano": "Ganahan ko mokanta", "japanese": "歌うのが好きです", "audio": "mokanta" },
+      { "cebuano": "Ganahan ko mosayaw", "japanese": "踊るのが好きです", "audio": "mosayaw" },
+      { "cebuano": "Maayo ka mosayaw", "japanese": "ダンスが上手ですね", "audio": "maayo_mosayaw" },
+      { "cebuano": "Mag-videoke ta", "japanese": "ビデオケしましょう", "audio": "videoke" },
+      { "cebuano": "Inom ta", "japanese": "飲みましょう", "audio": "inom_ta" },
+      { "cebuano": "Hubog nako", "japanese": "酔っ払いました", "audio": "hubog_nako" },
+      { "cebuano": "Tagay!", "japanese": "乾杯！", "audio": "tagay" },
+      { "cebuano": "Pulutan", "japanese": "おつまみ", "audio": "pulutan" },
+      { "cebuano": "Suroy-suroy ta", "japanese": "遊びに行きましょう（散歩）", "audio": "suroy_suroy" }
+    ]
+  },
+  {
+    "level": 10,
+    "questions": [
+      { "cebuano": "Unsay oras na?", "japanese": "今何時ですか？", "audio": "oras_na" },
+      { "cebuano": "Alas dies na", "japanese": "10時です", "audio": "alas_dies" },
+      { "cebuano": "Sayo pa", "japanese": "まだ早いです", "audio": "sayo_pa" },
+      { "cebuano": "Uwahi na", "japanese": "もう遅いです（遅刻）", "audio": "uwahi" },
+      { "cebuano": "Ugma puhon", "japanese": "また明日", "audio": "ugma_puhon" },
+      { "cebuano": "Kagahapon", "japanese": "昨日", "audio": "kagahapon" },
+      { "cebuano": "Karong adlawa", "japanese": "今日", "audio": "karong_adlawa" },
+      { "cebuano": "Karon dayon", "japanese": "今すぐ", "audio": "karon_dayon" },
+      { "cebuano": "Sa sunod semana", "japanese": "来週", "audio": "sunod_semana" },
+      { "cebuano": "Dugay na", "japanese": "久しぶり / 長い間", "audio": "dugay_na" }
+    ]
+  },
+  {
+    "level": 11,
+    "questions": [
+      { "cebuano": "Pila ni ka buok?", "japanese": "これは何個ですか？", "audio": "pila_buok" },
+      { "cebuano": "Usa", "japanese": "1つ", "audio": "usa" },
+      { "cebuano": "Duha", "japanese": "2つ", "audio": "duha" },
+      { "cebuano": "Tulo", "japanese": "3つ", "audio": "tulo" },
+      { "cebuano": "Upat", "japanese": "4つ", "audio": "upat" },
+      { "cebuano": "Lima", "japanese": "5つ", "audio": "lima" },
+      { "cebuano": "Unom", "japanese": "6つ", "audio": "unom" },
+      { "cebuano": "Pito", "japanese": "7つ", "audio": "pito" },
+      { "cebuano": "Walo", "japanese": "8つ", "audio": "walo" },
+      { "cebuano": "Siyam", "japanese": "9つ", "audio": "siyam" }
+    ]
+  },
+  {
+    "level": 12,
+    "questions": [
+      { "cebuano": "Napulo", "japanese": "10", "audio": "napulo" },
+      { "cebuano": "Kaluhaan", "japanese": "20", "audio": "kaluhaan" },
+      { "cebuano": "Katloan", "japanese": "30", "audio": "katloan" },
+      { "cebuano": "Kap-atan", "japanese": "40", "audio": "kap_atan" },
+      { "cebuano": "Kalimaan", "japanese": "50", "audio": "kalimaan" },
+      { "cebuano": "Gatus", "japanese": "100", "audio": "gatus" },
+      { "cebuano": "Libo", "japanese": "1000", "audio": "libo" },
+      { "cebuano": "Daghan", "japanese": "たくさん", "audio": "daghan" },
+      { "cebuano": "Gamay ra", "japanese": "少しだけ", "audio": "gamay_ra" },
+      { "cebuano": "Wala", "japanese": "ゼロ / ない", "audio": "wala_zero" }
+    ]
+  },
+  {
+    "level": 13,
+    "questions": [
+      { "cebuano": "Unsay trabaho nimo?", "japanese": "仕事は何ですか？", "audio": "trabaho" },
+      { "cebuano": "Magtutudlo ko", "japanese": "教師です", "audio": "magtutudlo" },
+      { "cebuano": "Estudyante ko", "japanese": "学生です", "audio": "estudyante" },
+      { "cebuano": "Negosyante ko", "japanese": "ビジネスマンです", "audio": "negosyante" },
+      { "cebuano": "Asa ka nagtrabaho?", "japanese": "どこで働いていますか？", "audio": "asa_nagtrabaho" },
+      { "cebuano": "Sa opisina", "japanese": "オフィスで", "audio": "opisina" },
+      { "cebuano": "Sa mall", "japanese": "モールで", "audio": "mall" },
+      { "cebuano": "Kapoy ang trabaho", "japanese": "仕事は大変です（疲れました）", "audio": "kapoy_trabaho" },
+      { "cebuano": "Sweldo na!", "japanese": "給料日だ！", "audio": "sweldo" },
+      { "cebuano": "Day-off nako", "japanese": "今日は休みです", "audio": "day_off" }
+    ]
+  },
+  {
+    "level": 14,
+    "questions": [
+      { "cebuano": "Unsay paborito nimo nga pagkaon?", "japanese": "好きな食べ物は何ですか？", "audio": "paborito_pagkaon" },
+      { "cebuano": "Ganahan ko og Lechon", "japanese": "レチョンが好きです", "audio": "lechon" },
+      { "cebuano": "Ganahan ko og Sinigang", "japanese": "シニガンが好きです", "audio": "sinigang" },
+      { "cebuano": "Lami ang mangga diri", "japanese": "ここのマンゴーは美味しいです", "audio": "mangga" },
+      { "cebuano": "Halang kaayo", "japanese": "とても辛いです", "audio": "halang" },
+      { "cebuano": "Tam-is", "japanese": "甘い", "audio": "tam_is" },
+      { "cebuano": "Aslum", "japanese": "酸っぱい", "audio": "aslum" },
+      { "cebuano": "Paet", "japanese": "苦い", "audio": "paet" },
+      { "cebuano": "Asin", "japanese": "塩", "audio": "asin" },
+      { "cebuano": "Sili", "japanese": "唐辛子", "audio": "sili" }
+    ]
+  },
+  {
+    "level": 15,
+    "questions": [
+      { "cebuano": "Naa kay uyab?", "japanese": "恋人はいますか？", "audio": "naa_uyab" },
+      { "cebuano": "Minyo nako", "japanese": "結婚しています", "audio": "minyo" },
+      { "cebuano": "Single pa ko", "japanese": "まだ独身です", "audio": "single" },
+      { "cebuano": "Gwapo imong anak", "japanese": "あなたの子供はハンサムですね", "audio": "gwapo_anak" },
+      { "cebuano": "Pila kabuok imong anak?", "japanese": "子供は何人いますか？", "audio": "pila_anak" },
+      { "cebuano": "Naa koy pamilya sa Japan", "japanese": "日本に家族がいます", "audio": "pamilya_japan" },
+      { "cebuano": "Mingaw ko sa akong pamilya", "japanese": "家族が恋しいです", "audio": "mingaw_pamilya" },
+      { "cebuano": "Suod mi", "japanese": "私たちは仲が良いです", "audio": "suod" },
+      { "cebuano": "Amigo ta", "japanese": "友達だよ", "audio": "amigo" },
+      { "cebuano": "Best friend nako siya", "japanese": "彼は私の親友です", "audio": "bestfriend" }
+    ]
+  },
+  {
+    "level": 16,
+    "questions": [
+      { "cebuano": "Unsay imong plano karong weekend?", "japanese": "今週末の予定は何ですか？", "audio": "plano_weekend" },
+      { "cebuano": "Mangaligo mi sa dagat", "japanese": "海に泳ぎに行きます", "audio": "mangaligo_dagat" },
+      { "cebuano": "Gusto ka mouban?", "japanese": "一緒に行きたいですか？", "audio": "gusto_mouban" },
+      { "cebuano": "Sige, uban ko", "japanese": "いいよ、行きます", "audio": "sige_uban" },
+      { "cebuano": "Asa ta magkita?", "japanese": "どこで待ち合わせしますか？", "audio": "asa_magkita" },
+      { "cebuano": "Sa IT Park lang", "japanese": "ITパークで会いましょう", "audio": "it_park" },
+      { "cebuano": "Unsang orasa?", "japanese": "何時に？", "audio": "unsang_orasa" },
+      { "cebuano": "Ayaw pag-uwan palihug", "japanese": "雨が降らないでほしいです", "audio": "ayaw_uwan" },
+      { "cebuano": "Nindot ang panahon", "japanese": "天気がいいですね", "audio": "nindot_panahon" },
+      { "cebuano": "Init kaayo sa gawas", "japanese": "外はとても暑いです", "audio": "init_gawas" }
+    ]
+  },
+  {
+    "level": 17,
+    "questions": [
+      { "cebuano": "Nawala akong pitaka", "japanese": "財布をなくしました", "audio": "nawala_pitaka" },
+      { "cebuano": "Tabangi ko palihug", "japanese": "助けてください", "audio": "tabangi_ko" },
+      { "cebuano": "Asa ang police station?", "japanese": "警察署はどこですか？", "audio": "police_station" },
+      { "cebuano": "Gikawatan ko", "japanese": "盗難に遭いました", "audio": "gikawatan" },
+      { "cebuano": "Nasakitan ko", "japanese": "怪我をしました / 痛いです", "audio": "nasakitan" },
+      { "cebuano": "Dal-a ko sa hospital", "japanese": "病院へ連れて行ってください", "audio": "hospital" },
+      { "cebuano": "Hain ang botika?", "japanese": "薬局はどこですか？", "audio": "botika" },
+      { "cebuano": "Gihilantan ko", "japanese": "熱があります", "audio": "gihilantan" },
+      { "cebuano": "Kinahanglan ko og tabang", "japanese": "助けが必要です", "audio": "kinahanglan_tabang" },
+      { "cebuano": "Ayaw ko biya-i", "japanese": "私を置いていかないで", "audio": "ayaw_biya" }
+    ]
+  },
+  {
+    "level": 18,
+    "questions": [
+      { "cebuano": "Barato ra ni", "japanese": "これは安いです", "audio": "barato" },
+      { "cebuano": "Mahal ra kaayo", "japanese": "高すぎます", "audio": "mahal_kaayo" },
+      { "cebuano": "Wala nay hangyo?", "japanese": "値引きできませんか？", "audio": "hangyo" },
+      { "cebuano": "Last price na na?", "japanese": "それが最終価格ですか？", "audio": "last_price" },
+      { "cebuano": "Sige, kuhaon nako ni", "japanese": "よし、これを買います", "audio": "kuhaon_ni" },
+      { "cebuano": "Tan-aw lang ko", "japanese": "見てるだけです", "audio": "tan_aw_lang" },
+      { "cebuano": "Naa moy medium size?", "japanese": "ミディアムサイズはありますか？", "audio": "medium_size" },
+      { "cebuano": "Isul-ob nako ni", "japanese": "これを着てみます", "audio": "isul_ob" },
+      { "cebuano": "Asa ang fitting room?", "japanese": "試着室はどこですか？", "audio": "fitting_room" },
+      { "cebuano": "Nindot ni", "japanese": "これ、いいですね", "audio": "nindot_ni" }
+    ]
+  },
+  {
+    "level": 19,
+    "questions": [
+      { "cebuano": "Kabalo ka mag-Bisaya?", "japanese": "ビサヤ語が話せますか？", "audio": "kabalo_bisaya" },
+      { "cebuano": "Gamay ra", "japanese": "少しだけです", "audio": "gamay_ra_bisaya" },
+      { "cebuano": "Nagtuon pa ko", "japanese": "まだ勉強中です", "audio": "nagtuon_pa" },
+      { "cebuano": "Lisod ang Bisaya", "japanese": "ビサヤ語は難しいです", "audio": "lisod_bisaya" },
+      { "cebuano": "Sayon ra na", "japanese": "それは簡単ですよ", "audio": "sayon_ra" },
+      { "cebuano": "Tudloi ko palihug", "japanese": "教えてください", "audio": "tudloi_ko" },
+      { "cebuano": "Sakto ba ni?", "japanese": "これは合っていますか？", "audio": "sakto_ba" },
+      { "cebuano": "Sayop na", "japanese": "それは間違いです", "audio": "sayop_na" },
+      { "cebuano": "Brayt kaayo ka", "japanese": "あなたはとても賢いです", "audio": "brayt_kaayo" },
+      { "cebuano": "Paningkamot lang", "japanese": "頑張って（努力して）", "audio": "paningkamot" }
+    ]
+  },
+  {
+    "level": 20,
+    "questions": [
+      { "cebuano": "Gatuo ko nimo", "japanese": "あなたを信じています", "audio": "gatuo_nimo" },
+      { "cebuano": "Ayaw ko bakaki", "japanese": "嘘をつかないで", "audio": "ayaw_bakak" },
+      { "cebuano": "Tinuod gyud ni", "japanese": "これは本当なんです", "audio": "tinuod_gyud" },
+      { "cebuano": "Prangka lang ta", "japanese": "正直に言いましょう", "audio": "prangka" },
+      { "cebuano": "Mura'g tinuod", "japanese": "本当みたいですね", "audio": "murag_tinuod" },
+      { "cebuano": "Sigurado ka?", "japanese": "確かですか？", "audio": "sigurado_ka" },
+      { "cebuano": "Dili ko sigurado", "japanese": "確かではありません", "audio": "dili_sigurado" },
+      { "cebuano": "Ambot lang nimo", "japanese": "もうあなたのことは知りません（勝手にして）", "audio": "ambot_nimo" },
+      { "cebuano": "Hala!", "japanese": "わあ！ / 大変！", "audio": "hala" },
+      { "cebuano": "Sus!", "japanese": "まったく！ / あらあら", "audio": "sus" }
+    ]
+  },
+  {
+    "level": 21,
+    "questions": [
+      { "cebuano": "Lakaw na ta", "japanese": "もう行きましょう", "audio": "lakaw_na" },
+      { "cebuano": "Dali na!", "japanese": "早く！ / 来て！", "audio": "dali_na" },
+      { "cebuano": "Ayaw saba", "japanese": "静かにして / 内緒だよ", "audio": "ayaw_saba" },
+      { "cebuano": "Paminaw nako", "japanese": "私の話を聞いて", "audio": "paminaw_nako" },
+      { "cebuano": "Tan-awa ra", "japanese": "見てごらん", "audio": "tan_awa" },
+      { "cebuano": "Ayaw hikap", "japanese": "触らないで", "audio": "ayaw_hikap" },
+      { "cebuano": "Pag-amping", "japanese": "気をつけて（お大事に）", "audio": "pag_amping" },
+      { "cebuano": "Ayo-ayo!", "japanese": "元気でね！ / 行ってらっしゃい", "audio": "ayo_ayo" },
+      { "cebuano": "Kita ta puhon", "japanese": "またいつか会いましょう", "audio": "kita_puhon" },
+      { "cebuano": "Amping sa biyahe", "japanese": "道中気をつけて", "audio": "amping_biyahe" }
+    ]
+  },
+  {
+    "level": 22,
+    "questions": [
+      { "cebuano": "Giunsa nimo pagkahibalo?", "japanese": "どうやって知ったのですか？", "audio": "giunsa_hibalo" },
+      { "cebuano": "Gisultian ko ni Maria", "japanese": "マリアが教えてくれました", "audio": "gisultian_maria" },
+      { "cebuano": "Naa koy nadunggan", "japanese": "噂を聞きました", "audio": "nadunggan" },
+      { "cebuano": "Ayaw tuo ana", "japanese": "それを信じないで", "audio": "ayaw_tuo" },
+      { "cebuano": "Tingali", "japanese": "たぶん / おそらく", "audio": "tingali" },
+      { "cebuano": "Siguro", "japanese": "たぶん（Siguroもよく使われます）", "audio": "siguro" },
+      { "cebuano": "Posible", "japanese": "可能です", "audio": "posible" },
+      { "cebuano": "Imposible", "japanese": "不可能です", "audio": "imposible" },
+      { "cebuano": "Dili gyud", "japanese": "絶対にダメ / 違います", "audio": "dili_gyud" },
+      { "cebuano": "Mao ba?", "japanese": "そうなの？", "audio": "mao_ba" }
+    ]
+  },
+  {
+    "level": 23,
+    "questions": [
+      { "cebuano": "Unsa may balita?", "japanese": "ニュース（最近どう？）は何？", "audio": "balita" },
+      { "cebuano": "Wala may bag-o", "japanese": "特に変わりないよ", "audio": "wala_bag_o" },
+      { "cebuano": "Nindot nga balita", "japanese": "いい知らせです", "audio": "nindot_balita" },
+      { "cebuano": "Bati nga balita", "japanese": "悪い知らせです", "audio": "bati_balita" },
+      { "cebuano": "Nakadungog ka?", "japanese": "聞きましたか？", "audio": "nakadungog" },
+      { "cebuano": "Wala pa ko kabalo", "japanese": "まだ知りません", "audio": "wala_kabalo" },
+      { "cebuano": "Karon pa ko kahibalo", "japanese": "今知りました", "audio": "karon_kahibalo" },
+      { "cebuano": "Ikaw ha!", "japanese": "またまた！（からかう時）", "audio": "ikaw_ha" },
+      { "cebuano": "Grabe!", "japanese": "すごい！ / ひどい！", "audio": "grabe" },
+      { "cebuano": "Bitaw", "japanese": "本当だよ / 確かに", "audio": "bitaw" }
+    ]
+  },
+  {
+    "level": 24,
+    "questions": [
+      { "cebuano": "Pila ka oras ang biyahe?", "japanese": "移動時間はどのくらいですか？", "audio": "pila_oras_biyahe" },
+      { "cebuano": "Layô pa ba ta?", "japanese": "まだ遠いですか？", "audio": "layo_pa_ta" },
+      { "cebuano": "Hapit na", "japanese": "もうすぐです", "audio": "hapit_na" },
+      { "cebuano": "Abot na ta", "japanese": "着きました", "audio": "abot_na_ta" },
+      { "cebuano": "Mana ko", "japanese": "終わりました / 済みました", "audio": "mana_ko" },
+      { "cebuano": "Wala pa", "japanese": "まだです", "audio": "wala_pa" },
+      { "cebuano": "Naghuwat ko", "japanese": "待っています", "audio": "naghuwat" },
+      { "cebuano": "Dugay na ko naghuwat", "japanese": "長い間待っています", "audio": "dugay_naghuwat" },
+      { "cebuano": "Ayaw ko paabuta", "japanese": "私を待たせないで", "audio": "ayaw_paabuta" },
+      { "cebuano": "Pasensya na, nalate ko", "japanese": "遅れてごめんなさい", "audio": "pasensya_late" }
+    ]
+  },
+  {
+    "level": 25,
+    "questions": [
+      { "cebuano": "Maayong swerte", "japanese": "幸運を祈ります", "audio": "maayong_swerte" },
+      { "cebuano": "Swerteha nimo!", "japanese": "ラッキーだね！", "audio": "swerteha" },
+      { "cebuano": "Dimalas ko karon", "japanese": "今日はツイてないです", "audio": "dimalas" },
+      { "cebuano": "Ayaw kawala og paglaum", "japanese": "希望を捨てないで", "audio": "paglaum" },
+      { "cebuano": "Kaya nimo na!", "japanese": "あなたならできる！", "audio": "kaya_nimo" },
+      { "cebuano": "Go lang!", "japanese": "そのまま行け！", "audio": "go_lang" },
+      { "cebuano": "Bilib ko nimo", "japanese": "君には感心するよ", "audio": "bilib" },
+      { "cebuano": "Proud ko nimo", "japanese": "君を誇りに思うよ", "audio": "proud" },
+      { "cebuano": "Salamat sa suporta", "japanese": "サポートありがとう", "audio": "suporta" },
+      { "cebuano": "Dako kaayo og tabang", "japanese": "とても助かりました", "audio": "dako_tabang" }
+    ]
+  },
+  {
+    "level": 26,
+    "questions": [
+      { "cebuano": "Unsaon ni paggamit?", "japanese": "これはどうやって使いますか？", "audio": "unsaon_paggamit" },
+      { "cebuano": "Guba ni", "japanese": "これは壊れています", "audio": "guba_ni" },
+      { "cebuano": "Ayuhon nato ni", "japanese": "これを直しましょう", "audio": "ayuhon" },
+      { "cebuano": "Pwede mangutana?", "japanese": "質問してもいいですか？", "audio": "mangutana" },
+      { "cebuano": "Naa koy pangutana", "japanese": "質問があります", "audio": "pangutana" },
+      { "cebuano": "Tubaga ko", "japanese": "答えてください", "audio": "tubaga" },
+      { "cebuano": "Wala koy labot", "japanese": "私には関係ありません", "audio": "wala_labot" },
+      { "cebuano": "Dili na nako sala", "japanese": "それは私のせいではありません", "audio": "dili_sala" },
+      { "cebuano": "Sala nimo na", "japanese": "それはあなたのせいです", "audio": "sala_nimo" },
+      { "cebuano": "Ayaw pangaway", "japanese": "喧嘩しないで / 意地悪しないで", "audio": "ayaw_pangaway" }
+    ]
+  },
+  {
+    "level": 27,
+    "questions": [
+      { "cebuano": "Unsay nindot nga suroyan diri?", "japanese": "この辺でおすすめの遊び場はどこですか？", "audio": "suroyan" },
+      { "cebuano": "Adto ta sa dagat", "japanese": "海に行きましょう", "audio": "adto_dagat" },
+      { "cebuano": "Nindot ang view diri", "japanese": "ここは景色がいいですね", "audio": "view" },
+      { "cebuano": "Picture-picture ta", "japanese": "写真を撮りましょう", "audio": "picture" },
+      { "cebuano": "Picturan ko nimo palihug", "japanese": "写真を撮ってもらえますか？", "audio": "picturan_ko" },
+      { "cebuano": "Usa pa", "japanese": "もう一枚", "audio": "usa_pa" },
+      { "cebuano": "Pahiyom!", "japanese": "笑って！（スマイル）", "audio": "pahiyom" },
+      { "cebuano": "I-send sa ako ha", "japanese": "私に（写真を）送ってね", "audio": "isend_sa_ako" },
+      { "cebuano": "Facebook lang", "japanese": "フェイスブックでいいよ", "audio": "facebook" },
+      { "cebuano": "Add ko nimo", "japanese": "友達申請するね", "audio": "add_ko" }
+    ]
+  },
+  {
+    "level": 28,
+    "questions": [
+      { "cebuano": "Unsay imong gusto?", "japanese": "何が欲しいですか？", "audio": "unsay_gusto" },
+      { "cebuano": "Gusto ko og kape", "japanese": "コーヒーが欲しいです", "audio": "gusto_kape" },
+      { "cebuano": "Mas maayo pa", "japanese": "もっといいです", "audio": "mas_maayo" },
+      { "cebuano": "Pareho ra na", "japanese": "それと同じです", "audio": "pareho_ra" },
+      { "cebuano": "Lahi ra ni", "japanese": "これは違います（別物です）", "audio": "lahi_ra" },
+      { "cebuano": "Pili lang", "japanese": "選んでいいよ", "audio": "pili_lang" },
+      { "cebuano": "Bisan unsa", "japanese": "なんでもいいよ", "audio": "bisan_unsa" },
+      { "cebuano": "Bisan kinsa", "japanese": "だれでもいいよ", "audio": "bisan_kinsa" },
+      { "cebuano": "Bisan asa", "japanese": "どこでもいいよ", "audio": "bisan_asa" },
+      { "cebuano": "Wala na jud", "japanese": "本当にもうないです", "audio": "wala_jud" }
+    ]
+  },
+  {
+    "level": 29,
+    "questions": [
+      { "cebuano": "Sabot ta ha?", "japanese": "了解（約束）だよ？", "audio": "sabot_ha" },
+      { "cebuano": "Ayaw kalimot", "japanese": "忘れないで", "audio": "ayaw_kalimot" },
+      { "cebuano": "Nakalimot ko", "japanese": "忘れました", "audio": "nakalimot" },
+      { "cebuano": "Hinumdumi ni", "japanese": "これを覚えておいて", "audio": "hinumdumi" },
+      { "cebuano": "Makahinumdom pa ko", "japanese": "まだ覚えています", "audio": "makahinumdom" },
+      { "cebuano": "Lisod hinumduman", "japanese": "思い出すのが難しいです", "audio": "lisod_hinumduman" },
+      { "cebuano": "Sa tinuod lang", "japanese": "実を言うと", "audio": "sa_tinuod_lang" },
+      { "cebuano": "Bitaw sa?", "japanese": "本当にそうだよね？", "audio": "bitaw_sa" },
+      { "cebuano": "Mao gyud na", "japanese": "まさにその通りです", "audio": "mao_gyud" },
+      { "cebuano": "Sakto ka", "japanese": "あなたは正しい", "audio": "sakto_ka" }
+    ]
+  },
+  {
+    "level": 30,
+    "questions": [
+      { "cebuano": "Salamat sa tanan", "japanese": "いろいろとありがとうございました", "audio": "salamat_tanan" },
+      { "cebuano": "Nalipay ko nga kaila ta", "japanese": "あなたと知り合えて嬉しいです", "audio": "kaila_ta" },
+      { "cebuano": "Hinaot nga magkita ta pag-usab", "japanese": "また会えることを願っています", "audio": "magkita_usab" },
+      { "cebuano": "Dili ko malimot nimo", "japanese": "あなたのことは忘れません", "audio": "dili_malimot" },
+      { "cebuano": "Pabilin nga maayo", "japanese": "元気でいてね（良いままでいて）", "audio": "pabilin_maayo" },
+      { "cebuano": "Good luck sa imong kinabuhi", "japanese": "あなたの人生に幸あれ", "audio": "good_luck_life" },
+      { "cebuano": "Kanunay kang mag-amping", "japanese": "いつも気をつけてね", "audio": "kanunay_amping" },
+      { "cebuano": "Salamat sa pagtudlo nako", "japanese": "教えてくれてありがとう", "audio": "salamat_pagtudlo" },
+      { "cebuano": "Gimingaw nako sa Cebu", "japanese": "もうセブが恋しいです", "audio": "mingaw_cebu" },
+      { "cebuano": "Daghan kaayong salamat!", "japanese": "本当にありがとうございました！", "audio": "daghan_salamat" }
+    ]
+  }
+]
