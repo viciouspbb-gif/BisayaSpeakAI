@@ -36,6 +36,7 @@ import androidx.navigation.navArgument
 import com.bisayaspeak.ai.data.model.DifficultyLevel
 import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.MyApp
 import com.bisayaspeak.ai.ui.account.AccountScreen
 import com.bisayaspeak.ai.ui.account.AccountUiState
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
@@ -47,6 +48,7 @@ import com.bisayaspeak.ai.ui.home.HomeScreen
 import com.bisayaspeak.ai.ui.home.HomeViewModel
 import com.bisayaspeak.ai.ui.screens.LessonResultScreen
 import com.bisayaspeak.ai.ui.screens.ListeningScreen
+import com.bisayaspeak.ai.ui.screens.LevelSelectionScreen
 import com.bisayaspeak.ai.ui.screens.PracticeCategoryScreen
 import com.bisayaspeak.ai.ui.screens.PracticeQuizScreen
 import com.bisayaspeak.ai.ui.screens.PracticeWordListScreen
@@ -60,17 +62,20 @@ import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.FeedbackScreen
 import com.bisayaspeak.ai.auth.AuthManager
+import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
+import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 import com.bisayaspeak.ai.ui.account.LoginType
 import com.google.firebase.auth.FirebaseAuth
 
 enum class AppRoute(val route: String) {
     Home("home"),
+    LevelSelection("level_selection"),
     Translation("translation"),
     Flashcards("flashcards"),
     PracticeCategories("practice/categories"),
     PracticeCategory("practice/category/{category}"),
     PracticeWord("practice/word/{id}"),
-    Listening("listening"),
+    Listening("listening/{level}"),
     Quiz("quiz"),
     RolePlay("roleplay"),
     RolePlayScenario("role_play_scenario/{scenarioId}"),
@@ -88,7 +93,8 @@ fun AppNavGraph(
     navController: androidx.navigation.NavHostController,
     isPremium: Boolean,
     showPremiumTestToggle: Boolean,
-    onTogglePremiumTest: () -> Unit
+    onTogglePremiumTest: () -> Unit,
+    listeningViewModelFactory: ListeningViewModelFactory
 ) {
     val context = LocalContext.current
     val activity = context as? Activity ?: return
@@ -133,7 +139,7 @@ fun AppNavGraph(
                     isLiteBuild = isLiteBuild,
                     onStartLearning = {
                         val destination = if (homeStatus.currentLevel < 3) {
-                            AppRoute.Listening.route
+                            AppRoute.LevelSelection.route
                         } else {
                             AppRoute.Quiz.route
                         }
@@ -148,7 +154,7 @@ fun AppNavGraph(
                             
                             // 無料機能のみナビゲーション
                             FeatureId.PRONUNCIATION -> if (!isLiteBuild) navController.navigate(AppRoute.PracticeCategories.route)
-                            FeatureId.LISTENING -> navController.navigate(AppRoute.Listening.route)
+                            FeatureId.LISTENING -> navController.navigate(AppRoute.LevelSelection.route)
                             FeatureId.QUIZ -> navController.navigate(AppRoute.Quiz.route)
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
                             FeatureId.ROLE_PLAY -> if (!isLiteBuild) navController.navigate(AppRoute.RolePlay.route)
@@ -240,6 +246,20 @@ fun AppNavGraph(
         composable(AppRoute.Upgrade.route) {
             com.bisayaspeak.ai.ui.upgrade.UpgradeScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppRoute.LevelSelection.route) {
+            val app = context.applicationContext as MyApp
+            val unlockedFlow = remember { app.userProgressRepository.getUnlockedLevels() }
+            val unlockedLevels by unlockedFlow.collectAsState(initial = setOf(1))
+            LevelSelectionScreen(
+                unlockedLevels = if (unlockedLevels.isEmpty()) setOf(1) else unlockedLevels,
+                onLevelSelected = { level ->
+                    navController.navigate(
+                        AppRoute.Listening.route.replace("{level}", level.toString())
+                    )
+                }
             )
         }
 
@@ -352,10 +372,15 @@ fun AppNavGraph(
             }
         }
 
-        composable(AppRoute.Listening.route) {
+        composable(
+            route = AppRoute.Listening.route,
+            arguments = listOf(navArgument("level") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val level = backStackEntry.arguments?.getInt("level") ?: 1
             BannerScreenContainer(isPremium = isPremium) {
+                val viewModel: ListeningViewModel = viewModel(factory = listeningViewModelFactory)
                 ListeningScreen(
-                    level = DifficultyLevel.BEGINNER,
+                    level = level,
                     isPremium = isPremium,
                     onNavigateBack = { navController.popBackStack() },
                     onShowRewardedAd = { onAdWatched ->
@@ -366,7 +391,8 @@ fun AppNavGraph(
                             onDismissed = onAdWatched
                         )
                     },
-                    navController = navController
+                    navController = navController,
+                    viewModel = viewModel
                 )
             }
         }

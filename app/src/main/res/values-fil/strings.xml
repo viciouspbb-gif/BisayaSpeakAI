@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bisaya Speak AI</string>
+    <string name="app_name">LearnBisaya</string>
     
     <!-- Level Selection Screen -->
     <string name="level_selection_title">Pumili ng Antas</string>

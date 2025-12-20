@@ -18,6 +18,7 @@ import com.bisayaspeak.ai.ui.theme.BisayaSpeakAITheme
 import com.bisayaspeak.ai.update.UpdateCheckResult
 import com.bisayaspeak.ai.update.UpdateManager
 import kotlinx.coroutines.launch
+import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 
 class MainActivity : ComponentActivity() {
     
@@ -52,6 +53,13 @@ class MainActivity : ComponentActivity() {
             checkForAppUpdate()
         }
 
+        val app = application as MyApp
+        val listeningViewModelFactory = ListeningViewModelFactory(
+            app,
+            app.questionRepository,
+            app.userProgressRepository
+        )
+
         setContent {
             BisayaSpeakAITheme {
 
@@ -64,7 +72,8 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     isPremium = isPremium,
                     showPremiumTestToggle = BuildConfig.DEBUG,
-                    onTogglePremiumTest = { isPremium = !isPremium }
+                    onTogglePremiumTest = { isPremium = !isPremium },
+                    listeningViewModelFactory = listeningViewModelFactory
                 )
             }
         }
