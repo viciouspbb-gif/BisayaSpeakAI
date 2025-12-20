@@ -3,6 +3,12 @@ package com.bisayaspeak.ai.data.listening
 import com.bisayaspeak.ai.data.model.DifficultyLevel
 import kotlin.random.Random
 
+enum class QuestionType {
+    LISTENING,
+    TRANSLATION,
+    ORDERING
+}
+
 data class ListeningQuestion(
     val id: String,
     val phrase: String,
@@ -10,7 +16,8 @@ data class ListeningQuestion(
     val correctOrder: List<String>,
     val meaning: String,
     val pronunciation: String? = null,
-    val audioUrl: String? = null
+    val audioUrl: String? = null,
+    val type: QuestionType = QuestionType.LISTENING
 )
 
 data class ListeningSession(
@@ -33,6 +40,10 @@ object ListeningQuestions {
     
     fun getQuestionsByLevel(difficulty: DifficultyLevel): List<ListeningQuestion> {
         return getQuestions(difficulty)
+    }
+
+    fun getAllQuestions(): List<ListeningQuestion> {
+        return beginnerQuestions + intermediateQuestions + advancedQuestions
     }
 
     fun getLiteSession(

@@ -1,5 +1,6 @@
 package com.bisayaspeak.ai.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,9 +35,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bisayaspeak.ai.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,6 +108,12 @@ fun LessonResultScreen(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Image(
+                            painter = painterResource(id = R.drawable.char_owl),
+                            contentDescription = "Result mascot",
+                            modifier = Modifier.size(160.dp)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
