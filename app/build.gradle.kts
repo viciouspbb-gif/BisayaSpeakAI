@@ -177,6 +177,9 @@ dependencies {
     
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
+    // Flexbox layout (for tighter word wrapping)
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
     
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")

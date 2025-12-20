@@ -1,5 +1,12 @@
 package com.bisayaspeak.ai.ui.screens
 
+import android.app.Activity
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.view.ViewGroup
+import android.speech.tts.TextToSpeech
+import android.widget.TextView
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -7,7 +14,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.*
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,9 +26,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
@@ -35,7 +45,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -51,6 +63,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -65,10 +78,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.scale
@@ -76,25 +89,37 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavHostController
 import com.bisayaspeak.ai.R
 import androidx.compose.material.icons.filled.Star
 import com.bisayaspeak.ai.data.model.DifficultyLevel
+import com.bisayaspeak.ai.data.listening.ListeningQuestion
+import com.bisayaspeak.ai.data.listening.ListeningSession
+import com.bisayaspeak.ai.data.listening.QuestionType
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.util.PracticeSessionManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.activity.compose.BackHandler
-import android.app.Activity
+import com.google.android.flexbox.AlignItems
+import com.google.android.flexbox.FlexWrap
+import com.google.android.flexbox.FlexboxLayout
+import com.google.android.flexbox.JustifyContent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.navigation.NavHostController
+import kotlin.math.roundToInt
 import com.bisayaspeak.ai.ui.navigation.AppRoute
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -109,9 +134,7 @@ fun ListeningScreen(
     val context = LocalContext.current
     val activity = context as? Activity
     
-    // セッション管理
     val sessionManager = remember { PracticeSessionManager(isPremium) }
-    
     val session = viewModel.session.collectAsState().value
     val currentQuestion = viewModel.currentQuestion.collectAsState().value
     val selectedWords by viewModel.selectedWords.collectAsState()
@@ -122,6 +145,28 @@ fun ListeningScreen(
     val shouldShowAd by viewModel.shouldShowAd.collectAsState()
     val lessonResult by viewModel.lessonResult.collectAsState()
     val clearedLevel by viewModel.clearedLevel.collectAsState()
+
+    var tts by remember { mutableStateOf<TextToSpeech?>(null) }
+    DisposableEffect(context) {
+        var localTts: TextToSpeech? = null
+        val instance = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val engine = localTts ?: return@TextToSpeech
+                val preferred = Locale("fil")
+                val fallback = Locale("id")
+                val result = engine.setLanguage(preferred)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    engine.setLanguage(fallback)
+                }
+            }
+        }
+        localTts = instance
+        tts = instance
+        onDispose {
+            localTts?.stop()
+            localTts?.shutdown()
+        }
+    }
     
     LaunchedEffect(Unit) {
         sessionManager.startSession()
@@ -195,6 +240,13 @@ fun ListeningScreen(
                     containerColor = Color.Black
                 )
             )
+        },
+        bottomBar = {
+            ListeningBottomBar(
+                showResult = showResult,
+                sessionCompleted = session?.completed == true,
+                onNext = { viewModel.nextQuestion() }
+            )
         }
     ) { padding ->
         Box(
@@ -216,331 +268,472 @@ fun ListeningScreen(
                 }
             } else if (currentQuestion != null && session != null) {
                 val question = currentQuestion
-                LazyColumn(
+                val scrollState = rememberScrollState()
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 16.dp,
-                        bottom = 32.dp
-                    ),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.listening_helper_text),
-                            color = Color.White.copy(alpha = 0.7f),
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
+                    ListeningHeader(session = session)
+                    ListeningAudioCoachRow(
+                        session = session,
+                        questionType = question.type,
+                        isPlaying = isPlaying,
+                        onPlayAudio = { viewModel.playAudio() }
+                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(scrollState),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        ListeningAnswerArea(
+                            question = question,
+                            selectedWords = selectedWords,
+                            shuffledWords = shuffledWords,
+                            showResult = showResult,
+                            isCorrect = isCorrect,
+                            onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
+                            onSelectWord = { word ->
+                                tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
+                                viewModel.selectWord(word)
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
-                    item {
-                        Card(
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuestionTypeBadge(type: QuestionType) {
+    val (label, color) = when (type) {
+        QuestionType.LISTENING -> "Listening" to Color(0xFF4A90E2)
+        QuestionType.TRANSLATION -> "Translation" to Color(0xFF34D399)
+        QuestionType.ORDERING -> "Ordering" to Color(0xFFFFA726)
+    }
+    Surface(
+        color = color.copy(alpha = 0.25f),
+        shape = RoundedCornerShape(50),
+        modifier = Modifier
+    ) {
+        Text(
+            text = label,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+        )
+    }
+}
+
+@Composable
+private fun FlexboxWordGrid(
+    words: List<String>,
+    selectedWords: List<String>,
+    showResult: Boolean,
+    onSelectWord: (String) -> Unit
+) {
+    val density = LocalDensity.current
+    val horizontalPadding = with(density) { 16.dp.toPx().roundToInt() }
+    val verticalPadding = with(density) { 10.dp.toPx().roundToInt() }
+    val chipCornerRadius = with(density) { 16.dp.toPx() }
+    val margin = with(density) { 6.dp.toPx().roundToInt() }
+
+    AndroidView(
+        modifier = Modifier.fillMaxWidth(),
+        factory = { context ->
+            FlexboxLayout(context).apply {
+                flexWrap = FlexWrap.WRAP
+                justifyContent = JustifyContent.CENTER
+                alignItems = AlignItems.CENTER
+                clipToPadding = false
+            }
+        },
+        update = { flexbox ->
+            flexbox.removeAllViews()
+            words.forEach { word ->
+                val usedCount = selectedWords.count { it == word }
+                val totalAvailable = words.count { it == word }
+                val isUsed = usedCount >= totalAvailable
+                val chipColor = if (isUsed) Color(0xFF2E2E3E) else Color(0xFFEDE4F3)
+                val textColor = if (isUsed) Color.Gray else Color.Black
+
+                val drawable = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    this.cornerRadius = chipCornerRadius
+                    setColor(chipColor.toArgb())
+                }
+
+                val textView = TextView(flexbox.context).apply {
+                    text = word
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(textColor.toArgb())
+                    setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
+                    background = drawable
+                    isEnabled = !isUsed && !showResult
+                    layoutParams = FlexboxLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        setMargins(margin, margin, margin, margin)
+                    }
+                    setOnClickListener {
+                        if (!isUsed && !showResult) {
+                            onSelectWord(word)
+                        }
+                    }
+                }
+                flexbox.addView(textView)
+            }
+        }
+    )
+}
+
+@Composable
+private fun ListeningHeader(session: ListeningSession) {
+    val progress = if (session.questions.isNotEmpty()) {
+        (session.currentQuestionIndex + 1f) / session.questions.size.toFloat()
+    } else 0f
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Q${session.currentQuestionIndex + 1}/${session.questions.size}",
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Score: ${session.score}",
+                color = Color(0xFF4A90E2),
+                fontWeight = FontWeight.Bold
+            )
+        }
+        LinearProgressIndicator(
+            progress = progress.coerceIn(0f, 1f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp),
+            color = Color(0xFF4A90E2),
+            trackColor = Color.White.copy(alpha = 0.2f)
+        )
+    }
+}
+
+@Composable
+private fun ListeningAudioCoachRow(
+    session: ListeningSession,
+    questionType: QuestionType,
+    isPlaying: Boolean,
+    onPlayAudio: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bubbleShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomEnd = 28.dp, bottomStart = 12.dp)
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isPlaying) 1.04f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color(0xFFEDE4F3))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.char_owl),
+                contentDescription = "Listening owl coach",
+                modifier = Modifier.size(96.dp),
+                contentScale = ContentScale.Fit
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val title = when (questionType) {
+                    QuestionType.LISTENING -> "フクロウ先生の音声ヒント"
+                    QuestionType.TRANSLATION -> "翻訳ミッション"
+                    QuestionType.ORDERING -> "語順ミッション"
+                }
+                Text(
+                    text = title,
+                    color = Color(0xFF5C4B8A),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                if (questionType == QuestionType.LISTENING) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .scale(pulseScale)
+                            .clip(bubbleShape)
+                            .background(
+                                if (isPlaying) Color(0xFF4A90E2).copy(alpha = 0.6f) else Color(0xFF4A90E2)
+                            )
+                            .clickable(enabled = !isPlaying) { onPlayAudio() }
+                            .padding(horizontal = 18.dp, vertical = 14.dp)
+                    ) {
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFEDE4F3)
-                            ),
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Q${session.currentQuestionIndex + 1}/${session.questions.size}",
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    )
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Star,
-                                            contentDescription = null,
-                                            tint = Color(0xFF4A90E2),
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Text(
-                                            text = "${session.score}",
-                                            color = Color(0xFF4A90E2),
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(12.dp))
-                                val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                                val pulseScale by infiniteTransition.animateFloat(
-                                    initialValue = 1f,
-                                    targetValue = if (isPlaying) 1.05f else 1f,
-                                    animationSpec = infiniteRepeatable(
-                                        animation = tween(600, easing = FastOutSlowInEasing),
-                                        repeatMode = RepeatMode.Reverse
-                                    ),
-                                    label = "pulse"
+                            Icon(
+                                imageVector = Icons.Default.VolumeUp,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = if (isPlaying) "再生中..." else "音声を再生",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp
                                 )
-                                Button(
-                                    onClick = { viewModel.playAudio() },
-                                    enabled = !isPlaying,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(56.dp)
-                                        .scale(pulseScale),
-                                    shape = RoundedCornerShape(28.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF4A90E2),
-                                        disabledContainerColor = Color(0xFF4A90E2).copy(alpha = 0.5f)
-                                    ),
-                                    elevation = ButtonDefaults.buttonElevation(
-                                        defaultElevation = 6.dp,
-                                        pressedElevation = 2.dp
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.VolumeUp,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(28.dp),
-                                        tint = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = if (isPlaying) "🎵 Playing..." else "🎧 Tap to Listen",
-                                        color = Color.White,
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
+                                Text(
+                                    text = "Tap & listen",
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    fontSize = 12.sp
+                                )
                             }
                         }
                     }
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFEDE4F3)
-                            ),
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(2.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Your Answer:",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
+                } else {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color.White.copy(alpha = 0.4f)
+                    ) {
+                        Text(
+                            text = if (questionType == QuestionType.TRANSLATION) {
+                                "日本語から正しいセブアノ語を組み立ててみよう。音声ヒントはありません。"
+                            } else {
+                                "語順問題です。提示された単語を並べ替えて正しいフレーズを作ろう。"
+                            },
+                            color = Color(0xFF3D2C5E),
+                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "正解数: ${session.score}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "ミス: ${session.mistakes}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ListeningAnswerArea(
+    question: ListeningQuestion,
+    selectedWords: List<String>,
+    shuffledWords: List<String>,
+    showResult: Boolean,
+    isCorrect: Boolean,
+    onRemoveWordAt: (Int) -> Unit,
+    onSelectWord: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            QuestionTypeBadge(type = question.type)
+        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            val correctWordCount = question.correctOrder.size
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "あなたの回答",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    repeat(correctWordCount) { index ->
+                        val isFilled = index < selectedWords.size
+                        Box(
+                            modifier = Modifier
+                                .height(48.dp)
+                                .widthIn(min = 72.dp)
+                                .shadow(
+                                    elevation = if (isFilled) 6.dp else 0.dp,
+                                    shape = RoundedCornerShape(12.dp),
+                                    clip = false
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                val correctWordCount = question.correctOrder.size
-                                FlowRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    repeat(correctWordCount) { index ->
-                                        val isFilled = index < selectedWords.size
-                                        Box(
-                                            modifier = Modifier
-                                                .height(52.dp)
-                                                .widthIn(min = 80.dp)
-                                                .shadow(
-                                                    elevation = if (isFilled) 6.dp else 0.dp,
-                                                    shape = RoundedCornerShape(12.dp),
-                                                    clip = false
-                                                )
-                                                .background(
-                                                    Color.White,
-                                                    RoundedCornerShape(12.dp)
-                                                )
-                                                .then(
-                                                    if (isFilled) {
-                                                        Modifier.border(
-                                                            2.dp,
-                                                            Color(0xFF4A90E2),
-                                                            RoundedCornerShape(12.dp)
-                                                        )
-                                                    } else {
-                                                        Modifier.dashedBorder(
-                                                            color = Color.LightGray.copy(alpha = 0.8f),
-                                                            strokeWidth = 1.dp,
-                                                            cornerRadius = 12.dp
-                                                        )
-                                                    }
-                                                )
-                                                .clickable(enabled = isFilled && !showResult) {
-                                                    viewModel.removeWordAt(index)
-                                                }
-                                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            if (isFilled) {
-                                                Text(
-                                                    text = selectedWords[index],
-                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                    fontSize = 16.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    textAlign = TextAlign.Center
-                                                )
-                                            }
-                                        }
+                                .background(
+                                    Color(0xFF2C2C3E),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .then(
+                                    if (isFilled) {
+                                        Modifier.border(
+                                            2.dp,
+                                            Color(0xFF4A90E2),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                    } else {
+                                        Modifier.dashedBorder(
+                                            color = Color.Gray.copy(alpha = 0.6f),
+                                            strokeWidth = 1.dp,
+                                            cornerRadius = 12.dp
+                                        )
                                     }
+                                )
+                                .clickable(enabled = isFilled && !showResult) {
+                                    onRemoveWordAt(index)
                                 }
-                                Spacer(modifier = Modifier.height(12.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isFilled) {
                                 Text(
-                                    text = "${selectedWords.size}/${correctWordCount} words selected",
-                                    color = if (selectedWords.size == correctWordCount) Color(0xFF4A90E2) else Color.Gray,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
+                                    text = selectedWords[index],
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
                     }
-                    if (showResult) {
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFEDE4F3)
+                }
+            }
+        }
+
+        FlexboxWordGrid(
+            words = shuffledWords,
+            selectedWords = selectedWords,
+            showResult = showResult,
+            onSelectWord = onSelectWord
+        )
+
+        AnimatedVisibility(visible = showResult) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE4F3)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                val explanationScrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = if (isCorrect) "✓ " + stringResource(R.string.correct) else "✗ " + stringResource(
+                            R.string.incorrect
+                        ),
+                        color = if (isCorrect) Color(0xFF4A90E2) else MaterialTheme.colorScheme.error,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (!isCorrect) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 140.dp)
+                                .verticalScroll(explanationScrollState),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.char_tarsier),
+                                    contentDescription = "Tarsier coach explaining",
+                                    modifier = Modifier.size(64.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                                Column {
+                                    Text(
+                                        text = "タルシエ先生の解説",
+                                        color = Color(0xFF4A4A5E),
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 15.sp
+                                    )
+                                    Text(
+                                        text = "続きはスクロールしてね",
+                                        color = Color(0xFF8E8E9A),
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                            Text(
+                                text = stringResource(
+                                    R.string.correct_answer,
+                                    question.correctOrder.joinToString(" ")
                                 ),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = if (isCorrect) "✓ " + stringResource(R.string.correct) else "✗ " + stringResource(R.string.incorrect),
-                                        color = if (isCorrect) Color(0xFF4A90E2) else MaterialTheme.colorScheme.error,
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    if (!isCorrect) {
-                                        Text(
-                                            text = stringResource(R.string.correct_answer, question.correctOrder.joinToString(" ")),
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            fontSize = 16.sp,
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                    }
-                                    Text(
-                                        text = stringResource(R.string.meaning, question.meaning),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Button(
-                                        onClick = { viewModel.nextQuestion() },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFF4A90E2)
-                                        ),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(48.dp),
-                                        shape = RoundedCornerShape(24.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.next) + " →",
-                                            color = Color.White,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = stringResource(R.string.meaning, question.meaning),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 15.sp
+                            )
                         }
-                    }
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFEDE4F3)
-                            ),
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(2.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            ) {
-                                Text(
-                                    text = "Select Words:",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                val coroutineScope = rememberCoroutineScope()
-                                FlowRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    shuffledWords.forEach { word ->
-                                        val isUsed = selectedWords.count { it == word } >= shuffledWords.count { it == word }
-                                        var isPressed by remember { mutableStateOf(false) }
-                                        val scale by animateFloatAsState(
-                                            targetValue = if (isPressed) 0.92f else 1f,
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                stiffness = Spring.StiffnessLow
-                                            ),
-                                            label = "scale"
-                                        )
-                                        val backgroundColor by animateColorAsState(
-                                            targetValue = when {
-                                                isUsed -> Color(0xFFE0E0E0)
-                                                else -> Color(0xFFEDE4F3)
-                                            },
-                                            animationSpec = tween(200),
-                                            label = "color"
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .scale(scale)
-                                                .background(
-                                                    backgroundColor,
-                                                    RoundedCornerShape(16.dp)
-                                                )
-                                                .clickable(enabled = !isUsed && !showResult) {
-                                                    isPressed = true
-                                                    viewModel.selectWord(word)
-                                                    coroutineScope.launch {
-                                                        delay(100)
-                                                        isPressed = false
-                                                    }
-                                                }
-                                                .padding(horizontal = 20.dp, vertical = 14.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = word,
-                                                color = if (isUsed) Color.Gray else MaterialTheme.colorScheme.onSurface,
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
+                    } else {
+                        Text(
+                            text = stringResource(R.string.meaning, question.meaning),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 15.sp,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             }

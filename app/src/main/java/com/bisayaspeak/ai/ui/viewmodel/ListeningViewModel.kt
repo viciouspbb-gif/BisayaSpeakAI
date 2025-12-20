@@ -9,6 +9,7 @@ import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.listening.ListeningQuestion
 import com.bisayaspeak.ai.data.listening.ListeningQuestions
 import com.bisayaspeak.ai.data.listening.ListeningSession
+import com.bisayaspeak.ai.data.listening.QuestionType
 import com.bisayaspeak.ai.data.model.DifficultyLevel
 import com.bisayaspeak.ai.data.model.LessonResult
 import com.bisayaspeak.ai.data.repository.UsageRepository
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
+import java.util.Random
 
 class ListeningViewModel(application: Application) : AndroidViewModel(application) {
     
@@ -69,6 +71,10 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
     
     companion object {
         private const val QUESTIONS_PER_SESSION = 10 // 1セッションあたりの問題数
+        private const val LISTENING_COUNT = 4
+        private const val TRANSLATION_COUNT = 3
+        private const val ORDERING_COUNT = 3
+        private const val MAX_PANEL_COUNT = 8
         private const val MIN_SPEECH_RATE = 0.6f // 最低速度（遅い）
         private const val MAX_SPEECH_RATE = 1.0f // 最高速度（通常）
         private const val CORRECT_STREAK_FOR_SPEEDUP = 3 // 速度を上げる連続正解数
@@ -119,38 +125,13 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
         val selectedQuestions = if (isLiteBuild) {
             ListeningQuestions.getLiteSession(totalQuestions = QUESTIONS_PER_SESSION)
         } else {
-            val allQuestions = ListeningQuestions.getQuestionsByLevel(level)
             val usedIds = _usedQuestionIds.value[level] ?: emptySet()
-            
-            // 未使用の問題を優先的に選択
-            val unusedQuestions = allQuestions.filter { it.id !in usedIds }
-            
-            val chosen = if (unusedQuestions.size >= QUESTIONS_PER_SESSION) {
-                // 未使用問題が十分にある場合、そこから選ぶ
-                unusedQuestions.shuffled(java.util.Random(System.currentTimeMillis()))
-                    .take(QUESTIONS_PER_SESSION)
-            } else if (unusedQuestions.isNotEmpty()) {
-                // 未使用問題が少ない場合、未使用を全て使い、残りは既使用から選ぶ
-                val remaining = QUESTIONS_PER_SESSION - unusedQuestions.size
-                val usedQuestions = allQuestions.filter { it.id in usedIds }
-                    .shuffled(java.util.Random(System.currentTimeMillis()))
-                    .take(remaining)
-                (unusedQuestions + usedQuestions).shuffled(java.util.Random(System.currentTimeMillis()))
-            } else {
-                // 全問使い切った場合、リセットして最初から
-                Log.d("ListeningViewModel", "All questions used for $level, resetting")
-                _usedQuestionIds.value = _usedQuestionIds.value - level
-                allQuestions.shuffled(java.util.Random(System.currentTimeMillis()))
-                    .take(QUESTIONS_PER_SESSION)
-            }
-            
-            // 使用した問題IDを記録
-            val newUsedIds = usedIds + chosen.map { it.id }
+            val source = prepareQuestionSource(level, usedIds)
+            val mixed = buildMixedQuestionSet(source)
+            val newUsedIds = usedIds + mixed.map { it.id }
             _usedQuestionIds.value = _usedQuestionIds.value + (level to newUsedIds)
-            
-            Log.d("ListeningViewModel", "Session started: ${chosen.size} questions, " +
-                    "used: ${newUsedIds.size}/${allQuestions.size}")
-            chosen
+            Log.d("ListeningViewModel", "Session started (mixed types) with ${mixed.size} questions for $level")
+            mixed
         }
         
         _session.value = ListeningSession(
@@ -229,9 +210,9 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
             .map { it.lowercase() }
             .filter { it !in correctWords }
         
-        // 必要な数のダミーを取得（正解と同じ数）
-        val neededCount = correctWords.size
-        return availableDummies.shuffled().take(neededCount)
+        val maxDummyCount = (MAX_PANEL_COUNT - correctWords.size).coerceAtLeast(0)
+        if (maxDummyCount == 0) return emptyList()
+        return availableDummies.shuffled().take(maxDummyCount)
     }
     
     /**
@@ -397,6 +378,58 @@ class ListeningViewModel(application: Application) : AndroidViewModel(applicatio
             xpEarned = xp,
             leveledUp = leveledUp
         )
+    }
+    
+    private fun prepareQuestionSource(
+        level: DifficultyLevel,
+        usedIds: Set<String>
+    ): List<ListeningQuestion> {
+        val levelQuestions = ListeningQuestions.getQuestionsByLevel(level)
+        val unusedLevelQuestions = levelQuestions.filterNot { it.id in usedIds }
+        val baseSource = when {
+            unusedLevelQuestions.size >= QUESTIONS_PER_SESSION -> unusedLevelQuestions
+            levelQuestions.size >= QUESTIONS_PER_SESSION -> levelQuestions
+            else -> ListeningQuestions.getAllQuestions()
+        }
+        if (unusedLevelQuestions.isEmpty() && levelQuestions.size < QUESTIONS_PER_SESSION) {
+            // 全問消費済 → リセット
+            _usedQuestionIds.value = _usedQuestionIds.value - level
+        }
+        return baseSource
+    }
+    
+    private fun buildMixedQuestionSet(source: List<ListeningQuestion>): List<ListeningQuestion> {
+        if (source.isEmpty()) return emptyList()
+        val random = Random(System.currentTimeMillis())
+        val distinctSource = source.distinctBy { it.id }.toMutableList()
+        if (distinctSource.size < QUESTIONS_PER_SESSION) {
+            val additional = ListeningQuestions.getAllQuestions()
+                .filterNot { existing -> distinctSource.any { it.id == existing.id } }
+                .shuffled(random)
+            distinctSource += additional
+        }
+        val pool = distinctSource.shuffled(random).toMutableList()
+        
+        fun take(count: Int): MutableList<ListeningQuestion> {
+            val actualCount = minOf(count, pool.size)
+            val taken = pool.take(actualCount).toMutableList()
+            pool.removeAll(taken)
+            if (taken.size < count) {
+                val refill = ListeningQuestions.getAllQuestions()
+                    .filterNot { existing -> taken.any { it.id == existing.id } }
+                    .shuffled(random)
+                    .take(count - taken.size)
+                taken += refill
+            }
+            return taken
+        }
+        
+        val listening = take(LISTENING_COUNT).map { it.copy(type = QuestionType.LISTENING) }
+        val translation = take(TRANSLATION_COUNT).map { it.copy(type = QuestionType.TRANSLATION) }
+        val ordering = take(ORDERING_COUNT).map { it.copy(type = QuestionType.ORDERING) }
+        
+        val combined = (listening + translation + ordering).shuffled(random)
+        return combined.take(QUESTIONS_PER_SESSION)
     }
     
     /**
