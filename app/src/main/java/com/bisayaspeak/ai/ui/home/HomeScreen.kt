@@ -16,21 +16,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Hearing
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Quiz
-import androidx.compose.material.icons.filled.SmartToy
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,9 +37,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,56 +87,31 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     var showProDialog by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
-    val quickActions = if (isLiteBuild) {
-        listOf(
-            FeatureItem(
-                id = FeatureId.LISTENING,
-                title = stringResource(R.string.listening),
-                subtitle = stringResource(R.string.listening_subtitle),
-                icon = Icons.Filled.Hearing,
-                isLocked = false
-            ),
-            FeatureItem(
-                id = FeatureId.QUIZ,
-                title = stringResource(R.string.quiz),
-                subtitle = stringResource(R.string.quiz_subtitle),
-                icon = Icons.Filled.Quiz,
-                isLocked = true
-            ),
-            FeatureItem(
-                id = FeatureId.FLASHCARDS,
-                title = stringResource(R.string.flashcards),
-                subtitle = stringResource(R.string.flashcards_subtitle),
-                icon = Icons.Filled.MenuBook,
-                isLocked = true
-            )
+    val proFeatures = listOf(
+        FeatureItem(
+            id = FeatureId.PRONUNCIATION,
+            title = stringResource(R.string.pro_feature_speaking),
+            subtitle = "",
+            icon = Icons.Filled.RecordVoiceOver,
+            isLocked = true
+        ),
+        FeatureItem(
+            id = FeatureId.QUIZ,
+            title = stringResource(R.string.pro_feature_quiz),
+            subtitle = "",
+            icon = Icons.Filled.Quiz,
+            isLocked = true
+        ),
+        FeatureItem(
+            id = FeatureId.ROLE_PLAY,
+            title = stringResource(R.string.pro_feature_roleplay),
+            subtitle = "",
+            icon = Icons.Filled.Psychology,
+            isLocked = true
         )
-    } else {
-        listOf(
-            FeatureItem(
-                id = FeatureId.LISTENING,
-                title = stringResource(R.string.listening),
-                subtitle = stringResource(R.string.listening_subtitle),
-                icon = Icons.Filled.Hearing,
-                isLocked = false
-            ),
-            FeatureItem(
-                id = FeatureId.QUIZ,
-                title = stringResource(R.string.quiz),
-                subtitle = stringResource(R.string.quiz_subtitle),
-                icon = Icons.Filled.Quiz,
-                isLocked = true
-            ),
-            FeatureItem(
-                id = FeatureId.PRONUNCIATION,
-                title = stringResource(R.string.practice),
-                subtitle = stringResource(R.string.practice_subtitle),
-                icon = Icons.Filled.Mic,
-                isLocked = true
-            )
-        )
-    }
+    )
 
     Column(
         modifier = modifier
@@ -156,8 +127,7 @@ fun HomeScreen(
             )
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = 20.dp, vertical = 24.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -188,36 +158,39 @@ fun HomeScreen(
             )
         }
 
-        HomeStatusCard(homeStatus = homeStatus)
+        Column(
+            modifier = Modifier
+                .weight(1f, fill = true)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            HomeStatusCard(homeStatus = homeStatus)
 
-        StartLearningCard(onStartLearning = onStartLearning)
+            StartLearningCard(onStartLearning = onStartLearning)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "トレーニングメニュー",
+            text = stringResource(R.string.pro_feature_section_title),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White
             )
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            quickActions.forEach { feature ->
+            proFeatures.forEach { feature ->
                 QuickActionButton(
                     item = feature,
-                    onClick = {
-                        if (feature.isLocked) {
-                            showProDialog = true
-                        } else {
-                            onClickFeature(feature.id)
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 4.dp)
+                    onClick = { showProDialog = true },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -231,7 +204,7 @@ fun HomeScreen(
                     }
                 },
                 title = { Text("PRO版限定機能") },
-                text = { Text("このトレーニングはPRO版限定です（近日公開）") }
+                text = { Text(stringResource(R.string.pro_feature_dialog_message)) }
             )
         }
     }

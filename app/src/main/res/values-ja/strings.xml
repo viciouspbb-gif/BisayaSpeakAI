@@ -181,6 +181,11 @@
     <string name="dictionary_subtitle">辞書</string>
     <string name="account">アカウント</string>
     <string name="account_subtitle">アカウント</string>
+    <string name="pro_feature_speaking">スピーキング</string>
+    <string name="pro_feature_quiz">クイズ</string>
+    <string name="pro_feature_roleplay">ロールプレイ</string>
+    <string name="pro_feature_section_title">PRO機能</string>
+    <string name="pro_feature_dialog_message">PRO版限定機能です（近日公開）</string>
     
     <!-- Translate Screen -->
     <string name="bisaya_translate">ビサヤ語翻訳</string>
