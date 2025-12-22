@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.Locale
-import java.util.Random
+import kotlin.random.Random
 import kotlin.math.roundToInt
 
 class ListeningViewModel(
@@ -90,6 +90,104 @@ class ListeningViewModel(
         private const val MIN_SPEECH_RATE = 0.6f // 最低速度（遅い）
         private const val MAX_SPEECH_RATE = 1.0f // 最高速度（通常）
         private const val CORRECT_STREAK_FOR_SPEEDUP = 3 // 速度を上げる連続正解数
+
+        private val dummyListeningQuestions = listOf(
+            createDummyQuestion(
+                id = "dummy_listening_1",
+                phrase = "Maayong buntag bisaya",
+                meaning = "おはようございます",
+                type = QuestionType.LISTENING
+            ),
+            createDummyQuestion(
+                id = "dummy_listening_2",
+                phrase = "Kumusta ka karon",
+                meaning = "今の調子はどう？",
+                type = QuestionType.LISTENING
+            ),
+            createDummyQuestion(
+                id = "dummy_listening_3",
+                phrase = "Palihug tabangi ko",
+                meaning = "助けてください",
+                type = QuestionType.LISTENING
+            ),
+            createDummyQuestion(
+                id = "dummy_listening_4",
+                phrase = "Pila ang oras",
+                meaning = "今何時ですか？",
+                type = QuestionType.LISTENING
+            )
+        )
+
+        private val dummyTranslationQuestions = listOf(
+            createDummyQuestion(
+                id = "dummy_translation_1",
+                phrase = "Maayong gabii",
+                meaning = "こんばんは",
+                type = QuestionType.TRANSLATION
+            ),
+            createDummyQuestion(
+                id = "dummy_translation_2",
+                phrase = "Gusto ko kape",
+                meaning = "コーヒーが欲しいです",
+                type = QuestionType.TRANSLATION
+            ),
+            createDummyQuestion(
+                id = "dummy_translation_3",
+                phrase = "Asa ang banyo",
+                meaning = "トイレはどこですか？",
+                type = QuestionType.TRANSLATION
+            ),
+            createDummyQuestion(
+                id = "dummy_translation_4",
+                phrase = "Salamat kaayo",
+                meaning = "本当にありがとう",
+                type = QuestionType.TRANSLATION
+            )
+        )
+
+        private val dummyOrderingQuestions = listOf(
+            createDummyQuestion(
+                id = "dummy_ordering_1",
+                phrase = "Unsa imong pangalan",
+                meaning = "あなたの名前は何ですか？",
+                type = QuestionType.ORDERING
+            ),
+            createDummyQuestion(
+                id = "dummy_ordering_2",
+                phrase = "Kanus-a ka moabot",
+                meaning = "いつ到着しますか？",
+                type = QuestionType.ORDERING
+            ),
+            createDummyQuestion(
+                id = "dummy_ordering_3",
+                phrase = "Pwede ko mangutana",
+                meaning = "質問してもいいですか？",
+                type = QuestionType.ORDERING
+            ),
+            createDummyQuestion(
+                id = "dummy_ordering_4",
+                phrase = "Dili ko gusto ana",
+                meaning = "それは好きではありません",
+                type = QuestionType.ORDERING
+            )
+        )
+
+        private fun createDummyQuestion(
+            id: String,
+            phrase: String,
+            meaning: String,
+            type: QuestionType
+        ): ListeningQuestion {
+            val tokens = phrase.split(" ").filter { it.isNotBlank() }
+            return ListeningQuestion(
+                id = id,
+                phrase = phrase,
+                words = tokens,
+                correctOrder = tokens,
+                meaning = meaning,
+                type = type
+            )
+        }
     }
     
     init {
@@ -167,11 +265,12 @@ class ListeningViewModel(
             currentLevel = level
             val difficulty = level.toDifficultyLevel()
             val questions = questionRepository.getQuestionsByLevel(level)
-            val listeningQuestions = questions.map { it.toListeningQuestion() }
+            val listeningQuestions = questions.map { question -> question.toListeningQuestion() }
+            val sessionQuestions = buildSessionQuestions(listeningQuestions)
 
             _session.value = ListeningSession(
                 difficulty = difficulty,
-                questions = listeningQuestions,
+                questions = sessionQuestions,
                 currentQuestionIndex = 0,
                 score = 0,
                 mistakes = 0,
@@ -184,7 +283,7 @@ class ListeningViewModel(
             _speechRate.value = 0.7f
             updateSpeechRate()
 
-            if (listeningQuestions.isNotEmpty()) {
+            if (sessionQuestions.isNotEmpty()) {
                 loadNextQuestion()
             }
         }
@@ -212,7 +311,7 @@ class ListeningViewModel(
         _selectedWords.value = emptyList()
         
         // 正解単語を小文字に正規化
-        val normalizedCorrectWords = question.words.map { it.lowercase() }
+        val normalizedCorrectWords = question.words.map { word -> word.lowercase() }
         
         // ダミー単語も小文字で取得し、重複を避ける
         val dummyWords = getDummyWords(normalizedCorrectWords, currentSession.difficulty)
@@ -246,8 +345,8 @@ class ListeningViewModel(
         
         // プールを小文字化し、正解単語（小文字）と被らないものだけにする
         val availableDummies = dummyPool
-            .map { it.lowercase() }
-            .filter { it !in correctWords }
+            .map { candidate -> candidate.lowercase() }
+            .filter { candidate -> candidate !in correctWords }
         
         val maxDummyCount = (MAX_PANEL_COUNT - correctWords.size).coerceAtLeast(0)
         if (maxDummyCount == 0) return emptyList()
@@ -320,8 +419,8 @@ class ListeningViewModel(
     private fun checkAnswer() {
         val question = _currentQuestion.value ?: return
         // 小文字ベースで正答判定（見た目やデータの大文字・小文字に影響されないようにする）
-        val selected = _selectedWords.value.map { it.lowercase() }
-        val correct = selected == question.correctOrder.map { it.lowercase() }
+        val selected = _selectedWords.value.map { selectedWord -> selectedWord.lowercase() }
+        val correct = selected == question.correctOrder.map { correctWord -> correctWord.lowercase() }
         
         _isCorrect.value = correct
         _showResult.value = true
@@ -445,8 +544,54 @@ class ListeningViewModel(
         else -> DifficultyLevel.ADVANCED
     }
 
+    private fun buildSessionQuestions(allQuestions: List<ListeningQuestion>): List<ListeningQuestion> {
+        val listeningPool = allQuestions.filter { question -> question.type == QuestionType.LISTENING }
+        val translationPool = allQuestions.filter { question -> question.type == QuestionType.TRANSLATION }
+        val orderingPool = allQuestions.filter { question -> question.type == QuestionType.ORDERING }
+
+        val selectedListening = selectWithFallback(
+            primary = listeningPool,
+            fallback = dummyListeningQuestions,
+            desiredCount = LISTENING_COUNT
+        )
+        val selectedTranslation = selectWithFallback(
+            primary = translationPool,
+            fallback = dummyTranslationQuestions,
+            desiredCount = TRANSLATION_COUNT
+        )
+        val selectedOrdering = selectWithFallback(
+            primary = orderingPool,
+            fallback = dummyOrderingQuestions,
+            desiredCount = ORDERING_COUNT
+        )
+
+        return (selectedListening + selectedTranslation + selectedOrdering)
+            .shuffled()
+            .take(QUESTIONS_PER_SESSION)
+    }
+
+    private fun selectWithFallback(
+        primary: List<ListeningQuestion>,
+        fallback: List<ListeningQuestion>,
+        desiredCount: Int
+    ): List<ListeningQuestion> {
+        if (desiredCount <= 0) return emptyList()
+        val result = primary.shuffled().take(desiredCount).toMutableList()
+        if (result.size >= desiredCount) return result
+
+        if (fallback.isEmpty()) return result
+        var fallbackIndex = 0
+        while (result.size < desiredCount) {
+            val base = fallback[fallbackIndex % fallback.size]
+            val uniqueId = "${base.id}_${Random.nextInt(1_000_000)}"
+            result += base.copy(id = uniqueId)
+            fallbackIndex++
+        }
+        return result
+    }
+
     private fun Question.toListeningQuestion(): ListeningQuestion {
-        val tokens = sentence.split(" ").filter { it.isNotBlank() }
+        val tokens = sentence.split(" ").filter { token -> token.isNotBlank() }
         return ListeningQuestion(
             id = "db_$id",
             phrase = sentence,

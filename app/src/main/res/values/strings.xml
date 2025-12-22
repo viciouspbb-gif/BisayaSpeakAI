@@ -184,6 +184,11 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="dictionary_subtitle">Dictionary</string>
     <string name="account">Account</string>
     <string name="account_subtitle">Account</string>
+    <string name="pro_feature_speaking">スピーキング</string>
+    <string name="pro_feature_quiz">クイズ</string>
+    <string name="pro_feature_roleplay">ロールプレイ</string>
+    <string name="pro_feature_section_title">PRO機能</string>
+    <string name="pro_feature_dialog_message">PRO版限定機能です（近日公開）</string>
     
     <!-- Translate Screen -->
     <string name="bisaya_translate">Bisaya Translate</string>
