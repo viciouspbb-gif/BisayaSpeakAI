@@ -21,8 +21,8 @@ android {
         applicationId = "com.bisayaspeak.ai"
         minSdk = 24
         targetSdk = 35
-        versionCode = 34
-        versionName = "2.2.2"
+        versionCode = 35
+        versionName = "2.2.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -46,7 +46,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("${rootProject.projectDir}/bisaya-speak-ai.jks")
+            storeFile = file("D:/BisayaSpeakAI/bisaya-speak-ai.jks")
             storePassword = "Bisaya2025"
             keyAlias = "bisaya-speak-ai"
             keyPassword = "Bisaya2025"
