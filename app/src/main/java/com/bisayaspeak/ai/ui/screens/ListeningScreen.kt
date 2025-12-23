@@ -146,6 +146,12 @@ fun ListeningScreen(
     val clearedLevel by viewModel.clearedLevel.collectAsState()
     val comboCount by viewModel.comboCount.collectAsState()
 
+    val screenTitle = when (currentQuestion?.type) {
+        QuestionType.TRANSLATION -> "翻訳練習"
+        QuestionType.ORDERING -> "並べ替え練習"
+        else -> stringResource(R.string.listening_practice)
+    }
+
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
     DisposableEffect(context) {
         var ttsInit: TextToSpeech? = null
@@ -173,10 +179,8 @@ fun ListeningScreen(
         viewModel.loadQuestions(level)
     }
     
-    // セッション完了時の広告表示（統一ルール：1セット完了 = 1回広告）
     LaunchedEffect(shouldShowAd) {
         if (shouldShowAd) {
-            android.util.Log.d("ListeningScreen", "Session completed, showing ad")
             sessionManager.onSessionComplete(activity) {
                 viewModel.onAdShown()
             }
@@ -194,17 +198,14 @@ fun ListeningScreen(
         }
     }
     
-    // 中断時の広告表示（統一ルール：中断 = 1回広告）
     DisposableEffect(Unit) {
         onDispose {
             if (session != null && !session.completed) {
-                android.util.Log.d("ListeningScreen", "Session interrupted, showing ad")
                 sessionManager.onSessionInterrupted(activity)
             }
         }
     }
     
-    // バックボタン処理
     BackHandler {
         if (session != null && !session.completed) {
             sessionManager.onSessionInterrupted(activity) {
@@ -222,7 +223,7 @@ fun ListeningScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        stringResource(R.string.listening_practice),
+                        text = screenTitle,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -257,14 +258,10 @@ fun ListeningScreen(
         ) {
             if (session?.completed == true) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.loading),
-                        color = Color.White
-                    )
+                    Text(text = stringResource(R.string.loading), color = Color.White)
                 }
             } else if (currentQuestion != null && session != null) {
                 val question = currentQuestion
@@ -281,62 +278,78 @@ fun ListeningScreen(
                     }
                     remaining
                 }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                        .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Spacer(modifier = Modifier.height(12.dp))
                     ListeningHeader(session = session)
-                    QuestionArea(
-                        question = question,
-                        session = session,
-                        isPlaying = isPlaying,
-                        onPlayAudio = {
-                            val phrase = question.pronunciation ?: question.phrase
-                            tts?.speak(phrase, TextToSpeech.QUEUE_FLUSH, null, null)
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    AnimatedVisibility(visible = comboCount > 0) {
-                        Text(
-                            text = "🔥 ${comboCount} Combo!",
-                            color = Color(0xFFFFA726),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(24.dp))
-                                .background(Color(0x33FFA726))
-                                .padding(vertical = 10.dp),
-                            textAlign = TextAlign.Center
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        QuestionArea(
+                            question = question,
+                            session = session,
+                            isPlaying = isPlaying,
+                            onPlayAudio = {
+                                val phrase = question.pronunciation ?: question.phrase
+                                tts?.speak(phrase, TextToSpeech.QUEUE_FLUSH, null, null)
+                            },
+                            modifier = Modifier.fillMaxWidth()
                         )
-                    }
-                    ListeningAnswerArea(
-                        question = question,
-                        selectedWords = selectedWords,
-                        shuffledWords = shuffledWords,
-                        showResult = showResult,
-                        isCorrect = isCorrect,
-                        onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
-                        onSelectWord = { word ->
-                            tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
-                            viewModel.selectWord(word)
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        FlexboxWordGrid(
-                            words = availableWords,
+                        
+                        AnimatedVisibility(visible = comboCount > 0) {
+                            Text(
+                                text = "🔥 ${comboCount} Combo!",
+                                color = Color(0xFFFFA726),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(Color(0x33FFA726))
+                                    .padding(vertical = 10.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        
+                        ListeningAnswerArea(
+                            question = question,
                             selectedWords = selectedWords,
+                            shuffledWords = shuffledWords,
                             showResult = showResult,
+                            isCorrect = isCorrect,
+                            onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
                             onSelectWord = { word ->
                                 tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
                                 viewModel.selectWord(word)
-                            }
+                            },
+                            modifier = Modifier.fillMaxWidth()
                         )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            FlexboxWordGrid(
+                                words = availableWords,
+                                selectedWords = selectedWords,
+                                showResult = showResult,
+                                onSelectWord = { word ->
+                                    tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
+                                    viewModel.selectWord(word)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -704,7 +717,6 @@ private fun ListeningAnswerArea(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE4F3)),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                val explanationScrollState = rememberScrollState()
                 Column(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -722,8 +734,7 @@ private fun ListeningAnswerArea(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 140.dp)
-                                .verticalScroll(explanationScrollState),
+                                .heightIn(min = 140.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                             horizontalAlignment = Alignment.Start
                         ) {
@@ -743,11 +754,6 @@ private fun ListeningAnswerArea(
                                         color = Color(0xFF4A4A5E),
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 15.sp
-                                    )
-                                    Text(
-                                        text = "続きはスクロールしてね",
-                                        color = Color(0xFF8E8E9A),
-                                        fontSize = 12.sp
                                     )
                                 }
                             }
