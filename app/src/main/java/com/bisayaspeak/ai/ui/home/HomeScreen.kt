@@ -311,14 +311,9 @@ private fun StartLearningCard(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "学習を開始する",
+                        text = "学習開始",
                         color = Color.White,
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Text(
-                        text = "あなたに最適なレッスンを自動で提案します",
-                        color = Color.White.copy(alpha = 0.85f),
-                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 Box(
