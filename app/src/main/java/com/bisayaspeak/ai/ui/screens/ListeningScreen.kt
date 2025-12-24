@@ -145,6 +145,7 @@ fun ListeningScreen(
     val lessonResult by viewModel.lessonResult.collectAsState()
     val clearedLevel by viewModel.clearedLevel.collectAsState()
     val comboCount by viewModel.comboCount.collectAsState()
+    val contentScrollState = rememberScrollState()
 
     val screenTitle = when (currentQuestion?.type) {
         QuestionType.TRANSLATION -> "翻訳練習"
@@ -282,7 +283,8 @@ fun ListeningScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .verticalScroll(contentScrollState),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(12.dp))
@@ -291,8 +293,7 @@ fun ListeningScreen(
 
                     Column(
                         modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
+                            .fillMaxWidth()
                             .padding(bottom = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -351,6 +352,8 @@ fun ListeningScreen(
                             )
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
