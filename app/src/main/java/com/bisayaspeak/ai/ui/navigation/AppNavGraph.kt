@@ -3,18 +3,13 @@
 package com.bisayaspeak.ai.ui.navigation
 
 import android.app.Activity
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -23,48 +18,45 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.bisayaspeak.ai.data.model.DifficultyLevel
-import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.MyApp
+import com.bisayaspeak.ai.auth.AuthManager
+import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.ui.account.AccountScreen
 import com.bisayaspeak.ai.ui.account.AccountUiState
+import com.bisayaspeak.ai.ui.account.LoginType
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdMobManager
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.ui.home.FeatureId
 import com.bisayaspeak.ai.ui.home.HomeScreen
 import com.bisayaspeak.ai.ui.home.HomeViewModel
+import com.bisayaspeak.ai.ui.roleplay.RoleplayChatScreen
+import com.bisayaspeak.ai.ui.roleplay.RoleplayListScreen
+import com.bisayaspeak.ai.ui.screens.FeedbackScreen
+import com.bisayaspeak.ai.ui.screens.FlashcardScreen
 import com.bisayaspeak.ai.ui.screens.LessonResultScreen
-import com.bisayaspeak.ai.ui.screens.ListeningScreen
 import com.bisayaspeak.ai.ui.screens.LevelSelectionScreen
+import com.bisayaspeak.ai.ui.screens.ListeningScreen
+import com.bisayaspeak.ai.ui.screens.MockRolePlayScreen
 import com.bisayaspeak.ai.ui.screens.PracticeCategoryScreen
 import com.bisayaspeak.ai.ui.screens.PracticeQuizScreen
-import com.bisayaspeak.ai.ui.screens.PracticeWordListScreen
 import com.bisayaspeak.ai.ui.screens.PracticeWordDetailScreen
+import com.bisayaspeak.ai.ui.screens.PracticeWordListScreen
 import com.bisayaspeak.ai.ui.screens.QuizScreen
-import com.bisayaspeak.ai.ui.screens.MockRolePlayMenuScreen
-import com.bisayaspeak.ai.ui.screens.MockRolePlayScreen
-import com.bisayaspeak.ai.ui.screens.FlashcardScreen
-import com.bisayaspeak.ai.ui.screens.TranslateScreen
 import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
-import com.bisayaspeak.ai.ui.screens.FeedbackScreen
-import com.bisayaspeak.ai.auth.AuthManager
+import com.bisayaspeak.ai.ui.screens.TranslateScreen
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
-import com.bisayaspeak.ai.ui.account.LoginType
 import com.google.firebase.auth.FirebaseAuth
 
 enum class AppRoute(val route: String) {
@@ -104,7 +96,7 @@ fun AppNavGraph(
     }
 
     var currentUser by remember { mutableStateOf(if (isLiteBuild) null else FirebaseAuth.getInstance().currentUser) }
-    
+
     if (!isLiteBuild) {
         DisposableEffect(Unit) {
             val authStateListener = FirebaseAuth.AuthStateListener { auth ->
@@ -120,7 +112,7 @@ fun AppNavGraph(
     // 簡易的な UI State
     val homeViewModel: HomeViewModel = viewModel()
     val homeStatus by homeViewModel.homeStatus.collectAsState()
-    val accountUiState = remember(isPremium, currentUser, isLiteBuild) { 
+    val accountUiState = remember(isPremium, currentUser, isLiteBuild) {
         AccountUiState(
             email = currentUser?.email ?: "",
             isPremium = isPremium,
@@ -151,13 +143,13 @@ fun AppNavGraph(
                             FeatureId.TRANSLATE -> { /* Locked - do nothing */ }
                             FeatureId.AI_CHAT -> { /* Locked - do nothing */ }
                             FeatureId.ADVANCED_ROLE_PLAY -> { /* Locked - do nothing */ }
-                            
+
                             // 無料機能のみナビゲーション
                             FeatureId.PRONUNCIATION -> if (!isLiteBuild) navController.navigate(AppRoute.PracticeCategories.route)
                             FeatureId.LISTENING -> navController.navigate(AppRoute.LevelSelection.route)
                             FeatureId.QUIZ -> navController.navigate(AppRoute.Quiz.route)
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
-                            FeatureId.ROLE_PLAY -> if (!isLiteBuild) navController.navigate(AppRoute.RolePlay.route)
+                            FeatureId.ROLE_PLAY -> navController.navigate("roleplay_list")
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
                         }
@@ -191,7 +183,7 @@ fun AppNavGraph(
                         onBack = { navController.popBackStack() },
                         onLogin = { navController.navigate(AppRoute.SignIn.route) },
                         onCreateAccount = { navController.navigate(AppRoute.SignUp.route) },
-                        onLogout = { 
+                        onLogout = {
                             authManager?.signOut()
                             navController.navigate(AppRoute.Home.route) {
                                 popUpTo(AppRoute.Home.route) { inclusive = true }
@@ -207,13 +199,13 @@ fun AppNavGraph(
                 }
             }
         }
-        
+
         if (!isLiteBuild) {
             // Sign In
             composable(AppRoute.SignIn.route) {
                 SignInScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onSignInSuccess = { 
+                    onSignInSuccess = {
                         navController.navigate(AppRoute.Account.route) {
                             popUpTo(AppRoute.SignIn.route) { inclusive = true }
                         }
@@ -221,19 +213,19 @@ fun AppNavGraph(
                     onNavigateToSignUp = { navController.navigate(AppRoute.SignUp.route) }
                 )
             }
-            
+
             // Sign Up
             composable(AppRoute.SignUp.route) {
                 SignUpScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onSignUpSuccess = { 
+                    onSignUpSuccess = {
                         navController.navigate(AppRoute.Account.route) {
                             popUpTo(AppRoute.SignUp.route) { inclusive = true }
                         }
                     }
                 )
             }
-            
+
             // Feedback
             composable(AppRoute.Feedback.route) {
                 FeedbackScreen(
@@ -241,7 +233,7 @@ fun AppNavGraph(
                 )
             }
         }
-        
+
         // Upgrade
         composable(AppRoute.Upgrade.route) {
             com.bisayaspeak.ai.ui.upgrade.UpgradeScreen(
@@ -420,39 +412,50 @@ fun AppNavGraph(
             }
         }
 
-        if (!isLiteBuild) {
-            composable(AppRoute.RolePlay.route) {
+        // リスト画面（無条件で追加）
+        composable("roleplay_list") {
+            // テスト用にLv100を渡す
+            RoleplayListScreen(
+                userCurrentLevel = 100,
+                onScenarioClick = { scenario ->
+                    navController.navigate("roleplay_chat/${scenario.id}")
+                }
+            )
+        }
+
+        // チャット画面（無条件で追加）
+        composable(
+            route = "roleplay_chat/{scenarioId}",
+            arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: ""
+            RoleplayChatScreen(
+                scenarioId = scenarioId,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 既存のモックシナリオ用（念のため残しています）
+        composable(
+            route = "role_play_scenario/{scenarioId}",
+            arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: ""
+            val repository = remember { com.bisayaspeak.ai.data.repository.mock.MockRolePlayRepository() }
+            val scenario = remember(scenarioId) { repository.getScenarios().find { it.id == scenarioId } }
+
+            if (scenario != null) {
                 BannerScreenContainer(isPremium = isPremium) {
-                    MockRolePlayMenuScreen(
-                        onScenarioSelected = { scenario ->
-                            navController.navigate("role_play_scenario/${scenario.id}")
-                        },
-                        onNavigateBack = { navController.popBackStack() }
+                    MockRolePlayScreen(
+                        scenario = scenario,
+                        onNavigateBack = { navController.popBackStack() },
+                        isPremium = isPremium
                     )
                 }
-            }
-
-            composable(
-                route = "role_play_scenario/{scenarioId}",
-                arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: ""
-                val repository = remember { com.bisayaspeak.ai.data.repository.mock.MockRolePlayRepository() }
-                val scenario = remember(scenarioId) { repository.getScenarios().find { it.id == scenarioId } }
-                
-                if (scenario != null) {
-                    BannerScreenContainer(isPremium = isPremium) {
-                        MockRolePlayScreen(
-                            scenario = scenario,
-                            onNavigateBack = { navController.popBackStack() },
-                            isPremium = isPremium
-                        )
-                    }
-                } else {
-                    // シナリオが見つからない場合は戻る
-                    LaunchedEffect(Unit) {
-                        navController.popBackStack()
-                    }
+            } else {
+                // シナリオが見つからない場合は戻る
+                LaunchedEffect(Unit) {
+                    navController.popBackStack()
                 }
             }
         }
@@ -483,4 +486,3 @@ private fun BannerScreenContainer(
         }
     }
 }
-

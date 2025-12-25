@@ -109,7 +109,7 @@ fun HomeScreen(
             title = stringResource(R.string.pro_feature_roleplay),
             subtitle = "",
             icon = Icons.Filled.Psychology,
-            isLocked = true
+            isLocked = false // ★テスト用：ロック解除
         )
     )
 
@@ -189,7 +189,14 @@ fun HomeScreen(
             proFeatures.forEach { feature ->
                 QuickActionButton(
                     item = feature,
-                    onClick = { showProDialog = true },
+                    onClick = { 
+                        // ★ロールプレイだけテスト用に解放
+                        if (feature.id == FeatureId.ROLE_PLAY) {
+                            onClickFeature(feature.id)
+                        } else {
+                            showProDialog = true 
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
