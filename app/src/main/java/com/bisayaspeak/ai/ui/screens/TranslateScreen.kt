@@ -3,13 +3,33 @@
 package com.bisayaspeak.ai.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.GraphicEq
@@ -21,10 +41,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +61,7 @@ import android.speech.tts.TextToSpeech
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext as LocalAndroidContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.layout.ContentScale
 import com.bisayaspeak.ai.R
 import java.util.Locale
 
@@ -56,8 +79,6 @@ fun TranslateScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     val clipboardManager = LocalClipboardManager.current
-    val scrollState = rememberScrollState()
-
     val context = LocalAndroidContext.current
     val tts = remember {
         TextToSpeech(context) { status ->
@@ -79,58 +100,95 @@ fun TranslateScreen(
         topBar = { TranslateTopBar() },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { padding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(padding)
                 .imePadding()
                 .navigationBarsPadding()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            LanguageSwitcherCard(
-                sourceLanguage = sourceLanguage,
-                onSwap = { viewModel.toggleSourceLanguage() }
-            )
+            val needsScroll = maxHeight < 640.dp
+            val scrollState = rememberScrollState()
 
-            TranslateInputField(
-                value = sourceText,
-                onValueChange = viewModel::onSourceTextChange,
-                isLoading = uiState is TranslateUiState.Loading
-            )
-
-            TranslateActionButton(
-                enabled = sourceText.isNotBlank() && uiState !is TranslateUiState.Loading,
-                onTranslate = viewModel::translate,
-                isLoading = uiState is TranslateUiState.Loading
-            )
-
-            if (uiState is TranslateUiState.Error) {
-                ErrorBanner(message = (uiState as TranslateUiState.Error).message)
-            }
-
-            AnimatedVisibility(visible = targetText.isNotBlank()) {
-                TranslateResultBubble(
-                    visayanText = targetText,
-                    originalText = sourceText,
-                    onCopy = {
-                        clipboardManager.setText(AnnotatedString(targetText))
-                    },
-                    onSpeak = {
-                        tts.speak(targetText, TextToSpeech.QUEUE_FLUSH, null, null)
-                    }
+            val questionSection: @Composable () -> Unit = {
+                TranslationQuestionSection(
+                    sourceLanguage = sourceLanguage,
+                    sourceText = sourceText,
+                    uiState = uiState,
+                    onSwapLanguage = { viewModel.toggleSourceLanguage() },
+                    onSourceTextChange = viewModel::onSourceTextChange,
+                    onTranslate = viewModel::translate
                 )
             }
 
-            ConversationModePremiumButton(
-                isPremium = isPremium,
-                onOpenPremiumInfo = onOpenPremiumInfo,
-                onOpenConversationMode = onOpenConversationMode
-            )
+            val mascotSection: @Composable () -> Unit = {
+                TranslationMascotSection()
+            }
 
-            Spacer(modifier = Modifier.height(80.dp))
+            val bottomSection: @Composable () -> Unit = {
+                TranslationResultSection(
+                    targetText = targetText,
+                    originalText = sourceText,
+                    onCopy = { clipboardManager.setText(AnnotatedString(targetText)) },
+                    onSpeak = {
+                        tts.speak(targetText, TextToSpeech.QUEUE_FLUSH, null, null)
+                    },
+                    isPremium = isPremium,
+                    onOpenPremiumInfo = onOpenPremiumInfo,
+                    onOpenConversationMode = onOpenConversationMode
+                )
+            }
+
+            val columnModifier = if (needsScroll) {
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+            } else {
+                Modifier.fillMaxSize()
+            }
+
+            Column(
+                modifier = columnModifier,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (needsScroll) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    questionSection()
+                    mascotSection()
+                    bottomSection()
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .fillMaxWidth()
+                    ) {
+                        questionSection()
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(0.9f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        mascotSection()
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1.1f)
+                            .fillMaxWidth()
+                    ) {
+                        bottomSection()
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TranslateBannerPlaceholder()
+            }
         }
     }
 }
@@ -315,6 +373,117 @@ private fun TranslateInputField(
                 innerTextField()
             }
         }
+    }
+}
+
+@Composable
+private fun TranslationQuestionSection(
+    sourceLanguage: SourceLang,
+    sourceText: String,
+    uiState: TranslateUiState,
+    onSwapLanguage: () -> Unit,
+    onSourceTextChange: (String) -> Unit,
+    onTranslate: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        LanguageSwitcherCard(
+            sourceLanguage = sourceLanguage,
+            onSwap = onSwapLanguage
+        )
+
+        TranslateInputField(
+            value = sourceText,
+            onValueChange = onSourceTextChange,
+            isLoading = uiState is TranslateUiState.Loading
+        )
+
+        TranslateActionButton(
+            enabled = sourceText.isNotBlank() && uiState !is TranslateUiState.Loading,
+            onTranslate = onTranslate,
+            isLoading = uiState is TranslateUiState.Loading
+        )
+
+        if (uiState is TranslateUiState.Error) {
+            ErrorBanner(message = uiState.message)
+        }
+    }
+}
+
+@Composable
+private fun TranslationMascotSection(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 80.dp, max = 200.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.char_owl),
+            contentDescription = "Translate mascot",
+            modifier = Modifier
+                .fillMaxHeight()
+                .aspectRatio(0.85f, matchHeightConstraintsFirst = true)
+                .heightIn(min = 80.dp, max = 160.dp),
+            contentScale = ContentScale.Fit
+        )
+    }
+}
+
+@Composable
+private fun TranslationResultSection(
+    targetText: String,
+    originalText: String,
+    onCopy: () -> Unit,
+    onSpeak: () -> Unit,
+    isPremium: Boolean,
+    onOpenPremiumInfo: () -> Unit,
+    onOpenConversationMode: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        AnimatedVisibility(visible = targetText.isNotBlank()) {
+            TranslateResultBubble(
+                visayanText = targetText,
+                originalText = originalText,
+                onCopy = onCopy,
+                onSpeak = onSpeak
+            )
+        }
+
+        ConversationModePremiumButton(
+            isPremium = isPremium,
+            onOpenPremiumInfo = onOpenPremiumInfo,
+            onOpenConversationMode = onOpenConversationMode
+        )
+    }
+}
+
+@Composable
+private fun TranslateBannerPlaceholder(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFF1E293B).copy(alpha = 0.9f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "広告スペース（AdMob）",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = Color(0xFF9CA3AF),
+                fontWeight = FontWeight.Medium
+            )
+        )
     }
 }
 

@@ -1,12 +1,16 @@
 package com.bisayaspeak.ai.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,8 +19,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -42,8 +47,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
@@ -53,6 +60,7 @@ import androidx.activity.compose.BackHandler
 import android.app.Activity
 import androidx.navigation.NavHostController
 import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.model.LessonResult
 import com.bisayaspeak.ai.data.repository.UsageRepository
@@ -226,7 +234,6 @@ fun QuizScreen(
         }
     ) { padding ->
         if (current == null) {
-            // 最終問題処理後にナビゲーションで別画面へ遷移するため、ここでは簡易表示のみ
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -239,44 +246,113 @@ fun QuizScreen(
                 )
             }
         } else {
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
                     .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                QuizProgressHeader(
-                    currentIndex = currentIndex,
-                    total = total
-                )
+                val needsScroll = maxHeight < 620.dp
+                val scrollState = rememberScrollState()
+                val columnModifier = if (needsScroll) {
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                } else {
+                    Modifier.fillMaxSize()
+                }
 
-                QuestionCard(
-                    question = current.questionJa,
-                    visayan = current.questionVisayan,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f, fill = true)
-                )
+                Column(
+                    modifier = columnModifier,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    QuizProgressHeader(
+                        currentIndex = currentIndex,
+                        total = total
+                    )
 
-                AnswerOptionsSection(
-                    options = current.options,
-                    selectedIndex = selectedIndex,
-                    correctIndex = current.correctIndex,
-                    showFeedback = showFeedback,
-                    onOptionSelected = { index ->
-                        if (!showFeedback) {
-                            selectedIndex = index
+                    val questionContent: @Composable () -> Unit = {
+                        QuestionAndMascotSection(
+                            question = current.questionJa,
+                            visayan = current.questionVisayan
+                        )
+                    }
+
+                    val answersContent: @Composable () -> Unit = {
+                        AnswerOptionsSection(
+                            options = current.options,
+                            selectedIndex = selectedIndex,
+                            correctIndex = current.correctIndex,
+                            showFeedback = showFeedback,
+                            onOptionSelected = { index ->
+                                if (!showFeedback) {
+                                    selectedIndex = index
+                                }
+                            },
+                            explanation = current.explanationJa,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    if (needsScroll) {
+                        questionContent()
+                        answersContent()
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .weight(1.1f)
+                                .fillMaxWidth()
+                        ) {
+                            questionContent()
                         }
-                    },
-                    explanation = current.explanationJa,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1.2f, fill = true)
-                )
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .fillMaxWidth()
+                        ) {
+                            answersContent()
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun QuestionAndMascotSection(
+    question: String,
+    visayan: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxSize(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        QuestionCard(
+            question = question,
+            visayan = visayan,
+            modifier = Modifier
+                .weight(1.1f)
+                .fillMaxHeight()
+        )
+
+        Image(
+            painter = painterResource(id = R.drawable.char_owl),
+            contentDescription = "Quiz mascot",
+            modifier = Modifier
+                .weight(0.9f)
+                .fillMaxHeight()
+                .heightIn(min = 60.dp, max = 180.dp)
+                .aspectRatio(0.8f, matchHeightConstraintsFirst = true)
+                .clip(RoundedCornerShape(24.dp)),
+            alignment = Alignment.Center
+        )
     }
 }
 
@@ -365,7 +441,7 @@ private fun AnswerOptionsSection(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.SpaceEvenly,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
@@ -385,7 +461,7 @@ private fun AnswerOptionsSection(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 56.dp)
+                        .heightIn(min = 52.dp)
                         .clickable(enabled = !showFeedback) {
                             onOptionSelected(index)
                         },
