@@ -18,17 +18,12 @@ data class WordChip(
 )
 
 data class RoleplayUiState(
-    val currentScenario: RoleplayScenario? = null,
+    val currentScenario: RoleplayScenarioDefinition? = null,
     val missionGoal: String = "",
     val aiCharacterName: String = "",
     val messages: List<ChatMessage> = emptyList(),
+    val systemPrompt: String = "",
     val isLoading: Boolean = false
-)
-
-private data class ScenarioDetail(
-    val missionGoal: String,
-    val aiCharacterName: String,
-    val initialAiMessage: String
 )
 
 class RoleplayChatViewModel : ViewModel() {
@@ -42,25 +37,6 @@ class RoleplayChatViewModel : ViewModel() {
         "palihug", "tagpila", "ni?", "Bayad", "Salamat"
     )
 
-    // 画面用に詳しいシナリオ情報を保持
-    private val scenarioDetails = mapOf(
-        "rp_airport" to ScenarioDetail(
-            missionGoal = "到着後にタクシー乗り場を尋ねましょう。",
-            aiCharacterName = "空港スタッフ",
-            initialAiMessage = "Maayong pag-abot! Unsa man imong kinahanglan? (ようこそ！何かお困りですか？)"
-        ),
-        "rp_taxi" to ScenarioDetail(
-            missionGoal = "目的地を伝えてメーターで走ってもらいましょう。",
-            aiCharacterName = "タクシードライバー",
-            initialAiMessage = "Asa ta padulong? (どこまで行く？)"
-        ),
-        "rp_hotel" to ScenarioDetail(
-            missionGoal = "チェックインしてWi-Fiパスワードを聞きましょう。",
-            aiCharacterName = "フロントスタッフ",
-            initialAiMessage = "Maayong adlaw! Pangalan nimo palihug? (こんにちは！お名前を教えてください)"
-        )
-    )
-
     // 画面で選択されている単語リスト（入力欄）
     private val _selectedWords = MutableStateFlow<List<WordChip>>(emptyList())
     val selectedWords: StateFlow<List<WordChip>> = _selectedWords.asStateFlow()
@@ -70,8 +46,7 @@ class RoleplayChatViewModel : ViewModel() {
     val availableWords: StateFlow<List<WordChip>> = _availableWords.asStateFlow()
 
     fun loadScenario(scenarioId: String) {
-        val scenario = roleplayScenarios.find { it.id == scenarioId } ?: roleplayScenarios.first()
-        val detail = scenarioDetails[scenario.id] ?: scenarioDetails.values.first()
+        val definition = getRoleplayScenarioDefinition(scenarioId)
 
         // 単語プールを初期化（シャッフルしてセット）
         val chips = defaultWordPool.map { text ->
@@ -80,13 +55,14 @@ class RoleplayChatViewModel : ViewModel() {
 
         _uiState.update {
             it.copy(
-                currentScenario = scenario,
-                missionGoal = detail.missionGoal,
-                aiCharacterName = detail.aiCharacterName,
+                currentScenario = definition,
+                missionGoal = definition.goal,
+                aiCharacterName = definition.aiRole,
+                systemPrompt = definition.systemPrompt,
                 messages = listOf(
                     ChatMessage(
                         id = UUID.randomUUID().toString(),
-                        text = detail.initialAiMessage,
+                        text = definition.initialMessage,
                         isUser = false
                     )
                 ),
@@ -155,7 +131,7 @@ class RoleplayChatViewModel : ViewModel() {
         }
     }
 
-    private fun mockAiResponse(input: String, scenario: RoleplayScenario?): String {
+    private fun mockAiResponse(input: String, scenario: RoleplayScenarioDefinition?): String {
         return if (input.contains("Gusto", ignoreCase = true)) {
             "Ah, sige sige. Pila kabuok? (ああ、はいはい。いくつ？)"
         } else if (input.contains("Salamat", ignoreCase = true)) {

@@ -21,30 +21,25 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -91,6 +86,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -145,7 +141,8 @@ fun ListeningScreen(
     val lessonResult by viewModel.lessonResult.collectAsState()
     val clearedLevel by viewModel.clearedLevel.collectAsState()
     val comboCount by viewModel.comboCount.collectAsState()
-    val contentScrollState = rememberScrollState()
+    val configuration = LocalConfiguration.current
+    val needsScroll = configuration.screenHeightDp <= 640
 
     val screenTitle = when (currentQuestion?.type) {
         QuestionType.TRANSLATION -> "翻訳練習"
@@ -280,24 +277,20 @@ fun ListeningScreen(
                     remaining
                 }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(contentScrollState),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    ListeningHeader(session = session)
-                    Spacer(modifier = Modifier.height(16.dp))
+                val baseModifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
 
+                if (needsScroll) {
+                    val scrollState = rememberScrollState()
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = baseModifier
+                            .verticalScroll(scrollState),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ListeningHeader(session = session)
                         QuestionArea(
                             question = question,
                             session = session,
@@ -306,9 +299,11 @@ fun ListeningScreen(
                                 val phrase = question.pronunciation ?: question.phrase
                                 tts?.speak(phrase, TextToSpeech.QUEUE_FLUSH, null, null)
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 160.dp, max = 260.dp)
                         )
-                        
+
                         AnimatedVisibility(visible = comboCount > 0) {
                             Text(
                                 text = "🔥 ${comboCount} Combo!",
@@ -323,7 +318,7 @@ fun ListeningScreen(
                                 textAlign = TextAlign.Center
                             )
                         }
-                        
+
                         ListeningAnswerArea(
                             question = question,
                             selectedWords = selectedWords,
@@ -335,12 +330,16 @@ fun ListeningScreen(
                                 tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
                                 viewModel.selectWord(word)
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 150.dp)
                         )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Box(modifier = Modifier.fillMaxWidth()) {
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp)
+                        ) {
                             FlexboxWordGrid(
                                 words = availableWords,
                                 selectedWords = selectedWords,
@@ -352,8 +351,93 @@ fun ListeningScreen(
                             )
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
+                } else {
+                    Column(
+                        modifier = baseModifier,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ListeningHeader(session = session)
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            QuestionArea(
+                                question = question,
+                                session = session,
+                                isPlaying = isPlaying,
+                                onPlayAudio = {
+                                    val phrase = question.pronunciation ?: question.phrase
+                                    tts?.speak(phrase, TextToSpeech.QUEUE_FLUSH, null, null)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight()
+                                    .heightIn(min = 160.dp, max = 260.dp)
+                            )
+                        }
+
+                        AnimatedVisibility(visible = comboCount > 0) {
+                            Text(
+                                text = "🔥 ${comboCount} Combo!",
+                                color = Color(0xFFFFA726),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(Color(0x33FFA726))
+                                    .padding(vertical = 8.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ListeningAnswerArea(
+                                question = question,
+                                selectedWords = selectedWords,
+                                shuffledWords = shuffledWords,
+                                showResult = showResult,
+                                isCorrect = isCorrect,
+                                onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
+                                onSelectWord = { word ->
+                                    tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
+                                    viewModel.selectWord(word)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight()
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(0.8f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            FlexboxWordGrid(
+                                words = availableWords,
+                                selectedWords = selectedWords,
+                                showResult = showResult,
+                                onSelectWord = { word ->
+                                    tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
+                                    viewModel.selectWord(word)
+                                }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
             }
         }

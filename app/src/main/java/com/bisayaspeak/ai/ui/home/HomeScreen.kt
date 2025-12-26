@@ -8,14 +8,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +53,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +93,8 @@ fun HomeScreen(
 ) {
     var showProDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val configuration = LocalConfiguration.current
+    val needsScroll = configuration.screenHeightDp <= 640
 
     val proFeatures = listOf(
         FeatureItem(
@@ -158,49 +165,97 @@ fun HomeScreen(
             )
         }
 
-        Column(
-            modifier = Modifier
-                .weight(1f, fill = true)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            HomeStatusCard(homeStatus = homeStatus)
+        Spacer(modifier = Modifier.height(8.dp))
 
-            StartLearningCard(onStartLearning = onStartLearning)
+        val handleProFeatureClick: (FeatureId) -> Unit = { featureId ->
+            if (featureId == FeatureId.ROLE_PLAY) {
+                onClickFeature(featureId)
+            } else {
+                showProDialog = true
+            }
+        }
+
+        if (needsScroll) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                HomeStatusCard(
+                    homeStatus = homeStatus,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 100.dp, max = 140.dp)
+                )
+
+                StartLearningCard(
+                    onStartLearning = onStartLearning,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 100.dp, max = 140.dp)
+                )
+
+                ProFeaturesSection(
+                    proFeatures = proFeatures,
+                    onFeatureClick = handleProFeatureClick,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1.2f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    HomeStatusCard(
+                        homeStatus = homeStatus,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 140.dp)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    StartLearningCard(
+                        onStartLearning = onStartLearning,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 140.dp)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(0.8f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    ProFeaturesSection(
+                        proFeatures = proFeatures,
+                        onFeatureClick = handleProFeatureClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            text = stringResource(R.string.pro_feature_section_title),
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
-            )
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            proFeatures.forEach { feature ->
-                QuickActionButton(
-                    item = feature,
-                    onClick = { 
-                        // ★ロールプレイだけテスト用に解放
-                        if (feature.id == FeatureId.ROLE_PLAY) {
-                            onClickFeature(feature.id)
-                        } else {
-                            showProDialog = true 
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
+        BannerPlaceholder()
 
         if (showProDialog) {
             AlertDialog(
@@ -219,7 +274,8 @@ fun HomeScreen(
 
 @Composable
 private fun HomeStatusCard(
-    homeStatus: HomeStatus
+    homeStatus: HomeStatus,
+    modifier: Modifier = Modifier
 ) {
     val cardGradient = Brush.linearGradient(
         colors = listOf(
@@ -228,7 +284,7 @@ private fun HomeStatusCard(
         )
     )
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent
@@ -237,15 +293,18 @@ private fun HomeStatusCard(
         Box(
             modifier = Modifier
                 .background(cardGradient)
+                .fillMaxSize()
                 .padding(horizontal = 24.dp, vertical = 28.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(0.55f)
+                        .fillMaxHeight(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
@@ -273,22 +332,52 @@ private fun HomeStatusCard(
                         )
                     }
                 }
-                Image(
-                    painter = painterResource(id = R.drawable.char_owl),
-                    contentDescription = "Level mascot",
+                Box(
                     modifier = Modifier
-                        .size(120.dp)
+                        .weight(0.45f)
+                        .fillMaxHeight()
                         .padding(start = 16.dp),
-                    contentScale = ContentScale.Fit
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.char_owl),
+                        contentDescription = "Level mascot",
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(1f, matchHeightConstraintsFirst = true)
+                            .heightIn(max = 120.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
+private fun BannerPlaceholder(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFF1E293B).copy(alpha = 0.9f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "広告スペース（AdMob）",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = Color(0xFF9CA3AF),
+                fontWeight = FontWeight.Medium
+            )
+        )
+    }
+}
+
+@Composable
 private fun StartLearningCard(
-    onStartLearning: () -> Unit
+    onStartLearning: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val ctaGradient = Brush.horizontalGradient(
         colors = listOf(
@@ -297,7 +386,7 @@ private fun StartLearningCard(
         )
     )
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable { onStartLearning() },
         shape = RoundedCornerShape(32.dp),
@@ -307,14 +396,19 @@ private fun StartLearningCard(
         Box(
             modifier = Modifier
                 .background(ctaGradient)
+                .fillMaxSize()
                 .padding(horizontal = 24.dp, vertical = 26.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
@@ -342,11 +436,47 @@ private fun StartLearningCard(
                 painter = painterResource(id = R.drawable.char_tarsier),
                 contentDescription = "Start learning mascot",
                 modifier = Modifier
-                    .size(130.dp)
+                    .fillMaxHeight()
+                    .aspectRatio(0.9f, matchHeightConstraintsFirst = true)
+                    .heightIn(max = 130.dp)
                     .align(Alignment.BottomEnd)
                     .offset(x = 10.dp, y = 10.dp),
                 contentScale = ContentScale.Fit
             )
+        }
+    }
+}
+
+@Composable
+private fun ProFeaturesSection(
+    proFeatures: List<FeatureItem>,
+    onFeatureClick: (FeatureId) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.pro_feature_section_title),
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            proFeatures.forEach { feature ->
+                QuickActionButton(
+                    item = feature,
+                    onClick = { onFeatureClick(feature.id) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
@@ -359,35 +489,35 @@ private fun QuickActionButton(
 ) {
     Card(
         modifier = modifier
-            .height(110.dp)
-            .alpha(if (item.isLocked) 0.6f else 1f)
+            .height(96.dp)
+            .alpha(if (item.isLocked) 0.65f else 1f)
             .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1E1E2E)
         ),
-        elevation = CardDefaults.cardElevation(6.dp)
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp)
+                .padding(horizontal = 10.dp, vertical = 8.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
                     imageVector = item.icon,
                     contentDescription = item.title,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(30.dp)
                 )
 
                 Text(
                     text = item.title,
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    style = MaterialTheme.typography.bodySmall.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -402,7 +532,7 @@ private fun QuickActionButton(
                     tint = Color.White,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .size(20.dp)
+                        .size(18.dp)
                 )
             }
         }

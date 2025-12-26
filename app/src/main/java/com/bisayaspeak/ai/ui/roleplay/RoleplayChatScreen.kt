@@ -6,20 +6,28 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+
 // 修正: automirrored パッケージではなく標準の filled パッケージを使用
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
@@ -34,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -47,10 +56,12 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bisayaspeak.ai.ui.components.SmartAdBanner
 
 // データクラス
 data class ChatMessage(
     val id: String,
+
     val text: String,
     val isUser: Boolean
 )
@@ -59,7 +70,8 @@ data class ChatMessage(
 @Composable
 fun RoleplayChatScreen(
     scenarioId: String,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    isPremium: Boolean = false
 ) {
     // 仮のチャット履歴
     val messages = remember {
@@ -74,11 +86,19 @@ fun RoleplayChatScreen(
 
     var inputText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("AI ロールプレイ") },
+
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         // 修正: Icons.AutoMirrored.Filled.ArrowBack -> Icons.Default.ArrowBack
@@ -95,44 +115,57 @@ fun RoleplayChatScreen(
                 )
             )
         },
-        containerColor = Color(0xFF121212)
+        containerColor = Color(0xFF121212),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .imePadding()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                reverseLayout = true
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(messages.reversed()) { message ->
+                items(messages, key = { it.id }) { message ->
                     ChatMessageItem(message)
-                    Spacer(modifier = Modifier.size(8.dp))
                 }
             }
 
-            ChatInputBar(
-                text = inputText,
-                onTextChange = { inputText = it },
-                onSendClick = {
-                    if (inputText.isNotBlank()) {
-                        messages.add(
-                            ChatMessage(
-                                id = java.util.UUID.randomUUID().toString(),
-                                text = inputText,
-                                isUser = true
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+            ) {
+                ChatInputBar(
+                    text = inputText,
+                    onTextChange = { inputText = it },
+                    onSendClick = {
+                        if (inputText.isNotBlank()) {
+                            messages.add(
+                                ChatMessage(
+                                    id = java.util.UUID.randomUUID().toString(),
+                                    text = inputText,
+                                    isUser = true
+                                )
                             )
-                        )
-                        inputText = ""
-                        focusManager.clearFocus()
+                            inputText = ""
+                            focusManager.clearFocus()
+                        }
                     }
-                }
-            )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                SmartAdBanner(isPremium = isPremium)
+            }
         }
     }
 }
