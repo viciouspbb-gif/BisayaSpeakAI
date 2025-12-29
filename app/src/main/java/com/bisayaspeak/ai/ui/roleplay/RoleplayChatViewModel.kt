@@ -45,6 +45,9 @@ class RoleplayChatViewModel : ViewModel() {
     private val _availableWords = MutableStateFlow<List<WordChip>>(emptyList())
     val availableWords: StateFlow<List<WordChip>> = _availableWords.asStateFlow()
 
+    private val _inputText = MutableStateFlow("")
+    val inputText: StateFlow<String> = _inputText.asStateFlow()
+
     fun loadScenario(scenarioId: String) {
         val definition = getRoleplayScenarioDefinition(scenarioId)
 
@@ -71,6 +74,11 @@ class RoleplayChatViewModel : ViewModel() {
         }
         _availableWords.value = chips
         _selectedWords.value = emptyList()
+        _inputText.value = ""
+    }
+
+    fun onInputTextChange(newText: String) {
+        _inputText.value = newText
     }
 
     // 単語をタップした時の処理（プールから入力欄へ）
@@ -92,14 +100,25 @@ class RoleplayChatViewModel : ViewModel() {
         }
     }
 
-    fun sendMessage() {
+    fun sendSelectedWordsMessage() {
         val currentSentence = _selectedWords.value.joinToString(" ") { it.text }
         if (currentSentence.isBlank()) return
+
+        sendMessage(currentSentence)
+
+        // 入力エリアをクリア＆単語プールをリセット
+        _selectedWords.value = emptyList()
+        _availableWords.update { list -> list.map { it.copy(isSelected = false) } }
+    }
+
+    fun sendMessage(userText: String) {
+        val trimmed = userText.trim()
+        if (trimmed.isBlank()) return
 
         // 1. ユーザーメッセージ表示
         val userMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
-            text = currentSentence,
+            text = trimmed,
             isUser = true
         )
         _uiState.update {
@@ -109,14 +128,12 @@ class RoleplayChatViewModel : ViewModel() {
             )
         }
 
-        // 入力エリアをクリア＆単語プールをリセット
-        _selectedWords.value = emptyList()
-        _availableWords.update { list -> list.map { it.copy(isSelected = false) } }
+        _inputText.value = ""
 
         // 2. AI返答（モック）
         viewModelScope.launch {
-            delay(1500)
-            val aiResponseText = mockAiResponse(currentSentence, _uiState.value.currentScenario)
+            delay(1000)
+            val aiResponseText = mockAiResponse(trimmed, _uiState.value.currentScenario)
             val aiMsg = ChatMessage(
                 id = UUID.randomUUID().toString(),
                 text = aiResponseText,
@@ -132,12 +149,18 @@ class RoleplayChatViewModel : ViewModel() {
     }
 
     private fun mockAiResponse(input: String, scenario: RoleplayScenarioDefinition?): String {
-        return if (input.contains("Gusto", ignoreCase = true)) {
-            "Ah, sige sige. Pila kabuok? (ああ、はいはい。いくつ？)"
-        } else if (input.contains("Salamat", ignoreCase = true)) {
-            "Way sapayan! (どういたしまして！)"
-        } else {
-            "Okey, unsa pa? (オーケー、他には？)"
+        val voice = when (scenario?.id) {
+            "rp_airport" -> "LV1 Airport AI"
+            "rp_taxi" -> "LV2 Taxi AI"
+            "rp_hotel" -> "LV3 Hotel AI"
+            else -> "AI Guide"
         }
+        val hint = when (scenario?.id) {
+            "rp_airport" -> "Please show your passport and purpose."
+            "rp_taxi" -> "Tell me where to go and if you want the meter."
+            "rp_hotel" -> "Let me confirm your booking."
+            else -> "Let's keep practicing."
+        }
+        return "$voice: I received your message — \"$input\". $hint"
     }
 }

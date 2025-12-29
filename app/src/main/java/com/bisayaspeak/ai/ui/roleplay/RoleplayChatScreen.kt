@@ -43,11 +43,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +58,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.ui.components.SmartAdBanner
 
 // データクラス
@@ -71,22 +74,18 @@ data class ChatMessage(
 fun RoleplayChatScreen(
     scenarioId: String,
     onBackClick: () -> Unit,
-    isPremium: Boolean = false
+    isPremium: Boolean = false,
+    viewModel: RoleplayChatViewModel = viewModel()
 ) {
-    // 仮のチャット履歴
-    val messages = remember {
-        mutableStateListOf(
-            ChatMessage(
-                id = "init",
-                text = "Kumusta! Mag-practice ta ug Bisaya. (こんにちは！ビサヤ語を練習しましょう。)",
-                isUser = false
-            )
-        )
-    }
-
-    var inputText by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
+    val inputText by viewModel.inputText.collectAsState()
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
+    val messages = uiState.messages
+
+    LaunchedEffect(scenarioId) {
+        viewModel.loadScenario(scenarioId)
+    }
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
@@ -146,19 +145,10 @@ fun RoleplayChatScreen(
             ) {
                 ChatInputBar(
                     text = inputText,
-                    onTextChange = { inputText = it },
+                    onTextChange = viewModel::onInputTextChange,
                     onSendClick = {
-                        if (inputText.isNotBlank()) {
-                            messages.add(
-                                ChatMessage(
-                                    id = java.util.UUID.randomUUID().toString(),
-                                    text = inputText,
-                                    isUser = true
-                                )
-                            )
-                            inputText = ""
-                            focusManager.clearFocus()
-                        }
+                        viewModel.sendMessage(inputText)
+                        focusManager.clearFocus()
                     }
                 )
 

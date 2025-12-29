@@ -599,7 +599,9 @@ private fun QuestionArea(
             Image(
                 painter = painterResource(id = R.drawable.char_owl),
                 contentDescription = "Listening owl coach",
-                modifier = Modifier.size(96.dp),
+                modifier = Modifier
+                    .heightIn(min = 60.dp, max = 200.dp)
+                    .widthIn(min = 60.dp, max = 200.dp),
                 contentScale = ContentScale.Fit
             )
             Column(

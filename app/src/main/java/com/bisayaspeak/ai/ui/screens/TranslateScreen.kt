@@ -427,9 +427,8 @@ private fun TranslationMascotSection(
             painter = painterResource(id = R.drawable.char_owl),
             contentDescription = "Translate mascot",
             modifier = Modifier
-                .fillMaxHeight()
-                .aspectRatio(0.85f, matchHeightConstraintsFirst = true)
-                .heightIn(min = 80.dp, max = 160.dp),
+                .heightIn(min = 60.dp, max = 200.dp)
+                .aspectRatio(0.85f, matchHeightConstraintsFirst = true),
             contentScale = ContentScale.Fit
         )
     }
