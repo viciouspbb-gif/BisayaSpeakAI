@@ -14,6 +14,11 @@ data class RoleplayScenario(
     val iconEmoji: String
 )
 
+data class HintPhrase(
+    val nativeText: String,
+    val translation: String
+)
+
 /**
  * 実際のロールプレイ設定を保持する定義。
  * 今後の会話ロジックや LLM プロンプト生成のソースとして利用する。
@@ -28,7 +33,8 @@ data class RoleplayScenarioDefinition(
     val goal: String,
     val iconEmoji: String,
     val initialMessage: String,
-    val systemPrompt: String
+    val systemPrompt: String,
+    val hintPhrases: List<HintPhrase> = emptyList()
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,7 +56,21 @@ val roleplayScenarioDefinitions: List<RoleplayScenarioDefinition> = listOf(
         goal = "入国スタンプをもらう（パスポート提示、滞在目的、日数を答える）",
         iconEmoji = "✈️",
         initialMessage = "Maayong pag-abot! Palihug ko sa imong pasaporte. (ようこそ！パスポートをお願いします)",
-        systemPrompt = lv1AirportPrompt
+        systemPrompt = lv1AirportPrompt,
+        hintPhrases = listOf(
+            HintPhrase(
+                nativeText = "Pasaporte palihug.",
+                translation = "パスポートをお願いします。"
+            ),
+            HintPhrase(
+                nativeText = "Turista ko gikan sa Japan.",
+                translation = "私は日本から来た旅行者です。"
+            ),
+            HintPhrase(
+                nativeText = "Magpuyo ko og tulo ka adlaw.",
+                translation = "3日間滞在します。"
+            )
+        )
     ),
     RoleplayScenarioDefinition(
         id = "rp_taxi",
@@ -62,7 +82,21 @@ val roleplayScenarioDefinitions: List<RoleplayScenarioDefinition> = listOf(
         goal = "行き先を伝え、メーターを使うよう交渉し、降りる",
         iconEmoji = "🚕",
         initialMessage = "Asa ta padulong? Sulod, sulod! (どこまで行く？さあ乗って！)",
-        systemPrompt = ""
+        systemPrompt = "",
+        hintPhrases = listOf(
+            HintPhrase(
+                nativeText = "Palihug gamit ang metro.",
+                translation = "メーターを使ってください。"
+            ),
+            HintPhrase(
+                nativeText = "Padulong ko sa Ayala Center.",
+                translation = "アヤラセンターまでお願いします。"
+            ),
+            HintPhrase(
+                nativeText = "Tagpila ang plete?",
+                translation = "運賃はいくらですか？"
+            )
+        )
     ),
     RoleplayScenarioDefinition(
         id = "rp_hotel",
@@ -74,7 +108,21 @@ val roleplayScenarioDefinitions: List<RoleplayScenarioDefinition> = listOf(
         goal = "予約を確認し、部屋の鍵を受け取る",
         iconEmoji = "🏨",
         initialMessage = "Maayong adlaw! Pangalan nimo palihug? (こんにちは！お名前を教えてください)",
-        systemPrompt = ""
+        systemPrompt = "",
+        hintPhrases = listOf(
+            HintPhrase(
+                nativeText = "Naa koy reservation saalan nga Tanaka.",
+                translation = "タナカの名前で予約しています。"
+            ),
+            HintPhrase(
+                nativeText = "Pwede ko makakuha sa room key?",
+                translation = "部屋の鍵を受け取れますか？"
+            ),
+            HintPhrase(
+                nativeText = "Unsa ang oras sa check-out?",
+                translation = "チェックアウトの時間は何時ですか？"
+            )
+        )
     )
 )
 
