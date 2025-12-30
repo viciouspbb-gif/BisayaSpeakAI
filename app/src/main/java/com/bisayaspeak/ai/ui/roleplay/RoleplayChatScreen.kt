@@ -1,9 +1,12 @@
-package com.bisayaspeak.ai.ui.roleplay
+﻿package com.bisayaspeak.ai.ui.roleplay
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -17,13 +20,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
@@ -35,31 +37,38 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults // 追加しました
+import androidx.compose.material3.TopAppBarDefaults
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-// import androidx.compose.runtime.viewModel // 削除しました（不要）
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.bisayaspeak.ai.ui.components.SmartAdBanner
+import com.bisayaspeak.ai.ui.roleplay.HintPhrase
 
-// データクラス
+// 繝・・繧ｿ繧ｯ繝ｩ繧ｹ
 data class ChatMessage(
     val id: String,
     val text: String,
     val isUser: Boolean
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RoleplayChatScreen(
     scenarioId: String,
@@ -83,10 +92,13 @@ fun RoleplayChatScreen(
         }
     }
 
+    val scenarioTitle = uiState.currentScenario?.title ?: "AI ロールプレイ"
+    val hintPhrases = uiState.currentScenario?.hintPhrases.orEmpty()
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AI ロールプレイ") },
+                title = { Text(scenarioTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -131,6 +143,15 @@ fun RoleplayChatScreen(
                     .fillMaxWidth()
                     .imePadding()
             ) {
+                if (hintPhrases.isNotEmpty()) {
+                    HintPhrasePanel(
+                        hints = hintPhrases,
+                        onHintSelected = viewModel::sendHintPhrase
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 ChatInputBar(
                     text = inputText,
                     onTextChange = viewModel::onInputTextChange,
@@ -200,7 +221,7 @@ fun ChatInputBar(
             OutlinedTextField(
                 value = text,
                 onValueChange = onTextChange,
-                placeholder = { Text("メッセージを入力...", color = Color.Gray) },
+                placeholder = { Text("繝｡繝・そ繝ｼ繧ｸ繧貞・蜉・..", color = Color.Gray) },
                 modifier = Modifier
                     .weight(1f)
                     .background(Color.Transparent),
@@ -236,6 +257,73 @@ fun ChatInputBar(
                     tint = Color.White
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun HintPhrasePanel(
+    hints: List<HintPhrase>,
+    onHintSelected: (HintPhrase) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1C1C1C), RoundedCornerShape(16.dp))
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+    ) {
+        Text(
+            text = "ビサヤ語ヒント",
+            color = Color(0xFFB0B0B0),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            hints.forEach { hint ->
+                HintChip(
+                    hintPhrase = hint,
+                    onClick = { onHintSelected(hint) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun HintChip(
+    hintPhrase: HintPhrase,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.clickable { onClick() },
+        color = Color(0xFF2C2C2C),
+        shape = RoundedCornerShape(20.dp),
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .widthIn(min = 140.dp, max = 220.dp)
+        ) {
+            Text(
+                text = hintPhrase.nativeText,
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = hintPhrase.translation,
+                color = Color(0xFFBEBEBE),
+                fontSize = 12.sp
+            )
         }
     }
 }

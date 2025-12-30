@@ -17,6 +17,15 @@ data class WordChip(
     val isSelected: Boolean = false
 )
 
+data class ReviewItem(
+    val id: String = UUID.randomUUID().toString(),
+    val scenarioId: String,
+    val scenarioTitle: String,
+    val phrase: String,
+    val translation: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 data class RoleplayUiState(
     val currentScenario: RoleplayScenarioDefinition? = null,
     val missionGoal: String = "",
@@ -47,6 +56,9 @@ class RoleplayChatViewModel : ViewModel() {
 
     private val _inputText = MutableStateFlow("")
     val inputText: StateFlow<String> = _inputText.asStateFlow()
+
+    private val _reviewItems = MutableStateFlow<List<ReviewItem>>(emptyList())
+    val reviewItems: StateFlow<List<ReviewItem>> = _reviewItems.asStateFlow()
 
     fun loadScenario(scenarioId: String) {
         val definition = getRoleplayScenarioDefinition(scenarioId)
@@ -111,9 +123,19 @@ class RoleplayChatViewModel : ViewModel() {
         _availableWords.update { list -> list.map { it.copy(isSelected = false) } }
     }
 
-    fun sendMessage(userText: String) {
+    fun sendHintPhrase(hintPhrase: HintPhrase) {
+        sendMessage(
+            userText = hintPhrase.nativeText,
+            fromHint = true,
+            translation = hintPhrase.translation
+        )
+    }
+
+    fun sendMessage(userText: String, fromHint: Boolean = false, translation: String? = null) {
         val trimmed = userText.trim()
         if (trimmed.isBlank()) return
+
+        val scenarioForReview = if (fromHint) _uiState.value.currentScenario else null
 
         // 1. ユーザーメッセージ表示
         val userMsg = ChatMessage(
@@ -129,6 +151,17 @@ class RoleplayChatViewModel : ViewModel() {
         }
 
         _inputText.value = ""
+
+        if (fromHint && scenarioForReview != null && translation != null) {
+            val reviewItem = ReviewItem(
+                scenarioId = scenarioForReview.id,
+                scenarioTitle = scenarioForReview.title,
+                phrase = trimmed,
+                translation = translation,
+                timestamp = System.currentTimeMillis()
+            )
+            _reviewItems.update { it + reviewItem }
+        }
 
         // 2. AI返答（モック）
         viewModelScope.launch {
