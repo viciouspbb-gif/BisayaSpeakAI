@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -85,7 +86,7 @@ fun LessonResultScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(20.dp),
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
@@ -114,6 +115,13 @@ fun LessonResultScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                )
+                Spacer(modifier = Modifier.navigationBarsPadding())
             }
         }
     ) { padding ->
@@ -121,29 +129,55 @@ fun LessonResultScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(padding)
-                .verticalScroll(scrollState)
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(padding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = true)
+                    .verticalScroll(scrollState)
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Box(modifier = Modifier.background(gradient).padding(24.dp)) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Text(text = if (passed) "Great Job!" else "Nice Try!", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Image(painter = painterResource(id = R.drawable.char_owl), contentDescription = "Result mascot", modifier = Modifier.size(160.dp))
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(text = "正解数", style = MaterialTheme.typography.labelMedium)
-                        Text(text = "$correctCount / $totalQuestions", fontSize = 36.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "レベル $clearedLevel")
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(gradient)
+                            .padding(24.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = if (passed) "Great Job!" else "Nice Try!",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp
+                            )
+                            Image(
+                                painter = painterResource(id = R.drawable.char_owl),
+                                contentDescription = "Result mascot",
+                                modifier = Modifier.size(160.dp)
+                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(text = "正解数", style = MaterialTheme.typography.labelMedium)
+                                Text(
+                                    text = "$correctCount / $totalQuestions",
+                                    fontSize = 36.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(text = "レベル $clearedLevel")
+                            }
+                        }
                     }
                 }
-            }
 
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
                 Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -172,8 +206,6 @@ fun LessonResultScreen(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }

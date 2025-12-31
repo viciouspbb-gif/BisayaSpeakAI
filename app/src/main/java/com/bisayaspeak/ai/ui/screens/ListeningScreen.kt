@@ -140,6 +140,8 @@ fun ListeningScreen(
     val lessonResult by viewModel.lessonResult.collectAsState()
     val clearedLevel by viewModel.clearedLevel.collectAsState()
     val comboCount by viewModel.comboCount.collectAsState()
+    val voiceHintRemaining by viewModel.voiceHintRemaining.collectAsState()
+    val showHintRecoveryDialog by viewModel.showHintRecoveryDialog.collectAsState()
     val configuration = LocalConfiguration.current
 
     val screenTitle = when (currentQuestion?.type) {
@@ -287,8 +289,7 @@ fun ListeningScreen(
                         )
                         Button(
                             onClick = {
-                                val phrase = question.pronunciation ?: question.phrase
-                                tts?.speak(phrase, TextToSpeech.QUEUE_FLUSH, null, null)
+                                viewModel.playAudio()
                             },
                             enabled = !isPlaying,
                             modifier = Modifier
@@ -303,7 +304,7 @@ fun ListeningScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "音声ヒント",
+                                text = "音声ヒント (残り${voiceHintRemaining.coerceAtLeast(0)})",
                                 color = Color.White,
                                 softWrap = false,
                                 maxLines = 1
@@ -422,6 +423,32 @@ fun ListeningScreen(
                 }
             }
         }
+    }
+
+    if (showHintRecoveryDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissHintRecoveryDialog() },
+            confirmButton = {
+                TextButton(onClick = {
+                    onShowRewardedAd {
+                        viewModel.onHintRecoveryEarned()
+                    }
+                }) {
+                    Text("動画を見て回復")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissHintRecoveryDialog() }) {
+                    Text("閉じる")
+                }
+            },
+            title = { Text("音声ヒントが必要です") },
+            text = {
+                Text(
+                    "動画広告を視聴すると音声ヒントを3回分回復できます。\nPRO版ならこの制限は一切ありません。"
+                )
+            }
+        )
     }
 }
 
