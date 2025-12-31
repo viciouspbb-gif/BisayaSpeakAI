@@ -179,30 +179,67 @@ fun LessonResultScreen(
                     }
                 }
 
-            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
-                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(text = "獲得XP", fontWeight = FontWeight.SemiBold)
-                        Text(text = "+$earnedXP XP", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Box(modifier = Modifier.fillMaxWidth().height(16.dp).clip(RoundedCornerShape(50)).background(Color(0xFFE3E3E3))) {
-                        Box(modifier = Modifier.fillMaxWidth(progress).height(16.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50)))
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(text = "獲得XP", fontWeight = FontWeight.SemiBold)
+                            Text(text = "+$earnedXP XP", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(16.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color(0xFFE3E3E3))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(progress)
+                                    .height(16.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary,
+                                        RoundedCornerShape(50)
+                                    )
+                            )
+                        }
                     }
                 }
-            }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Row(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                        Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    }
-                    Column {
-                        Text(text = if (passed) "次のレベルが解放されました！" else "あと少しでレベルアップ！", fontWeight = FontWeight.Bold)
-                        Text(text = if (passed) "引き続き学習を続けましょう。" else "もう一度挑戦してみましょう。", style = MaterialTheme.typography.bodyMedium)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = if (passed) "次のレベルが解放されました！" else "あと少しでレベルアップ！",
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (passed) "引き続き学習を続けましょう。" else "もう一度挑戦してみましょう。",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
             }
