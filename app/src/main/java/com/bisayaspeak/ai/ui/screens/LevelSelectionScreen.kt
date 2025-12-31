@@ -30,6 +30,16 @@ fun LevelSelectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("レベル選択") })
+        },
+        bottomBar = {
+            Column {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                )
+                Spacer(modifier = Modifier.navigationBarsPadding())
+            }
         }
     ) { padding ->
         LazyVerticalGrid(

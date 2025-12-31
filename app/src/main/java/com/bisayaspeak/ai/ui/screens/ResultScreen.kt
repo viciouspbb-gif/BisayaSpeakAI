@@ -71,29 +71,35 @@ fun ResultScreen(
             )
         },
         bottomBar = {
-            Surface(
-                tonalElevation = 3.dp,
-                shadowElevation = 8.dp
-            ) {
+            Column {
+                Surface(
+                    tonalElevation = 3.dp,
+                    shadowElevation = 8.dp
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Button(
+                            onClick = onRetry,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.try_again_button), fontSize = 18.sp)
+                        }
+                    }
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        // システムナビゲーションバーのすぐ上にボタンを固定
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                ) {
-                    Button(
-                        onClick = onRetry,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.try_again_button), fontSize = 18.sp)
-                    }
-                }
+                        .height(60.dp)
+                )
+                Spacer(modifier = Modifier.navigationBarsPadding())
             }
         }
     ) { paddingValues ->
