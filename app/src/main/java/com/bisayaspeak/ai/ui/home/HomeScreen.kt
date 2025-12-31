@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -49,15 +51,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bisayaspeak.ai.R
 
 @Immutable
@@ -92,9 +97,8 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     var showProDialog by remember { mutableStateOf(false) }
+    var showOwlAdviceDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
-    val configuration = LocalConfiguration.current
-    val needsScroll = configuration.screenHeightDp <= 640
 
     val proFeatures = listOf(
         FeatureItem(
@@ -134,6 +138,7 @@ fun HomeScreen(
             )
             .statusBarsPadding()
             .navigationBarsPadding()
+            .verticalScroll(scrollState)
             .padding(horizontal = 20.dp, vertical = 24.dp)
     ) {
         Row(
@@ -175,85 +180,30 @@ fun HomeScreen(
             }
         }
 
-        if (needsScroll) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                HomeStatusCard(
-                    homeStatus = homeStatus,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 100.dp, max = 140.dp)
-                )
+        Spacer(modifier = Modifier.height(16.dp))
 
-                StartLearningCard(
-                    onStartLearning = onStartLearning,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 100.dp, max = 140.dp)
-                )
+        HomeStatusCard(
+            homeStatus = homeStatus,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(130.dp)
+                .padding(bottom = 12.dp),
+            onClick = { showOwlAdviceDialog = true }
+        )
 
-                ProFeaturesSection(
-                    proFeatures = proFeatures,
-                    onFeatureClick = handleProFeatureClick,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1.2f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    HomeStatusCard(
-                        homeStatus = homeStatus,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 100.dp, max = 140.dp)
-                    )
-                }
+        StartLearningCard(
+            onStartLearning = onStartLearning,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(130.dp)
+                .padding(bottom = 16.dp)
+        )
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    StartLearningCard(
-                        onStartLearning = onStartLearning,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 100.dp, max = 140.dp)
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(0.8f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.TopCenter
-                ) {
-                    ProFeaturesSection(
-                        proFeatures = proFeatures,
-                        onFeatureClick = handleProFeatureClick,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
+        ProFeaturesSection(
+            proFeatures = proFeatures,
+            onFeatureClick = handleProFeatureClick,
+            modifier = Modifier.padding(bottom = 20.dp)
+        )
 
         BannerPlaceholder()
 
@@ -269,13 +219,29 @@ fun HomeScreen(
                 text = { Text(stringResource(R.string.pro_feature_dialog_message)) }
             )
         }
+
+        if (showOwlAdviceDialog) {
+            AlertDialog(
+                onDismissRequest = { showOwlAdviceDialog = false },
+                confirmButton = {
+                    TextButton(onClick = { showOwlAdviceDialog = false }) {
+                        Text("OK")
+                    }
+                },
+                title = { Text("フクロウ先生の分析") },
+                text = {
+                    Text(getOwlAdvice(homeStatus))
+                }
+            )
+        }
     }
 }
 
 @Composable
 private fun HomeStatusCard(
     homeStatus: HomeStatus,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     val cardGradient = Brush.linearGradient(
         colors = listOf(
@@ -284,7 +250,10 @@ private fun HomeStatusCard(
         )
     )
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .clickable(enabled = onClick != null) { onClick?.invoke() },
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent
@@ -294,7 +263,7 @@ private fun HomeStatusCard(
             modifier = Modifier
                 .background(cardGradient)
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 28.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -303,54 +272,124 @@ private fun HomeStatusCard(
             ) {
                 Column(
                     modifier = Modifier
-                        .weight(0.55f)
+                        .weight(0.65f)
                         .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = "現在のレベル",
-                        color = Color.White.copy(alpha = 0.8f),
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Text(
-                        text = "Lv ${homeStatus.currentLevel}",
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineLarge.copy(
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "現在のレベル",
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        AutoSizeText(
+                            text = "Lv ${homeStatus.currentLevel}",
+                            color = Color.White,
+                            maxFontSize = 32.sp,
+                            minFontSize = 20.sp,
                             fontWeight = FontWeight.Black
                         )
-                    )
+                    }
                     Surface(
                         color = Color.White.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(50),
                         modifier = Modifier.align(Alignment.Start)
                     ) {
-                        Text(
+                        AutoSizeText(
                             text = "累計XP ${homeStatus.totalXp}",
                             color = Color.White,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.bodySmall
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            maxFontSize = 14.sp,
+                            minFontSize = 8.sp,
+                            maxLines = 1,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
                 Box(
                     modifier = Modifier
-                        .weight(0.45f)
-                        .fillMaxHeight()
-                        .padding(start = 16.dp),
+                        .padding(start = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
+                    MascotImageBox(
                         painter = painterResource(id = R.drawable.char_owl),
-                        contentDescription = "Level mascot",
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .aspectRatio(1f, matchHeightConstraintsFirst = true)
-                            .heightIn(max = 120.dp),
-                        contentScale = ContentScale.Fit
+                        contentDescription = "Level mascot"
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AutoSizeText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    maxFontSize: TextUnit = 20.sp,
+    minFontSize: TextUnit = 12.sp,
+    maxLines: Int = 1,
+    fontWeight: FontWeight? = null,
+    softWrap: Boolean = false
+) {
+    var scaledTextStyle by remember {
+        mutableStateOf(
+            TextStyle(
+                fontSize = maxFontSize,
+                fontWeight = fontWeight,
+                color = color
+            )
+        )
+    }
+    var readyToDraw by remember { mutableStateOf(false) }
+
+    Text(
+        text = text,
+        modifier = modifier.drawWithContent {
+            if (readyToDraw) drawContent()
+        },
+        style = scaledTextStyle,
+        maxLines = maxLines,
+        softWrap = softWrap,
+        onTextLayout = { textLayoutResult ->
+            if ((textLayoutResult.didOverflowWidth || textLayoutResult.didOverflowHeight) &&
+                scaledTextStyle.fontSize > minFontSize
+            ) {
+                scaledTextStyle = scaledTextStyle.copy(fontSize = scaledTextStyle.fontSize * 0.9f)
+            } else {
+                readyToDraw = true
+            }
+        }
+    )
+}
+
+@Composable
+private fun MascotImageBox(
+    painter: androidx.compose.ui.graphics.painter.Painter,
+    contentDescription: String?,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .padding(4.dp)
+            .requiredSize(100.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painter,
+            contentDescription = contentDescription,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit
+        )
+    }
+}
+
+private fun getOwlAdvice(homeStatus: HomeStatus): String {
+    return when {
+        homeStatus.currentLevel <= 1 -> "まずは「挨拶」からじゃ！毎日コツコツやれば必ず話せるようになるぞ。"
+        homeStatus.currentLevel in 2..3 -> "おっ、少し慣れてきたようじゃな！次は単語量を増やしてみようか。"
+        homeStatus.totalXp >= 500 -> "経験値が貯まってきたのう。今こそリスニングで耳を鍛えて会話力を一段上げるのじゃ。"
+        else -> "調子はどうじゃ？焦らず楽しむことが継続の秘訣じゃぞ！"
     }
 }
 
@@ -388,8 +427,9 @@ private fun StartLearningCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
             .clickable { onStartLearning() },
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
@@ -397,52 +437,67 @@ private fun StartLearningCard(
             modifier = Modifier
                 .background(ctaGradient)
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 26.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "学習開始",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        AutoSizeText(
+                            text = "学習開始",
+                            color = Color.White,
+                            maxFontSize = 22.sp,
+                            minFontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        AutoSizeText(
+                            text = "今日のおすすめレッスンからスタートしよう",
+                            color = Color.White.copy(alpha = 0.85f),
+                            maxFontSize = 14.sp,
+                            minFontSize = 10.sp
+                        )
+                    }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.25f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                        AutoSizeText(
+                            text = "今すぐ学ぶ",
+                            color = Color.White,
+                            maxFontSize = 16.sp,
+                            minFontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
+
+                MascotImageBox(
+                    painter = painterResource(id = R.drawable.char_tarsier),
+                    contentDescription = "Start learning mascot"
+                )
             }
-            Image(
-                painter = painterResource(id = R.drawable.char_tarsier),
-                contentDescription = "Start learning mascot",
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .aspectRatio(0.9f, matchHeightConstraintsFirst = true)
-                    .heightIn(max = 130.dp)
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 10.dp, y = 10.dp),
-                contentScale = ContentScale.Fit
-            )
         }
     }
 }

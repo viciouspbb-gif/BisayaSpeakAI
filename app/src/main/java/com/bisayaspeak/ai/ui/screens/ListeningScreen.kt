@@ -78,6 +78,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
@@ -97,15 +98,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.bisayaspeak.ai.R
-import androidx.compose.material.icons.filled.Star
 import com.bisayaspeak.ai.data.model.DifficultyLevel
 import com.bisayaspeak.ai.data.listening.ListeningQuestion
 import com.bisayaspeak.ai.data.listening.ListeningSession
 import com.bisayaspeak.ai.data.listening.QuestionType
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.util.PracticeSessionManager
+import com.bisayaspeak.ai.ui.home.AutoSizeText
 import com.google.android.flexbox.AlignItems
 import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayout
@@ -263,107 +265,30 @@ fun ListeningScreen(
                 }
             } else if (currentQuestion != null && session != null) {
                 val question = currentQuestion
-                val availableWords = remember(shuffledWords, selectedWords) {
-                    val usedCounts = selectedWords.groupingBy { it }.eachCount().toMutableMap()
-                    val remaining = mutableListOf<String>()
-                    for (word in shuffledWords) {
-                        val remainingCount = usedCounts[word] ?: 0
-                        if (remainingCount > 0) {
-                            usedCounts[word] = remainingCount - 1
-                        } else {
-                            remaining += word
-                        }
-                    }
-                    remaining
-                }
+                val scrollState = rememberScrollState()
+                val promptScrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ListeningHeader(session = session)
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                val baseModifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp)
-
-                if (needsScroll) {
-                    val scrollState = rememberScrollState()
                     Column(
-                        modifier = baseModifier
-                            .verticalScroll(scrollState),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier
+                            .weight(1f, fill = true)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ListeningHeader(session = session)
-                        QuestionArea(
-                            question = question,
-                            session = session,
-                            isPlaying = isPlaying,
-                            onPlayAudio = {
-                                val phrase = question.pronunciation ?: question.phrase
-                                tts?.speak(phrase, TextToSpeech.QUEUE_FLUSH, null, null)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 160.dp, max = 260.dp)
-                        )
-
-                        AnimatedVisibility(visible = comboCount > 0) {
-                            Text(
-                                text = "🔥 ${comboCount} Combo!",
-                                color = Color(0xFFFFA726),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(24.dp))
-                                    .background(Color(0x33FFA726))
-                                    .padding(vertical = 10.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-
-                        ListeningAnswerArea(
-                            question = question,
-                            selectedWords = selectedWords,
-                            shuffledWords = shuffledWords,
-                            showResult = showResult,
-                            isCorrect = isCorrect,
-                            onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
-                            onSelectWord = { word ->
-                                tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
-                                viewModel.selectWord(word)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 150.dp)
-                        )
-
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 12.dp)
-                        ) {
-                            FlexboxWordGrid(
-                                words = availableWords,
-                                selectedWords = selectedWords,
-                                showResult = showResult,
-                                onSelectWord = { word ->
-                                    tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
-                                    viewModel.selectWord(word)
-                                }
-                            )
-                        }
-                    }
-                } else {
-                    Column(
-                        modifier = baseModifier,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ListeningHeader(session = session)
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1.2f)
-                                .fillMaxWidth(),
+                                .verticalScroll(promptScrollState),
                             contentAlignment = Alignment.Center
                         ) {
                             QuestionArea(
@@ -376,8 +301,7 @@ fun ListeningScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .fillMaxHeight()
-                                    .heightIn(min = 160.dp, max = 260.dp)
+                                    .heightIn(min = 160.dp, max = 220.dp)
                             )
                         }
 
@@ -396,48 +320,21 @@ fun ListeningScreen(
                             )
                         }
 
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            ListeningAnswerArea(
-                                question = question,
-                                selectedWords = selectedWords,
-                                shuffledWords = shuffledWords,
-                                showResult = showResult,
-                                isCorrect = isCorrect,
-                                onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
-                                onSelectWord = { word ->
-                                    tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
-                                    viewModel.selectWord(word)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight()
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(0.8f)
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.TopCenter
-                        ) {
-                            FlexboxWordGrid(
-                                words = availableWords,
-                                selectedWords = selectedWords,
-                                showResult = showResult,
-                                onSelectWord = { word ->
-                                    tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
-                                    viewModel.selectWord(word)
-                                }
-                            )
-                        }
-
                         Spacer(modifier = Modifier.height(12.dp))
                     }
+
+                    ListeningInteractionPanel(
+                        question = question,
+                        selectedWords = selectedWords,
+                        shuffledWords = shuffledWords,
+                        showResult = showResult,
+                        isCorrect = isCorrect,
+                        onRemoveWordAt = { index -> viewModel.removeWordAt(index) },
+                        onSelectWord = { word ->
+                            tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, null)
+                            viewModel.selectWord(word)
+                        }
+                    )
                 }
             }
         }
@@ -509,6 +406,7 @@ private fun FlexboxWordGrid(
                     setTextColor(textColor.toArgb())
                     setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
                     background = drawable
+                    alpha = if (isUsed) 0f else 1f
                     isEnabled = !isUsed && !showResult
                     layoutParams = FlexboxLayout.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -583,109 +481,68 @@ private fun QuestionArea(
         ),
         label = "pulse"
     )
+    val helperText = if (question.type == QuestionType.TRANSLATION) {
+        "この日本語をセブアノ語にしよう。"
+    } else {
+        "日本語の意味に合う語順を組み立てよう。"
+    }
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(Color(0xFFEDE4F3))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
                 painter = painterResource(id = R.drawable.char_owl),
                 contentDescription = "Listening owl coach",
-                modifier = Modifier
-                    .heightIn(min = 60.dp, max = 200.dp)
-                    .widthIn(min = 60.dp, max = 200.dp),
+                modifier = Modifier.size(56.dp),
                 contentScale = ContentScale.Fit
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                val title = when (question.type) {
-                    QuestionType.LISTENING -> "フクロウ先生の音声ヒント"
-                    QuestionType.TRANSLATION -> "翻訳ミッション"
-                    QuestionType.ORDERING -> "語順ミッション"
-                }
-                Text(
-                    text = title,
-                    color = Color(0xFF5C4B8A),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
+                AutoSizeText(
+                    text = when (question.type) {
+                        QuestionType.LISTENING -> question.meaning.ifBlank { question.phrase }
+                        QuestionType.TRANSLATION -> question.meaning
+                        QuestionType.ORDERING -> question.meaning
+                    },
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxFontSize = 18.sp,
+                    minFontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 3
                 )
-                if (question.type == QuestionType.LISTENING) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .scale(pulseScale)
-                            .clip(bubbleShape)
-                            .background(
-                                if (isPlaying) Color(0xFF4A90E2).copy(alpha = 0.6f) else Color(0xFF4A90E2)
-                            )
-                            .clickable(enabled = !isPlaying) { onPlayAudio() }
-                            .padding(horizontal = 18.dp, vertical = 14.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.VolumeUp,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Column {
-                                Text(
-                                    text = if (isPlaying) "再生中..." else "音声を再生",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 17.sp
-                                )
-                                Text(
-                                    text = "Tap & listen",
-                                    color = Color.White.copy(alpha = 0.85f),
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    val missionLabel = if (question.type == QuestionType.TRANSLATION) "翻訳ミッション" else "並べ替えミッション"
-                    val helperText = if (question.type == QuestionType.TRANSLATION) {
-                        "この日本語をセブアノ語にしよう。"
-                    } else {
-                        "日本語の意味に合う語順を組み立てよう。"
-                    }
-                    Text(
-                        text = missionLabel,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = question.meaning,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                if (question.type != QuestionType.LISTENING) {
                     Text(
                         text = helperText,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
+            }
+            IconButton(
+                onClick = onPlayAudio,
+                modifier = Modifier
+                    .size(42.dp)
+                    .scale(if (isPlaying) pulseScale else 1f),
+                enabled = question.type == QuestionType.LISTENING && !isPlaying
+            ) {
+                Icon(
+                    imageVector = Icons.Default.VolumeUp,
+                    contentDescription = "Play audio",
+                    tint = if (question.type == QuestionType.LISTENING) Color(0xFF4A90E2) else Color(0xFFB0B0C0)
+                )
             }
         }
         Row(
@@ -694,11 +551,13 @@ private fun QuestionArea(
         ) {
             Text(
                 text = "正解数: ${session.score}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall
             )
             Text(
                 text = "ミス: ${session.mistakes}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -706,7 +565,7 @@ private fun QuestionArea(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ListeningAnswerArea(
+private fun ListeningInteractionPanel(
     question: ListeningQuestion,
     selectedWords: List<String>,
     shuffledWords: List<String>,
@@ -716,109 +575,159 @@ private fun ListeningAnswerArea(
     onSelectWord: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = if (showResult) 148.dp else 0.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            QuestionTypeBadge(type = question.type)
-        }
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
-            shape = RoundedCornerShape(20.dp)
-        ) {
-            val correctWordCount = question.correctOrder.size
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
             ) {
-                Text(
-                    text = "あなたの回答",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                QuestionTypeBadge(type = question.type)
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                val correctWordCount = question.correctOrder.size
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    repeat(correctWordCount) { index ->
-                        val isFilled = index < selectedWords.size
-                        Box(
-                            modifier = Modifier
-                                .height(48.dp)
-                                .widthIn(min = 72.dp)
-                                .shadow(
-                                    elevation = if (isFilled) 6.dp else 0.dp,
-                                    shape = RoundedCornerShape(12.dp),
-                                    clip = false
-                                )
-                                .background(
-                                    Color(0xFF2C2C3E),
-                                    RoundedCornerShape(12.dp)
-                                )
-                                .then(
-                                    if (isFilled) {
-                                        Modifier.border(
-                                            2.dp,
-                                            Color(0xFF4A90E2),
-                                            RoundedCornerShape(12.dp)
-                                        )
-                                    } else {
-                                        Modifier.dashedBorder(
-                                            color = Color.Gray.copy(alpha = 0.6f),
-                                            strokeWidth = 1.dp,
-                                            cornerRadius = 12.dp
-                                        )
+                    Text(
+                        text = "あなたの回答",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        repeat(correctWordCount) { index ->
+                            val isFilled = index < selectedWords.size
+                            Box(
+                                modifier = Modifier
+                                    .height(48.dp)
+                                    .widthIn(min = 72.dp)
+                                    .shadow(
+                                        elevation = if (isFilled) 6.dp else 0.dp,
+                                        shape = RoundedCornerShape(12.dp),
+                                        clip = false
+                                    )
+                                    .background(
+                                        Color(0xFF2C2C3E),
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .then(
+                                        if (isFilled) {
+                                            Modifier.border(
+                                                2.dp,
+                                                Color(0xFF4A90E2),
+                                                RoundedCornerShape(12.dp)
+                                            )
+                                        } else {
+                                            Modifier.dashedBorder(
+                                                color = Color.Gray.copy(alpha = 0.6f),
+                                                strokeWidth = 1.dp,
+                                                cornerRadius = 12.dp
+                                            )
+                                        }
+                                    )
+                                    .clickable(enabled = isFilled && !showResult) {
+                                        onRemoveWordAt(index)
                                     }
-                                )
-                                .clickable(enabled = isFilled && !showResult) {
-                                    onRemoveWordAt(index)
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isFilled) {
+                                    Text(
+                                        text = selectedWords[index],
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
                                 }
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isFilled) {
-                                Text(
-                                    text = selectedWords[index],
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center
-                                )
                             }
                         }
                     }
                 }
             }
-        }
 
-        AnimatedVisibility(visible = showResult) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE4F3)),
-                shape = RoundedCornerShape(16.dp)
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF151524)),
+                shape = RoundedCornerShape(20.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (isCorrect) "✓ " + stringResource(R.string.correct) else "✗ " + stringResource(
-                            R.string.incorrect
-                        ),
+                        text = "単語をタップして文章を完成させよう",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    FlexboxWordGrid(
+                        words = shuffledWords,
+                        selectedWords = selectedWords,
+                        showResult = showResult,
+                        onSelectWord = onSelectWord
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = showResult,
+            enter = fadeIn() + scaleIn(),
+            exit = fadeOut() + scaleOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .zIndex(2f)
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 4.dp, end = 4.dp, bottom = 4.dp)
+                    .shadow(20.dp, RoundedCornerShape(20.dp)),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF6F0FF)),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = if (isCorrect) {
+                            "✓ " + stringResource(R.string.correct)
+                        } else {
+                            "✗ " + stringResource(R.string.incorrect)
+                        },
                         color = if (isCorrect) Color(0xFF4A90E2) else MaterialTheme.colorScheme.error,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                     if (!isCorrect) {
                         Column(
                             modifier = Modifier
