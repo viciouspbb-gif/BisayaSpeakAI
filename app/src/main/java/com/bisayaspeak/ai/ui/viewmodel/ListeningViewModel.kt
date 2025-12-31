@@ -73,6 +73,10 @@ class ListeningViewModel(
     
     private val _comboCount = MutableStateFlow(0)
     val comboCount: StateFlow<Int> = _comboCount.asStateFlow()
+    private val _voiceHintRemaining = MutableStateFlow(MAX_VOICE_HINTS)
+    val voiceHintRemaining: StateFlow<Int> = _voiceHintRemaining.asStateFlow()
+    private val _showHintRecoveryDialog = MutableStateFlow(false)
+    val showHintRecoveryDialog: StateFlow<Boolean> = _showHintRecoveryDialog.asStateFlow()
     
     private var tts: TextToSpeech? = null
     private val soundPool: SoundPool
@@ -87,6 +91,7 @@ class ListeningViewModel(
         private const val TRANSLATION_COUNT = 3
         private const val ORDERING_COUNT = 3
         private const val MAX_PANEL_COUNT = 8
+        private const val MAX_VOICE_HINTS = 3
         private const val MIN_SPEECH_RATE = 0.6f // 最低速度（遅い）
         private const val MAX_SPEECH_RATE = 1.0f // 最高速度（通常）
         private const val CORRECT_STREAK_FOR_SPEEDUP = 3 // 速度を上げる連続正解数
@@ -189,6 +194,15 @@ class ListeningViewModel(
             )
         }
     }
+
+    fun dismissHintRecoveryDialog() {
+        _showHintRecoveryDialog.value = false
+    }
+
+    fun onHintRecoveryEarned() {
+        _voiceHintRemaining.value = MAX_VOICE_HINTS
+        _showHintRecoveryDialog.value = false
+    }
     
     init {
         soundPool = SoundPool.Builder()
@@ -281,6 +295,8 @@ class ListeningViewModel(
             _shouldShowAd.value = false
             _lessonResult.value = null
             _speechRate.value = 0.7f
+            _voiceHintRemaining.value = MAX_VOICE_HINTS
+            _showHintRecoveryDialog.value = false
             updateSpeechRate()
 
             if (sessionQuestions.isNotEmpty()) {
@@ -309,6 +325,7 @@ class ListeningViewModel(
         val question = currentSession.questions[currentSession.currentQuestionIndex]
         _currentQuestion.value = question
         _selectedWords.value = emptyList()
+        _showHintRecoveryDialog.value = false
         
         // 正解単語を小文字に正規化
         val normalizedCorrectWords = question.words.map { word -> word.lowercase() }
@@ -354,9 +371,18 @@ class ListeningViewModel(
     }
     
     /**
-     * 音声再生
+     * 音声ヒント再生
      */
     fun playAudio() {
+        if (_voiceHintRemaining.value <= 0) {
+            _showHintRecoveryDialog.value = true
+            return
+        }
+        _voiceHintRemaining.value = (_voiceHintRemaining.value - 1).coerceAtLeast(0)
+        performAudioPlayback()
+    }
+
+    private fun performAudioPlayback() {
         val question = _currentQuestion.value ?: return
         val pronunciation = question.pronunciation ?: question.phrase
         _isPlaying.value = true
