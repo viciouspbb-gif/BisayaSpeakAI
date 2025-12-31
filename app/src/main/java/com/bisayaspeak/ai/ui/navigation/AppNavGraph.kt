@@ -372,18 +372,18 @@ fun AppNavGraph(
             BannerScreenContainer(isPremium = isPremium) {
                 val viewModel: ListeningViewModel = viewModel(factory = listeningViewModelFactory)
                 ListeningScreen(
+                    navController = navController,
                     level = level,
                     isPremium = isPremium,
                     onNavigateBack = { navController.popBackStack() },
-                    onShowRewardedAd = { onAdWatched ->
+                    onShowRewardedAd = {
                         AdMobManager.loadRewarded(context)
                         AdMobManager.showRewarded(
                             activity = activity,
-                            onEarned = { _, _ -> onAdWatched() },
-                            onDismissed = onAdWatched
+                            onEarned = { _, _ -> },
+                            onDismissed = {}
                         )
                     },
-                    navController = navController,
                     viewModel = viewModel
                 )
             }
