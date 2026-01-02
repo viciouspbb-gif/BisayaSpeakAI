@@ -30,6 +30,7 @@ import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.MyApp
 import com.bisayaspeak.ai.auth.AuthManager
 import com.bisayaspeak.ai.data.model.LearningLevel
+import com.bisayaspeak.ai.data.model.UserPlan
 import com.bisayaspeak.ai.ui.account.AccountScreen
 import com.bisayaspeak.ai.ui.account.AccountUiState
 import com.bisayaspeak.ai.ui.account.LoginType
@@ -39,8 +40,11 @@ import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.home.FeatureId
 import com.bisayaspeak.ai.ui.home.HomeScreen
 import com.bisayaspeak.ai.ui.home.HomeViewModel
+import com.bisayaspeak.ai.ui.missions.MissionScenarioSelectScreen
+import com.bisayaspeak.ai.ui.missions.MissionTalkScreen
 import com.bisayaspeak.ai.ui.roleplay.RoleplayChatScreen
 import com.bisayaspeak.ai.ui.roleplay.RoleplayListScreen
+import com.bisayaspeak.ai.ui.screens.AiTranslatorScreen
 import com.bisayaspeak.ai.ui.screens.FeedbackScreen
 import com.bisayaspeak.ai.ui.screens.FlashcardScreen
 import com.bisayaspeak.ai.ui.screens.LessonResultScreen
@@ -76,14 +80,17 @@ enum class AppRoute(val route: String) {
     SignUp("signup"),
     Feedback("feedback"),
     Upgrade("upgrade"),
-    LessonResult("result_screen/{correctCount}/{earnedXP}/{clearedLevel}")
+    LessonResult("result_screen/{correctCount}/{earnedXP}/{clearedLevel}"),
+    MissionScenarioSelect("mission/scenario"),
+    MissionTalk("mission/talk/{scenarioId}"),
+    AiTranslator("ai/translator")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavGraph(
     navController: androidx.navigation.NavHostController,
-    isPremium: Boolean,
+    userPlan: UserPlan,
     showPremiumTestToggle: Boolean,
     onTogglePremiumTest: () -> Unit,
     listeningViewModelFactory: ListeningViewModelFactory
@@ -112,10 +119,13 @@ fun AppNavGraph(
     // 簡易的な UI State
     val homeViewModel: HomeViewModel = viewModel()
     val homeStatus by homeViewModel.homeStatus.collectAsState()
-    val accountUiState = remember(isPremium, currentUser, isLiteBuild) {
+    val isPaidPlan = userPlan != UserPlan.LITE
+    val isPremiumPlan = userPlan == UserPlan.PREMIUM
+
+    val accountUiState = remember(isPremiumPlan, currentUser, isLiteBuild) {
         AccountUiState(
             email = currentUser?.email ?: "",
-            isPremium = isPremium,
+            isPremium = isPremiumPlan,
             loginType = if (!isLiteBuild && currentUser != null) LoginType.Email else LoginType.Guest
         )
     }
@@ -125,10 +135,12 @@ fun AppNavGraph(
         startDestination = AppRoute.Home.route
     ) {
         composable(AppRoute.Home.route) {
-            BannerScreenContainer(isPremium = isPremium) {
+            BannerScreenContainer(userPlan = userPlan) {
                 HomeScreen(
                     homeStatus = homeStatus,
                     isLiteBuild = isLiteBuild,
+                    isPremiumPlan = isPremiumPlan,
+
                     onStartLearning = {
                         val destination = if (homeStatus.currentLevel < 3) {
                             AppRoute.LevelSelection.route
@@ -141,8 +153,21 @@ fun AppNavGraph(
                         when (feature) {
                             // Premium機能（ロック済み）は何もしない
                             FeatureId.TRANSLATE -> { /* Locked - do nothing */ }
-                            FeatureId.AI_CHAT -> { /* Locked - do nothing */ }
+                            FeatureId.AI_CHAT -> {
+                                if (isPremiumPlan) {
+                                    navController.navigate(AppRoute.MissionScenarioSelect.route)
+                                } else {
+                                    navController.navigate(AppRoute.Upgrade.route)
+                                }
+                            }
                             FeatureId.ADVANCED_ROLE_PLAY -> { /* Locked - do nothing */ }
+                            FeatureId.AI_TRANSLATOR -> {
+                                if (isPremiumPlan) {
+                                    navController.navigate(AppRoute.AiTranslator.route)
+                                } else {
+                                    navController.navigate(AppRoute.Upgrade.route)
+                                }
+                            }
 
                             // 無料機能のみナビゲーション
                             FeatureId.PRONUNCIATION -> if (!isLiteBuild) navController.navigate(AppRoute.PracticeCategories.route)
@@ -161,9 +186,10 @@ fun AppNavGraph(
 
         composable(AppRoute.Account.route) {
             if (isLiteBuild) {
-                BannerScreenContainer(isPremium = isPremium) {
+                BannerScreenContainer(userPlan = userPlan) {
                     AccountScreen(
                         uiState = accountUiState,
+
                         onBack = { navController.popBackStack() },
                         onLogin = {},
                         onCreateAccount = {},
@@ -171,15 +197,16 @@ fun AppNavGraph(
                         onOpenPremiumInfo = { /* Premium info not implemented */ },
                         onOpenFeedback = { /* Lite版ではフィードバック画面を利用しない */ },
                         showPremiumTestToggle = false,
-                        premiumTestEnabled = isPremium,
+                        premiumTestEnabled = isPremiumPlan,
                         onTogglePremiumTest = null,
                         authEnabled = false
                     )
                 }
             } else {
-                BannerScreenContainer(isPremium = isPremium) {
+                BannerScreenContainer(userPlan = userPlan) {
                     AccountScreen(
                         uiState = accountUiState,
+
                         onBack = { navController.popBackStack() },
                         onLogin = { navController.navigate(AppRoute.SignIn.route) },
                         onCreateAccount = { navController.navigate(AppRoute.SignUp.route) },
@@ -192,8 +219,9 @@ fun AppNavGraph(
                         onOpenPremiumInfo = { /* Premium info not implemented */ },
                         onOpenFeedback = { navController.navigate(AppRoute.Feedback.route) },
                         showPremiumTestToggle = showPremiumTestToggle,
-                        premiumTestEnabled = isPremium,
+                        premiumTestEnabled = isPremiumPlan,
                         onTogglePremiumTest = { onTogglePremiumTest() },
+
                         authEnabled = true
                     )
                 }
@@ -241,6 +269,42 @@ fun AppNavGraph(
             )
         }
 
+        composable(AppRoute.MissionScenarioSelect.route) {
+            if (!isPremiumPlan) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(AppRoute.Upgrade.route)
+                }
+            } else {
+                MissionScenarioSelectScreen(
+                    onBack = { navController.popBackStack() },
+                    onScenarioSelected = { scenario ->
+                        navController.navigate(
+                            AppRoute.MissionTalk.route.replace("{scenarioId}", scenario.id)
+                        )
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = AppRoute.MissionTalk.route,
+            arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val scenarioId = backStackEntry.arguments?.getString("scenarioId")
+            if (!isPremiumPlan) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(AppRoute.Upgrade.route)
+                }
+            } else if (scenarioId != null) {
+                MissionTalkScreen(
+                    scenarioId = scenarioId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            } else {
+                navController.popBackStack()
+            }
+        }
+
         composable(AppRoute.LevelSelection.route) {
             val app = context.applicationContext as MyApp
             val unlockedFlow = remember { app.userProgressRepository.getUnlockedLevels() }
@@ -283,10 +347,11 @@ fun AppNavGraph(
 
         if (!isLiteBuild) {
             composable(AppRoute.Translation.route) {
-                BannerScreenContainer(isPremium = isPremium) {
+                BannerScreenContainer(userPlan = userPlan) {
                     TranslateScreen(
-                        isPremium = isPremium,
+                        isPremium = isPremiumPlan,
                         onOpenPremiumInfo = { /* Premium not implemented */ },
+
                         onOpenConversationMode = { /* Conversation mode not implemented */ }
                     )
                 }
@@ -294,7 +359,7 @@ fun AppNavGraph(
         }
 
         composable(AppRoute.Flashcards.route) {
-            BannerScreenContainer(isPremium = isPremium) {
+            BannerScreenContainer(userPlan = userPlan) {
                 FlashcardScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -304,14 +369,15 @@ fun AppNavGraph(
         if (!isLiteBuild) {
             // Practice Categories
             composable(AppRoute.PracticeCategories.route) {
-                BannerScreenContainer(isPremium = isPremium) {
+                BannerScreenContainer(userPlan = userPlan) {
                     PracticeCategoryScreen(
                         onNavigateBack = { navController.popBackStack() },
                         onCategorySelected = { category ->
                             // 5問連続出題画面に遷移
                             navController.navigate("practice/quiz/$category")
                         },
-                        isPremium = isPremium
+                        userPlan = userPlan,
+                        onNavigateToUpgrade = { navController.navigate(AppRoute.Upgrade.route) }
                     )
                 }
             }
@@ -322,11 +388,11 @@ fun AppNavGraph(
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
             ) { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category") ?: ""
-                BannerScreenContainer(isPremium = isPremium) {
+                BannerScreenContainer(userPlan = userPlan) {
                     PracticeQuizScreen(
                         category = category,
                         onNavigateBack = { navController.popBackStack() },
-                        isPremium = isPremium
+                        isPremium = isPremiumPlan
                     )
                 }
             }
@@ -337,9 +403,10 @@ fun AppNavGraph(
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
             ) { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category") ?: ""
-                BannerScreenContainer(isPremium = isPremium) {
+                BannerScreenContainer(userPlan = userPlan) {
                     PracticeWordListScreen(
                         category = category,
+
                         onNavigateBack = { navController.popBackStack() },
                         onWordClick = { wordId ->
                             navController.navigate("practice/word/$wordId")
@@ -354,11 +421,11 @@ fun AppNavGraph(
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("id") ?: ""
-                BannerScreenContainer(isPremium = isPremium) {
+                BannerScreenContainer(userPlan = userPlan) {
                     PracticeWordDetailScreen(
                         id = id,
                         onNavigateBack = { navController.popBackStack() },
-                        isPremium = isPremium
+                        isPremium = isPremiumPlan
                     )
                 }
             }
@@ -369,12 +436,13 @@ fun AppNavGraph(
             arguments = listOf(navArgument("level") { type = NavType.IntType })
         ) { backStackEntry ->
             val level = backStackEntry.arguments?.getInt("level") ?: 1
-            BannerScreenContainer(isPremium = isPremium) {
+            BannerScreenContainer(userPlan = userPlan) {
                 val viewModel: ListeningViewModel = viewModel(factory = listeningViewModelFactory)
                 ListeningScreen(
                     navController = navController,
                     level = level,
-                    isPremium = isPremium,
+                    isPremium = isPremiumPlan,
+
                     onNavigateBack = { navController.popBackStack() },
                     onShowRewardedAd = {
                         AdMobManager.loadRewarded(context)
@@ -391,22 +459,23 @@ fun AppNavGraph(
 
         // Quiz - Direct to QuizScreen
         composable(AppRoute.Quiz.route) {
-            BannerScreenContainer(isPremium = isPremium) {
+            BannerScreenContainer(userPlan = userPlan) {
                 QuizScreen(
                     level = LearningLevel.BEGINNER,
+
                     onNavigateBack = { navController.popBackStack() },
                     onQuizStart = {
                         // クイズ開始時は何もしない
                     },
                     onQuizComplete = {
                         // クイズ終了時にインタースティシャル広告を表示（無料版のみ）
-                        if (!isPremium) {
+                        if (!isPremiumPlan) {
                             AdMobManager.showInterstitial(activity) {
                                 AdMobManager.loadInterstitial(context)
                             }
                         }
                     },
-                    isPremium = isPremium,
+                    isPremium = isPremiumPlan,
                     navController = navController
                 )
             }
@@ -445,11 +514,11 @@ fun AppNavGraph(
             val scenario = remember(scenarioId) { repository.getScenarios().find { it.id == scenarioId } }
 
             if (scenario != null) {
-                BannerScreenContainer(isPremium = isPremium) {
+                BannerScreenContainer(userPlan = userPlan) {
                     MockRolePlayScreen(
                         scenario = scenario,
                         onNavigateBack = { navController.popBackStack() },
-                        isPremium = isPremium
+                        isPremium = isPremiumPlan
                     )
                 }
             } else {
@@ -464,19 +533,23 @@ fun AppNavGraph(
 
 @Composable
 private fun BannerScreenContainer(
-    isPremium: Boolean = false,
+    userPlan: UserPlan,
     content: @Composable () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .navigationBarsPadding()
-    ) {
-        Box(modifier = Modifier.weight(1f, fill = true)) {
+    val isPaid = userPlan != UserPlan.LITE
+    if (isPaid) {
+        Box(modifier = Modifier.fillMaxSize()) {
             content()
         }
-        // 無料版のみバナー広告を表示
-        if (!isPremium) {
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding()
+        ) {
+            Box(modifier = Modifier.weight(1f, fill = true)) {
+                content()
+            }
             AdMobBanner(
                 adUnitId = AdUnitIds.BANNER_MAIN,
                 modifier = Modifier

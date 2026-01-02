@@ -7,11 +7,17 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.bisayaspeak.ai.billing.BillingManager
 import com.bisayaspeak.ai.data.PurchaseStore
+import com.bisayaspeak.ai.data.model.UserPlan
 import com.bisayaspeak.ai.ui.ads.AdMobManager
 import com.bisayaspeak.ai.ui.navigation.AppNavGraph
 import com.bisayaspeak.ai.ui.theme.BisayaSpeakAITheme
@@ -64,15 +70,18 @@ class MainActivity : ComponentActivity() {
             BisayaSpeakAITheme {
 
                 val navController = rememberNavController()
-
-                // Debug時のみ Premiumトグル有効
-                var isPremium by remember { mutableStateOf(false) }
-
+                val basePlan by billingManager.userPlan.collectAsState(initial = UserPlan.LITE)
+                var premiumTestEnabled by remember { mutableStateOf(false) }
+                val effectivePlan = if (BuildConfig.DEBUG && premiumTestEnabled) {
+                    UserPlan.PREMIUM
+                } else {
+                    basePlan
+                }
                 AppNavGraph(
                     navController = navController,
-                    isPremium = isPremium,
+                    userPlan = effectivePlan,
                     showPremiumTestToggle = BuildConfig.DEBUG,
-                    onTogglePremiumTest = { isPremium = !isPremium },
+                    onTogglePremiumTest = { premiumTestEnabled = !premiumTestEnabled },
                     listeningViewModelFactory = listeningViewModelFactory
                 )
             }

@@ -54,6 +54,7 @@ fun PracticeWordDetailScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val practiceViewModel: PracticeViewModel = viewModel()
     val pronunciationRepository = remember { PronunciationRepository() }
     val feedbackRepository = remember { PronunciationFeedbackRepository() }
@@ -111,6 +112,7 @@ fun PracticeWordDetailScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -321,8 +323,15 @@ fun PracticeWordDetailScreen(
                         label = "scale"
                     )
                     
+                        val isPronunciationMaintenance = true
                         FloatingActionButton(
                             onClick = {
+                            if (isPronunciationMaintenance) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("現在アップグレード準備中です (Under maintenance for upgrade)")
+                                }
+                                return@FloatingActionButton
+                            }
                             if (!hasPermission) {
                                 permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                 return@FloatingActionButton

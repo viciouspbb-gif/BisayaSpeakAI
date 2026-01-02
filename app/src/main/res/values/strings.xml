@@ -88,6 +88,7 @@
     <string name="incorrect">❌ Incorrect</string>
     <string name="correct_answer">Correct answer: %s</string>
     <string name="meaning">Meaning: %s</string>
+    <string name="use_voice_hint_prompt">答えが気になる？音声ヒントでチェックしましょう！</string>
     <string name="next">Next</string>
     <string name="completed">Completed!</string>
     <string name="score_result">Score</string>

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import com.android.billingclient.api.*
+import com.bisayaspeak.ai.data.model.UserPlan
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +45,8 @@ class BillingManager(private val context: Context) {
     
     private val _products = MutableStateFlow<List<ProductDetails>>(emptyList())
     val products: StateFlow<List<ProductDetails>> = _products.asStateFlow()
+    private val _userPlan = MutableStateFlow(UserPlan.LITE)
+    val userPlan: StateFlow<UserPlan> = _userPlan.asStateFlow()
     
     // 購入成功コールバック
     var onPurchaseSuccess: ((String) -> Unit)? = null
@@ -82,6 +85,7 @@ class BillingManager(private val context: Context) {
             _isPremium.value = true
             _isProUnlocked.value = true
             _hasPremiumAI.value = true
+            refreshUserPlan()
             Log.d(TAG, "Premium enabled - isDebug=$isDebug, isDeveloper=${isDeveloperAccount()}")
             onReady()
             return
@@ -181,6 +185,7 @@ class BillingManager(private val context: Context) {
                 _hasPremiumAI.value = hasPremiumAI
                 _isPremium.value = hasPremiumAI // Premium AIは全機能含む
                 Log.d(TAG, "Premium AI status: $hasPremiumAI (${purchases.size} subs)")
+                refreshUserPlan()
             }
         }
         
@@ -201,6 +206,7 @@ class BillingManager(private val context: Context) {
                     _isPremium.value = true // ProもPremium扱い
                 }
                 Log.d(TAG, "Pro Unlock status: $hasProUnlock (${purchases.size} in-app)")
+                refreshUserPlan()
             }
         }
     }
@@ -267,9 +273,17 @@ class BillingManager(private val context: Context) {
                             Log.d(TAG, "Premium AI purchased")
                         }
                     }
+                    refreshUserPlan()
                 }
             }
         }
+    }
+
+    private fun refreshUserPlan() {
+        _userPlan.value = UserPlan.fromFlags(
+            isProUnlocked = _isProUnlocked.value,
+            hasPremiumAI = _hasPremiumAI.value
+        )
     }
     
     /**
@@ -292,6 +306,7 @@ class BillingManager(private val context: Context) {
      */
     fun restorePurchases(onComplete: (Boolean) -> Unit) {
         checkPremiumStatus()
+        refreshUserPlan()
         onComplete(_isPremium.value)
     }
     
