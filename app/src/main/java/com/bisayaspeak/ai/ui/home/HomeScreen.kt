@@ -1,7 +1,9 @@
 package com.bisayaspeak.ai.ui.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +34,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Quiz
-import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.AlertDialog
@@ -62,10 +64,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bisayaspeak.ai.R
+
+enum class FeatureTier {
+    PRO,
+    PREMIUM
+}
 
 @Immutable
 data class FeatureItem(
@@ -73,6 +81,7 @@ data class FeatureItem(
     val title: String,
     val subtitle: String,
     val icon: ImageVector,
+    val tier: FeatureTier,
     val isLocked: Boolean = false
 )
 
@@ -95,6 +104,7 @@ fun HomeScreen(
     homeStatus: HomeStatus,
     isLiteBuild: Boolean,
     isPremiumPlan: Boolean,
+    isProUnlocked: Boolean,
     onStartLearning: () -> Unit,
     onClickFeature: (FeatureId) -> Unit,
     onClickProfile: () -> Unit,
@@ -106,25 +116,36 @@ fun HomeScreen(
 
     val proFeatures = listOf(
         FeatureItem(
-            id = FeatureId.PRONUNCIATION,
-            title = stringResource(R.string.pro_feature_speaking),
-            subtitle = "",
-            icon = Icons.Filled.RecordVoiceOver,
-            isLocked = true
+            id = FeatureId.AI_TRANSLATOR,
+            title = "AI 翻訳機",
+            subtitle = "ネイティブ翻訳",
+            icon = Icons.Outlined.Translate,
+            tier = FeatureTier.PREMIUM,
+            isLocked = !isPremiumPlan
+        ),
+        FeatureItem(
+            id = FeatureId.AI_CHAT,
+            title = "AI ミッション",
+            subtitle = "実践ボイス会話",
+            icon = Icons.Filled.Psychology,
+            tier = FeatureTier.PREMIUM,
+            isLocked = !isPremiumPlan
         ),
         FeatureItem(
             id = FeatureId.QUIZ,
-            title = stringResource(R.string.pro_feature_quiz),
-            subtitle = "",
+            title = "おさらいクイズ",
+            subtitle = "苦手克服・総復習",
             icon = Icons.Filled.Quiz,
-            isLocked = true
+            tier = FeatureTier.PRO,
+            isLocked = !isProUnlocked && !isPremiumPlan
         ),
         FeatureItem(
             id = FeatureId.ROLE_PLAY,
-            title = stringResource(R.string.pro_feature_roleplay),
-            subtitle = "",
-            icon = Icons.Filled.Psychology,
-            isLocked = !isPremiumPlan
+            title = "基礎ロールプレイ",
+            subtitle = "パネル選択形式",
+            icon = Icons.Filled.ViewList,
+            tier = FeatureTier.PRO,
+            isLocked = !isProUnlocked && !isPremiumPlan
         )
     )
 
@@ -176,11 +197,11 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val handleProFeatureClick: (FeatureId) -> Unit = { featureId ->
-            if (featureId == FeatureId.ROLE_PLAY) {
-                onClickFeature(featureId)
-            } else {
+        val handleProFeatureClick: (FeatureItem) -> Unit = { feature ->
+            if (feature.isLocked) {
                 showProDialog = true
+            } else {
+                onClickFeature(feature.id)
             }
         }
 
@@ -207,30 +228,6 @@ fun HomeScreen(
             proFeatures = proFeatures,
             onFeatureClick = handleProFeatureClick,
             modifier = Modifier.padding(bottom = 20.dp)
-        )
-
-        MissionFeatureCard(
-            title = "AI Mission Talk",
-            subtitle = "ボイスファーストで交渉・恋愛・ビジネスのミッションを突破しよう。",
-            icon = Icons.Outlined.Bolt,
-            isPremiumPlan = isPremiumPlan,
-            onClick = { onClickFeature(FeatureId.AI_CHAT) },
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        MissionFeatureCard(
-            title = "AI Translator",
-            subtitle = "ネイティブの口語感で一瞬翻訳",
-            icon = Icons.Outlined.Translate,
-            isPremiumPlan = isPremiumPlan,
-            onClick = {
-                if (isPremiumPlan) {
-                    onClickFeature(FeatureId.AI_TRANSLATOR)
-                } else {
-                    showProDialog = true
-                }
-            },
-            modifier = Modifier.padding(bottom = 16.dp)
         )
 
         BannerPlaceholder()
@@ -631,7 +628,7 @@ private fun StartLearningCard(
 @Composable
 private fun ProFeaturesSection(
     proFeatures: List<FeatureItem>,
-    onFeatureClick: (FeatureId) -> Unit,
+    onFeatureClick: (FeatureItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -654,7 +651,7 @@ private fun ProFeaturesSection(
             proFeatures.forEach { feature ->
                 QuickActionButton(
                     item = feature,
-                    onClick = { onFeatureClick(feature.id) },
+                    onClick = { onFeatureClick(feature) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -668,53 +665,115 @@ private fun QuickActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val (accent, gradient) = when (item.tier) {
+        FeatureTier.PREMIUM -> Color(0xFFFFC857) to Brush.linearGradient(
+            listOf(
+                Color(0xFF35270F),
+                Color(0xFF5C3B0F),
+                Color(0xFF7B4D11)
+            )
+        )
+
+        FeatureTier.PRO -> Color(0xFF60A5FA) to Brush.linearGradient(
+            listOf(
+                Color(0xFF0F2E65),
+                Color(0xFF133E79),
+                Color(0xFF1F4E93)
+            )
+        )
+    }
+
+    val badgeLabel = when (item.tier) {
+        FeatureTier.PREMIUM -> "PREMIUM"
+        FeatureTier.PRO -> "PRO"
+    }
+
+    val borderColor = if (item.isLocked) accent.copy(alpha = 0.4f) else accent
+
     Card(
         modifier = modifier
-            .height(96.dp)
-            .alpha(if (item.isLocked) 0.65f else 1f)
+            .height(110.dp)
+            .alpha(if (item.isLocked) 0.6f else 1f)
             .clickable { onClick() },
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(24.dp),
+        border = BorderStroke(1.8.dp, borderColor),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1E1E2E)
+            containerColor = Color.Transparent
         ),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 10.dp, vertical = 8.dp)
+                .background(gradient)
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally
+                verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.Top),
+                horizontalAlignment = Alignment.Start
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Surface(
+                        color = Color.Black.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(1.dp, accent)
+                    ) {
+                        Text(
+                            text = badgeLabel,
+                            color = accent,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                    if (item.isLocked) {
+                        Icon(
+                            imageVector = Icons.Filled.Lock,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
                 Icon(
                     imageVector = item.icon,
                     contentDescription = item.title,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(30.dp)
+                    tint = accent,
+                    modifier = Modifier.size(32.dp)
                 )
 
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        ),
+                        maxLines = 1
                     )
-                )
-            }
-
-            if (item.isLocked) {
-                Icon(
-                    imageVector = Icons.Filled.Lock,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .size(18.dp)
-                )
+                    if (item.subtitle.isNotBlank()) {
+                        Text(
+                            text = item.subtitle,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontSize = 11.sp
+                            ),
+                            maxLines = 1
+                        )
+                    }
+                }
             }
         }
     }

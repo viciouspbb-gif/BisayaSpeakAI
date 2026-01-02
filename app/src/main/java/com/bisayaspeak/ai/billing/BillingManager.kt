@@ -73,50 +73,41 @@ class BillingManager(private val context: Context) {
         }
         return false
     }
+
+    /**
+     * 開発者の実機かどうかを判定
+     */
+    private fun isMyDevice(): Boolean {
+        val manufacturer = android.os.Build.MANUFACTURER.orEmpty()
+        val brand = android.os.Build.BRAND.orEmpty()
+        val model = android.os.Build.MODEL.orEmpty()
+
+        Log.d(
+            TAG,
+            "Device check => manufacturer: $manufacturer / brand: $brand / model: $model"
+        )
+
+        return manufacturer.equals("SHARP", ignoreCase = true) ||
+            brand.equals("SHARP", ignoreCase = true) ||
+            model.contains("sense9", ignoreCase = true)
+    }
     
     /**
      * Billing Clientを初期化
      */
     fun initialize(onReady: () -> Unit = {}) {
-        // デバッグビルドまたは開発者アカウントの場合は即座にプレミアム扱い
-        val isDebug = (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
-        
-        if (isDebug || isDeveloperAccount()) {
-            _isPremium.value = true
-            _isProUnlocked.value = true
-            _hasPremiumAI.value = true
-            refreshUserPlan()
-            Log.d(TAG, "Premium enabled - isDebug=$isDebug, isDeveloper=${isDeveloperAccount()}")
-            onReady()
-            return
-        }
-        
-        billingClient = BillingClient.newBuilder(context)
-            .setListener { billingResult, purchases ->
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-                    handlePurchases(purchases)
-                }
-            }
-            .enablePendingPurchases()
-            .build()
-        
-        billingClient?.startConnection(object : BillingClientStateListener {
-            override fun onBillingSetupFinished(billingResult: BillingResult) {
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    Log.d(TAG, "Billing setup finished successfully")
-                    queryProducts()
-                    checkPremiumStatus()
-                    onReady()
-                } else {
-                    Log.e(TAG, "Billing setup failed: ${billingResult.debugMessage}")
-                }
-            }
-            
-            override fun onBillingServiceDisconnected() {
-                Log.w(TAG, "Billing service disconnected")
-                // 再接続を試みる
-            }
-        })
+        // 【強制解除】テスト用に無条件で全フラグをONにする
+        _isPremium.value = true
+        _isProUnlocked.value = true
+        _hasPremiumAI.value = true
+
+        // UIに反映させる
+        refreshUserPlan()
+
+        Log.d(TAG, "🔓 FORCE UNLOCKED: All features enabled for testing")
+
+        // 準備完了を通知して終了（課金サーバーへの接続はスキップ）
+        onReady()
     }
     
     /**
