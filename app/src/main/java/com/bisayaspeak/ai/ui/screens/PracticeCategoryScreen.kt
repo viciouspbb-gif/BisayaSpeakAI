@@ -11,7 +11,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.data.model.UserPlan
 import com.bisayaspeak.ai.ui.viewmodel.PracticeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,18 +42,31 @@ fun PracticeCategoryScreen(
     onNavigateBack: () -> Unit,
     onCategorySelected: (String) -> Unit,
     onNavigateToUpgrade: () -> Unit = {},
-    isPremium: Boolean = false,
+    userPlan: UserPlan = UserPlan.LITE,
     viewModel: PracticeViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val groupedItems by viewModel.groupedItems.collectAsState()
     var showProDialog by remember { mutableStateOf(false) }
-    
+    val isUserPremium = userPlan == UserPlan.PREMIUM
+    val premiumOnlyCategories = remember {
+        setOf(
+            "ビジネス", "Business",
+            "恋愛", "恋愛編", "恋愛会話", "恋愛ミッション",
+            "Deep Romance"
+        )
+    }
     // カテゴリとPremium情報をペアで保持
     val categoryInfo = remember(groupedItems) {
         groupedItems.map { (category, items) ->
-            category to items.any { it.isPremium }
+            val isPremiumCategory = items.any { it.isPremium }
+            val isPremiumOnly = isPremiumCategory || premiumOnlyCategories.contains(category)
+            CategoryInfo(
+                name = category,
+                isPremiumCategory = isPremiumCategory,
+                isPremiumOnly = isPremiumOnly
+            )
         }
     }
     
@@ -105,22 +129,17 @@ fun PracticeCategoryScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(categoryInfo) { (category, isPremiumCategory) ->
+            items(categoryInfo) { (category, isPremiumCategory, isPremiumOnly) ->
                 CategoryCard(
                     category = category,
                     isPremiumCategory = isPremiumCategory,
-                    isUserPremium = isPremium,
+                    isPremiumOnly = isPremiumOnly,
+                    isUserPremium = isUserPremium,
                     onClick = {
-                        if (!isPremiumCategory || isPremium) {
-                            onCategorySelected(category)
-                        } else {
-                            // ロックされたカテゴリをタップ
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.locked_toast_pro),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                        if (isPremiumOnly && !isUserPremium) {
                             showProDialog = true
+                        } else {
+                            onCategorySelected(category)
                         }
                     }
                 )
@@ -129,17 +148,24 @@ fun PracticeCategoryScreen(
     }
 }
 
+private data class CategoryInfo(
+    val name: String,
+    val isPremiumCategory: Boolean,
+    val isPremiumOnly: Boolean
+)
+
 @Composable
 private fun CategoryCard(
     category: String,
     isPremiumCategory: Boolean,
+    isPremiumOnly: Boolean,
     isUserPremium: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // ロック状態による色変更
-    val isLocked = isPremiumCategory && !isUserPremium
-    val containerColor = if (isLocked) Color(0xFFB0B0B0) else Color(0xFFE7E0EC)
+    val isLocked = (isPremiumCategory || isPremiumOnly) && !isUserPremium
+    val containerColor = if (isLocked) Color(0xFF2C2C2C) else Color(0xFFE7E0EC)
     val contentColor = if (isLocked) Color.White else Color.Black
     
     Card(
@@ -177,6 +203,13 @@ private fun CategoryCard(
                     fontWeight = FontWeight.Bold,
                     color = contentColor
                 )
+                if (isLocked) {
+                    Text(
+                        text = "PREMIUM",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFFC107)
+                    )
+                }
             }
         }
     }

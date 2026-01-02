@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -82,6 +84,7 @@ enum class FeatureId {
     FLASHCARDS,
     ROLE_PLAY,
     AI_CHAT,
+    AI_TRANSLATOR,
     ADVANCED_ROLE_PLAY,
     ACCOUNT,
     UPGRADE
@@ -91,6 +94,7 @@ enum class FeatureId {
 fun HomeScreen(
     homeStatus: HomeStatus,
     isLiteBuild: Boolean,
+    isPremiumPlan: Boolean,
     onStartLearning: () -> Unit,
     onClickFeature: (FeatureId) -> Unit,
     onClickProfile: () -> Unit,
@@ -120,7 +124,7 @@ fun HomeScreen(
             title = stringResource(R.string.pro_feature_roleplay),
             subtitle = "",
             icon = Icons.Filled.Psychology,
-            isLocked = false // ★テスト用：ロック解除
+            isLocked = !isPremiumPlan
         )
     )
 
@@ -205,6 +209,30 @@ fun HomeScreen(
             modifier = Modifier.padding(bottom = 20.dp)
         )
 
+        MissionFeatureCard(
+            title = "AI Mission Talk",
+            subtitle = "ボイスファーストで交渉・恋愛・ビジネスのミッションを突破しよう。",
+            icon = Icons.Outlined.Bolt,
+            isPremiumPlan = isPremiumPlan,
+            onClick = { onClickFeature(FeatureId.AI_CHAT) },
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        MissionFeatureCard(
+            title = "AI Translator",
+            subtitle = "ネイティブの口語感で一瞬翻訳",
+            icon = Icons.Outlined.Translate,
+            isPremiumPlan = isPremiumPlan,
+            onClick = {
+                if (isPremiumPlan) {
+                    onClickFeature(FeatureId.AI_TRANSLATOR)
+                } else {
+                    showProDialog = true
+                }
+            },
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
         BannerPlaceholder()
 
         if (showProDialog) {
@@ -237,6 +265,101 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(60.dp))
         Spacer(modifier = Modifier.navigationBarsPadding())
+    }
+}
+
+@Composable
+private fun MissionFeatureCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    isPremiumPlan: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val gradient = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF071C32),
+            Color(0xFF0D324D),
+            Color(0xFF0F3D63)
+        )
+    )
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(
+            modifier = Modifier
+                .background(gradient)
+                .padding(20.dp)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Bolt,
+                        contentDescription = null,
+                        tint = Color(0xFFFFC857)
+                    )
+                    Text(
+                        text = "PREMIUM FEATURE",
+                        color = Color(0xFFFFC857),
+                        fontWeight = FontWeight.Black
+                    )
+                }
+
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    text = subtitle,
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 15.sp
+                )
+
+                Surface(
+                    color = Color.White.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Text(
+                        text = if (isPremiumPlan) "プレミアム開放中" else "アップグレードで解放",
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            if (!isPremiumPlan) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.35f))
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Lock,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(12.dp)
+                    )
+                }
+            }
+        }
     }
 }
 

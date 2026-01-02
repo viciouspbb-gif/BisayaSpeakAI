@@ -97,6 +97,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
 import androidx.compose.material.icons.filled.Star
 import com.bisayaspeak.ai.data.model.DifficultyLevel
@@ -593,6 +594,7 @@ private fun AnswerSlots(
 
 @Composable
 private fun ResultCard(isCorrect: Boolean, question: ListeningQuestion) {
+    val shouldRevealAnswer = isCorrect || !BuildConfig.IS_LITE_BUILD
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -615,16 +617,18 @@ private fun ResultCard(isCorrect: Boolean, question: ListeningQuestion) {
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(
-                text = stringResource(R.string.correct_answer, question.correctOrder.joinToString(" ")),
-                color = Color.Black,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = stringResource(R.string.meaning, question.meaning),
-                color = Color.DarkGray,
-                textAlign = TextAlign.Center
-            )
+            if (shouldRevealAnswer) {
+                Text(
+                    text = stringResource(R.string.correct_answer, question.correctOrder.joinToString(" ")),
+                    color = Color.Black,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = stringResource(R.string.meaning, question.meaning),
+                    color = Color.DarkGray,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -920,7 +924,8 @@ private fun ListeningAnswerArea(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    if (!isCorrect) {
+                    val showFullExplanation = isCorrect || !BuildConfig.IS_LITE_BUILD
+                    if (showFullExplanation) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
