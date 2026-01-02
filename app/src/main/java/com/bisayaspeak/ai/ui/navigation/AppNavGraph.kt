@@ -121,6 +121,7 @@ fun AppNavGraph(
     val homeStatus by homeViewModel.homeStatus.collectAsState()
     val isPaidPlan = userPlan != UserPlan.LITE
     val isPremiumPlan = userPlan == UserPlan.PREMIUM
+    val isProUnlocked = userPlan == UserPlan.STANDARD || userPlan == UserPlan.PREMIUM
 
     val accountUiState = remember(isPremiumPlan, currentUser, isLiteBuild) {
         AccountUiState(
@@ -140,6 +141,7 @@ fun AppNavGraph(
                     homeStatus = homeStatus,
                     isLiteBuild = isLiteBuild,
                     isPremiumPlan = isPremiumPlan,
+                    isProUnlocked = isProUnlocked,
 
                     onStartLearning = {
                         val destination = if (homeStatus.currentLevel < 3) {
@@ -151,8 +153,6 @@ fun AppNavGraph(
                     },
                     onClickFeature = { feature ->
                         when (feature) {
-                            // Premium機能（ロック済み）は何もしない
-                            FeatureId.TRANSLATE -> { /* Locked - do nothing */ }
                             FeatureId.AI_CHAT -> {
                                 if (isPremiumPlan) {
                                     navController.navigate(AppRoute.MissionScenarioSelect.route)
@@ -160,7 +160,6 @@ fun AppNavGraph(
                                     navController.navigate(AppRoute.Upgrade.route)
                                 }
                             }
-                            FeatureId.ADVANCED_ROLE_PLAY -> { /* Locked - do nothing */ }
                             FeatureId.AI_TRANSLATOR -> {
                                 if (isPremiumPlan) {
                                     navController.navigate(AppRoute.AiTranslator.route)
@@ -169,14 +168,16 @@ fun AppNavGraph(
                                 }
                             }
 
-                            // 無料機能のみナビゲーション
+                            FeatureId.TRANSLATE -> navController.navigate(AppRoute.Translation.route)
+                            FeatureId.ADVANCED_ROLE_PLAY -> { /* no-op (deprecated) */ }
+
                             FeatureId.PRONUNCIATION -> if (!isLiteBuild) navController.navigate(AppRoute.PracticeCategories.route)
                             FeatureId.LISTENING -> navController.navigate(AppRoute.LevelSelection.route)
                             FeatureId.QUIZ -> navController.navigate(AppRoute.Quiz.route)
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
-                            FeatureId.ROLE_PLAY -> navController.navigate("roleplay_list")
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
+                            else -> { /* Legacy/unused features */ }
                         }
                     },
                     onClickProfile = { navController.navigate(AppRoute.Account.route) }

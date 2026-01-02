@@ -1,5 +1,6 @@
 package com.bisayaspeak.ai.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -74,6 +75,7 @@ class MissionTalkViewModel(
             triggerFailure()
             return
         }
+        Log.d("MissionTalk", "User message sent: $trimmed")
 
         val userMessage = MissionChatMessage(
             primaryText = trimmed,
@@ -99,11 +101,13 @@ class MissionTalkViewModel(
         streamJob?.cancel()
         val job = viewModelScope.launch {
             var latestChunk: MissionChatMessage? = null
+            Log.d("MissionTalk", "Requesting AI reply...")
             repository.streamMissionReply(
                 context = scenario.context,
                 history = history.toList(),
                 userMessage = trimmed
             ).collect { chunk ->
+                Log.d("MissionTalk", "Received chunk: ${chunk.primaryText}")
                 latestChunk = chunk
                 applyAiChunk(chunk)
             }
