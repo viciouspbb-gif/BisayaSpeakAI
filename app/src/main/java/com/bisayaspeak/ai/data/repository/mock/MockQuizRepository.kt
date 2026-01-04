@@ -330,4 +330,7 @@ class MockQuizRepository {
 
         return combined.take(totalQuestions).shuffled()
     }
+
+    fun getAllQuestions(): List<MockQuizQuestion> =
+        beginnerQuestions + intermediateQuestions + advancedQuestions
 }

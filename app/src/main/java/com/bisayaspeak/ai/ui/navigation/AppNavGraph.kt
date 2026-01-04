@@ -40,6 +40,7 @@ import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.home.FeatureId
 import com.bisayaspeak.ai.ui.home.HomeScreen
 import com.bisayaspeak.ai.ui.home.HomeViewModel
+import com.bisayaspeak.ai.ui.missions.MissionListScreen
 import com.bisayaspeak.ai.ui.missions.MissionScenarioSelectScreen
 import com.bisayaspeak.ai.ui.missions.MissionTalkScreen
 import com.bisayaspeak.ai.ui.roleplay.RoleplayChatScreen
@@ -82,7 +83,7 @@ enum class AppRoute(val route: String) {
     Upgrade("upgrade"),
     LessonResult("result_screen/{correctCount}/{earnedXP}/{clearedLevel}"),
     MissionScenarioSelect("mission/scenario"),
-    MissionTalk("mission/talk/{scenarioId}"),
+    MissionTalk("mission/talk/{missionId}"),
     AiTranslator("ai/translator")
 }
 
@@ -177,6 +178,7 @@ fun AppNavGraph(
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
+                            FeatureId.ROLE_PLAY -> navController.navigate("roleplay_list")
                             else -> { /* Legacy/unused features */ }
                         }
                     },
@@ -270,17 +272,23 @@ fun AppNavGraph(
             )
         }
 
+        composable(AppRoute.AiTranslator.route) {
+            AiTranslatorScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(AppRoute.MissionScenarioSelect.route) {
             if (!isPremiumPlan) {
                 LaunchedEffect(Unit) {
                     navController.navigate(AppRoute.Upgrade.route)
                 }
             } else {
-                MissionScenarioSelectScreen(
-                    onBack = { navController.popBackStack() },
-                    onScenarioSelected = { scenario ->
+                MissionListScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onMissionSelect = { missionId ->
                         navController.navigate(
-                            AppRoute.MissionTalk.route.replace("{scenarioId}", scenario.id)
+                            AppRoute.MissionTalk.route.replace("{missionId}", missionId)
                         )
                     }
                 )
@@ -289,16 +297,16 @@ fun AppNavGraph(
 
         composable(
             route = AppRoute.MissionTalk.route,
-            arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
+            arguments = listOf(navArgument("missionId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val scenarioId = backStackEntry.arguments?.getString("scenarioId")
+            val missionId = backStackEntry.arguments?.getString("missionId")
             if (!isPremiumPlan) {
                 LaunchedEffect(Unit) {
                     navController.navigate(AppRoute.Upgrade.route)
                 }
-            } else if (scenarioId != null) {
+            } else if (missionId != null) {
                 MissionTalkScreen(
-                    scenarioId = scenarioId,
+                    scenarioId = missionId,
                     onNavigateBack = { navController.popBackStack() }
                 )
             } else {

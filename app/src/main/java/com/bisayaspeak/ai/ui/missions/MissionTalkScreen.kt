@@ -666,6 +666,7 @@ private fun launchSpeechRecognizer(
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         putExtra(RecognizerIntent.EXTRA_LANGUAGE, detectInputLanguage())
         putExtra(RecognizerIntent.EXTRA_PROMPT, "ビサヤ語で話す内容を日本語で話してOK（編集できます）")
+        putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
     }
     launcher.launch(intent)
 }

@@ -78,6 +78,7 @@ fun RoleplayChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val inputText by viewModel.inputText.collectAsState()
+    val selectedWords by viewModel.selectedWords.collectAsState()
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
     val messages = uiState.messages
@@ -143,7 +144,8 @@ fun RoleplayChatScreen(
                     .fillMaxWidth()
                     .imePadding()
             ) {
-                if (hintPhrases.isNotEmpty()) {
+                val showHintPanel = hintPhrases.isNotEmpty()
+                if (showHintPanel) {
                     HintPhrasePanel(
                         hints = hintPhrases,
                         onHintSelected = viewModel::sendHintPhrase
@@ -152,16 +154,18 @@ fun RoleplayChatScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                ChatInputBar(
-                    text = inputText,
-                    onTextChange = viewModel::onInputTextChange,
-                    onSendClick = {
-                        viewModel.sendMessage(inputText)
-                        focusManager.clearFocus()
-                    }
-                )
+                if (selectedWords.isEmpty()) {
+                    ChatInputBar(
+                        text = inputText,
+                        onTextChange = viewModel::onInputTextChange,
+                        onSendClick = {
+                            viewModel.sendMessage(inputText)
+                            focusManager.clearFocus()
+                        }
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 SmartAdBanner(isPremium = isPremium)
             }

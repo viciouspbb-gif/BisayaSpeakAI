@@ -21,7 +21,7 @@ import java.util.UUID
 
 class GeminiMissionRepository(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val missionModelName: String = "gemini-2.0-flash",
+    private val missionModelName: String = "gemini-1.5-flash",
     private val translationModelName: String = "gemini-1.5-flash"
 ) {
 
@@ -107,6 +107,27 @@ class GeminiMissionRepository(
         }
     }
 
+    suspend fun generateRoleplayReply(
+        systemPrompt: String,
+        history: List<MissionHistoryMessage>,
+        userMessage: String
+    ): Result<String> = withContext(ioDispatcher) {
+        runCatching {
+            val prompt = systemPrompt.ifBlank { DEFAULT_ROLEPLAY_PROMPT }
+            val contents = mutableListOf<Content>()
+            contents += content(role = "user") { text("SYSTEM:\n$prompt") }
+            contents += content(role = "model") { text("Understood. Staying in character and replying concisely.") }
+            history.forEach { message ->
+                val role = if (message.isUser) "user" else "model"
+                contents += content(role = role) { text(message.text) }
+            }
+            contents += content(role = "user") { text(userMessage) }
+
+            val response = missionModel.generateContent(*contents.toTypedArray())
+            response.text?.trim()?.takeIf { it.isNotEmpty() } ?: error("Empty roleplay response")
+        }
+    }
+
     private fun buildConversationContents(
         systemPrompt: String,
         history: List<MissionHistoryMessage>,
@@ -171,5 +192,8 @@ class GeminiMissionRepository(
             """\[BISAYA\]:\s*(.+?)(?=\[JAPANESE]|$)""".toRegex(RegexOption.DOT_MATCHES_ALL)
         private val JAPANESE_REGEX =
             """\[JAPANESE\]:\s*(.+)$""".toRegex(RegexOption.DOT_MATCHES_ALL)
+
+        private const val DEFAULT_ROLEPLAY_PROMPT =
+            "You are a friendly Bisaya speaking partner helping the user practice real-life conversations. Keep responses under 2 sentences, reply in Bisaya with optional short Japanese translation in parentheses, and always continue the dialogue with a follow-up question or prompt."
     }
 }
