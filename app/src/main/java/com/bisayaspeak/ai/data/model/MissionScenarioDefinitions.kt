@@ -7,7 +7,9 @@ data class MissionScenario(
     val subtitle: String,
     val difficultyLabel: String,
     val context: MissionContext,
-    val backgroundGradient: List<Color>
+    val backgroundGradient: List<Color>,
+    val openingMessage: String,
+    val systemPrompt: String
 )
 
 val missionScenarios: List<MissionScenario> = listOf(
@@ -26,7 +28,18 @@ val missionScenarios: List<MissionScenario> = listOf(
             tone = "陽気で少し早口。時々ジョークを挟む。",
             level = LearningLevel.INTERMEDIATE
         ),
-        backgroundGradient = listOf(Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364))
+        backgroundGradient = listOf(Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)),
+        openingMessage = """
+            ここはセブ島のカルボン市場。
+            あなたは今日の夕飯用に新鮮な魚を探しています。
+            元気な魚屋のおばちゃんに「今日は何がおすすめ？」と聞いてみましょう！
+            (例: Unsay nindot karon, Tiya?)
+        """.trimIndent(),
+        systemPrompt = """
+            You are a lively Cebuano fish vendor auntie in Carbon Market.
+            Speak in a mix of Bisaya and Cebuano-accented English, start by pitching a slightly high price,
+            but happily lower it when the user negotiates. Keep the conversation upbeat and playful.
+        """.trimIndent()
     ),
     MissionScenario(
         id = "staff_instruction",
@@ -43,7 +56,17 @@ val missionScenarios: List<MissionScenario> = listOf(
             tone = "冷静だが優しい指導者。丁寧に確認質問を挟む。",
             level = LearningLevel.ADVANCED
         ),
-        backgroundGradient = listOf(Color(0xFF1D2671), Color(0xFFC33764))
+        backgroundGradient = listOf(Color(0xFF1D2671), Color(0xFFC33764)),
+        openingMessage = """
+            開店まであと30分。ラッシュ前に新人スタッフへ指示を出します。
+            バッカーを整え、ドリンクマシンのチェック、そして予約リストの確認をお願いしましょう。
+            (例: Palihug check sa espresso machine ug lista sa reservations.)
+        """.trimIndent(),
+        systemPrompt = """
+            You are a calm but firm shift leader in a modern Cebu café.
+            Guide the trainee with clear Bisaya instructions, ask them to repeat the tasks,
+            and keep the tone supportive while ensuring accountability.
+        """.trimIndent()
     ),
     MissionScenario(
         id = "jealousy",
@@ -60,7 +83,17 @@ val missionScenarios: List<MissionScenario> = listOf(
             tone = "少し拗ねた恋人。すねた声調とユーモア混じり。",
             level = LearningLevel.ADVANCED
         ),
-        backgroundGradient = listOf(Color(0xFF360033), Color(0xFF0B8793))
+        backgroundGradient = listOf(Color(0xFF360033), Color(0xFF0B8793)),
+        openingMessage = """
+            ナイトマーケットの帰り道、恋人の表情が曇っています。
+            さっき友達と話していた相手のことを疑っているようです。
+            まずは優しく声をかけ、誤解を解く説明を始めてください。
+        """.trimIndent(),
+        systemPrompt = """
+            You are a slightly jealous but playful partner walking through the night market.
+            Express your doubts with humor, tease a little, but show you want reassurance.
+            React emotionally to the user's words and acknowledge sincere apologies.
+        """.trimIndent()
     ),
     MissionScenario(
         id = "making_up",
@@ -77,7 +110,17 @@ val missionScenarios: List<MissionScenario> = listOf(
             tone = "感情的だが心底信頼している親友。",
             level = LearningLevel.INTERMEDIATE
         ),
-        backgroundGradient = listOf(Color(0xFF41295A), Color(0xFF2F0743))
+        backgroundGradient = listOf(Color(0xFF41295A), Color(0xFF2F0743)),
+        openingMessage = """
+            ドタキャンが重なり、親友は明らかに怒っています。
+            カフェのテラス席で向かい合い、まずは心からの謝罪を伝えましょう。
+            その上で次に一緒にしたい計画を提案してみてください。
+        """.trimIndent(),
+        systemPrompt = """
+            You are a childhood best friend who feels hurt after repeated cancellations.
+            Speak candidly in Bisaya, showing disappointment but also deep trust.
+            Respond warmly when the user apologizes sincerely and suggest rebuilding plans together.
+        """.trimIndent()
     )
 )
 

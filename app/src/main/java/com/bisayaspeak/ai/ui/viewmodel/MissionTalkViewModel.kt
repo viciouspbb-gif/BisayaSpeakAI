@@ -44,12 +44,26 @@ class MissionTalkViewModel(
 
     private val missionScenario: MissionScenario? = getMissionScenario(scenarioId)
 
-    private val history = mutableListOf<MissionHistoryMessage>()
+    private val history = mutableListOf<MissionHistoryMessage>().apply {
+        missionScenario?.openingMessage
+            ?.takeIf { it.isNotBlank() }
+            ?.let { add(MissionHistoryMessage(text = it, isUser = false)) }
+    }
     private var streamJob: Job? = null
 
     private val _uiState = MutableStateFlow(
         MissionTalkUiState(
             scenario = missionScenario,
+            messages = missionScenario?.openingMessage
+                ?.takeIf { it.isNotBlank() }
+                ?.let {
+                    listOf(
+                        MissionChatMessage(
+                            primaryText = it,
+                            isUser = false
+                        )
+                    )
+                }.orEmpty(),
             remainingTurns = missionScenario?.context?.turnLimit ?: 0,
             missionStatus = missionScenario?.let { MissionStatus.IN_PROGRESS } ?: MissionStatus.ERROR,
             errorMessage = if (missionScenario == null) "ミッション情報が見つかりませんでした" else null

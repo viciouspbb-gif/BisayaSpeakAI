@@ -1,5 +1,7 @@
 package com.bisayaspeak.ai.ui.screens
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,11 +21,12 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -40,6 +43,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,13 +55,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.activity.compose.BackHandler
-import android.app.Activity
 import androidx.navigation.NavHostController
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
@@ -68,6 +70,7 @@ import com.bisayaspeak.ai.data.repository.mock.MockQuizRepository
 import com.bisayaspeak.ai.ui.components.SmartAdBanner
 import com.bisayaspeak.ai.ui.navigation.AppRoute
 import com.bisayaspeak.ai.ui.util.PracticeSessionManager
+import com.bisayaspeak.ai.utils.MistakeManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -80,7 +83,8 @@ fun QuizScreen(
     onQuizComplete: () -> Unit = {},
     onLessonFinished: (LessonResult) -> Unit = {},
     isPremium: Boolean = false,
-    navController: NavHostController
+    navController: NavHostController,
+    isReviewMode: Boolean = false
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -92,13 +96,20 @@ fun QuizScreen(
     
     val repository = remember { MockQuizRepository() }
     val isLiteBuild = BuildConfig.IS_LITE_BUILD
-    val questions = remember(level, isLiteBuild) {
-        val source = if (isLiteBuild) {
-            repository.getLiteQuizSet(totalQuestions = 10)
+    val mistakeIds by MistakeManager.mistakeIds.collectAsState()
+    val questions = remember(level, isLiteBuild, isReviewMode, mistakeIds) {
+        if (isReviewMode) {
+            repository.getAllQuestions()
+                .filter { it.id in mistakeIds }
+                .shuffled()
         } else {
-            repository.getQuestionsByLevel(level)
+            val source = if (isLiteBuild) {
+                repository.getLiteQuizSet(totalQuestions = 10)
+            } else {
+                repository.getQuestionsByLevel(level)
+            }
+            source.shuffled().take(10)
         }
-        source.shuffled().take(10)
     }
 
     var currentIndex by remember { mutableStateOf(0) }
@@ -111,14 +122,15 @@ fun QuizScreen(
     val total = questions.size
 
     val current = questions.getOrNull(currentIndex)
+    val currentCorrectAnswer = current?.options?.getOrNull(current.correctIndex)
     
     fun handleLessonCompletion() {
         if (lessonReported) return
         lessonReported = true
-        val baseXp = correctCount * 10
-        val bonus = if (correctCount == total && total == 10) 50 else 0
+        val baseXp = if (isReviewMode) 0 else correctCount * 10
+        val bonus = if (!isReviewMode && correctCount == total && total == 10) 50 else 0
         val xp = baseXp + bonus
-        val leveledUp = correctCount >= 8
+        val leveledUp = !isReviewMode && correctCount >= 8
         val result = LessonResult(
             correctCount = correctCount,
             totalQuestions = total,
@@ -127,11 +139,13 @@ fun QuizScreen(
         )
         coroutineScope.launch {
             val currentLevel = usageRepository.getCurrentLevel().first()
-            usageRepository.addXP(result.xpEarned)
             var clearedLevel = currentLevel
-            if (result.leveledUp) {
-                usageRepository.incrementLevel()
-                clearedLevel += 1
+            if (!isReviewMode) {
+                usageRepository.addXP(result.xpEarned)
+                if (result.leveledUp) {
+                    usageRepository.incrementLevel()
+                    clearedLevel += 1
+                }
             }
             onLessonFinished(result)
             navController.navigate("result_screen/${result.correctCount}/${result.xpEarned}/$clearedLevel") {
@@ -210,6 +224,8 @@ fun QuizScreen(
                 showFeedback = showFeedback,
                 hasSelection = selectedIndex != null,
                 isLastQuestion = currentIndex >= total - 1,
+                isCorrect = showFeedback && selectedIndex == current?.correctIndex,
+                correctAnswer = currentCorrectAnswer.orEmpty(),
                 isPremium = isPremium,
                 onAction = {
                     if (current == null) return@QuizBottomBar
@@ -218,6 +234,9 @@ fun QuizScreen(
                         showFeedback = true
                         if (selectedIndex == current.correctIndex) {
                             correctCount++
+                            MistakeManager.removeMistake(current.id)
+                        } else {
+                            MistakeManager.addMistake(current.id)
                         }
                     } else {
                         if (currentIndex < total - 1) {
@@ -241,8 +260,13 @@ fun QuizScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "結果画面へ移動しています...",
-                    color = Color.White
+                    text = if (isReviewMode && total == 0) {
+                        "復習する問題はありません！\n通常のレッスンやクイズで間違えると、ここに溜まっていきます。"
+                    } else {
+                        "結果画面へ移動しています..."
+                    },
+                    color = Color.White,
+                    textAlign = TextAlign.Center
                 )
             }
         } else {
@@ -290,7 +314,6 @@ fun QuizScreen(
                                     selectedIndex = index
                                 }
                             },
-                            explanation = current.explanationJa,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -436,7 +459,6 @@ private fun AnswerOptionsSection(
     correctIndex: Int,
     showFeedback: Boolean,
     onOptionSelected: (Int) -> Unit,
-    explanation: String?,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -490,56 +512,6 @@ private fun AnswerOptionsSection(
             }
         }
 
-        if (showFeedback) {
-            FeedbackCard(
-                isCorrect = selectedIndex == correctIndex,
-                correctAnswer = options[correctIndex],
-                explanation = explanation,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-private fun FeedbackCard(
-    isCorrect: Boolean,
-    correctAnswer: String,
-    explanation: String?,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isCorrect) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = if (isCorrect) "正解！" else "不正解",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = if (isCorrect) Color(0xFF2E7D32) else Color(0xFFC62828)
-            )
-            if (!isCorrect) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "正解は「$correctAnswer」です",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color(0xFF2E7D32)
-                )
-            }
-            explanation?.let {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black
-                )
-            }
-        }
     }
 }
 
@@ -548,6 +520,8 @@ private fun QuizBottomBar(
     showFeedback: Boolean,
     hasSelection: Boolean,
     isLastQuestion: Boolean,
+    isCorrect: Boolean,
+    correctAnswer: String,
     isPremium: Boolean,
     onAction: () -> Unit
 ) {
@@ -558,27 +532,123 @@ private fun QuizBottomBar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        if (showFeedback) {
+            ResultFeedbackPanel(
+                isCorrect = isCorrect,
+                correctAnswer = correctAnswer,
+                isLastQuestion = isLastQuestion,
+                onNext = onAction
+            )
+        } else {
+            Button(
+                onClick = onAction,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = hasSelection,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                )
+            ) {
+                Text(
+                    text = "回答を確認する",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            if (!isPremium) {
+                SmartAdBanner(isPremium = false)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultFeedbackPanel(
+    isCorrect: Boolean,
+    correctAnswer: String,
+    isLastQuestion: Boolean,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val backgroundColor = if (isCorrect) Color(0xFFE8F7ED) else Color(0xFFFFE8E5)
+    val accentColor = if (isCorrect) Color(0xFF1B5E20) else Color(0xFFB71C1C)
+    val encouragement = if (isCorrect) "正解！ナイス！" else "不正解...次はヒントを使ってみよう！"
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(backgroundColor)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (isCorrect) {
+                Image(
+                    painter = painterResource(id = R.drawable.char_tarsier),
+                    contentDescription = "Happy tarsier",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(accentColor.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = if (isCorrect) "正解！" else "不正解",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = accentColor
+                )
+                Text(
+                    text = encouragement,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = accentColor.copy(alpha = 0.9f)
+                )
+                if (!isCorrect && correctAnswer.isNotBlank()) {
+                    Text(
+                        text = "正解: $correctAnswer",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = accentColor
+                    )
+                }
+            }
+        }
+
         Button(
-            onClick = onAction,
+            onClick = onNext,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
-            enabled = showFeedback || hasSelection,
+                .height(54.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                containerColor = accentColor,
+                contentColor = Color.White
             )
         ) {
-            val label = when {
-                !showFeedback -> "回答を確認する"
-                showFeedback && !isLastQuestion -> "次の問題へ"
-                else -> "結果を見る"
-            }
+            val label = if (isLastQuestion) "結果を見る" else "次の問題へ"
             Text(text = label, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        }
-        if (!isPremium) {
-            SmartAdBanner(isPremium = false)
         }
     }
 }

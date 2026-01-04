@@ -2,7 +2,8 @@ package com.bisayaspeak.ai.ui.roleplay
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.bisayaspeak.ai.data.model.MissionHistoryMessage
+import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +36,9 @@ data class RoleplayUiState(
     val isLoading: Boolean = false
 )
 
-class RoleplayChatViewModel : ViewModel() {
+class RoleplayChatViewModel(
+    private val repository: GeminiMissionRepository = GeminiMissionRepository()
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RoleplayUiState())
     val uiState: StateFlow<RoleplayUiState> = _uiState.asStateFlow()
@@ -60,6 +63,8 @@ class RoleplayChatViewModel : ViewModel() {
     private val _reviewItems = MutableStateFlow<List<ReviewItem>>(emptyList())
     val reviewItems: StateFlow<List<ReviewItem>> = _reviewItems.asStateFlow()
 
+    private val history = mutableListOf<MissionHistoryMessage>()
+
     fun loadScenario(scenarioId: String) {
         val definition = getRoleplayScenarioDefinition(scenarioId)
 
@@ -67,6 +72,10 @@ class RoleplayChatViewModel : ViewModel() {
         val chips = defaultWordPool.map { text ->
             WordChip(text = text)
         }.shuffled()
+
+        history.clear()
+        val openingMessage = definition.initialMessage.trim()
+        history.add(MissionHistoryMessage(openingMessage, isUser = false))
 
         _uiState.update {
             it.copy(
@@ -77,7 +86,7 @@ class RoleplayChatViewModel : ViewModel() {
                 messages = listOf(
                     ChatMessage(
                         id = UUID.randomUUID().toString(),
-                        text = definition.initialMessage,
+                        text = openingMessage,
                         isUser = false
                     )
                 ),
@@ -133,7 +142,7 @@ class RoleplayChatViewModel : ViewModel() {
 
     fun sendMessage(userText: String, fromHint: Boolean = false, translation: String? = null) {
         val trimmed = userText.trim()
-        if (trimmed.isBlank()) return
+        if (trimmed.isBlank() || _uiState.value.isLoading) return
 
         val scenarioForReview = if (fromHint) _uiState.value.currentScenario else null
 
@@ -151,6 +160,7 @@ class RoleplayChatViewModel : ViewModel() {
         }
 
         _inputText.value = ""
+        history.add(MissionHistoryMessage(trimmed, isUser = true))
 
         if (fromHint && scenarioForReview != null && translation != null) {
             val reviewItem = ReviewItem(
@@ -163,37 +173,42 @@ class RoleplayChatViewModel : ViewModel() {
             _reviewItems.update { it + reviewItem }
         }
 
-        // 2. AI返答（モック）
+        val scenario = _uiState.value.currentScenario ?: return
+
         viewModelScope.launch {
-            delay(1000)
-            val aiResponseText = mockAiResponse(trimmed, _uiState.value.currentScenario)
-            val aiMsg = ChatMessage(
-                id = UUID.randomUUID().toString(),
-                text = aiResponseText,
-                isUser = false
+            val result = repository.generateRoleplayReply(
+                systemPrompt = scenario.systemPrompt,
+                history = history.toList(),
+                userMessage = trimmed
             )
-            _uiState.update {
-                it.copy(
-                    messages = it.messages + aiMsg,
-                    isLoading = false
+
+            result.onSuccess { reply ->
+                val aiMsg = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    text = reply,
+                    isUser = false
                 )
+                history.add(MissionHistoryMessage(reply, isUser = false))
+                _uiState.update {
+                    it.copy(
+                        messages = it.messages + aiMsg,
+                        isLoading = false
+                    )
+                }
+            }.onFailure { error ->
+                val fallbackText = "AIの応答取得に失敗しました: ${error.message ?: "Unknown error"}"
+                val errorMsg = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    text = fallbackText,
+                    isUser = false
+                )
+                _uiState.update {
+                    it.copy(
+                        messages = it.messages + errorMsg,
+                        isLoading = false
+                    )
+                }
             }
         }
-    }
-
-    private fun mockAiResponse(input: String, scenario: RoleplayScenarioDefinition?): String {
-        val voice = when (scenario?.id) {
-            "rp_airport" -> "LV1 Airport AI"
-            "rp_taxi" -> "LV2 Taxi AI"
-            "rp_hotel" -> "LV3 Hotel AI"
-            else -> "AI Guide"
-        }
-        val hint = when (scenario?.id) {
-            "rp_airport" -> "Please show your passport and purpose."
-            "rp_taxi" -> "Tell me where to go and if you want the meter."
-            "rp_hotel" -> "Let me confirm your booking."
-            else -> "Let's keep practicing."
-        }
-        return "$voice: I received your message — \"$input\". $hint"
     }
 }
