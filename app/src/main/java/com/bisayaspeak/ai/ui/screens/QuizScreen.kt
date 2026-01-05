@@ -99,9 +99,7 @@ fun QuizScreen(
     val mistakeIds by MistakeManager.mistakeIds.collectAsState()
     val questions = remember(level, isLiteBuild, isReviewMode, mistakeIds) {
         if (isReviewMode) {
-            repository.getAllQuestions()
-                .filter { it.id in mistakeIds }
-                .shuffled()
+            repository.getQuestionsForReview(mistakeIds).shuffled()
         } else {
             val source = if (isLiteBuild) {
                 repository.getLiteQuizSet(totalQuestions = 10)
@@ -122,6 +120,7 @@ fun QuizScreen(
     val total = questions.size
 
     val current = questions.getOrNull(currentIndex)
+    val isEmptyReview = isReviewMode && total == 0
     val currentCorrectAnswer = current?.options?.getOrNull(current.correctIndex)
     
     fun handleLessonCompletion() {
@@ -220,39 +219,70 @@ fun QuizScreen(
             )
         },
         bottomBar = {
-            QuizBottomBar(
-                showFeedback = showFeedback,
-                hasSelection = selectedIndex != null,
-                isLastQuestion = currentIndex >= total - 1,
-                isCorrect = showFeedback && selectedIndex == current?.correctIndex,
-                correctAnswer = currentCorrectAnswer.orEmpty(),
-                isPremium = isPremium,
-                onAction = {
-                    if (current == null) return@QuizBottomBar
-                    if (!showFeedback) {
-                        if (selectedIndex == null) return@QuizBottomBar
-                        showFeedback = true
-                        if (selectedIndex == current.correctIndex) {
-                            correctCount++
-                            MistakeManager.removeMistake(current.id)
+            if (!isEmptyReview) {
+                QuizBottomBar(
+                    showFeedback = showFeedback,
+                    hasSelection = selectedIndex != null,
+                    isLastQuestion = currentIndex >= total - 1,
+                    isCorrect = showFeedback && selectedIndex == current?.correctIndex,
+                    correctAnswer = currentCorrectAnswer.orEmpty(),
+                    isPremium = isPremium,
+                    onAction = {
+                        if (current == null) return@QuizBottomBar
+                        if (!showFeedback) {
+                            if (selectedIndex == null) return@QuizBottomBar
+                            showFeedback = true
+                            if (selectedIndex == current.correctIndex) {
+                                correctCount++
+                                MistakeManager.removeMistake(current.id)
+                            } else {
+                                MistakeManager.addMistake(current.id)
+                            }
                         } else {
-                            MistakeManager.addMistake(current.id)
-                        }
-                    } else {
-                        if (currentIndex < total - 1) {
-                            currentIndex++
-                            selectedIndex = null
-                            showFeedback = false
-                        } else {
-                            handleLessonCompletion()
-                            currentIndex = total
+                            if (currentIndex < total - 1) {
+                                currentIndex++
+                                selectedIndex = null
+                                showFeedback = false
+                            } else {
+                                handleLessonCompletion()
+                                currentIndex = total
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     ) { padding ->
-        if (current == null) {
+        if (isEmptyReview) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .navigationBarsPadding(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "弱点はまだ登録されていません！\nレッスンやロールプレイでヒントを使って弱点を追加しましょう。",
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                    Button(
+                        onClick = {
+                            navController.navigate(AppRoute.Home.route) {
+                                popUpTo(AppRoute.Home.route) { inclusive = true }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("ホームに戻る")
+                    }
+                }
+            }
+        } else if (current == null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -260,11 +290,7 @@ fun QuizScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (isReviewMode && total == 0) {
-                        "復習する問題はありません！\n通常のレッスンやクイズで間違えると、ここに溜まっていきます。"
-                    } else {
-                        "結果画面へ移動しています..."
-                    },
+                    text = "結果画面へ移動しています...",
                     color = Color.White,
                     textAlign = TextAlign.Center
                 )

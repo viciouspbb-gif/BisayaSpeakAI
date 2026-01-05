@@ -6,9 +6,6 @@ import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -40,7 +38,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.TipsAndUpdates
@@ -57,6 +54,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -70,7 +68,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -85,8 +82,6 @@ import com.bisayaspeak.ai.ui.viewmodel.MissionStatus
 import com.bisayaspeak.ai.ui.viewmodel.MissionTalkViewModel
 import kotlinx.coroutines.launch
 
-private enum class InputMode { VOICE, KEYBOARD }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissionTalkScreen(
@@ -97,7 +92,6 @@ fun MissionTalkScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scenario = uiState.scenario
     val listState = rememberLazyListState()
-    var inputMode by remember { mutableStateOf(InputMode.VOICE) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -134,71 +128,62 @@ fun MissionTalkScreen(
                 onBack = onNavigateBack
             )
         },
-        containerColor = Color(0xFF050A14)
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFF050A14))
-                .padding(padding)
-        ) {
-            if (scenario == null) {
-                MissionErrorState(onNavigateBack = onNavigateBack)
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                ) {
-                    MissionHeaderInfo(scenario.context, uiState.remainingTurns)
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    MissionHintRow(
-                        hints = scenario.context.hints,
-                        onHintClick = viewModel::appendHint
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    MissionChatTimeline(
-                        messages = uiState.messages,
-                        listState = listState,
-                        isStreaming = uiState.isStreaming
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    MissionInputCard(
-                        inputText = uiState.inputText,
-                        onTextChange = viewModel::onInputChange,
-                        onSend = {
-                            viewModel.sendMessage()
-                            inputMode = InputMode.KEYBOARD
-                        },
-                        isSending = uiState.isSending,
-                        inputMode = inputMode,
-                        onToggleMode = {
-                            inputMode = if (inputMode == InputMode.VOICE) InputMode.KEYBOARD else InputMode.VOICE
-                        }
-                    )
-                }
-
-                if (inputMode == InputMode.VOICE) {
-                    MissionMicButton(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 24.dp),
-                        isListening = uiState.isStreaming
-                    ) {
-                        if (!hasMicPermission) {
-                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        } else {
-                            launchSpeechRecognizer(context, speechLauncher)
-                        }
+        containerColor = Color(0xFF050A14),
+        bottomBar = {
+            MissionBottomBar(
+                text = uiState.inputText,
+                onTextChange = viewModel::onInputChange,
+                onMicClick = {
+                    if (!hasMicPermission) {
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    } else {
+                        launchSpeechRecognizer(context, speechLauncher)
                     }
-                }
+                },
+                onSendClick = viewModel::sendMessage,
+                isSending = uiState.isSending,
+                isListening = uiState.isStreaming
+            )
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { padding ->
+        if (scenario == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF050A14))
+                    .padding(padding)
+            ) {
+                MissionErrorState(onNavigateBack = onNavigateBack)
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF050A14))
+                    .padding(padding)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+            ) {
+                MissionHeaderInfo(scenario.context, uiState.remainingTurns)
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                MissionHintRow(
+                    hints = scenario.context.hints,
+                    onHintClick = viewModel::appendHint
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                MissionChatTimeline(
+                    messages = uiState.messages,
+                    listState = listState,
+                    isStreaming = uiState.isStreaming,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }
@@ -232,6 +217,89 @@ fun MissionTalkScreen(
             title = { Text("エラー") },
             text = { Text(message) }
         )
+    }
+}
+
+@Composable
+private fun MissionBottomBar(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onMicClick: () -> Unit,
+    onSendClick: () -> Unit,
+    isSending: Boolean,
+    isListening: Boolean
+) {
+    Surface(
+        tonalElevation = 3.dp,
+        color = Color(0xFF0F1C2E)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            IconButton(
+                onClick = onMicClick,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = if (isListening) Color(0xFF1BA1F3) else Color(0xFF1B314F),
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = "音声入力",
+                    tint = Color.White
+                )
+            }
+
+            OutlinedTextField(
+                value = text,
+                onValueChange = onTextChange,
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("ビサヤ語で返答してみよう！") },
+                shape = RoundedCornerShape(20.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF152238),
+                    unfocusedContainerColor = Color(0xFF152238),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                singleLine = false,
+                maxLines = 3
+            )
+
+            IconButton(
+                onClick = onSendClick,
+                enabled = text.isNotBlank() && !isSending,
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(
+                        color = if (text.isNotBlank()) Color(0xFF1BA1F3) else Color(0x331BA1F3),
+                        shape = CircleShape
+                    )
+            ) {
+                if (isSending) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "送信",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -362,10 +430,11 @@ private fun MissionHintRow(
 private fun MissionChatTimeline(
     messages: List<MissionChatMessage>,
     listState: androidx.compose.foundation.lazy.LazyListState,
-    isStreaming: Boolean
+    isStreaming: Boolean,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF040A12)),
         shape = RoundedCornerShape(28.dp)
     ) {
@@ -472,132 +541,6 @@ private fun MissionChatBubble(message: MissionChatMessage) {
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MissionInputCard(
-    inputText: String,
-    onTextChange: (String) -> Unit,
-    onSend: () -> Unit,
-    isSending: Boolean,
-    inputMode: InputMode,
-    onToggleMode: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .imePadding(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0B1623))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = if (inputMode == InputMode.VOICE) "Speak → Edit → Send" else "Keyboard入力中",
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold
-                )
-                IconButton(onClick = onToggleMode) {
-                    Icon(
-                        imageVector = if (inputMode == InputMode.VOICE) Icons.Default.Keyboard else Icons.Default.Mic,
-                        contentDescription = "入力切り替え",
-                        tint = Color.White
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = onTextChange,
-                placeholder = { Text("音声認識の結果がここに表示されます", color = Color.Gray) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = androidx.compose.material3.TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF152235),
-                    unfocusedContainerColor = Color(0xFF0F1C2E),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                ),
-                trailingIcon = {
-                    IconButton(
-                        onClick = onSend,
-                        enabled = inputText.isNotBlank() && !isSending,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (inputText.isNotBlank()) Color(0xFF00C896) else Color(0xFF1A2C42)
-                            )
-                    ) {
-                        if (isSending) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Send,
-                                contentDescription = "送信",
-                                tint = Color.White
-                            )
-                        }
-                    }
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun MissionMicButton(
-    modifier: Modifier = Modifier,
-    isListening: Boolean,
-    onMicClick: () -> Unit
-) {
-    Box(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(Color(0xFF00C9A7), Color(0xFF0077FF))
-                    )
-                )
-                .clickable { onMicClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Mic,
-                contentDescription = "音声入力",
-                tint = Color.White,
-                modifier = Modifier.size(50.dp)
-            )
-        }
-        AnimatedVisibility(
-            visible = isListening,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(150.dp),
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.1f))
-            )
         }
     }
 }
