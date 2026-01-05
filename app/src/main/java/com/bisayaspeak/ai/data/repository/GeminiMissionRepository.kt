@@ -28,6 +28,11 @@ class GeminiMissionRepository(
     private val translationModelName: String = "gemini-1.5-flash"
 ) {
 
+    init {
+        val isKeyLoaded = BuildConfig.GEMINI_API_KEY.isNotEmpty()
+        Log.d("GeminiRepo", "API Key Loaded: $isKeyLoaded")
+    }
+
     private val missionModel by lazy {
         GenerativeModel(
             modelName = missionModelName,
