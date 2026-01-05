@@ -333,4 +333,10 @@ class MockQuizRepository {
 
     fun getAllQuestions(): List<MockQuizQuestion> =
         beginnerQuestions + intermediateQuestions + advancedQuestions
+
+    fun getQuestionsForReview(mistakeIds: Set<String>): List<MockQuizQuestion> {
+        if (mistakeIds.isEmpty()) return emptyList()
+        val all = getAllQuestions()
+        return all.filter { it.id in mistakeIds }
+    }
 }

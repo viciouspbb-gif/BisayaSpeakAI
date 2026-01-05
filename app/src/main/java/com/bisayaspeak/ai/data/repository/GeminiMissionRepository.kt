@@ -10,6 +10,9 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -95,25 +98,31 @@ class GeminiMissionRepository(
                     "Translate this Bisaya (Cebuano) text into natural Japanese, keeping the nuance and politeness. Return ONLY the translation."
             }
 
-            val response = translationModel.generateContent(
-                content {
-                    text(instruction)
-                    text(text.trim())
-                }
-            )
-            response.text?.trim()
-                ?.takeIf { it.isNotEmpty() }
-                ?: error("Empty translation result")
+            try {
+                val response = translationModel.generateContent(
+                    content {
+                        text(instruction)
+                        text(text.trim())
+                    }
+                )
+                response.text?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: error("Empty translation result")
+            } catch (e: Exception) {
+                Log.e(TAG, "Translation failed", e)
+                "通信エラーが発生しました。時間を置いて再試行してください。"
+            }
         }
     }
 
     suspend fun generateRoleplayReply(
         systemPrompt: String,
         history: List<MissionHistoryMessage>,
-        userMessage: String
-    ): Result<String> = withContext(ioDispatcher) {
+        userMessage: String,
+        level: Int
+    ): Result<RoleplayAiResponsePayload> = withContext(ioDispatcher) {
         runCatching {
-            val prompt = systemPrompt.ifBlank { DEFAULT_ROLEPLAY_PROMPT }
+            val prompt = buildRoleplayPrompt(systemPrompt, level)
             val contents = mutableListOf<Content>()
             contents += content(role = "user") { text("SYSTEM:\n$prompt") }
             contents += content(role = "model") { text("Understood. Staying in character and replying concisely.") }
@@ -121,10 +130,31 @@ class GeminiMissionRepository(
                 val role = if (message.isUser) "user" else "model"
                 contents += content(role = role) { text(message.text) }
             }
-            contents += content(role = "user") { text(userMessage) }
+            val effectiveUserMessage = if (userMessage == ROLEPLAY_START_TOKEN) {
+                "START_CONVERSATION"
+            } else {
+                userMessage
+            }
+            contents += content(role = "user") { text(effectiveUserMessage) }
 
-            val response = missionModel.generateContent(*contents.toTypedArray())
-            response.text?.trim()?.takeIf { it.isNotEmpty() } ?: error("Empty roleplay response")
+            try {
+                val response = missionModel.generateContent(*contents.toTypedArray())
+                val raw = response.text?.trim()?.takeIf { it.isNotEmpty() } ?: error("Empty roleplay response")
+                val jsonPayload = extractJsonBlock(raw)
+                gson.fromJson(jsonPayload, RoleplayAiResponsePayload::class.java)
+            } catch (e: Exception) {
+                Log.e(TAG, "Roleplay generation failed", e)
+                RoleplayAiResponsePayload(
+                    aiResponse = "通信エラーが発生しました。もう一度試してください。",
+                    options = listOf(
+                        RoleplayOptionPayload(
+                            text = "リトライをお願いする",
+                            translation = "もう一度試してください",
+                            tone = "neutral"
+                        )
+                    )
+                )
+            }
         }
     }
 
@@ -187,6 +217,7 @@ class GeminiMissionRepository(
     companion object {
         private const val TAG = "GeminiMissionRepo"
         private const val GOAL_TAG = "[GOAL_ACHIEVED]"
+        const val ROLEPLAY_START_TOKEN = "__ROLEPLAY_START__"
 
         private val BISAYA_REGEX =
             """\[BISAYA\]:\s*(.+?)(?=\[JAPANESE]|$)""".toRegex(RegexOption.DOT_MATCHES_ALL)
@@ -196,4 +227,54 @@ class GeminiMissionRepository(
         private const val DEFAULT_ROLEPLAY_PROMPT =
             "You are a friendly Bisaya speaking partner helping the user practice real-life conversations. Keep responses under 2 sentences, reply in Bisaya with optional short Japanese translation in parentheses, and always continue the dialogue with a follow-up question or prompt."
     }
+
+    private val gson = Gson()
+
+    private fun buildRoleplayPrompt(systemPrompt: String, level: Int): String {
+        val basePrompt = systemPrompt.ifBlank { DEFAULT_ROLEPLAY_PROMPT }
+        val optionCount = when {
+            level <= 1 -> 2
+            level == 2 -> 3
+            else -> 4
+        }
+        return """
+$basePrompt
+
+When replying to the latest learner message, output ONLY a valid JSON object with the following schema:
+{
+  "ai_response": "Bisaya reply with optional short Japanese translation in parentheses.",
+  "options": [
+    {
+      "text": "Example reply the learner could say next in Bisaya.",
+      "translation": "Japanese translation of that reply.",
+      "tone": "short descriptor such as 'polite', 'casual', or 'bold'."
+    }
+  ]
 }
+- Provide exactly $optionCount options that mix confident and cautious tones, and keep each option within 8 words.
+- The options should represent natural learner replies that keep the conversation aligned with the mission goal.
+- Never include explanation outside the JSON. No markdown, no code block fences.
+        """.trimIndent()
+    }
+
+    private fun extractJsonBlock(raw: String): String {
+        val start = raw.indexOf('{')
+        val end = raw.lastIndexOf('}')
+        if (start == -1 || end == -1 || start >= end) {
+            throw JsonSyntaxException("No JSON object found in response: $raw")
+        }
+        return raw.substring(start, end + 1)
+    }
+}
+
+data class RoleplayAiResponsePayload(
+    @SerializedName("ai_response")
+    val aiResponse: String,
+    val options: List<RoleplayOptionPayload> = emptyList()
+)
+
+data class RoleplayOptionPayload(
+    val text: String,
+    val translation: String? = null,
+    val tone: String? = null
+)
