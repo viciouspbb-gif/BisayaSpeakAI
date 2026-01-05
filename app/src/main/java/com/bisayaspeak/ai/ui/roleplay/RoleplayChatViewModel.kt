@@ -4,13 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
-import com.bisayaspeak.ai.data.repository.RoleplayAiResponsePayload
 import com.bisayaspeak.ai.utils.MistakeManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.UUID
 
 data class RoleplayOption(
@@ -35,6 +36,8 @@ class RoleplayChatViewModel(
     private val repository: GeminiMissionRepository = GeminiMissionRepository()
 ) : ViewModel() {
 
+    private val startToken = "[START_CONVERSATION]"
+
     private val _uiState = MutableStateFlow(RoleplayUiState())
     val uiState: StateFlow<RoleplayUiState> = _uiState.asStateFlow()
 
@@ -55,7 +58,7 @@ class RoleplayChatViewModel(
 
         requestAiTurn(
             scenario = definition,
-            userMessage = GeminiMissionRepository.ROLEPLAY_START_TOKEN
+            userMessage = startToken
         )
     }
 
@@ -96,17 +99,14 @@ class RoleplayChatViewModel(
         userMessage: String
     ) {
         viewModelScope.launch {
-            val result = repository.generateRoleplayReply(
-                systemPrompt = scenario.systemPrompt,
-                history = history.toList(),
-                userMessage = userMessage,
-                level = scenario.level
-            )
-
-            result.onSuccess { payload ->
+            _uiState.update { it.copy(isLoading = true) }
+            try {
+                val prompt = buildRoleplayPrompt(scenario, userMessage)
+                val rawResponse = repository.generateRoleplayReply(prompt)
+                val payload = parseRoleplayPayload(rawResponse)
                 applyAiPayload(payload)
-            }.onFailure { error ->
-                val fallbackText = "AIの応答取得に失敗しました: ${error.message ?: "Unknown error"}"
+            } catch (e: Exception) {
+                val fallbackText = "AIの応答取得に失敗しました: ${e.message ?: "Unknown error"}"
                 val errorMsg = ChatMessage(
                     id = UUID.randomUUID().toString(),
                     text = fallbackText,
@@ -151,4 +151,82 @@ class RoleplayChatViewModel(
             )
         }
     }
+
+    private fun buildRoleplayPrompt(
+        scenario: RoleplayScenarioDefinition,
+        userMessage: String
+    ): String {
+        val historyText = history.joinToString(separator = "\n") { entry ->
+            val speaker = if (entry.isUser) "USER" else "AI"
+            "$speaker: ${entry.text}"
+        }.ifBlank { "No previous messages." }
+
+        val hints = scenario.hintPhrases.joinToString(separator = "\n") {
+            "- ${it.nativeText} (${it.translation})"
+        }
+
+        val basePrompt = if (scenario.systemPrompt.isBlank()) {
+            """
+            You are ${scenario.aiRole}.
+            Situation: ${scenario.situation}
+            Goal: ${scenario.goal}
+            """
+        } else scenario.systemPrompt
+
+        return """
+            $basePrompt
+
+            Helpful hint phrases:
+            $hints
+
+            Conversation history:
+            $historyText
+
+            Latest learner message: $userMessage
+
+            Respond strictly in JSON:
+            {
+              "aiResponse": "assistant reply in Bisaya with light Japanese hints if needed",
+              "options": [
+                {
+                  "text": "suggested learner reply in Bisaya",
+                  "translation": "Japanese translation or hint",
+                  "tone": "short tone description"
+                }
+              ]
+            }
+            Provide 2-3 concise options. Do not include markdown.
+        """.trimIndent()
+    }
+
+    private fun parseRoleplayPayload(raw: String): RoleplayAiResponsePayload {
+        return try {
+            val json = JSONObject(raw)
+            val aiResponse = json.optString("aiResponse", raw)
+            val optionsArray = json.optJSONArray("options") ?: JSONArray()
+            val options = mutableListOf<RoleplayAiOption>()
+            for (i in 0 until optionsArray.length()) {
+                val item = optionsArray.optJSONObject(i) ?: continue
+                options += RoleplayAiOption(
+                    text = item.optString("text"),
+                    translation = item.optString("translation"),
+                    tone = item.optString("tone")
+                )
+            }
+            RoleplayAiResponsePayload(aiResponse, options)
+        } catch (_: Exception) {
+            RoleplayAiResponsePayload(raw, emptyList())
+        }
+    }
+
+    private data class RoleplayAiResponsePayload(
+        val aiResponse: String,
+        val options: List<RoleplayAiOption>
+    )
+
+    private data class RoleplayAiOption(
+        val text: String,
+        val translation: String?,
+        val tone: String?
+    )
 }

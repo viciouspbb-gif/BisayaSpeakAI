@@ -118,6 +118,15 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/license.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
+            excludes += "META-INF/notice.txt"
+            excludes += "META-INF/ASL2.0"
+            excludes += "META-INF/*.kotlin_module"
         }
     }
 }
@@ -195,10 +204,8 @@ dependencies {
     // Gson
     implementation("com.google.code.gson:gson:2.10.1")
     
-    // Gemini AI - 最新安定版
-    implementation("com.google.ai.client.generativeai:generativeai:0.9.0") {
-        exclude(group = "io.ktor", module = "ktor-client-core")
-    }
+    // Gemini AI
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("io.ktor:ktor-client-core:2.3.7")
     implementation("io.ktor:ktor-client-okhttp:2.3.7")
     

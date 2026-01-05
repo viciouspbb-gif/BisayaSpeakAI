@@ -141,8 +141,7 @@ fun MissionTalkScreen(
                     }
                 },
                 onSendClick = viewModel::sendMessage,
-                isSending = uiState.isSending,
-                isListening = uiState.isStreaming
+                isSending = uiState.isSending
             )
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
@@ -179,7 +178,7 @@ fun MissionTalkScreen(
                 MissionChatTimeline(
                     messages = uiState.messages,
                     listState = listState,
-                    isStreaming = uiState.isStreaming,
+                    isThinking = uiState.isSending,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -226,8 +225,7 @@ private fun MissionBottomBar(
     onTextChange: (String) -> Unit,
     onMicClick: () -> Unit,
     onSendClick: () -> Unit,
-    isSending: Boolean,
-    isListening: Boolean
+    isSending: Boolean
 ) {
     Surface(
         tonalElevation = 3.dp,
@@ -246,9 +244,11 @@ private fun MissionBottomBar(
                 modifier = Modifier
                     .size(48.dp)
                     .background(
-                        color = if (isListening) Color(0xFF1BA1F3) else Color(0xFF1B314F),
+                        color = if (isSending) Color(0x661BA1F3) else Color(0xFF1B314F),
                         shape = CircleShape
                     )
+                ,
+                enabled = !isSending
             ) {
                 Icon(
                     imageVector = Icons.Default.Mic,
@@ -263,6 +263,7 @@ private fun MissionBottomBar(
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("ビサヤ語で返答してみよう！") },
                 shape = RoundedCornerShape(20.dp),
+                enabled = !isSending,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFF152238),
                     unfocusedContainerColor = Color(0xFF152238),
@@ -430,7 +431,7 @@ private fun MissionHintRow(
 private fun MissionChatTimeline(
     messages: List<MissionChatMessage>,
     listState: androidx.compose.foundation.lazy.LazyListState,
-    isStreaming: Boolean,
+    isThinking: Boolean,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -451,7 +452,7 @@ private fun MissionChatTimeline(
                 }
             }
 
-            if (isStreaming) {
+            if (isThinking) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)

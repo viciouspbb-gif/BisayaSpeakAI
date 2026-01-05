@@ -60,15 +60,14 @@ class AiTranslatorViewModel(
 
         viewModelScope.launch {
             _uiState.value = TranslatorUiState.Loading
-            repository.translate(text, _direction.value)
-                .onSuccess { result ->
-                    _translatedText.value = result
-                    _uiState.value = TranslatorUiState.Success
-                }
-                .onFailure { throwable ->
-                    _uiState.value =
-                        TranslatorUiState.Error(throwable.message ?: "翻訳に失敗しました")
-                }
+            try {
+                val result = repository.translateText(text)
+                _translatedText.value = result
+                _uiState.value = TranslatorUiState.Success
+            } catch (e: Exception) {
+                _uiState.value =
+                    TranslatorUiState.Error(e.message ?: "翻訳に失敗しました")
+            }
         }
     }
 }

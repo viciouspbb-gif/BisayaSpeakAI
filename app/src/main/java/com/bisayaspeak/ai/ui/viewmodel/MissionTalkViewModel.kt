@@ -1,6 +1,5 @@
 package com.bisayaspeak.ai.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -9,12 +8,12 @@ import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.data.model.MissionScenario
 import com.bisayaspeak.ai.data.model.getMissionScenario
 import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 enum class MissionStatus {
     NOT_READY,
@@ -30,7 +29,6 @@ data class MissionTalkUiState(
     val inputText: String = "",
     val remainingTurns: Int = 0,
     val isSending: Boolean = false,
-    val isStreaming: Boolean = false,
     val missionStatus: MissionStatus = MissionStatus.NOT_READY,
     val showSuccessDialog: Boolean = false,
     val showFailedDialog: Boolean = false,
@@ -49,7 +47,6 @@ class MissionTalkViewModel(
             ?.takeIf { it.isNotBlank() }
             ?.let { add(MissionHistoryMessage(text = it, isUser = false)) }
     }
-    private var streamJob: Job? = null
 
     private val _uiState = MutableStateFlow(
         MissionTalkUiState(
@@ -89,7 +86,6 @@ class MissionTalkViewModel(
             triggerFailure()
             return
         }
-        Log.d("MissionTalk", "User message sent: $trimmed")
 
         val userMessage = MissionChatMessage(
             primaryText = trimmed,
@@ -106,68 +102,49 @@ class MissionTalkViewModel(
                 messages = updatedMessages,
                 inputText = "",
                 isSending = true,
-                isStreaming = true,
                 remainingTurns = newRemaining,
-                missionStatus = MissionStatus.IN_PROGRESS
+                missionStatus = MissionStatus.IN_PROGRESS,
+                errorMessage = null
             )
         }
 
-        streamJob?.cancel()
-        val job = viewModelScope.launch {
-            var latestChunk: MissionChatMessage? = null
-            Log.d("MissionTalk", "Requesting AI reply...")
-            repository.streamMissionReply(
-                context = scenario.context,
-                history = history.toList(),
-                userMessage = trimmed
-            ).collect { chunk ->
-                Log.d("MissionTalk", "Received chunk: ${chunk.primaryText}")
-                latestChunk = chunk
-                applyAiChunk(chunk)
-            }
+        viewModelScope.launch {
+            try {
+                val prompt = buildMissionPrompt(scenario, trimmed, newRemaining)
+                val rawResponse = repository.generateRoleplayReply(prompt)
+                val payload = parseMissionReply(rawResponse)
+                val aiText = payload.aiResponse.ifBlank { "..." }
+                history.add(MissionHistoryMessage(aiText, isUser = false))
+                val aiMessage = MissionChatMessage(
+                    primaryText = aiText,
+                    isUser = false,
+                    isGoalFlagged = payload.goalAchieved
+                )
 
-            _uiState.update { it.copy(isSending = false, isStreaming = false) }
+                _uiState.update {
+                    it.copy(
+                        messages = it.messages + aiMessage,
+                        isSending = false,
+                        missionStatus = if (payload.goalAchieved) MissionStatus.CLEARED else it.missionStatus
+                    )
+                }
 
-            latestChunk?.let { chunk ->
-                history.add(MissionHistoryMessage(chunk.primaryText, isUser = false))
-                if (chunk.isGoalFlagged) {
+                if (payload.goalAchieved) {
                     triggerSuccess()
                 } else if (_uiState.value.remainingTurns <= 0) {
                     triggerFailure()
                 }
-            } ?: run {
-                if (_uiState.value.remainingTurns <= 0) triggerFailure()
-            }
-        }
-        job.invokeOnCompletion { cause ->
-            if (cause != null) {
+            } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
                         isSending = false,
-                        isStreaming = false,
-                        errorMessage = cause.message ?: "ミッション応答の取得に失敗しました"
+                        errorMessage = e.message ?: "ミッション応答の取得に失敗しました"
                     )
                 }
+                if (_uiState.value.remainingTurns <= 0) {
+                    triggerFailure()
+                }
             }
-        }
-        streamJob = job
-    }
-
-    private fun applyAiChunk(chunk: MissionChatMessage) {
-        val currentMessages = _uiState.value.messages.toMutableList()
-        val existingIndex = currentMessages.indexOfFirst { !it.isUser && it.id == chunk.id }
-
-        if (existingIndex >= 0) {
-            currentMessages[existingIndex] = chunk
-        } else {
-            currentMessages += chunk
-        }
-
-        _uiState.update {
-            it.copy(
-                messages = currentMessages,
-                missionStatus = MissionStatus.IN_PROGRESS
-            )
         }
     }
 
@@ -202,11 +179,6 @@ class MissionTalkViewModel(
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        streamJob?.cancel()
-    }
-
     companion object {
         fun factory(scenarioId: String): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
@@ -216,4 +188,57 @@ class MissionTalkViewModel(
                 }
             }
     }
+
+    private fun buildMissionPrompt(
+        scenario: MissionScenario,
+        userMessage: String,
+        turnsRemaining: Int
+    ): String {
+        val historyText = history.joinToString(separator = "\n") { entry ->
+            val speaker = if (entry.isUser) "USER" else "AI"
+            "$speaker: ${entry.text}"
+        }.ifBlank { "No previous messages." }
+
+        val hints = scenario.context.hints.joinToString(separator = "\n") { "- $it" }
+
+        return """
+            You are ${scenario.context.role}.
+            Situation: ${scenario.context.situation}
+            Mission Goal: ${scenario.context.goal}
+            Tone: ${scenario.context.tone ?: "Friendly and helpful"}
+            Provide concise replies primarily in Bisaya with light Japanese support if needed.
+            Refer to these useful hint phrases:
+            $hints
+
+            Conversation history:
+            $historyText
+
+            Turns remaining for the learner: $turnsRemaining
+            Latest learner message: $userMessage
+
+            Respond strictly in JSON with the following schema:
+            {
+              "aiResponse": "string",
+              "goalAchieved": true | false
+            }
+            The aiResponse must be plain text (no markdown). Set goalAchieved true only if the mission goal is clearly met.
+        """.trimIndent()
+    }
+
+    private fun parseMissionReply(raw: String): MissionAiResponse {
+        return try {
+            val json = JSONObject(raw)
+            MissionAiResponse(
+                aiResponse = json.optString("aiResponse", raw),
+                goalAchieved = json.optBoolean("goalAchieved", false)
+            )
+        } catch (_: Exception) {
+            MissionAiResponse(aiResponse = raw, goalAchieved = false)
+        }
+    }
+
+    private data class MissionAiResponse(
+        val aiResponse: String,
+        val goalAchieved: Boolean
+    )
 }
