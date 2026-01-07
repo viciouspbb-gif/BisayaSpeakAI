@@ -2,12 +2,11 @@ package com.bisayaspeak.ai
 
 import android.app.Application
 import android.util.Log
+import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.data.local.AppDatabase
 import com.bisayaspeak.ai.data.repository.QuestionRepository
 import com.bisayaspeak.ai.data.repository.UserProgressRepository
-import com.bisayaspeak.ai.ui.ads.AdMobManager
 import com.bisayaspeak.ai.ui.ads.AdsPolicy
-import com.google.android.gms.ads.MobileAds
 
 class MyApp : Application() {
 
@@ -27,11 +26,8 @@ class MyApp : Application() {
         userProgressRepository = UserProgressRepository(database.userProgressDao())
 
         if (AdsPolicy.areAdsEnabled) {
-            // ★ これがないと広告は一生出ない
-            MobileAds.initialize(this)
-
-            // ★ AdMobManagerを使うなら initialize を呼ぶ
-            AdMobManager.initialize(this)
+            // 広告システムの準備スタート！
+            AdManager.initialize(this)
         }
     }
 }

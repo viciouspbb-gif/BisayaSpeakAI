@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.ads.AdMobBanner // ★共通部品をインポート
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,11 +117,16 @@ fun LessonResultScreen(
                     )
                 }
 
+                // ★共通のバナー広告部品を使用
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp)
-                )
+                        .padding(top = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AdMobBanner()
+                }
+
                 Spacer(modifier = Modifier.navigationBarsPadding())
             }
         }

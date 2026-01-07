@@ -34,6 +34,7 @@ import com.bisayaspeak.ai.data.model.UserPlan
 import com.bisayaspeak.ai.ui.account.AccountScreen
 import com.bisayaspeak.ai.ui.account.AccountUiState
 import com.bisayaspeak.ai.ui.account.LoginType
+import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdMobManager
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
@@ -315,11 +316,7 @@ fun AppNavGraph(
         }
 
         composable(AppRoute.LevelSelection.route) {
-            val app = context.applicationContext as MyApp
-            val unlockedFlow = remember { app.userProgressRepository.getUnlockedLevels() }
-            val unlockedLevels by unlockedFlow.collectAsState(initial = setOf(1))
             LevelSelectionScreen(
-                unlockedLevels = if (unlockedLevels.isEmpty()) setOf(1) else unlockedLevels,
                 onLevelSelected = { level ->
                     navController.navigate(
                         AppRoute.Listening.route.replace("{level}", level.toString())
@@ -445,25 +442,28 @@ fun AppNavGraph(
             arguments = listOf(navArgument("level") { type = NavType.IntType })
         ) { backStackEntry ->
             val level = backStackEntry.arguments?.getInt("level") ?: 1
-            BannerScreenContainer(userPlan = userPlan) {
-                val viewModel: ListeningViewModel = viewModel(factory = listeningViewModelFactory)
-                ListeningScreen(
-                    navController = navController,
-                    level = level,
-                    isPremium = isPremiumPlan,
-
-                    onNavigateBack = { navController.popBackStack() },
-                    onShowRewardedAd = {
-                        AdMobManager.loadRewarded(context)
-                        AdMobManager.showRewarded(
-                            activity = activity,
-                            onEarned = { _, _ -> },
-                            onDismissed = {}
+            val viewModel: ListeningViewModel = viewModel(factory = listeningViewModelFactory)
+            ListeningScreen(
+                navController = navController,
+                level = level,
+                isPremium = isPremiumPlan,
+                onNavigateBack = { navController.popBackStack() },
+                onShowRewardedAd = { onComplete ->
+                    val act = activity
+                    val ctx = context
+                    if (act != null) {
+                        AdManager.showRewardAd(
+                            activity = act,
+                            onRewardEarned = onComplete,
+                            onAdClosed = { AdManager.loadReward(act) }
                         )
-                    },
-                    viewModel = viewModel
-                )
-            }
+                    } else {
+                        onComplete()
+                        AdManager.loadReward(ctx)
+                    }
+                },
+                viewModel = viewModel
+            )
         }
 
         // Quiz - Direct to QuizScreen

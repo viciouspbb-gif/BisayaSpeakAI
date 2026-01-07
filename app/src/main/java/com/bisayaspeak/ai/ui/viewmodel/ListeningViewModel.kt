@@ -591,9 +591,16 @@ class ListeningViewModel(
             desiredCount = ORDERING_COUNT
         )
 
-        return (selectedListening + selectedTranslation + selectedOrdering)
-            .shuffled()
-            .take(QUESTIONS_PER_SESSION)
+        val combined = mutableListOf<ListeningQuestion>().apply {
+            addAll(selectedListening)
+            addAll(selectedTranslation)
+            addAll(selectedOrdering)
+        }
+
+        return ensureUniqueSessionQuestions(
+            candidates = combined,
+            desiredCount = QUESTIONS_PER_SESSION
+        )
     }
 
     private fun selectWithFallback(
@@ -614,6 +621,39 @@ class ListeningViewModel(
             fallbackIndex++
         }
         return result
+    }
+
+    private fun ensureUniqueSessionQuestions(
+        candidates: List<ListeningQuestion>,
+        desiredCount: Int
+    ): List<ListeningQuestion> {
+        if (desiredCount <= 0) return emptyList()
+
+        val uniqueMap = LinkedHashMap<String, ListeningQuestion>()
+        candidates.forEach { question ->
+            val key = question.phrase.trim().lowercase()
+            uniqueMap.putIfAbsent(key, question)
+        }
+
+        if (uniqueMap.size < desiredCount) {
+            val fallbackPool = dummyListeningQuestions + dummyTranslationQuestions + dummyOrderingQuestions
+            var fallbackIndex = 0
+            var attempts = 0
+            val maxAttempts = (fallbackPool.size.coerceAtLeast(1)) * 3
+
+            while (uniqueMap.size < desiredCount && fallbackPool.isNotEmpty() && attempts < maxAttempts) {
+                val base = fallbackPool[fallbackIndex % fallbackPool.size]
+                val key = base.phrase.trim().lowercase()
+                if (!uniqueMap.containsKey(key)) {
+                    val uniqueId = "${base.id}_${Random.nextInt(1_000_000)}"
+                    uniqueMap[key] = base.copy(id = uniqueId)
+                }
+                fallbackIndex++
+                attempts++
+            }
+        }
+
+        return uniqueMap.values.shuffled().take(desiredCount)
     }
 
     private fun Question.toListeningQuestion(): ListeningQuestion {
