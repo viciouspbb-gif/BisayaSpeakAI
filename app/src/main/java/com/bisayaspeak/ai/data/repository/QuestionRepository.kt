@@ -12,6 +12,9 @@ class QuestionRepository(
     suspend fun getQuestionsByLevel(level: Int): List<Question> =
         questionDao.getQuestionsByLevel(level)
 
+    suspend fun getDistinctQuestionsByLevel(level: Int): List<Question> =
+        questionDao.getDistinctQuestionsByLevel(level)
+
     suspend fun getQuestionsInRange(minLevel: Int, maxLevel: Int): List<Question> =
         questionDao.getQuestionsInRange(minLevel, maxLevel)
 
@@ -23,4 +26,6 @@ class QuestionRepository(
     }
 
     suspend fun getQuestionCount(): Int = questionDao.countQuestions()
+
+    suspend fun getDistinctQuestionCount(): Int = questionDao.countDistinctQuestions()
 }

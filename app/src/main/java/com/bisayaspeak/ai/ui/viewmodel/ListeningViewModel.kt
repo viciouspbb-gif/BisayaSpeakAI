@@ -24,8 +24,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.Locale
-import kotlin.random.Random
+import kotlin.math.ceil
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 class ListeningViewModel(
     application: Application,
@@ -63,8 +64,8 @@ class ListeningViewModel(
     private val _shouldShowAd = MutableStateFlow(false)
     val shouldShowAd: StateFlow<Boolean> = _shouldShowAd.asStateFlow()
     
-    // 正解率に応じた音声速度
-    private val _speechRate = MutableStateFlow(0.7f)
+    // フクロウ先生の声設定（一定速度）
+    private val _speechRate = MutableStateFlow(0.9f)
     val speechRate: StateFlow<Float> = _speechRate.asStateFlow()
     
     // 連続正解数
@@ -92,107 +93,9 @@ class ListeningViewModel(
         private const val ORDERING_COUNT = 3
         private const val MAX_PANEL_COUNT = 8
         private const val MAX_VOICE_HINTS = 3
-        private const val MIN_SPEECH_RATE = 0.6f // 最低速度（遅い）
-        private const val MAX_SPEECH_RATE = 1.0f // 最高速度（通常）
-        private const val CORRECT_STREAK_FOR_SPEEDUP = 3 // 速度を上げる連続正解数
-
-        private val dummyListeningQuestions = listOf(
-            createDummyQuestion(
-                id = "dummy_listening_1",
-                phrase = "Maayong buntag bisaya",
-                meaning = "おはようございます",
-                type = QuestionType.LISTENING
-            ),
-            createDummyQuestion(
-                id = "dummy_listening_2",
-                phrase = "Kumusta ka karon",
-                meaning = "今の調子はどう？",
-                type = QuestionType.LISTENING
-            ),
-            createDummyQuestion(
-                id = "dummy_listening_3",
-                phrase = "Palihug tabangi ko",
-                meaning = "助けてください",
-                type = QuestionType.LISTENING
-            ),
-            createDummyQuestion(
-                id = "dummy_listening_4",
-                phrase = "Pila ang oras",
-                meaning = "今何時ですか？",
-                type = QuestionType.LISTENING
-            )
-        )
-
-        private val dummyTranslationQuestions = listOf(
-            createDummyQuestion(
-                id = "dummy_translation_1",
-                phrase = "Maayong gabii",
-                meaning = "こんばんは",
-                type = QuestionType.TRANSLATION
-            ),
-            createDummyQuestion(
-                id = "dummy_translation_2",
-                phrase = "Gusto ko kape",
-                meaning = "コーヒーが欲しいです",
-                type = QuestionType.TRANSLATION
-            ),
-            createDummyQuestion(
-                id = "dummy_translation_3",
-                phrase = "Asa ang banyo",
-                meaning = "トイレはどこですか？",
-                type = QuestionType.TRANSLATION
-            ),
-            createDummyQuestion(
-                id = "dummy_translation_4",
-                phrase = "Salamat kaayo",
-                meaning = "本当にありがとう",
-                type = QuestionType.TRANSLATION
-            )
-        )
-
-        private val dummyOrderingQuestions = listOf(
-            createDummyQuestion(
-                id = "dummy_ordering_1",
-                phrase = "Unsa imong pangalan",
-                meaning = "あなたの名前は何ですか？",
-                type = QuestionType.ORDERING
-            ),
-            createDummyQuestion(
-                id = "dummy_ordering_2",
-                phrase = "Kanus-a ka moabot",
-                meaning = "いつ到着しますか？",
-                type = QuestionType.ORDERING
-            ),
-            createDummyQuestion(
-                id = "dummy_ordering_3",
-                phrase = "Pwede ko mangutana",
-                meaning = "質問してもいいですか？",
-                type = QuestionType.ORDERING
-            ),
-            createDummyQuestion(
-                id = "dummy_ordering_4",
-                phrase = "Dili ko gusto ana",
-                meaning = "それは好きではありません",
-                type = QuestionType.ORDERING
-            )
-        )
-
-        private fun createDummyQuestion(
-            id: String,
-            phrase: String,
-            meaning: String,
-            type: QuestionType
-        ): ListeningQuestion {
-            val tokens = phrase.split(" ").filter { it.isNotBlank() }
-            return ListeningQuestion(
-                id = id,
-                phrase = phrase,
-                words = tokens,
-                correctOrder = tokens,
-                meaning = meaning,
-                type = type
-            )
-        }
+        private const val FIXED_SPEECH_RATE = 0.9f // フクロウ先生設定（固定）
+        private const val CORRECT_STREAK_FOR_SPEEDUP = 3 // 連続正解数（現在は未使用）
+        private const val PASSING_RATE = 0.8f
     }
 
     fun dismissHintRecoveryDialog() {
@@ -245,15 +148,26 @@ class ListeningViewModel(
                         primaryResult != TextToSpeech.LANG_NOT_SUPPORTED
                 if (!primarySupported) {
                     Log.w("ListeningViewModel", "Tagalog TTS not supported, trying Indonesian fallback")
-                    val fallbackResult = tts?.setLanguage(fallbackLocale)
-                    val fallbackSupported = fallbackResult != TextToSpeech.LANG_MISSING_DATA &&
-                            fallbackResult != TextToSpeech.LANG_NOT_SUPPORTED
-                    if (!fallbackSupported) {
-                        Log.w("ListeningViewModel", "Indonesian TTS not supported, falling back to default locale")
-                        tts?.language = Locale.US
+                    tts = TextToSpeech(getApplication()) { status ->
+                        if (status == TextToSpeech.SUCCESS) {
+                            tts?.let { instance ->
+                                var result = instance.setLanguage(Locale("id"))
+                                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                    result = instance.setLanguage(Locale("fil"))
+                                }
+                                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                                    instance.setLanguage(Locale.US)
+                                }
+                                instance.setPitch(0.7f)
+                                instance.setSpeechRate(FIXED_SPEECH_RATE)
+                                _speechRate.value = FIXED_SPEECH_RATE
+                                Log.d("ListeningViewModel", "TTS initialized with fixed speech rate: $FIXED_SPEECH_RATE")
+                            }
+                        } else {
+                            Log.e("ListeningViewModel", "TTS initialization failed: $status")
+                        }
                     }
                 }
-                updateSpeechRate()
             } else {
                 Log.e("ListeningViewModel", "TTS initialization failed: $status")
             }
@@ -267,20 +181,65 @@ class ListeningViewModel(
     }
     
     /**
-     * 音声速度を更新
+     * 音声速度を更新（固定速度）
      */
     private fun updateSpeechRate() {
-        tts?.setSpeechRate(_speechRate.value)
-        Log.d("ListeningViewModel", "Speech rate updated to ${_speechRate.value}")
+        tts?.setSpeechRate(FIXED_SPEECH_RATE)
+        _speechRate.value = FIXED_SPEECH_RATE
+        Log.d("ListeningViewModel", "Speech rate set to fixed value: $FIXED_SPEECH_RATE")
     }
     
     fun loadQuestions(level: Int) {
         viewModelScope.launch {
+            Log.d("ListeningViewModel", "Loading questions for level $level")
             currentLevel = level
             val difficulty = level.toDifficultyLevel()
-            val questions = questionRepository.getQuestionsByLevel(level)
-            val listeningQuestions = questions.map { question -> question.toListeningQuestion() }
+            
+            // リトライ処理付きデータ取得（重複排除）
+            var questions: List<Question> = emptyList()
+            var retryCount = 0
+            val maxRetries = 5
+            val retryDelayMs = 1000L // 1秒待機
+            
+            while (retryCount < maxRetries && questions.isEmpty()) {
+                // DISTINCTクエリを使用して重複を排除
+                questions = questionRepository.getDistinctQuestionsByLevel(level)
+                Log.d("ListeningViewModel", "Attempt ${retryCount + 1}: Retrieved ${questions.size} distinct questions from database for level $level")
+                
+                if (questions.isEmpty()) {
+                    retryCount++
+                    if (retryCount < maxRetries) {
+                        Log.d("ListeningViewModel", "No questions found, waiting ${retryDelayMs}ms before retry...")
+                        kotlinx.coroutines.delay(retryDelayMs)
+                        
+                        // データベースの総件数を確認
+                        val totalQuestions = questionRepository.getAllQuestions()
+                        val distinctTotal = questionRepository.getDistinctQuestionCount()
+                        Log.d("ListeningViewModel", "Total questions in database during retry: ${totalQuestions.size} (distinct: $distinctTotal)")
+                    }
+                }
+            }
+            
+            if (questions.isEmpty()) {
+                Log.e("ListeningViewModel", "Failed to load questions after $maxRetries attempts for level $level")
+                // 総データ数を確認
+                val totalQuestions = questionRepository.getAllQuestions()
+                Log.e("ListeningViewModel", "Final total questions in database: ${totalQuestions.size}")
+                Log.e("ListeningViewModel", "Available levels: ${totalQuestions.groupBy { it.level }.keys.sorted()}")
+                return@launch
+            }
+            
+            Log.d("ListeningViewModel", "Successfully loaded ${questions.size} questions for level $level")
+            
+            val listeningQuestions = questions.map { question -> 
+                val listeningQ = question.toListeningQuestion()
+                Log.d("ListeningViewModel", "Converted question: ${listeningQ.phrase} -> ${listeningQ.meaning}")
+                listeningQ
+            }
+            
+            Log.d("ListeningViewModel", "Converted to ${listeningQuestions.size} listening questions")
             val sessionQuestions = buildSessionQuestions(listeningQuestions)
+            Log.d("ListeningViewModel", "Built session with ${sessionQuestions.size} questions")
 
             _session.value = ListeningSession(
                 difficulty = difficulty,
@@ -294,7 +253,7 @@ class ListeningViewModel(
             _comboCount.value = 0
             _shouldShowAd.value = false
             _lessonResult.value = null
-            _speechRate.value = 0.7f
+            _speechRate.value = 0.9f
             _voiceHintRemaining.value = MAX_VOICE_HINTS
             _showHintRecoveryDialog.value = false
             updateSpeechRate()
@@ -371,6 +330,17 @@ class ListeningViewModel(
     }
     
     /**
+     * ヒントリクエスト処理（UIからの呼び出し用）
+     */
+    fun processHintRequest() {
+        if (_voiceHintRemaining.value <= 0) {
+            _showHintRecoveryDialog.value = true
+        } else {
+            playAudio()
+        }
+    }
+
+    /**
      * 音声ヒント再生
      */
     fun playAudio() {
@@ -387,7 +357,11 @@ class ListeningViewModel(
         val pronunciation = question.pronunciation ?: question.phrase
         _isPlaying.value = true
         
-        tts?.speak(pronunciation, TextToSpeech.QUEUE_FLUSH, null, null)
+        tts?.let {
+            it.setPitch(0.7f)
+            it.setSpeechRate(FIXED_SPEECH_RATE)
+            it.speak(pronunciation, TextToSpeech.QUEUE_FLUSH, null, null)
+        }
         
         // 再生終了を検知（簡易版）
         viewModelScope.launch {
@@ -459,21 +433,15 @@ class ListeningViewModel(
                 score = currentSession.score + 1
             )
             
-            // 連続正解数を増やす
-            val newConsecutiveCorrect = _consecutiveCorrect.value + 1
-            _consecutiveCorrect.value = newConsecutiveCorrect
-            val newCombo = _comboCount.value + 1
-            _comboCount.value = newCombo
-            playComboSound(newCombo)
-            
-            // 3問連続正解で速度を上げる（難易度アップ）
-            if (newConsecutiveCorrect % CORRECT_STREAK_FOR_SPEEDUP == 0) {
-                val newRate = (_speechRate.value + 0.1f).coerceAtMost(MAX_SPEECH_RATE)
-                if (newRate != _speechRate.value) {
-                    _speechRate.value = newRate
-                    updateSpeechRate()
-                    Log.d("ListeningViewModel", "Speed increased to ${_speechRate.value} after $newConsecutiveCorrect correct")
-                }
+            // 連続正解数を記録（速度変更は無効化）
+            if (_isCorrect.value) {
+                val newConsecutiveCorrect = _consecutiveCorrect.value + 1
+                _consecutiveCorrect.value = newConsecutiveCorrect
+                
+                Log.d("ListeningViewModel", "Correct! Consecutive: $newConsecutiveCorrect")
+            } else {
+                _consecutiveCorrect.value = 0
+                Log.d("ListeningViewModel", "Incorrect! Consecutive reset")
             }
         } else {
             // 不正解
@@ -483,15 +451,6 @@ class ListeningViewModel(
             
             // 連続正解数をリセット
             _consecutiveCorrect.value = 0
-            _comboCount.value = 0
-            
-            // 速度を下げる（難易度ダウン）
-            val newRate = (_speechRate.value - 0.1f).coerceAtLeast(MIN_SPEECH_RATE)
-            if (newRate != _speechRate.value) {
-                _speechRate.value = newRate
-                updateSpeechRate()
-                Log.d("ListeningViewModel", "Speed decreased to ${_speechRate.value} after mistake")
-            }
         }
     }
     
@@ -518,39 +477,50 @@ class ListeningViewModel(
         val totalQuestions = currentSession.questions.size
         if (totalQuestions == 0) return
         val correct = currentSession.score
-        val result = calculateLessonResult(correct, totalQuestions)
+        val requiredCorrect = if (totalQuestions > 0) {
+            ceil(totalQuestions * PASSING_RATE).toInt().coerceAtMost(totalQuestions)
+        } else {
+            0
+        }
+        val passed = totalQuestions > 0 && correct >= requiredCorrect
+        val result = calculateLessonResult(correct, totalQuestions, passed)
         if (_lessonResult.value == null) {
             _lessonResult.value = result
             viewModelScope.launch {
                 val currentLevel = usageRepository.getCurrentLevel().first()
                 usageRepository.addXP(result.xpEarned)
-                val clearedLevel = if (result.leveledUp) {
+                val clearedLevel = if (passed) {
                     usageRepository.incrementLevel()
                     currentLevel + 1
                 } else {
-                    currentLevel
+                    null
                 }
                 _clearedLevel.value = clearedLevel
 
-                val starsEarned = calculateStars(correct, totalQuestions)
-                userProgressRepository.markLevelCompleted(this@ListeningViewModel.currentLevel, starsEarned)
-                if (starsEarned > 0) {
-                    userProgressRepository.unlockLevel(this@ListeningViewModel.currentLevel + 1)
+                if (passed) {
+                    val starsEarned = calculateStars(correct, totalQuestions)
+                    userProgressRepository.markLevelCompleted(this@ListeningViewModel.currentLevel, starsEarned)
+                    if (starsEarned > 0) {
+                        userProgressRepository.unlockLevel(this@ListeningViewModel.currentLevel + 1)
+                    }
                 }
             }
         }
     }
     
-    private fun calculateLessonResult(correctCount: Int, totalQuestions: Int): LessonResult {
+    private fun calculateLessonResult(
+        correctCount: Int,
+        totalQuestions: Int,
+        passed: Boolean
+    ): LessonResult {
         val baseXp = correctCount * 10
         val bonus = if (correctCount == totalQuestions && totalQuestions == QUESTIONS_PER_SESSION) 50 else 0
         val xp = baseXp + bonus
-        val leveledUp = correctCount >= 8
         return LessonResult(
             correctCount = correctCount,
             totalQuestions = totalQuestions,
             xpEarned = xp,
-            leveledUp = leveledUp
+            leveledUp = passed
         )
     }
 
@@ -571,89 +541,77 @@ class ListeningViewModel(
     }
 
     private fun buildSessionQuestions(allQuestions: List<ListeningQuestion>): List<ListeningQuestion> {
-        val listeningPool = allQuestions.filter { question -> question.type == QuestionType.LISTENING }
-        val translationPool = allQuestions.filter { question -> question.type == QuestionType.TRANSLATION }
-        val orderingPool = allQuestions.filter { question -> question.type == QuestionType.ORDERING }
+        if (allQuestions.isEmpty()) return emptyList()
 
-        val selectedListening = selectWithFallback(
-            primary = listeningPool,
-            fallback = dummyListeningQuestions,
-            desiredCount = LISTENING_COUNT
-        )
-        val selectedTranslation = selectWithFallback(
-            primary = translationPool,
-            fallback = dummyTranslationQuestions,
-            desiredCount = TRANSLATION_COUNT
-        )
-        val selectedOrdering = selectWithFallback(
-            primary = orderingPool,
-            fallback = dummyOrderingQuestions,
-            desiredCount = ORDERING_COUNT
-        )
-
-        val combined = mutableListOf<ListeningQuestion>().apply {
-            addAll(selectedListening)
-            addAll(selectedTranslation)
-            addAll(selectedOrdering)
+        // まずIDで重複を排除（確実な一意性保証）
+        val distinctQuestions = allQuestions.distinctBy { it.phrase }
+        if (distinctQuestions.size != allQuestions.size) {
+            Log.w("ListeningViewModel", "Removed duplicates: ${allQuestions.size} -> ${distinctQuestions.size}")
         }
 
-        return ensureUniqueSessionQuestions(
-            candidates = combined,
-            desiredCount = QUESTIONS_PER_SESSION
-        )
+        val listeningPool = distinctQuestions.filter { question -> question.type == QuestionType.LISTENING }
+        val translationPool = distinctQuestions.filter { question -> question.type == QuestionType.TRANSLATION }
+        val orderingPool = distinctQuestions.filter { question -> question.type == QuestionType.ORDERING }
+
+        val combined = mutableListOf<ListeningQuestion>().apply {
+            addAll(selectFromPool(listeningPool, LISTENING_COUNT))
+            addAll(selectFromPool(translationPool, TRANSLATION_COUNT))
+            addAll(selectFromPool(orderingPool, ORDERING_COUNT))
+        }
+
+        if (combined.isEmpty()) {
+            combined += replicateFromPool(distinctQuestions, QUESTIONS_PER_SESSION)
+        }
+
+        if (combined.size < QUESTIONS_PER_SESSION) {
+            combined += replicateFromPool(distinctQuestions, QUESTIONS_PER_SESSION - combined.size)
+        }
+
+        // 最終的な重複チェックとシャッフル
+        val finalQuestions = combined.shuffled().take(QUESTIONS_PER_SESSION)
+        val finalDistinct = finalQuestions.distinctBy { it.phrase }
+        
+        if (finalDistinct.size != finalQuestions.size) {
+            Log.w("ListeningViewModel", "Final session had duplicates, ensuring uniqueness")
+            // 重複がある場合はユニークな問題で埋める
+            val additionalQuestions = distinctQuestions.filter { 
+                !finalDistinct.contains(it) 
+            }.shuffled()
+            val result = (finalDistinct + additionalQuestions).take(QUESTIONS_PER_SESSION)
+            Log.d("ListeningViewModel", "Session questions: ${result.size} unique questions")
+            return result
+        }
+        
+        Log.d("ListeningViewModel", "Session built with ${finalQuestions.size} unique questions")
+        return finalQuestions
     }
 
-    private fun selectWithFallback(
-        primary: List<ListeningQuestion>,
-        fallback: List<ListeningQuestion>,
+    private fun selectFromPool(
+        pool: List<ListeningQuestion>,
         desiredCount: Int
-    ): List<ListeningQuestion> {
-        if (desiredCount <= 0) return emptyList()
-        val result = primary.shuffled().take(desiredCount).toMutableList()
-        if (result.size >= desiredCount) return result
-
-        if (fallback.isEmpty()) return result
-        var fallbackIndex = 0
-        while (result.size < desiredCount) {
-            val base = fallback[fallbackIndex % fallback.size]
-            val uniqueId = "${base.id}_${Random.nextInt(1_000_000)}"
-            result += base.copy(id = uniqueId)
-            fallbackIndex++
+    ): MutableList<ListeningQuestion> {
+        if (pool.isEmpty() || desiredCount <= 0) return mutableListOf()
+        val result = pool.shuffled().take(desiredCount).toMutableList()
+        if (result.size < desiredCount) {
+            result += replicateFromPool(pool, desiredCount - result.size)
         }
         return result
     }
 
-    private fun ensureUniqueSessionQuestions(
-        candidates: List<ListeningQuestion>,
-        desiredCount: Int
+    private fun replicateFromPool(
+        pool: List<ListeningQuestion>,
+        needed: Int
     ): List<ListeningQuestion> {
-        if (desiredCount <= 0) return emptyList()
-
-        val uniqueMap = LinkedHashMap<String, ListeningQuestion>()
-        candidates.forEach { question ->
-            val key = question.phrase.trim().lowercase()
-            uniqueMap.putIfAbsent(key, question)
+        if (pool.isEmpty() || needed <= 0) return emptyList()
+        val result = mutableListOf<ListeningQuestion>()
+        var index = 0
+        while (result.size < needed) {
+            val base = pool[index % pool.size]
+            val duplicateId = "${base.id}_dup_${index}_${Random.nextInt(1_000_000)}"
+            result += base.copy(id = duplicateId)
+            index++
         }
-
-        if (uniqueMap.size < desiredCount) {
-            val fallbackPool = dummyListeningQuestions + dummyTranslationQuestions + dummyOrderingQuestions
-            var fallbackIndex = 0
-            var attempts = 0
-            val maxAttempts = (fallbackPool.size.coerceAtLeast(1)) * 3
-
-            while (uniqueMap.size < desiredCount && fallbackPool.isNotEmpty() && attempts < maxAttempts) {
-                val base = fallbackPool[fallbackIndex % fallbackPool.size]
-                val key = base.phrase.trim().lowercase()
-                if (!uniqueMap.containsKey(key)) {
-                    val uniqueId = "${base.id}_${Random.nextInt(1_000_000)}"
-                    uniqueMap[key] = base.copy(id = uniqueId)
-                }
-                fallbackIndex++
-                attempts++
-            }
-        }
-
-        return uniqueMap.values.shuffled().take(desiredCount)
+        return result
     }
 
     private fun Question.toListeningQuestion(): ListeningQuestion {

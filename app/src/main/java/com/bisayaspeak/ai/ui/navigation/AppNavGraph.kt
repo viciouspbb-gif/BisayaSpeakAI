@@ -57,7 +57,6 @@ import com.bisayaspeak.ai.ui.screens.PracticeCategoryScreen
 import com.bisayaspeak.ai.ui.screens.PracticeQuizScreen
 import com.bisayaspeak.ai.ui.screens.PracticeWordDetailScreen
 import com.bisayaspeak.ai.ui.screens.PracticeWordListScreen
-import com.bisayaspeak.ai.ui.screens.QuizScreen
 import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.TranslateScreen
@@ -74,15 +73,14 @@ enum class AppRoute(val route: String) {
     PracticeCategory("practice/category/{category}"),
     PracticeWord("practice/word/{id}"),
     Listening("listening/{level}"),
-    Quiz("quiz"),
-    RolePlay("roleplay"),
+        RolePlay("roleplay"),
     RolePlayScenario("role_play_scenario/{scenarioId}"),
     Account("account"),
     SignIn("signin"),
     SignUp("signup"),
     Feedback("feedback"),
     Upgrade("upgrade"),
-    LessonResult("result_screen/{correctCount}/{earnedXP}/{clearedLevel}"),
+    LessonResult("result_screen/{correctCount}/{totalQuestions}/{earnedXP}/{clearedLevel}/{leveledUp}"),
     MissionScenarioSelect("mission/scenario"),
     MissionTalk("mission/talk/{missionId}"),
     AiTranslator("ai/translator")
@@ -146,12 +144,7 @@ fun AppNavGraph(
                     isProUnlocked = isProUnlocked,
 
                     onStartLearning = {
-                        val destination = if (homeStatus.currentLevel < 3) {
-                            AppRoute.LevelSelection.route
-                        } else {
-                            AppRoute.Quiz.route
-                        }
-                        navController.navigate(destination)
+                        navController.navigate(AppRoute.LevelSelection.route)
                     },
                     onClickFeature = { feature ->
                         when (feature) {
@@ -175,7 +168,7 @@ fun AppNavGraph(
 
                             FeatureId.PRONUNCIATION -> if (!isLiteBuild) navController.navigate(AppRoute.PracticeCategories.route)
                             FeatureId.LISTENING -> navController.navigate(AppRoute.LevelSelection.route)
-                            FeatureId.QUIZ -> navController.navigate(AppRoute.Quiz.route)
+                            FeatureId.QUIZ -> navController.navigate(AppRoute.LevelSelection.route)
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
@@ -329,17 +322,23 @@ fun AppNavGraph(
             route = AppRoute.LessonResult.route,
             arguments = listOf(
                 navArgument("correctCount") { type = NavType.IntType },
+                navArgument("totalQuestions") { type = NavType.IntType },
                 navArgument("earnedXP") { type = NavType.IntType },
-                navArgument("clearedLevel") { type = NavType.IntType }
+                navArgument("clearedLevel") { type = NavType.IntType },
+                navArgument("leveledUp") { type = NavType.IntType }
             )
         ) { backStackEntry ->
             val correctCount = backStackEntry.arguments?.getInt("correctCount") ?: 0
+            val totalQuestions = backStackEntry.arguments?.getInt("totalQuestions") ?: 0
             val earnedXP = backStackEntry.arguments?.getInt("earnedXP") ?: 0
             val clearedLevel = backStackEntry.arguments?.getInt("clearedLevel") ?: 1
+            val leveledUp = backStackEntry.arguments?.getInt("leveledUp") == 1
             LessonResultScreen(
                 correctCount = correctCount,
+                totalQuestions = totalQuestions,
                 earnedXP = earnedXP,
                 clearedLevel = clearedLevel,
+                leveledUp = leveledUp,
                 onNavigateHome = {
                     navController.navigate(AppRoute.Home.route) {
                         popUpTo(AppRoute.Home.route) { inclusive = true }
@@ -448,7 +447,7 @@ fun AppNavGraph(
                 level = level,
                 isPremium = isPremiumPlan,
                 onNavigateBack = { navController.popBackStack() },
-                onShowRewardedAd = { onComplete ->
+                onShowRewardedAd = { onComplete: () -> Unit ->
                     val act = activity
                     val ctx = context
                     if (act != null) {
@@ -463,41 +462,6 @@ fun AppNavGraph(
                     }
                 },
                 viewModel = viewModel
-            )
-        }
-
-        // Quiz - Direct to QuizScreen
-        composable(AppRoute.Quiz.route) {
-            BannerScreenContainer(userPlan = userPlan) {
-                QuizScreen(
-                    level = LearningLevel.BEGINNER,
-
-                    onNavigateBack = { navController.popBackStack() },
-                    onQuizStart = {
-                        // クイズ開始時は何もしない
-                    },
-                    onQuizComplete = {
-                        // クイズ終了時にインタースティシャル広告を表示（無料版のみ）
-                        if (!isPremiumPlan) {
-                            AdMobManager.showInterstitial(activity) {
-                                AdMobManager.loadInterstitial(context)
-                            }
-                        }
-                    },
-                    isPremium = isPremiumPlan,
-                    navController = navController
-                )
-            }
-        }
-
-        // リスト画面（無条件で追加）
-        composable("roleplay_list") {
-            // テスト用にLv100を渡す
-            RoleplayListScreen(
-                userCurrentLevel = 100,
-                onScenarioClick = { scenario ->
-                    navController.navigate("roleplay_chat/${scenario.id}")
-                }
             )
         }
 

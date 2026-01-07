@@ -1,6 +1,7 @@
 package com.bisayaspeak.ai.data.local
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -46,6 +47,19 @@ abstract class AppDatabase : RoomDatabase() {
 
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
+            Log.d("AppDatabase", "Database created, initializing seed data")
+            CoroutineScope(Dispatchers.IO).launch {
+                DatabaseInitializer.initialize(
+                    context = context,
+                    questionDao = database.questionDao(),
+                    userProgressDao = database.userProgressDao()
+                )
+            }
+        }
+        
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
+            Log.d("AppDatabase", "Database opened, checking seed data")
             CoroutineScope(Dispatchers.IO).launch {
                 DatabaseInitializer.initialize(
                     context = context,

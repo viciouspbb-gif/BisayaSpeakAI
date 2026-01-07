@@ -1,452 +1,3470 @@
 [
   {
+    "id": 1,
     "level": 1,
-    "questions": [
-      { "cebuano": "Maayong buntag", "japanese": "おはようございます", "audio": "m_buntag" },
-      { "cebuano": "Maayong hapon", "japanese": "こんにちは（午後）", "audio": "m_hapon" },
-      { "cebuano": "Maayong gabii", "japanese": "こんばんは", "audio": "m_gabii" },
-      { "cebuano": "Salamat", "japanese": "ありがとう", "audio": "salamat" },
-      { "cebuano": "Walay sapayan", "japanese": "どういたしまして", "audio": "w_sapayan" },
-      { "cebuano": "Kumusta?", "japanese": "元気ですか？", "audio": "kumusta" },
-      { "cebuano": "Maayo man", "japanese": "元気です", "audio": "maayo_man" },
-      { "cebuano": "Tagpila kini?", "japanese": "これはいくらですか？", "audio": "tagpila" },
-      { "cebuano": "Ambi", "japanese": "ちょうだい / ください", "audio": "ambi" },
-      { "cebuano": "Tagpila?", "japanese": "いくら？", "audio": "tagpila_short" }
+    "native": "Maayong buntag",
+    "translation": "おはよう",
+    "words": [
+      "Maayong",
+      "buntag"
     ]
   },
   {
+    "id": 2,
+    "level": 1,
+    "native": "Maayong adlaw",
+    "translation": "良い一日を",
+    "words": [
+      "Maayong",
+      "adlaw"
+    ]
+  },
+  {
+    "id": 3,
+    "level": 1,
+    "native": "Maayong hapon",
+    "translation": "こんにちは",
+    "words": [
+      "Maayong",
+      "hapon"
+    ]
+  },
+  {
+    "id": 4,
+    "level": 1,
+    "native": "Maayong gabii",
+    "translation": "こんばんは",
+    "words": [
+      "Maayong",
+      "gabii"
+    ]
+  },
+  {
+    "id": 5,
+    "level": 1,
+    "native": "Kumusta ka",
+    "translation": "元気ですか？",
+    "words": [
+      "Kumusta",
+      "ka"
+    ]
+  },
+  {
+    "id": 6,
+    "level": 1,
+    "native": "Maayo ra ko",
+    "translation": "私は元気です",
+    "words": [
+      "Maayo",
+      "ra",
+      "ko"
+    ]
+  },
+  {
+    "id": 7,
+    "level": 1,
+    "native": "Salamat",
+    "translation": "ありがとう",
+    "words": [
+      "Salamat"
+    ]
+  },
+  {
+    "id": 8,
+    "level": 1,
+    "native": "Walay sapayan",
+    "translation": "どういたしまして",
+    "words": [
+      "Walay",
+      "sapayan"
+    ]
+  },
+  {
+    "id": 9,
+    "level": 1,
+    "native": "Amping ha",
+    "translation": "気をつけてね",
+    "words": [
+      "Amping",
+      "ha"
+    ]
+  },
+  {
+    "id": 10,
+    "level": 1,
+    "native": "Nalipay ko magkita nimo",
+    "translation": "会えて嬉しいです",
+    "words": [
+      "Nalipay",
+      "ko",
+      "magkita",
+      "nimo"
+    ]
+  },
+  {
+    "id": 11,
     "level": 2,
-    "questions": [
-      { "cebuano": "Unsa imong ngalan?", "japanese": "お名前は何ですか？", "audio": "unsa_ngalan" },
-      { "cebuano": "Ako si Ricky", "japanese": "私はリッキーです", "audio": "ako_si_ricky" },
-      { "cebuano": "Taga-asa ka?", "japanese": "どこから来ましたか？", "audio": "taga_asa" },
-      { "cebuano": "Taga-Japan ko", "japanese": "日本から来ました", "audio": "taga_japan" },
-      { "cebuano": "Pila imong edad?", "japanese": "何歳ですか？", "audio": "pila_edad" },
-      { "cebuano": "Asa ka padulong?", "japanese": "どこへ行くのですか？", "audio": "asa_padulong" },
-      { "cebuano": "Diri lang", "japanese": "ちょっとそこまで", "audio": "diri_lang" },
-      { "cebuano": "Kaon na ta", "japanese": "ご飯を食べましょう", "audio": "kaon_na_ta" },
-      { "cebuano": "Lami kaayo!", "japanese": "とても美味しい！", "audio": "lami_kaayo" },
-      { "cebuano": "Busog nako", "japanese": "お腹いっぱいです", "audio": "busog_nako" }
+    "native": "Oo",
+    "translation": "はい",
+    "words": [
+      "Oo"
     ]
   },
   {
+    "id": 12,
+    "level": 2,
+    "native": "Dili",
+    "translation": "いいえ",
+    "words": [
+      "Dili"
+    ]
+  },
+  {
+    "id": 13,
+    "level": 2,
+    "native": "Wala",
+    "translation": "ありません",
+    "words": [
+      "Wala"
+    ]
+  },
+  {
+    "id": 14,
+    "level": 2,
+    "native": "Sige",
+    "translation": "了解です",
+    "words": [
+      "Sige"
+    ]
+  },
+  {
+    "id": 15,
+    "level": 2,
+    "native": "Pwede",
+    "translation": "できます",
+    "words": [
+      "Pwede"
+    ]
+  },
+  {
+    "id": 16,
+    "level": 2,
+    "native": "Dili pwede",
+    "translation": "できません",
+    "words": [
+      "Dili",
+      "pwede"
+    ]
+  },
+  {
+    "id": 17,
+    "level": 2,
+    "native": "Basin siguro",
+    "translation": "たぶんそうです",
+    "words": [
+      "Basin",
+      "siguro"
+    ]
+  },
+  {
+    "id": 18,
+    "level": 2,
+    "native": "Maayo ra",
+    "translation": "大丈夫です",
+    "words": [
+      "Maayo",
+      "ra"
+    ]
+  },
+  {
+    "id": 19,
+    "level": 2,
+    "native": "Wala pa",
+    "translation": "まだです",
+    "words": [
+      "Wala",
+      "pa"
+    ]
+  },
+  {
+    "id": 20,
+    "level": 2,
+    "native": "Naa pa",
+    "translation": "まだあります",
+    "words": [
+      "Naa",
+      "pa"
+    ]
+  },
+  {
+    "id": 21,
     "level": 3,
-    "questions": [
-      { "cebuano": "Asa ang banyo?", "japanese": "トイレはどこですか？", "audio": "asa_banyo" },
-      { "cebuano": "Palihug", "japanese": "お願いします", "audio": "palihug" },
-      { "cebuano": "Dili ko kasabot", "japanese": "理解できません", "audio": "dili_kasabot" },
-      { "cebuano": "Unsaon pag-ingon...?", "japanese": "〜はなんて言いますか？", "audio": "unsaon_pag_ingon" },
-      { "cebuano": "Usba palihug", "japanese": "もう一度お願いします", "audio": "usba_palihug" },
-      { "cebuano": "Hinay-hinay lang", "japanese": "ゆっくりお願いします", "audio": "hinay_hinay" },
-      { "cebuano": "Oo", "japanese": "はい", "audio": "oo" },
-      { "cebuano": "Dili", "japanese": "いいえ", "audio": "dili" },
-      { "cebuano": "Ambambot", "japanese": "わかりません（知りません）", "audio": "ambot" },
-      { "cebuano": "Gimingaw ko nimo", "japanese": "あなたが恋しいです", "audio": "gimingaw" }
+    "native": "Ako",
+    "translation": "私",
+    "words": [
+      "Ako"
     ]
   },
   {
+    "id": 22,
+    "level": 3,
+    "native": "Ikaw",
+    "translation": "あなた",
+    "words": [
+      "Ikaw"
+    ]
+  },
+  {
+    "id": 23,
+    "level": 3,
+    "native": "Siya",
+    "translation": "彼／彼女",
+    "words": [
+      "Siya"
+    ]
+  },
+  {
+    "id": 24,
+    "level": 3,
+    "native": "Kami ra",
+    "translation": "私たち（あなた抜き）",
+    "words": [
+      "Kami",
+      "ra"
+    ]
+  },
+  {
+    "id": 25,
+    "level": 3,
+    "native": "Kita tanan",
+    "translation": "私たち（あなた含む）",
+    "words": [
+      "Kita",
+      "tanan"
+    ]
+  },
+  {
+    "id": 26,
+    "level": 3,
+    "native": "Kamo tanan",
+    "translation": "あなたたち",
+    "words": [
+      "Kamo",
+      "tanan"
+    ]
+  },
+  {
+    "id": 27,
+    "level": 3,
+    "native": "Sila tanan",
+    "translation": "彼ら",
+    "words": [
+      "Sila",
+      "tanan"
+    ]
+  },
+  {
+    "id": 28,
+    "level": 3,
+    "native": "Akong amigo",
+    "translation": "私の友達",
+    "words": [
+      "Akong",
+      "amigo"
+    ]
+  },
+  {
+    "id": 29,
+    "level": 3,
+    "native": "Imong pamilya",
+    "translation": "あなたの家族",
+    "words": [
+      "Imong",
+      "pamilya"
+    ]
+  },
+  {
+    "id": 30,
+    "level": 3,
+    "native": "Iyang trabaho",
+    "translation": "彼／彼女の仕事",
+    "words": [
+      "Iyang",
+      "trabaho"
+    ]
+  },
+  {
+    "id": 31,
     "level": 4,
-    "questions": [
-      { "cebuano": "Kinsa ka?", "japanese": "あなたは誰ですか？", "audio": "kinsa_ka" },
-      { "cebuano": "Kinsa siya?", "japanese": "彼は（彼女は）誰ですか？", "audio": "kinsa_siya" },
-      { "cebuano": "Unsa ni?", "japanese": "これは何ですか？", "audio": "unsa_ni" },
-      { "cebuano": "Unsa to?", "japanese": "あれは何でしたか？", "audio": "unsa_to" },
-      { "cebuano": "Pila man?", "japanese": "いくつですか？", "audio": "pila_man" },
-      { "cebuano": "Kanus-a?", "japanese": "いつですか？", "audio": "kanus_a" },
-      { "cebuano": "Ngano man?", "japanese": "なぜですか？", "audio": "ngano_man" },
-      { "cebuano": "Giunsa nimo?", "japanese": "どうやったのですか？", "audio": "giunsa_nimo" },
-      { "cebuano": "Hain man?", "japanese": "どっちですか？", "audio": "hain_man" },
-      { "cebuano": "Tinuod?", "japanese": "本当？", "audio": "tinuod" }
+    "native": "Kaon ta karon",
+    "translation": "今食べよう",
+    "words": [
+      "Kaon",
+      "ta",
+      "karon"
     ]
   },
   {
+    "id": 32,
+    "level": 4,
+    "native": "Kaon ko ug pan",
+    "translation": "パンを食べます",
+    "words": [
+      "Kaon",
+      "ko",
+      "ug",
+      "pan"
+    ]
+  },
+  {
+    "id": 33,
+    "level": 4,
+    "native": "Inom ko tubig",
+    "translation": "水を飲みます",
+    "words": [
+      "Inom",
+      "ko",
+      "tubig"
+    ]
+  },
+  {
+    "id": 34,
+    "level": 4,
+    "native": "Inom ta kape",
+    "translation": "コーヒーを飲もう",
+    "words": [
+      "Inom",
+      "ta",
+      "kape"
+    ]
+  },
+  {
+    "id": 35,
+    "level": 4,
+    "native": "Tulog na ko",
+    "translation": "もう寝ます",
+    "words": [
+      "Tulog",
+      "na",
+      "ko"
+    ]
+  },
+  {
+    "id": 36,
+    "level": 4,
+    "native": "Mata na palihug",
+    "translation": "起きてください",
+    "words": [
+      "Mata",
+      "na",
+      "palihug"
+    ]
+  },
+  {
+    "id": 37,
+    "level": 4,
+    "native": "Laba ko sa sanina",
+    "translation": "服を洗います",
+    "words": [
+      "Laba",
+      "ko",
+      "sa",
+      "sanina"
+    ]
+  },
+  {
+    "id": 38,
+    "level": 4,
+    "native": "Ligo ta sa dagat",
+    "translation": "海で泳ごう",
+    "words": [
+      "Ligo",
+      "ta",
+      "sa",
+      "dagat"
+    ]
+  },
+  {
+    "id": 39,
+    "level": 4,
+    "native": "Lakaw ta palihug",
+    "translation": "歩きましょう",
+    "words": [
+      "Lakaw",
+      "ta",
+      "palihug"
+    ]
+  },
+  {
+    "id": 40,
+    "level": 4,
+    "native": "Balik ko unya",
+    "translation": "あとで戻ります",
+    "words": [
+      "Balik",
+      "ko",
+      "unya"
+    ]
+  },
+  {
+    "id": 41,
     "level": 5,
-    "questions": [
-      { "cebuano": "Gikapoy ko", "japanese": "疲れました", "audio": "gikapoy" },
-      { "cebuano": "Gigutom ko", "japanese": "お腹が空きました", "audio": "gigutom" },
-      { "cebuano": "Giuhaw ko", "japanese": "喉が渇きました", "audio": "giuhaw" },
-      { "cebuano": "Katulgon nako", "japanese": "眠いです", "audio": "katulgon" },
-      { "cebuano": "Sakit akong ulo", "japanese": "頭が痛いです", "audio": "sakit_ulo" },
-      { "cebuano": "Sakit akong tiyan", "japanese": "お腹が痛いです", "audio": "sakit_tiyan" },
-      { "cebuano": "Init kaayo", "japanese": "とても暑いです", "audio": "init_kaayo" },
-      { "cebuano": "Bugnaw diri", "japanese": "ここは寒いです（涼しい）", "audio": "bugnaw_diri" },
-      { "cebuano": "Ayaw lang", "japanese": "結構です（気にしないで）", "audio": "ayaw_lang" },
-      { "cebuano": "Ambi na", "japanese": "それ、ちょうだい", "audio": "ambi_na" }
+    "native": "Init kaayo diri",
+    "translation": "ここはとても暑いです",
+    "words": [
+      "Init",
+      "kaayo",
+      "diri"
     ]
   },
   {
+    "id": 42,
+    "level": 5,
+    "native": "Bugnaw ang tubig",
+    "translation": "水が冷たいです",
+    "words": [
+      "Bugnaw",
+      "ang",
+      "tubig"
+    ]
+  },
+  {
+    "id": 43,
+    "level": 5,
+    "native": "Dako kaayo ang balay",
+    "translation": "家が大きいです",
+    "words": [
+      "Dako",
+      "kaayo",
+      "ang",
+      "balay"
+    ]
+  },
+  {
+    "id": 44,
+    "level": 5,
+    "native": "Gamay ra ang kwarto",
+    "translation": "部屋が小さいです",
+    "words": [
+      "Gamay",
+      "ra",
+      "ang",
+      "kwarto"
+    ]
+  },
+  {
+    "id": 45,
+    "level": 5,
+    "native": "Taas siya",
+    "translation": "彼／彼女は背が高いです",
+    "words": [
+      "Taas",
+      "siya"
+    ]
+  },
+  {
+    "id": 46,
+    "level": 5,
+    "native": "Mubo ko",
+    "translation": "私は背が低いです",
+    "words": [
+      "Mubo",
+      "ko"
+    ]
+  },
+  {
+    "id": 47,
+    "level": 5,
+    "native": "Humok ang unlan",
+    "translation": "枕が柔らかいです",
+    "words": [
+      "Humok",
+      "ang",
+      "unlan"
+    ]
+  },
+  {
+    "id": 48,
+    "level": 5,
+    "native": "Lig on ang lamesa",
+    "translation": "机が丈夫です",
+    "words": [
+      "Lig",
+      "on",
+      "ang",
+      "lamesa"
+    ]
+  },
+  {
+    "id": 49,
+    "level": 5,
+    "native": "Baga kaayo ang libro",
+    "translation": "本がとても厚いです",
+    "words": [
+      "Baga",
+      "kaayo",
+      "ang",
+      "libro"
+    ]
+  },
+  {
+    "id": 50,
+    "level": 5,
+    "native": "Hayag ang adlaw",
+    "translation": "陽射しが明るいです",
+    "words": [
+      "Hayag",
+      "ang",
+      "adlaw"
+    ]
+  },
+  {
+    "id": 51,
     "level": 6,
-    "questions": [
-      { "cebuano": "Gwapa kaayo ka", "japanese": "あなたはとても綺麗です", "audio": "gwapa_kaayo" },
-      { "cebuano": "Gwapo ka", "japanese": "あなたはハンサムです", "audio": "gwapo_ka" },
-      { "cebuano": "Maayo kaayo ka", "japanese": "あなたはとても上手です", "audio": "maayo_kaayo_ka" },
-      { "cebuano": "Sige lang", "japanese": "大丈夫ですよ / 構いません", "audio": "sige_lang" },
-      { "cebuano": "Puhon", "japanese": "いつか（将来的に）", "audio": "puhon" },
-      { "cebuano": "Hinaot unta", "japanese": "そう願っています", "audio": "hinaot_unta" },
-      { "cebuano": "Basig unya", "japanese": "たぶん後で", "audio": "basig_unya" },
-      { "cebuano": "Kadiyot lang", "japanese": "ちょっと待って", "audio": "kadiyot_lang" },
-      { "cebuano": "Huwat lang", "japanese": "待っていて", "audio": "huwat_lang" },
-      { "cebuano": "Dali ra", "japanese": "すぐだよ / 簡単だよ", "audio": "dali_ra" }
+    "native": "Gigutom ko",
+    "translation": "お腹が空きました",
+    "words": [
+      "Gigutom",
+      "ko"
     ]
   },
   {
+    "id": 52,
+    "level": 6,
+    "native": "Gikapoy ko",
+    "translation": "疲れました",
+    "words": [
+      "Gikapoy",
+      "ko"
+    ]
+  },
+  {
+    "id": 53,
+    "level": 6,
+    "native": "Giuhaw ko",
+    "translation": "喉が渇きました",
+    "words": [
+      "Giuhaw",
+      "ko"
+    ]
+  },
+  {
+    "id": 54,
+    "level": 6,
+    "native": "Nalipay ko",
+    "translation": "嬉しいです",
+    "words": [
+      "Nalipay",
+      "ko"
+    ]
+  },
+  {
+    "id": 55,
+    "level": 6,
+    "native": "Nagool ko",
+    "translation": "心配しています",
+    "words": [
+      "Nagool",
+      "ko"
+    ]
+  },
+  {
+    "id": 56,
+    "level": 6,
+    "native": "Nasuko ko",
+    "translation": "怒っています",
+    "words": [
+      "Nasuko",
+      "ko"
+    ]
+  },
+  {
+    "id": 57,
+    "level": 6,
+    "native": "Naglibog ko",
+    "translation": "混乱しています",
+    "words": [
+      "Naglibog",
+      "ko"
+    ]
+  },
+  {
+    "id": 58,
+    "level": 6,
+    "native": "Nahadlok ko",
+    "translation": "怖いです",
+    "words": [
+      "Nahadlok",
+      "ko"
+    ]
+  },
+  {
+    "id": 59,
+    "level": 6,
+    "native": "Masakiton ko",
+    "translation": "体調が悪いです",
+    "words": [
+      "Masakiton",
+      "ko"
+    ]
+  },
+  {
+    "id": 60,
+    "level": 6,
+    "native": "Ganahan ko mopahuway",
+    "translation": "休みたいです",
+    "words": [
+      "Ganahan",
+      "ko",
+      "mopahuway"
+    ]
+  },
+  {
+    "id": 61,
     "level": 7,
-    "questions": [
-      { "cebuano": "Unsaon nako pag-adto sa...?", "japanese": "〜へはどうやって行きますか？", "audio": "unsaon_pag_adto" },
-      { "cebuano": "Layô ba ang...?", "japanese": "〜は遠いですか？", "audio": "layo_ba" },
-      { "cebuano": "Duol ra", "japanese": "すぐ近くです", "audio": "duol_ra" },
-      { "cebuano": "Liko sa tuo", "japanese": "右に曲がって", "audio": "liko_tuo" },
-      { "cebuano": "Liko sa wala", "japanese": "左に曲がって", "audio": "liko_wala" },
-      { "cebuano": "Deretso lang", "japanese": "まっすぐ行って", "audio": "deretso" },
-      { "cebuano": "Hunong diri", "japanese": "ここで止まって", "audio": "hunong_diri" },
-      { "cebuano": "Tagpila ang plete?", "japanese": "運賃はいくらですか？", "audio": "plete" },
-      { "cebuano": "Naa moy...?", "japanese": "〜はありますか？", "audio": "naa_moy" },
-      { "cebuano": "Wala na", "japanese": "もうありません", "audio": "wala_na" }
+    "native": "Asa ka",
+    "translation": "どこにいるの？",
+    "words": [
+      "Asa",
+      "ka"
     ]
   },
   {
+    "id": 62,
+    "level": 7,
+    "native": "Ania ko sa balay",
+    "translation": "家にいます",
+    "words": [
+      "Ania",
+      "ko",
+      "sa",
+      "balay"
+    ]
+  },
+  {
+    "id": 63,
+    "level": 7,
+    "native": "Ania ko sa opisina",
+    "translation": "オフィスにいます",
+    "words": [
+      "Ania",
+      "ko",
+      "sa",
+      "opisina"
+    ]
+  },
+  {
+    "id": 64,
+    "level": 7,
+    "native": "Asa sila karon",
+    "translation": "みんな今どこ？",
+    "words": [
+      "Asa",
+      "sila",
+      "karon"
+    ]
+  },
+  {
+    "id": 65,
+    "level": 7,
+    "native": "Ania ra siya sa gawas",
+    "translation": "彼／彼女は外にいます",
+    "words": [
+      "Ania",
+      "ra",
+      "siya",
+      "sa",
+      "gawas"
+    ]
+  },
+  {
+    "id": 66,
+    "level": 7,
+    "native": "Tua ko sa merkado",
+    "translation": "市場にいます",
+    "words": [
+      "Tua",
+      "ko",
+      "sa",
+      "merkado"
+    ]
+  },
+  {
+    "id": 67,
+    "level": 7,
+    "native": "Anhi diri palihug",
+    "translation": "こちらに来てください",
+    "words": [
+      "Anhi",
+      "diri",
+      "palihug"
+    ]
+  },
+  {
+    "id": 68,
+    "level": 7,
+    "native": "Didto ko ganiha",
+    "translation": "さっきそこにいました",
+    "words": [
+      "Didto",
+      "ko",
+      "ganiha"
+    ]
+  },
+  {
+    "id": 69,
+    "level": 7,
+    "native": "Asa dapit ang terminal",
+    "translation": "ターミナルはどの辺ですか？",
+    "words": [
+      "Asa",
+      "dapit",
+      "ang",
+      "terminal"
+    ]
+  },
+  {
+    "id": 70,
+    "level": 7,
+    "native": "Ania ta sa klase",
+    "translation": "今授業にいます",
+    "words": [
+      "Ania",
+      "ta",
+      "sa",
+      "klase"
+    ]
+  },
+  {
+    "id": 71,
     "level": 8,
-    "questions": [
-      { "cebuano": "Ganahan ko nimo", "japanese": "あなたが好きです", "audio": "ganahan_nimo" },
-      { "cebuano": "Gihigugma ko ikaw", "japanese": "愛しています", "audio": "gihigugma" },
-      { "cebuano": "Lipay kaayo ko", "japanese": "とても幸せです", "audio": "lipay_kaayo" },
-      { "cebuano": "Ayaw pag-ana", "japanese": "そんなことしないで", "audio": "ayaw_pag_ana" },
-      { "cebuano": "Isog ka", "japanese": "あなたは勇敢です（または怒っている）", "audio": "isog_ka" },
-      { "cebuano": "Hadlok ko", "japanese": "怖いです", "audio": "hadlok_ko" },
-      { "cebuano": "Ayaw kabalaka", "japanese": "心配しないで", "audio": "ayaw_kabalaka" },
-      { "cebuano": "Salig nako", "japanese": "私を信じて", "audio": "salig_nako" },
-      { "cebuano": "Pasayloa ko", "japanese": "ごめんなさい（許して）", "audio": "pasayloa" },
-      { "cebuano": "Ok ra", "japanese": "大丈夫だよ", "audio": "ok_ra" }
+    "native": "Akoa kini",
+    "translation": "これは私のものです",
+    "words": [
+      "Akoa",
+      "kini"
     ]
   },
   {
+    "id": 72,
+    "level": 8,
+    "native": "Imoha kana",
+    "translation": "それはあなたのものです",
+    "words": [
+      "Imoha",
+      "kana"
+    ]
+  },
+  {
+    "id": 73,
+    "level": 8,
+    "native": "Iya ni Maria",
+    "translation": "これはマリアのものです",
+    "words": [
+      "Iya",
+      "ni",
+      "Maria"
+    ]
+  },
+  {
+    "id": 74,
+    "level": 8,
+    "native": "Amuha ning balay",
+    "translation": "この家は私たちのものです",
+    "words": [
+      "Amuha",
+      "ning",
+      "balay"
+    ]
+  },
+  {
+    "id": 75,
+    "level": 8,
+    "native": "Inyong libro ni",
+    "translation": "これはあなたたちの本です",
+    "words": [
+      "Inyong",
+      "libro",
+      "ni"
+    ]
+  },
+  {
+    "id": 76,
+    "level": 8,
+    "native": "Ilaha tong sakyanan",
+    "translation": "あの車は彼らのものです",
+    "words": [
+      "Ilaha",
+      "tong",
+      "sakyanan"
+    ]
+  },
+  {
+    "id": 77,
+    "level": 8,
+    "native": "Akong pitaka gikan Japan",
+    "translation": "私の財布は日本製です",
+    "words": [
+      "Akong",
+      "pitaka",
+      "gikan",
+      "Japan"
+    ]
+  },
+  {
+    "id": 78,
+    "level": 8,
+    "native": "Imong cellphone nindot",
+    "translation": "あなたの携帯は素敵ですね",
+    "words": [
+      "Imong",
+      "cellphone",
+      "nindot"
+    ]
+  },
+  {
+    "id": 79,
+    "level": 8,
+    "native": "Akoa ang trabaho karon",
+    "translation": "今の仕事は私の担当です",
+    "words": [
+      "Akoa",
+      "ang",
+      "trabaho",
+      "karon"
+    ]
+  },
+  {
+    "id": 80,
+    "level": 8,
+    "native": "Akoa ning plano",
+    "translation": "この計画は私のものです",
+    "words": [
+      "Akoa",
+      "ning",
+      "plano"
+    ]
+  },
+  {
+    "id": 81,
     "level": 9,
-    "questions": [
-      { "cebuano": "Unsa imong kalingawan?", "japanese": "趣味は何ですか？", "audio": "kalingawan" },
-      { "cebuano": "Ganahan ko mokanta", "japanese": "歌うのが好きです", "audio": "mokanta" },
-      { "cebuano": "Ganahan ko mosayaw", "japanese": "踊るのが好きです", "audio": "mosayaw" },
-      { "cebuano": "Maayo ka mosayaw", "japanese": "ダンスが上手ですね", "audio": "maayo_mosayaw" },
-      { "cebuano": "Mag-videoke ta", "japanese": "ビデオケしましょう", "audio": "videoke" },
-      { "cebuano": "Inom ta", "japanese": "飲みましょう", "audio": "inom_ta" },
-      { "cebuano": "Hubog nako", "japanese": "酔っ払いました", "audio": "hubog_nako" },
-      { "cebuano": "Tagay!", "japanese": "乾杯！", "audio": "tagay" },
-      { "cebuano": "Pulutan", "japanese": "おつまみ", "audio": "pulutan" },
-      { "cebuano": "Suroy-suroy ta", "japanese": "遊びに行きましょう（散歩）", "audio": "suroy_suroy" }
+    "native": "Gusto ko mokaon ug sinugba",
+    "translation": "焼き魚を食べたいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "mokaon",
+      "ug",
+      "sinugba"
     ]
   },
   {
+    "id": 82,
+    "level": 9,
+    "native": "Gusto ko moinom ug kape",
+    "translation": "コーヒーを飲みたいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "moinom",
+      "ug",
+      "kape"
+    ]
+  },
+  {
+    "id": 83,
+    "level": 9,
+    "native": "Gusto ko moadto sa dagat",
+    "translation": "海に行きたいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "moadto",
+      "sa",
+      "dagat"
+    ]
+  },
+  {
+    "id": 84,
+    "level": 9,
+    "native": "Gusto ko motan aw sine",
+    "translation": "映画を観たいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "motan",
+      "aw",
+      "sine"
+    ]
+  },
+  {
+    "id": 85,
+    "level": 9,
+    "native": "Gusto ko magpahuway",
+    "translation": "休みたいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "magpahuway"
+    ]
+  },
+  {
+    "id": 86,
+    "level": 9,
+    "native": "Gusto ko magtuon",
+    "translation": "ビサヤ語を学びたいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "magtuon"
+    ]
+  },
+  {
+    "id": 87,
+    "level": 9,
+    "native": "Gusto ko makigstorya nimo",
+    "translation": "あなたと話したいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "makigstorya",
+      "nimo"
+    ]
+  },
+  {
+    "id": 88,
+    "level": 9,
+    "native": "Ganahan ko mokaon og mangga",
+    "translation": "マンゴーを食べたいです",
+    "words": [
+      "Ganahan",
+      "ko",
+      "mokaon",
+      "og",
+      "mangga"
+    ]
+  },
+  {
+    "id": 89,
+    "level": 9,
+    "native": "Ganahan ko muadto Japan",
+    "translation": "日本に行きたいです",
+    "words": [
+      "Ganahan",
+      "ko",
+      "muadto",
+      "Japan"
+    ]
+  },
+  {
+    "id": 90,
+    "level": 9,
+    "native": "Gusto ko makatulog sayo",
+    "translation": "早く寝たいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "makatulog",
+      "sayo"
+    ]
+  },
+  {
+    "id": 91,
     "level": 10,
-    "questions": [
-      { "cebuano": "Unsay oras na?", "japanese": "今何時ですか？", "audio": "oras_na" },
-      { "cebuano": "Alas dies na", "japanese": "10時です", "audio": "alas_dies" },
-      { "cebuano": "Sayo pa", "japanese": "まだ早いです", "audio": "sayo_pa" },
-      { "cebuano": "Uwahi na", "japanese": "もう遅いです（遅刻）", "audio": "uwahi" },
-      { "cebuano": "Ugma puhon", "japanese": "また明日", "audio": "ugma_puhon" },
-      { "cebuano": "Kagahapon", "japanese": "昨日", "audio": "kagahapon" },
-      { "cebuano": "Karong adlawa", "japanese": "今日", "audio": "karong_adlawa" },
-      { "cebuano": "Karon dayon", "japanese": "今すぐ", "audio": "karon_dayon" },
-      { "cebuano": "Sa sunod semana", "japanese": "来週", "audio": "sunod_semana" },
-      { "cebuano": "Dugay na", "japanese": "久しぶり / 長い間", "audio": "dugay_na" }
+    "native": "Uli na ko",
+    "translation": "もう帰ります",
+    "words": [
+      "Uli",
+      "na",
+      "ko"
     ]
   },
   {
+    "id": 92,
+    "level": 10,
+    "native": "Lakaw na ta",
+    "translation": "そろそろ行きましょう",
+    "words": [
+      "Lakaw",
+      "na",
+      "ta"
+    ]
+  },
+  {
+    "id": 93,
+    "level": 10,
+    "native": "Balik ko unya",
+    "translation": "あとで戻ります",
+    "words": [
+      "Balik",
+      "ko",
+      "unya"
+    ]
+  },
+  {
+    "id": 94,
+    "level": 10,
+    "native": "Moadto ko sa trabaho",
+    "translation": "仕事に行きます",
+    "words": [
+      "Moadto",
+      "ko",
+      "sa",
+      "trabaho"
+    ]
+  },
+  {
+    "id": 95,
+    "level": 10,
+    "native": "Moanha ko didto",
+    "translation": "あそこへ行きます",
+    "words": [
+      "Moanha",
+      "ko",
+      "didto"
+    ]
+  },
+  {
+    "id": 96,
+    "level": 10,
+    "native": "Hulat sa ko diri",
+    "translation": "ここで待っています",
+    "words": [
+      "Hulat",
+      "sa",
+      "ko",
+      "diri"
+    ]
+  },
+  {
+    "id": 97,
+    "level": 10,
+    "native": "Sulod na mo",
+    "translation": "中に入ってください",
+    "words": [
+      "Sulod",
+      "na",
+      "mo"
+    ]
+  },
+  {
+    "id": 98,
+    "level": 10,
+    "native": "Gawas ta gamay",
+    "translation": "少し外に出ましょう",
+    "words": [
+      "Gawas",
+      "ta",
+      "gamay"
+    ]
+  },
+  {
+    "id": 99,
+    "level": 10,
+    "native": "Dali na og sakay",
+    "translation": "早く乗ってください",
+    "words": [
+      "Dali",
+      "na",
+      "og",
+      "sakay"
+    ]
+  },
+  {
+    "id": 100,
+    "level": 10,
+    "native": "Naug ko sa kanto",
+    "translation": "角で降ります",
+    "words": [
+      "Naug",
+      "ko",
+      "sa",
+      "kanto"
+    ]
+  },
+  {
+    "id": 101,
     "level": 11,
-    "questions": [
-      { "cebuano": "Pila ni ka buok?", "japanese": "これは何個ですか？", "audio": "pila_buok" },
-      { "cebuano": "Usa", "japanese": "1つ", "audio": "usa" },
-      { "cebuano": "Duha", "japanese": "2つ", "audio": "duha" },
-      { "cebuano": "Tulo", "japanese": "3つ", "audio": "tulo" },
-      { "cebuano": "Upat", "japanese": "4つ", "audio": "upat" },
-      { "cebuano": "Lima", "japanese": "5つ", "audio": "lima" },
-      { "cebuano": "Unom", "japanese": "6つ", "audio": "unom" },
-      { "cebuano": "Pito", "japanese": "7つ", "audio": "pito" },
-      { "cebuano": "Walo", "japanese": "8つ", "audio": "walo" },
-      { "cebuano": "Siyam", "japanese": "9つ", "audio": "siyam" }
+    "native": "Unsa kini",
+    "translation": "これは何ですか？",
+    "words": [
+      "Unsa",
+      "kini"
     ]
   },
   {
+    "id": 102,
+    "level": 11,
+    "native": "Unsa na imong dala",
+    "translation": "それは何を持っていますか？",
+    "words": [
+      "Unsa",
+      "na",
+      "imong",
+      "dala"
+    ]
+  },
+  {
+    "id": 103,
+    "level": 11,
+    "native": "Kinsa ka",
+    "translation": "あなたは誰ですか？",
+    "words": [
+      "Kinsa",
+      "ka"
+    ]
+  },
+  {
+    "id": 104,
+    "level": 11,
+    "native": "Kinsa siya",
+    "translation": "彼／彼女は誰ですか？",
+    "words": [
+      "Kinsa",
+      "siya"
+    ]
+  },
+  {
+    "id": 105,
+    "level": 11,
+    "native": "Unsa imong pangalan",
+    "translation": "あなたの名前は？",
+    "words": [
+      "Unsa",
+      "imong",
+      "pangalan"
+    ]
+  },
+  {
+    "id": 106,
+    "level": 11,
+    "native": "Unsa iyang trabaho",
+    "translation": "彼／彼女の仕事は？",
+    "words": [
+      "Unsa",
+      "iyang",
+      "trabaho"
+    ]
+  },
+  {
+    "id": 107,
+    "level": 11,
+    "native": "Kinsa inyong maestro",
+    "translation": "先生は誰ですか？",
+    "words": [
+      "Kinsa",
+      "inyong",
+      "maestro"
+    ]
+  },
+  {
+    "id": 108,
+    "level": 11,
+    "native": "Unsa ni nga tunog",
+    "translation": "これはどんな音ですか？",
+    "words": [
+      "Unsa",
+      "ni",
+      "nga",
+      "tunog"
+    ]
+  },
+  {
+    "id": 109,
+    "level": 11,
+    "native": "Kinsa pa ang mouban",
+    "translation": "誰が一緒に行きますか？",
+    "words": [
+      "Kinsa",
+      "pa",
+      "ang",
+      "mouban"
+    ]
+  },
+  {
+    "id": 110,
+    "level": 11,
+    "native": "Unsa imong plano",
+    "translation": "あなたの予定は？",
+    "words": [
+      "Unsa",
+      "imong",
+      "plano"
+    ]
+  },
+  {
+    "id": 111,
     "level": 12,
-    "questions": [
-      { "cebuano": "Napulo", "japanese": "10", "audio": "napulo" },
-      { "cebuano": "Kaluhaan", "japanese": "20", "audio": "kaluhaan" },
-      { "cebuano": "Katloan", "japanese": "30", "audio": "katloan" },
-      { "cebuano": "Kap-atan", "japanese": "40", "audio": "kap_atan" },
-      { "cebuano": "Kalimaan", "japanese": "50", "audio": "kalimaan" },
-      { "cebuano": "Gatus", "japanese": "100", "audio": "gatus" },
-      { "cebuano": "Libo", "japanese": "1000", "audio": "libo" },
-      { "cebuano": "Daghan", "japanese": "たくさん", "audio": "daghan" },
-      { "cebuano": "Gamay ra", "japanese": "少しだけ", "audio": "gamay_ra" },
-      { "cebuano": "Wala", "japanese": "ゼロ / ない", "audio": "wala_zero" }
+    "native": "Asa dapit",
+    "translation": "どの辺ですか？",
+    "words": [
+      "Asa",
+      "dapit"
     ]
   },
   {
+    "id": 112,
+    "level": 12,
+    "native": "Asa ka moadto",
+    "translation": "どこへ行くのですか？",
+    "words": [
+      "Asa",
+      "ka",
+      "moadto"
+    ]
+  },
+  {
+    "id": 113,
+    "level": 12,
+    "native": "Asa ang tindahan",
+    "translation": "店はどこですか？",
+    "words": [
+      "Asa",
+      "ang",
+      "tindahan"
+    ]
+  },
+  {
+    "id": 114,
+    "level": 12,
+    "native": "Asa dapit ang hospital",
+    "translation": "病院はどの辺ですか？",
+    "words": [
+      "Asa",
+      "dapit",
+      "ang",
+      "hospital"
+    ]
+  },
+  {
+    "id": 115,
+    "level": 12,
+    "native": "Kanus a ka moabot",
+    "translation": "いつ到着しますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ka",
+      "moabot"
+    ]
+  },
+  {
+    "id": 116,
+    "level": 12,
+    "native": "Kanus a ta magkita",
+    "translation": "いつ会いましょうか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ta",
+      "magkita"
+    ]
+  },
+  {
+    "id": 117,
+    "level": 12,
+    "native": "Asa ka karon",
+    "translation": "今どこにいますか？",
+    "words": [
+      "Asa",
+      "ka",
+      "karon"
+    ]
+  },
+  {
+    "id": 118,
+    "level": 12,
+    "native": "Kanus a ang flight",
+    "translation": "フライトはいつですか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ang",
+      "flight"
+    ]
+  },
+  {
+    "id": 119,
+    "level": 12,
+    "native": "Asa dapit ang park",
+    "translation": "公園はどの辺ですか？",
+    "words": [
+      "Asa",
+      "dapit",
+      "ang",
+      "park"
+    ]
+  },
+  {
+    "id": 120,
+    "level": 12,
+    "native": "Kanus a ko mulakaw",
+    "translation": "いつ出発すればいいですか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ko",
+      "mulakaw"
+    ]
+  },
+  {
+    "id": 121,
     "level": 13,
-    "questions": [
-      { "cebuano": "Unsay trabaho nimo?", "japanese": "仕事は何ですか？", "audio": "trabaho" },
-      { "cebuano": "Magtutudlo ko", "japanese": "教師です", "audio": "magtutudlo" },
-      { "cebuano": "Estudyante ko", "japanese": "学生です", "audio": "estudyante" },
-      { "cebuano": "Negosyante ko", "japanese": "ビジネスマンです", "audio": "negosyante" },
-      { "cebuano": "Asa ka nagtrabaho?", "japanese": "どこで働いていますか？", "audio": "asa_nagtrabaho" },
-      { "cebuano": "Sa opisina", "japanese": "オフィスで", "audio": "opisina" },
-      { "cebuano": "Sa mall", "japanese": "モールで", "audio": "mall" },
-      { "cebuano": "Kapoy ang trabaho", "japanese": "仕事は大変です（疲れました）", "audio": "kapoy_trabaho" },
-      { "cebuano": "Sweldo na!", "japanese": "給料日だ！", "audio": "sweldo" },
-      { "cebuano": "Day-off nako", "japanese": "今日は休みです", "audio": "day_off" }
+    "native": "Tagpila kini",
+    "translation": "これはいくらですか？",
+    "words": [
+      "Tagpila",
+      "kini"
     ]
   },
   {
+    "id": 122,
+    "level": 13,
+    "native": "Tagpila ni tanan",
+    "translation": "全部でいくらですか？",
+    "words": [
+      "Tagpila",
+      "ni",
+      "tanan"
+    ]
+  },
+  {
+    "id": 123,
+    "level": 13,
+    "native": "Tagpila ang isa",
+    "translation": "一ついくらですか？",
+    "words": [
+      "Tagpila",
+      "ang",
+      "isa"
+    ]
+  },
+  {
+    "id": 124,
+    "level": 13,
+    "native": "Tagpila ang kilo",
+    "translation": "1キロいくらですか？",
+    "words": [
+      "Tagpila",
+      "ang",
+      "kilo"
+    ]
+  },
+  {
+    "id": 125,
+    "level": 13,
+    "native": "Pwede pa mahangyo",
+    "translation": "値引きできますか？",
+    "words": [
+      "Pwede",
+      "pa",
+      "mahangyo"
+    ]
+  },
+  {
+    "id": 126,
+    "level": 13,
+    "native": "Barato ra ni",
+    "translation": "これは安いですよ",
+    "words": [
+      "Barato",
+      "ra",
+      "ni"
+    ]
+  },
+  {
+    "id": 127,
+    "level": 13,
+    "native": "Mahal kaayo ni",
+    "translation": "これは高すぎます",
+    "words": [
+      "Mahal",
+      "kaayo",
+      "ni"
+    ]
+  },
+  {
+    "id": 128,
+    "level": 13,
+    "native": "Tagpila ang plete",
+    "translation": "運賃はいくらですか？",
+    "words": [
+      "Tagpila",
+      "ang",
+      "plete"
+    ]
+  },
+  {
+    "id": 129,
+    "level": 13,
+    "native": "Tagpila imong gusto",
+    "translation": "いくらを希望しますか？",
+    "words": [
+      "Tagpila",
+      "imong",
+      "gusto"
+    ]
+  },
+  {
+    "id": 130,
+    "level": 13,
+    "native": "Last price na",
+    "translation": "これが最終価格ですか？",
+    "words": [
+      "Last",
+      "price",
+      "na"
+    ]
+  },
+  {
+    "id": 131,
     "level": 14,
-    "questions": [
-      { "cebuano": "Unsay paborito nimo nga pagkaon?", "japanese": "好きな食べ物は何ですか？", "audio": "paborito_pagkaon" },
-      { "cebuano": "Ganahan ko og Lechon", "japanese": "レチョンが好きです", "audio": "lechon" },
-      { "cebuano": "Ganahan ko og Sinigang", "japanese": "シニガンが好きです", "audio": "sinigang" },
-      { "cebuano": "Lami ang mangga diri", "japanese": "ここのマンゴーは美味しいです", "audio": "mangga" },
-      { "cebuano": "Halang kaayo", "japanese": "とても辛いです", "audio": "halang" },
-      { "cebuano": "Tam-is", "japanese": "甘い", "audio": "tam_is" },
-      { "cebuano": "Aslum", "japanese": "酸っぱい", "audio": "aslum" },
-      { "cebuano": "Paet", "japanese": "苦い", "audio": "paet" },
-      { "cebuano": "Asin", "japanese": "塩", "audio": "asin" },
-      { "cebuano": "Sili", "japanese": "唐辛子", "audio": "sili" }
+    "native": "Bayad palihug",
+    "translation": "支払いお願いします",
+    "words": [
+      "Bayad",
+      "palihug"
     ]
   },
   {
+    "id": 132,
+    "level": 14,
+    "native": "Lugar lang",
+    "translation": "ここで止めてください",
+    "words": [
+      "Lugar",
+      "lang"
+    ]
+  },
+  {
+    "id": 133,
+    "level": 14,
+    "native": "Naog ko sa kanto",
+    "translation": "角で降ります",
+    "words": [
+      "Naog",
+      "ko",
+      "sa",
+      "kanto"
+    ]
+  },
+  {
+    "id": 134,
+    "level": 14,
+    "native": "Saka na ta",
+    "translation": "乗りましょう",
+    "words": [
+      "Saka",
+      "na",
+      "ta"
+    ]
+  },
+  {
+    "id": 135,
+    "level": 14,
+    "native": "Hapit na ko musuod",
+    "translation": "もうすぐ乗ります",
+    "words": [
+      "Hapit",
+      "na",
+      "ko",
+      "musuod"
+    ]
+  },
+  {
+    "id": 136,
+    "level": 14,
+    "native": "Ayaw kalimot og sukli",
+    "translation": "お釣りを忘れないで",
+    "words": [
+      "Ayaw",
+      "kalimot",
+      "og",
+      "sukli"
+    ]
+  },
+  {
+    "id": 137,
+    "level": 14,
+    "native": "Asa ang sakayan",
+    "translation": "乗り場はどこですか？",
+    "words": [
+      "Asa",
+      "ang",
+      "sakayan"
+    ]
+  },
+  {
+    "id": 138,
+    "level": 14,
+    "native": "Paabot ug jeep",
+    "translation": "ジープを待ってください",
+    "words": [
+      "Paabot",
+      "ug",
+      "jeep"
+    ]
+  },
+  {
+    "id": 139,
+    "level": 14,
+    "native": "Lingkod sa likod",
+    "translation": "後ろに座ってください",
+    "words": [
+      "Lingkod",
+      "sa",
+      "likod"
+    ]
+  },
+  {
+    "id": 140,
+    "level": 14,
+    "native": "Dali ra ang biyahe",
+    "translation": "すぐ到着します",
+    "words": [
+      "Dali",
+      "ra",
+      "ang",
+      "biyahe"
+    ]
+  },
+  {
+    "id": 141,
     "level": 15,
-    "questions": [
-      { "cebuano": "Naa kay uyab?", "japanese": "恋人はいますか？", "audio": "naa_uyab" },
-      { "cebuano": "Minyo nako", "japanese": "結婚しています", "audio": "minyo" },
-      { "cebuano": "Single pa ko", "japanese": "まだ独身です", "audio": "single" },
-      { "cebuano": "Gwapo imong anak", "japanese": "あなたの子供はハンサムですね", "audio": "gwapo_anak" },
-      { "cebuano": "Pila kabuok imong anak?", "japanese": "子供は何人いますか？", "audio": "pila_anak" },
-      { "cebuano": "Naa koy pamilya sa Japan", "japanese": "日本に家族がいます", "audio": "pamilya_japan" },
-      { "cebuano": "Mingaw ko sa akong pamilya", "japanese": "家族が恋しいです", "audio": "mingaw_pamilya" },
-      { "cebuano": "Suod mi", "japanese": "私たちは仲が良いです", "audio": "suod" },
-      { "cebuano": "Amigo ta", "japanese": "友達だよ", "audio": "amigo" },
-      { "cebuano": "Best friend nako siya", "japanese": "彼は私の親友です", "audio": "bestfriend" }
+    "native": "Taga Japan ko",
+    "translation": "私は日本から来ました",
+    "words": [
+      "Taga",
+      "Japan",
+      "ko"
     ]
   },
   {
+    "id": 142,
+    "level": 15,
+    "native": "Ako si Ken",
+    "translation": "私はケンです",
+    "words": [
+      "Ako",
+      "si",
+      "Ken"
+    ]
+  },
+  {
+    "id": 143,
+    "level": 15,
+    "native": "Puyo ko sa Cebu",
+    "translation": "セブに住んでいます",
+    "words": [
+      "Puyo",
+      "ko",
+      "sa",
+      "Cebu"
+    ]
+  },
+  {
+    "id": 144,
+    "level": 15,
+    "native": "Nagtrabaho ko sa IT",
+    "translation": "ITで働いています",
+    "words": [
+      "Nagtrabaho",
+      "ko",
+      "sa",
+      "IT"
+    ]
+  },
+  {
+    "id": 145,
+    "level": 15,
+    "native": "Mahilig ko sa kanta",
+    "translation": "歌うのが好きです",
+    "words": [
+      "Mahilig",
+      "ko",
+      "sa",
+      "kanta"
+    ]
+  },
+  {
+    "id": 146,
+    "level": 15,
+    "native": "Ganahan ko mag travel",
+    "translation": "旅行が好きです",
+    "words": [
+      "Ganahan",
+      "ko",
+      "mag",
+      "travel"
+    ]
+  },
+  {
+    "id": 147,
+    "level": 15,
+    "native": "Nagtuon ko og",
+    "translation": "ビサヤ語を勉強中です",
+    "words": [
+      "Nagtuon",
+      "ko",
+      "og"
+    ]
+  },
+  {
+    "id": 148,
+    "level": 15,
+    "native": "Gusto ko makaila ninyo",
+    "translation": "皆さんと知り合いになりたいです",
+    "words": [
+      "Gusto",
+      "ko",
+      "makaila",
+      "ninyo"
+    ]
+  },
+  {
+    "id": 149,
+    "level": 15,
+    "native": "Nalipay ko makigstorya",
+    "translation": "お話しできて嬉しいです",
+    "words": [
+      "Nalipay",
+      "ko",
+      "makigstorya"
+    ]
+  },
+  {
+    "id": 150,
+    "level": 15,
+    "native": "Palihug tabangi ko magpraktis",
+    "translation": "練習を手伝ってください",
+    "words": [
+      "Palihug",
+      "tabangi",
+      "ko",
+      "magpraktis"
+    ]
+  },
+  {
+    "id": 151,
     "level": 16,
-    "questions": [
-      { "cebuano": "Unsay imong plano karong weekend?", "japanese": "今週末の予定は何ですか？", "audio": "plano_weekend" },
-      { "cebuano": "Mangaligo mi sa dagat", "japanese": "海に泳ぎに行きます", "audio": "mangaligo_dagat" },
-      { "cebuano": "Gusto ka mouban?", "japanese": "一緒に行きたいですか？", "audio": "gusto_mouban" },
-      { "cebuano": "Sige, uban ko", "japanese": "いいよ、行きます", "audio": "sige_uban" },
-      { "cebuano": "Asa ta magkita?", "japanese": "どこで待ち合わせしますか？", "audio": "asa_magkita" },
-      { "cebuano": "Sa IT Park lang", "japanese": "ITパークで会いましょう", "audio": "it_park" },
-      { "cebuano": "Unsang orasa?", "japanese": "何時に？", "audio": "unsang_orasa" },
-      { "cebuano": "Ayaw pag-uwan palihug", "japanese": "雨が降らないでほしいです", "audio": "ayaw_uwan" },
-      { "cebuano": "Nindot ang panahon", "japanese": "天気がいいですね", "audio": "nindot_panahon" },
-      { "cebuano": "Init kaayo sa gawas", "japanese": "外はとても暑いです", "audio": "init_gawas" }
+    "native": "Lami kaayo",
+    "translation": "とても美味しいです",
+    "words": [
+      "Lami",
+      "kaayo"
     ]
   },
   {
+    "id": 152,
+    "level": 16,
+    "native": "Gutom na ko",
+    "translation": "お腹がすきました",
+    "words": [
+      "Gutom",
+      "na",
+      "ko"
+    ]
+  },
+  {
+    "id": 153,
+    "level": 16,
+    "native": "Kaon ta sa carinderia",
+    "translation": "食堂で食べましょう",
+    "words": [
+      "Kaon",
+      "ta",
+      "sa",
+      "carinderia"
+    ]
+  },
+  {
+    "id": 154,
+    "level": 16,
+    "native": "Palihug og dugang sabaw",
+    "translation": "スープを追加してください",
+    "words": [
+      "Palihug",
+      "og",
+      "dugang",
+      "sabaw"
+    ]
+  },
+  {
+    "id": 155,
+    "level": 16,
+    "native": "Pakiluto pa gamay",
+    "translation": "もう少し火を通してください",
+    "words": [
+      "Pakiluto",
+      "pa",
+      "gamay"
+    ]
+  },
+  {
+    "id": 156,
+    "level": 16,
+    "native": "Busog na ko",
+    "translation": "お腹いっぱいです",
+    "words": [
+      "Busog",
+      "na",
+      "ko"
+    ]
+  },
+  {
+    "id": 157,
+    "level": 16,
+    "native": "Tilawi ni",
+    "translation": "これを味見してみて",
+    "words": [
+      "Tilawi",
+      "ni"
+    ]
+  },
+  {
+    "id": 158,
+    "level": 16,
+    "native": "Palihug ihatag ang kutsara",
+    "translation": "スプーンを渡してください",
+    "words": [
+      "Palihug",
+      "ihatag",
+      "ang",
+      "kutsara"
+    ]
+  },
+  {
+    "id": 159,
+    "level": 16,
+    "native": "Timplahi gamayng asin",
+    "translation": "塩を少し加えてください",
+    "words": [
+      "Timplahi",
+      "gamayng",
+      "asin"
+    ]
+  },
+  {
+    "id": 160,
+    "level": 16,
+    "native": "Paborito nako ang sinugba",
+    "translation": "焼き料理が大好きです",
+    "words": [
+      "Paborito",
+      "nako",
+      "ang",
+      "sinugba"
+    ]
+  },
+  {
+    "id": 161,
     "level": 17,
-    "questions": [
-      { "cebuano": "Nawala akong pitaka", "japanese": "財布をなくしました", "audio": "nawala_pitaka" },
-      { "cebuano": "Tabangi ko palihug", "japanese": "助けてください", "audio": "tabangi_ko" },
-      { "cebuano": "Asa ang police station?", "japanese": "警察署はどこですか？", "audio": "police_station" },
-      { "cebuano": "Gikawatan ko", "japanese": "盗難に遭いました", "audio": "gikawatan" },
-      { "cebuano": "Nasakitan ko", "japanese": "怪我をしました / 痛いです", "audio": "nasakitan" },
-      { "cebuano": "Dal-a ko sa hospital", "japanese": "病院へ連れて行ってください", "audio": "hospital" },
-      { "cebuano": "Hain ang botika?", "japanese": "薬局はどこですか？", "audio": "botika" },
-      { "cebuano": "Gihilantan ko", "japanese": "熱があります", "audio": "gihilantan" },
-      { "cebuano": "Kinahanglan ko og tabang", "japanese": "助けが必要です", "audio": "kinahanglan_tabang" },
-      { "cebuano": "Ayaw ko biya-i", "japanese": "私を置いていかないで", "audio": "ayaw_biya" }
+    "native": "Nalipay ko",
+    "translation": "嬉しいです",
+    "words": [
+      "Nalipay",
+      "ko"
     ]
   },
   {
+    "id": 162,
+    "level": 17,
+    "native": "Nagool ko",
+    "translation": "心配しています",
+    "words": [
+      "Nagool",
+      "ko"
+    ]
+  },
+  {
+    "id": 163,
+    "level": 17,
+    "native": "Nasuko siya",
+    "translation": "彼は怒っています",
+    "words": [
+      "Nasuko",
+      "siya"
+    ]
+  },
+  {
+    "id": 164,
+    "level": 17,
+    "native": "Nahadlok ko",
+    "translation": "怖いです",
+    "words": [
+      "Nahadlok",
+      "ko"
+    ]
+  },
+  {
+    "id": 165,
+    "level": 17,
+    "native": "Naglibog ko",
+    "translation": "混乱しています",
+    "words": [
+      "Naglibog",
+      "ko"
+    ]
+  },
+  {
+    "id": 166,
+    "level": 17,
+    "native": "Nalingaw ko",
+    "translation": "楽しんでいます",
+    "words": [
+      "Nalingaw",
+      "ko"
+    ]
+  },
+  {
+    "id": 167,
+    "level": 17,
+    "native": "Naulaw ko",
+    "translation": "恥ずかしいです",
+    "words": [
+      "Naulaw",
+      "ko"
+    ]
+  },
+  {
+    "id": 168,
+    "level": 17,
+    "native": "Naglagot ko sa trapik",
+    "translation": "渋滞にイライラしています",
+    "words": [
+      "Naglagot",
+      "ko",
+      "sa",
+      "trapik"
+    ]
+  },
+  {
+    "id": 169,
+    "level": 17,
+    "native": "Nalipay ko nga naa ka",
+    "translation": "あなたがいて嬉しいです",
+    "words": [
+      "Nalipay",
+      "ko",
+      "nga",
+      "naa",
+      "ka"
+    ]
+  },
+  {
+    "id": 170,
+    "level": 17,
+    "native": "Nagpahulay ko para dili kapoy",
+    "translation": "疲れないように休んでいます",
+    "words": [
+      "Nagpahulay",
+      "ko",
+      "para",
+      "dili",
+      "kapoy"
+    ]
+  },
+  {
+    "id": 171,
     "level": 18,
-    "questions": [
-      { "cebuano": "Barato ra ni", "japanese": "これは安いです", "audio": "barato" },
-      { "cebuano": "Mahal ra kaayo", "japanese": "高すぎます", "audio": "mahal_kaayo" },
-      { "cebuano": "Wala nay hangyo?", "japanese": "値引きできませんか？", "audio": "hangyo" },
-      { "cebuano": "Last price na na?", "japanese": "それが最終価格ですか？", "audio": "last_price" },
-      { "cebuano": "Sige, kuhaon nako ni", "japanese": "よし、これを買います", "audio": "kuhaon_ni" },
-      { "cebuano": "Tan-aw lang ko", "japanese": "見てるだけです", "audio": "tan_aw_lang" },
-      { "cebuano": "Naa moy medium size?", "japanese": "ミディアムサイズはありますか？", "audio": "medium_size" },
-      { "cebuano": "Isul-ob nako ni", "japanese": "これを着てみます", "audio": "isul_ob" },
-      { "cebuano": "Asa ang fitting room?", "japanese": "試着室はどこですか？", "audio": "fitting_room" },
-      { "cebuano": "Nindot ni", "japanese": "これ、いいですね", "audio": "nindot_ni" }
+    "native": "Init kaayo karon",
+    "translation": "今日はとても暑い",
+    "words": [
+      "Init",
+      "kaayo",
+      "karon"
     ]
   },
   {
+    "id": 172,
+    "level": 18,
+    "native": "Bugnaw ang hangin",
+    "translation": "風が涼しいです",
+    "words": [
+      "Bugnaw",
+      "ang",
+      "hangin"
+    ]
+  },
+  {
+    "id": 173,
+    "level": 18,
+    "native": "Nag uwan pag ayo",
+    "translation": "土砂降りです",
+    "words": [
+      "Nag",
+      "uwan",
+      "pag",
+      "ayo"
+    ]
+  },
+  {
+    "id": 174,
+    "level": 18,
+    "native": "Walay adlaw karon",
+    "translation": "今日は日が出ていない",
+    "words": [
+      "Walay",
+      "adlaw",
+      "karon"
+    ]
+  },
+  {
+    "id": 175,
+    "level": 18,
+    "native": "Kusog ang hangin",
+    "translation": "風が強い",
+    "words": [
+      "Kusog",
+      "ang",
+      "hangin"
+    ]
+  },
+  {
+    "id": 176,
+    "level": 18,
+    "native": "Mahangin sa buntag",
+    "translation": "朝は風が強い",
+    "words": [
+      "Mahangin",
+      "sa",
+      "buntag"
+    ]
+  },
+  {
+    "id": 177,
+    "level": 18,
+    "native": "Ting init na",
+    "translation": "もう夏です",
+    "words": [
+      "Ting",
+      "init",
+      "na"
+    ]
+  },
+  {
+    "id": 178,
+    "level": 18,
+    "native": "Ting ulan na pud",
+    "translation": "また雨季になりました",
+    "words": [
+      "Ting",
+      "ulan",
+      "na",
+      "pud"
+    ]
+  },
+  {
+    "id": 179,
+    "level": 18,
+    "native": "Lapok ang dalan",
+    "translation": "道がぬかるんでいます",
+    "words": [
+      "Lapok",
+      "ang",
+      "dalan"
+    ]
+  },
+  {
+    "id": 180,
+    "level": 18,
+    "native": "Humok ang panganod",
+    "translation": "雲が柔らかそうです",
+    "words": [
+      "Humok",
+      "ang",
+      "panganod"
+    ]
+  },
+  {
+    "id": 181,
     "level": 19,
-    "questions": [
-      { "cebuano": "Kabalo ka mag-Bisaya?", "japanese": "ビサヤ語が話せますか？", "audio": "kabalo_bisaya" },
-      { "cebuano": "Gamay ra", "japanese": "少しだけです", "audio": "gamay_ra_bisaya" },
-      { "cebuano": "Nagtuon pa ko", "japanese": "まだ勉強中です", "audio": "nagtuon_pa" },
-      { "cebuano": "Lisod ang Bisaya", "japanese": "ビサヤ語は難しいです", "audio": "lisod_bisaya" },
-      { "cebuano": "Sayon ra na", "japanese": "それは簡単ですよ", "audio": "sayon_ra" },
-      { "cebuano": "Tudloi ko palihug", "japanese": "教えてください", "audio": "tudloi_ko" },
-      { "cebuano": "Sakto ba ni?", "japanese": "これは合っていますか？", "audio": "sakto_ba" },
-      { "cebuano": "Sayop na", "japanese": "それは間違いです", "audio": "sayop_na" },
-      { "cebuano": "Brayt kaayo ka", "japanese": "あなたはとても賢いです", "audio": "brayt_kaayo" },
-      { "cebuano": "Paningkamot lang", "japanese": "頑張って（努力して）", "audio": "paningkamot" }
+    "native": "Naa kay change",
+    "translation": "お釣りありますか？",
+    "words": [
+      "Naa",
+      "kay",
+      "change"
     ]
   },
   {
+    "id": 182,
+    "level": 19,
+    "native": "Palihug og sukli",
+    "translation": "お釣りをください",
+    "words": [
+      "Palihug",
+      "og",
+      "sukli"
+    ]
+  },
+  {
+    "id": 183,
+    "level": 19,
+    "native": "Pila tanan",
+    "translation": "全部でいくらですか？",
+    "words": [
+      "Pila",
+      "tanan"
+    ]
+  },
+  {
+    "id": 184,
+    "level": 19,
+    "native": "Pwede ko mobayad ug GCash",
+    "translation": "GCashで払ってもいいですか？",
+    "words": [
+      "Pwede",
+      "ko",
+      "mobayad",
+      "ug",
+      "GCash"
+    ]
+  },
+  {
+    "id": 185,
+    "level": 19,
+    "native": "Asa ang cash register",
+    "translation": "レジはどこですか？",
+    "words": [
+      "Asa",
+      "ang",
+      "cash",
+      "register"
+    ]
+  },
+  {
+    "id": 186,
+    "level": 19,
+    "native": "Palit ko ani duha",
+    "translation": "これを二つ買います",
+    "words": [
+      "Palit",
+      "ko",
+      "ani",
+      "duha"
+    ]
+  },
+  {
+    "id": 187,
+    "level": 19,
+    "native": "Wala moy mas barato",
+    "translation": "もっと安いのはありますか？",
+    "words": [
+      "Wala",
+      "moy",
+      "mas",
+      "barato"
+    ]
+  },
+  {
+    "id": 188,
+    "level": 19,
+    "native": "Testingan nako ni",
+    "translation": "これを試してみます",
+    "words": [
+      "Testingan",
+      "nako",
+      "ni"
+    ]
+  },
+  {
+    "id": 189,
+    "level": 19,
+    "native": "Salamat sa inyong serbisyo",
+    "translation": "サービスをありがとう",
+    "words": [
+      "Salamat",
+      "sa",
+      "inyong",
+      "serbisyo"
+    ]
+  },
+  {
+    "id": 190,
+    "level": 19,
+    "native": "Balik ko ugma",
+    "translation": "また明日来ます",
+    "words": [
+      "Balik",
+      "ko",
+      "ugma"
+    ]
+  },
+  {
+    "id": 191,
     "level": 20,
-    "questions": [
-      { "cebuano": "Gatuo ko nimo", "japanese": "あなたを信じています", "audio": "gatuo_nimo" },
-      { "cebuano": "Ayaw ko bakaki", "japanese": "嘘をつかないで", "audio": "ayaw_bakak" },
-      { "cebuano": "Tinuod gyud ni", "japanese": "これは本当なんです", "audio": "tinuod_gyud" },
-      { "cebuano": "Prangka lang ta", "japanese": "正直に言いましょう", "audio": "prangka" },
-      { "cebuano": "Mura'g tinuod", "japanese": "本当みたいですね", "audio": "murag_tinuod" },
-      { "cebuano": "Sigurado ka?", "japanese": "確かですか？", "audio": "sigurado_ka" },
-      { "cebuano": "Dili ko sigurado", "japanese": "確かではありません", "audio": "dili_sigurado" },
-      { "cebuano": "Ambot lang nimo", "japanese": "もうあなたのことは知りません（勝手にして）", "audio": "ambot_nimo" },
-      { "cebuano": "Hala!", "japanese": "わあ！ / 大変！", "audio": "hala" },
-      { "cebuano": "Sus!", "japanese": "まったく！ / あらあら", "audio": "sus" }
+    "native": "Magkita ta unya",
+    "translation": "また後で会いましょう",
+    "words": [
+      "Magkita",
+      "ta",
+      "unya"
     ]
   },
   {
+    "id": 192,
+    "level": 20,
+    "native": "Amping sa biyahe",
+    "translation": "道中気をつけて",
+    "words": [
+      "Amping",
+      "sa",
+      "biyahe"
+    ]
+  },
+  {
+    "id": 193,
+    "level": 20,
+    "native": "Huwat ko sa imong chat",
+    "translation": "メッセージを待っています",
+    "words": [
+      "Huwat",
+      "ko",
+      "sa",
+      "imong",
+      "chat"
+    ]
+  },
+  {
+    "id": 194,
+    "level": 20,
+    "native": "Tawagi ko puhon",
+    "translation": "また電話してね",
+    "words": [
+      "Tawagi",
+      "ko",
+      "puhon"
+    ]
+  },
+  {
+    "id": 195,
+    "level": 20,
+    "native": "Mag amping kanunay",
+    "translation": "いつも気をつけてね",
+    "words": [
+      "Mag",
+      "amping",
+      "kanunay"
+    ]
+  },
+  {
+    "id": 196,
+    "level": 20,
+    "native": "Kita kits",
+    "translation": "またね",
+    "words": [
+      "Kita",
+      "kits"
+    ]
+  },
+  {
+    "id": 197,
+    "level": 20,
+    "native": "Dali ra ta magbalik",
+    "translation": "すぐ戻ってきます",
+    "words": [
+      "Dali",
+      "ra",
+      "ta",
+      "magbalik"
+    ]
+  },
+  {
+    "id": 198,
+    "level": 20,
+    "native": "Daghang salamat ug ayo ayo",
+    "translation": "本当にありがとう、元気でね",
+    "words": [
+      "Daghang",
+      "salamat",
+      "ug",
+      "ayo",
+      "ayo"
+    ]
+  },
+  {
+    "id": 199,
+    "level": 20,
+    "native": "Ayo ayo sa imong lakaw",
+    "translation": "行ってらっしゃい",
+    "words": [
+      "Ayo",
+      "ayo",
+      "sa",
+      "imong",
+      "lakaw"
+    ]
+  },
+  {
+    "id": 200,
+    "level": 20,
+    "native": "Tan awa ta sunod semana",
+    "translation": "来週また会いましょう",
+    "words": [
+      "Tan",
+      "awa",
+      "ta",
+      "sunod",
+      "semana"
+    ]
+  },
+  {
+    "id": 201,
     "level": 21,
-    "questions": [
-      { "cebuano": "Lakaw na ta", "japanese": "もう行きましょう", "audio": "lakaw_na" },
-      { "cebuano": "Dali na!", "japanese": "早く！ / 来て！", "audio": "dali_na" },
-      { "cebuano": "Ayaw saba", "japanese": "静かにして / 内緒だよ", "audio": "ayaw_saba" },
-      { "cebuano": "Paminaw nako", "japanese": "私の話を聞いて", "audio": "paminaw_nako" },
-      { "cebuano": "Tan-awa ra", "japanese": "見てごらん", "audio": "tan_awa" },
-      { "cebuano": "Ayaw hikap", "japanese": "触らないで", "audio": "ayaw_hikap" },
-      { "cebuano": "Pag-amping", "japanese": "気をつけて（お大事に）", "audio": "pag_amping" },
-      { "cebuano": "Ayo-ayo!", "japanese": "元気でね！ / 行ってらっしゃい", "audio": "ayo_ayo" },
-      { "cebuano": "Kita ta puhon", "japanese": "またいつか会いましょう", "audio": "kita_puhon" },
-      { "cebuano": "Amping sa biyahe", "japanese": "道中気をつけて", "audio": "amping_biyahe" }
+    "native": "Magluto ko ug panihapon",
+    "translation": "夕食を作るつもりです",
+    "words": [
+      "Magluto",
+      "ko",
+      "ug",
+      "panihapon"
     ]
   },
   {
+    "id": 202,
+    "level": 21,
+    "native": "Magtuon ko sa gabii",
+    "translation": "夜に勉強します",
+    "words": [
+      "Magtuon",
+      "ko",
+      "sa",
+      "gabii"
+    ]
+  },
+  {
+    "id": 203,
+    "level": 21,
+    "native": "Magtrabaho ko ug maayo",
+    "translation": "しっかり働くつもりです",
+    "words": [
+      "Magtrabaho",
+      "ko",
+      "ug",
+      "maayo"
+    ]
+  },
+  {
+    "id": 204,
+    "level": 21,
+    "native": "Maglimpyo ko sa kwarto",
+    "translation": "部屋を掃除するつもりです",
+    "words": [
+      "Maglimpyo",
+      "ko",
+      "sa",
+      "kwarto"
+    ]
+  },
+  {
+    "id": 205,
+    "level": 21,
+    "native": "Magpraktis ko og kanta",
+    "translation": "歌の練習をするつもりです",
+    "words": [
+      "Magpraktis",
+      "ko",
+      "og",
+      "kanta"
+    ]
+  },
+  {
+    "id": 206,
+    "level": 21,
+    "native": "Magbasa ko ug libro",
+    "translation": "本を読むつもりです",
+    "words": [
+      "Magbasa",
+      "ko",
+      "ug",
+      "libro"
+    ]
+  },
+  {
+    "id": 207,
+    "level": 21,
+    "native": "Magpahuway ko sa Domingo",
+    "translation": "日曜日に休むつもりです",
+    "words": [
+      "Magpahuway",
+      "ko",
+      "sa",
+      "Domingo"
+    ]
+  },
+  {
+    "id": 208,
+    "level": 21,
+    "native": "Magbisita ko sa akong lola",
+    "translation": "祖母を訪ねるつもりです",
+    "words": [
+      "Magbisita",
+      "ko",
+      "sa",
+      "akong",
+      "lola"
+    ]
+  },
+  {
+    "id": 209,
+    "level": 21,
+    "native": "Magdula ko ug badminton",
+    "translation": "バドミントンをするつもりです",
+    "words": [
+      "Magdula",
+      "ko",
+      "ug",
+      "badminton"
+    ]
+  },
+  {
+    "id": 210,
+    "level": 21,
+    "native": "Magampo ko kada gabii",
+    "translation": "毎晩祈るつもりです",
+    "words": [
+      "Magampo",
+      "ko",
+      "kada",
+      "gabii"
+    ]
+  },
+  {
+    "id": 211,
     "level": 22,
-    "questions": [
-      { "cebuano": "Giunsa nimo pagkahibalo?", "japanese": "どうやって知ったのですか？", "audio": "giunsa_hibalo" },
-      { "cebuano": "Gisultian ko ni Maria", "japanese": "マリアが教えてくれました", "audio": "gisultian_maria" },
-      { "cebuano": "Naa koy nadunggan", "japanese": "噂を聞きました", "audio": "nadunggan" },
-      { "cebuano": "Ayaw tuo ana", "japanese": "それを信じないで", "audio": "ayaw_tuo" },
-      { "cebuano": "Tingali", "japanese": "たぶん / おそらく", "audio": "tingali" },
-      { "cebuano": "Siguro", "japanese": "たぶん（Siguroもよく使われます）", "audio": "siguro" },
-      { "cebuano": "Posible", "japanese": "可能です", "audio": "posible" },
-      { "cebuano": "Imposible", "japanese": "不可能です", "audio": "imposible" },
-      { "cebuano": "Dili gyud", "japanese": "絶対にダメ / 違います", "audio": "dili_gyud" },
-      { "cebuano": "Mao ba?", "japanese": "そうなの？", "audio": "mao_ba" }
+    "native": "Ugma puhon mag jogging ko",
+    "translation": "明日はジョギングします",
+    "words": [
+      "Ugma",
+      "puhon",
+      "mag",
+      "jogging",
+      "ko"
     ]
   },
   {
+    "id": 212,
+    "level": 22,
+    "native": "Ugma sa buntag magluto ko",
+    "translation": "明日の朝料理します",
+    "words": [
+      "Ugma",
+      "sa",
+      "buntag",
+      "magluto",
+      "ko"
+    ]
+  },
+  {
+    "id": 213,
+    "level": 22,
+    "native": "Ugma sa hapon muadto ko sa mall",
+    "translation": "明日の午後モールへ行きます",
+    "words": [
+      "Ugma",
+      "sa",
+      "hapon",
+      "muadto",
+      "ko",
+      "sa",
+      "mall"
+    ]
+  },
+  {
+    "id": 214,
+    "level": 22,
+    "native": "Sa sunod semana mouli ko",
+    "translation": "来週帰ります",
+    "words": [
+      "Sa",
+      "sunod",
+      "semana",
+      "mouli",
+      "ko"
+    ]
+  },
+  {
+    "id": 215,
+    "level": 22,
+    "native": "Sa sunod adlaw mag haircut ko",
+    "translation": "明後日髪を切ります",
+    "words": [
+      "Sa",
+      "sunod",
+      "adlaw",
+      "mag",
+      "haircut",
+      "ko"
+    ]
+  },
+  {
+    "id": 216,
+    "level": 22,
+    "native": "Sa sunod bulan magsugod ang klase",
+    "translation": "来月授業が始まります",
+    "words": [
+      "Sa",
+      "sunod",
+      "bulan",
+      "magsugod",
+      "ang",
+      "klase"
+    ]
+  },
+  {
+    "id": 217,
+    "level": 22,
+    "native": "Sa sunod tuig mag travel ko",
+    "translation": "来年旅行します",
+    "words": [
+      "Sa",
+      "sunod",
+      "tuig",
+      "mag",
+      "travel",
+      "ko"
+    ]
+  },
+  {
+    "id": 218,
+    "level": 22,
+    "native": "Ugma sa udto magkita ta",
+    "translation": "明日の昼会いましょう",
+    "words": [
+      "Ugma",
+      "sa",
+      "udto",
+      "magkita",
+      "ta"
+    ]
+  },
+  {
+    "id": 219,
+    "level": 22,
+    "native": "Sa sunod weekend mag beach mi",
+    "translation": "次の週末海に行きます",
+    "words": [
+      "Sa",
+      "sunod",
+      "weekend",
+      "mag",
+      "beach",
+      "mi"
+    ]
+  },
+  {
+    "id": 220,
+    "level": 22,
+    "native": "Ugma sa gabii magtan aw kog sine",
+    "translation": "明日の夜映画を観ます",
+    "words": [
+      "Ugma",
+      "sa",
+      "gabii",
+      "magtan",
+      "aw",
+      "kog",
+      "sine"
+    ]
+  },
+  {
+    "id": 221,
     "level": 23,
-    "questions": [
-      { "cebuano": "Unsa may balita?", "japanese": "ニュース（最近どう？）は何？", "audio": "balita" },
-      { "cebuano": "Wala may bag-o", "japanese": "特に変わりないよ", "audio": "wala_bag_o" },
-      { "cebuano": "Nindot nga balita", "japanese": "いい知らせです", "audio": "nindot_balita" },
-      { "cebuano": "Bati nga balita", "japanese": "悪い知らせです", "audio": "bati_balita" },
-      { "cebuano": "Nakadungog ka?", "japanese": "聞きましたか？", "audio": "nakadungog" },
-      { "cebuano": "Wala pa ko kabalo", "japanese": "まだ知りません", "audio": "wala_kabalo" },
-      { "cebuano": "Karon pa ko kahibalo", "japanese": "今知りました", "audio": "karon_kahibalo" },
-      { "cebuano": "Ikaw ha!", "japanese": "またまた！（からかう時）", "audio": "ikaw_ha" },
-      { "cebuano": "Grabe!", "japanese": "すごい！ / ひどい！", "audio": "grabe" },
-      { "cebuano": "Bitaw", "japanese": "本当だよ / 確かに", "audio": "bitaw" }
+    "native": "Mangaon ta sa karinderya",
+    "translation": "食堂で食べよう",
+    "words": [
+      "Mangaon",
+      "ta",
+      "sa",
+      "karinderya"
     ]
   },
   {
+    "id": 222,
+    "level": 23,
+    "native": "Muli na ta",
+    "translation": "帰ろう",
+    "words": [
+      "Muli",
+      "na",
+      "ta"
+    ]
+  },
+  {
+    "id": 223,
+    "level": 23,
+    "native": "Manan aw ta og sine",
+    "translation": "映画を観に行こう",
+    "words": [
+      "Manan",
+      "aw",
+      "ta",
+      "og",
+      "sine"
+    ]
+  },
+  {
+    "id": 224,
+    "level": 23,
+    "native": "Maglakaw ta sa baybayon",
+    "translation": "海辺を散歩しよう",
+    "words": [
+      "Maglakaw",
+      "ta",
+      "sa",
+      "baybayon"
+    ]
+  },
+  {
+    "id": 225,
+    "level": 23,
+    "native": "Magduwa ta og cards",
+    "translation": "カードで遊ぼう",
+    "words": [
+      "Magduwa",
+      "ta",
+      "og",
+      "cards"
+    ]
+  },
+  {
+    "id": 226,
+    "level": 23,
+    "native": "Magkape ta ug istorya",
+    "translation": "コーヒー飲んで話そう",
+    "words": [
+      "Magkape",
+      "ta",
+      "ug",
+      "istorya"
+    ]
+  },
+  {
+    "id": 227,
+    "level": 23,
+    "native": "Mamasyal ta sa park",
+    "translation": "公園へ遊びに行こう",
+    "words": [
+      "Mamasyal",
+      "ta",
+      "sa",
+      "park"
+    ]
+  },
+  {
+    "id": 228,
+    "level": 23,
+    "native": "Magshopping ta sa downtown",
+    "translation": "ダウンタウンで買い物しよう",
+    "words": [
+      "Magshopping",
+      "ta",
+      "sa",
+      "downtown"
+    ]
+  },
+  {
+    "id": 229,
+    "level": 23,
+    "native": "Magpraktis ta sa kanta",
+    "translation": "歌の練習をしよう",
+    "words": [
+      "Magpraktis",
+      "ta",
+      "sa",
+      "kanta"
+    ]
+  },
+  {
+    "id": 230,
+    "level": 23,
+    "native": "Magadto ta sa museyo",
+    "translation": "博物館へ行こう",
+    "words": [
+      "Magadto",
+      "ta",
+      "sa",
+      "museyo"
+    ]
+  },
+  {
+    "id": 231,
     "level": 24,
-    "questions": [
-      { "cebuano": "Pila ka oras ang biyahe?", "japanese": "移動時間はどのくらいですか？", "audio": "pila_oras_biyahe" },
-      { "cebuano": "Layô pa ba ta?", "japanese": "まだ遠いですか？", "audio": "layo_pa_ta" },
-      { "cebuano": "Hapit na", "japanese": "もうすぐです", "audio": "hapit_na" },
-      { "cebuano": "Abot na ta", "japanese": "着きました", "audio": "abot_na_ta" },
-      { "cebuano": "Mana ko", "japanese": "終わりました / 済みました", "audio": "mana_ko" },
-      { "cebuano": "Wala pa", "japanese": "まだです", "audio": "wala_pa" },
-      { "cebuano": "Naghuwat ko", "japanese": "待っています", "audio": "naghuwat" },
-      { "cebuano": "Dugay na ko naghuwat", "japanese": "長い間待っています", "audio": "dugay_naghuwat" },
-      { "cebuano": "Ayaw ko paabuta", "japanese": "私を待たせないで", "audio": "ayaw_paabuta" },
-      { "cebuano": "Pasensya na, nalate ko", "japanese": "遅れてごめんなさい", "audio": "pasensya_late" }
+    "native": "Dili ko moadto ugma",
+    "translation": "明日は行きません",
+    "words": [
+      "Dili",
+      "ko",
+      "moadto",
+      "ugma"
     ]
   },
   {
+    "id": 232,
+    "level": 24,
+    "native": "Dili ko moinom ug kape",
+    "translation": "コーヒーを飲みません",
+    "words": [
+      "Dili",
+      "ko",
+      "moinom",
+      "ug",
+      "kape"
+    ]
+  },
+  {
+    "id": 233,
+    "level": 24,
+    "native": "Dili ko mokaon ug tam is",
+    "translation": "甘いものを食べません",
+    "words": [
+      "Dili",
+      "ko",
+      "mokaon",
+      "ug",
+      "tam",
+      "is"
+    ]
+  },
+  {
+    "id": 234,
+    "level": 24,
+    "native": "Dili ko magasto daghang kwarta",
+    "translation": "お金をたくさん使いません",
+    "words": [
+      "Dili",
+      "ko",
+      "magasto",
+      "daghang",
+      "kwarta"
+    ]
+  },
+  {
+    "id": 235,
+    "level": 24,
+    "native": "Dili ko mosayaw sa party",
+    "translation": "パーティーで踊りません",
+    "words": [
+      "Dili",
+      "ko",
+      "mosayaw",
+      "sa",
+      "party"
+    ]
+  },
+  {
+    "id": 236,
+    "level": 24,
+    "native": "Dili ko mo travel karong bulan",
+    "translation": "今月は旅行しません",
+    "words": [
+      "Dili",
+      "ko",
+      "mo",
+      "travel",
+      "karong",
+      "bulan"
+    ]
+  },
+  {
+    "id": 237,
+    "level": 24,
+    "native": "Dili ko magbyahe kung ulan",
+    "translation": "雨のときは出かけません",
+    "words": [
+      "Dili",
+      "ko",
+      "magbyahe",
+      "kung",
+      "ulan"
+    ]
+  },
+  {
+    "id": 238,
+    "level": 24,
+    "native": "Dili ko magdula karong gabii",
+    "translation": "今夜は遊びません",
+    "words": [
+      "Dili",
+      "ko",
+      "magdula",
+      "karong",
+      "gabii"
+    ]
+  },
+  {
+    "id": 239,
+    "level": 24,
+    "native": "Dili ko mosugot ana",
+    "translation": "それには同意しません",
+    "words": [
+      "Dili",
+      "ko",
+      "mosugot",
+      "ana"
+    ]
+  },
+  {
+    "id": 240,
+    "level": 24,
+    "native": "Dili ko molingkod kung hugaw",
+    "translation": "汚れているときは座りません",
+    "words": [
+      "Dili",
+      "ko",
+      "molingkod",
+      "kung",
+      "hugaw"
+    ]
+  },
+  {
+    "id": 241,
     "level": 25,
-    "questions": [
-      { "cebuano": "Maayong swerte", "japanese": "幸運を祈ります", "audio": "maayong_swerte" },
-      { "cebuano": "Swerteha nimo!", "japanese": "ラッキーだね！", "audio": "swerteha" },
-      { "cebuano": "Dimalas ko karon", "japanese": "今日はツイてないです", "audio": "dimalas" },
-      { "cebuano": "Ayaw kawala og paglaum", "japanese": "希望を捨てないで", "audio": "paglaum" },
-      { "cebuano": "Kaya nimo na!", "japanese": "あなたならできる！", "audio": "kaya_nimo" },
-      { "cebuano": "Go lang!", "japanese": "そのまま行け！", "audio": "go_lang" },
-      { "cebuano": "Bilib ko nimo", "japanese": "君には感心するよ", "audio": "bilib" },
-      { "cebuano": "Proud ko nimo", "japanese": "君を誇りに思うよ", "audio": "proud" },
-      { "cebuano": "Salamat sa suporta", "japanese": "サポートありがとう", "audio": "suporta" },
-      { "cebuano": "Dako kaayo og tabang", "japanese": "とても助かりました", "audio": "dako_tabang" }
+    "native": "Kanus a ka moabot",
+    "translation": "いつ着きますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ka",
+      "moabot"
     ]
   },
   {
+    "id": 242,
+    "level": 25,
+    "native": "Kanus a ta magkita",
+    "translation": "いつ会いましょうか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ta",
+      "magkita"
+    ]
+  },
+  {
+    "id": 243,
+    "level": 25,
+    "native": "Kanus a ang party magsugod",
+    "translation": "パーティーはいつ始まりますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ang",
+      "party",
+      "magsugod"
+    ]
+  },
+  {
+    "id": 244,
+    "level": 25,
+    "native": "Kanus a ka mouli",
+    "translation": "いつ帰りますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ka",
+      "mouli"
+    ]
+  },
+  {
+    "id": 245,
+    "level": 25,
+    "native": "Kanus a mahuman ang pelikula",
+    "translation": "映画はいつ終わりますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "mahuman",
+      "ang",
+      "pelikula"
+    ]
+  },
+  {
+    "id": 246,
+    "level": 25,
+    "native": "Kanus a ka mosugot",
+    "translation": "いつ同意しますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ka",
+      "mosugot"
+    ]
+  },
+  {
+    "id": 247,
+    "level": 25,
+    "native": "Kanus a mo open ang tindahan",
+    "translation": "店はいつ開きますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "mo",
+      "open",
+      "ang",
+      "tindahan"
+    ]
+  },
+  {
+    "id": 248,
+    "level": 25,
+    "native": "Kanus a ka mosulod sa opisina",
+    "translation": "いつオフィスに来ますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ka",
+      "mosulod",
+      "sa",
+      "opisina"
+    ]
+  },
+  {
+    "id": 249,
+    "level": 25,
+    "native": "Kanus a moabot ang jeep",
+    "translation": "ジープはいつ来ますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "moabot",
+      "ang",
+      "jeep"
+    ]
+  },
+  {
+    "id": 250,
+    "level": 25,
+    "native": "Kanus a ka moadto sa Cebu",
+    "translation": "いつセブへ行きますか？",
+    "words": [
+      "Kanus",
+      "a",
+      "ka",
+      "moadto",
+      "sa",
+      "Cebu"
+    ]
+  },
+  {
+    "id": 251,
     "level": 26,
-    "questions": [
-      { "cebuano": "Unsaon ni paggamit?", "japanese": "これはどうやって使いますか？", "audio": "unsaon_paggamit" },
-      { "cebuano": "Guba ni", "japanese": "これは壊れています", "audio": "guba_ni" },
-      { "cebuano": "Ayuhon nato ni", "japanese": "これを直しましょう", "audio": "ayuhon" },
-      { "cebuano": "Pwede mangutana?", "japanese": "質問してもいいですか？", "audio": "mangutana" },
-      { "cebuano": "Naa koy pangutana", "japanese": "質問があります", "audio": "pangutana" },
-      { "cebuano": "Tubaga ko", "japanese": "答えてください", "audio": "tubaga" },
-      { "cebuano": "Wala koy labot", "japanese": "私には関係ありません", "audio": "wala_labot" },
-      { "cebuano": "Dili na nako sala", "japanese": "それは私のせいではありません", "audio": "dili_sala" },
-      { "cebuano": "Sala nimo na", "japanese": "それはあなたのせいです", "audio": "sala_nimo" },
-      { "cebuano": "Ayaw pangaway", "japanese": "喧嘩しないで / 意地悪しないで", "audio": "ayaw_pangaway" }
+    "native": "Nikaon na ko",
+    "translation": "もう食べました",
+    "words": [
+      "Nikaon",
+      "na",
+      "ko"
     ]
   },
   {
+    "id": 252,
+    "level": 26,
+    "native": "Niabot na siya",
+    "translation": "彼は到着しました",
+    "words": [
+      "Niabot",
+      "na",
+      "siya"
+    ]
+  },
+  {
+    "id": 253,
+    "level": 26,
+    "native": "Nipalit ko ug prutas gahapon",
+    "translation": "昨日果物を買いました",
+    "words": [
+      "Nipalit",
+      "ko",
+      "ug",
+      "prutas",
+      "gahapon"
+    ]
+  },
+  {
+    "id": 254,
+    "level": 26,
+    "native": "Nimisita sila sa amo",
+    "translation": "彼らは家に来ました",
+    "words": [
+      "Nimisita",
+      "sila",
+      "sa",
+      "amo"
+    ]
+  },
+  {
+    "id": 255,
+    "level": 26,
+    "native": "Nisulat ko og sulat",
+    "translation": "手紙を書きました",
+    "words": [
+      "Nisulat",
+      "ko",
+      "og",
+      "sulat"
+    ]
+  },
+  {
+    "id": 256,
+    "level": 26,
+    "native": "Nibasa siya ug libro",
+    "translation": "彼女は本を読みました",
+    "words": [
+      "Nibasa",
+      "siya",
+      "ug",
+      "libro"
+    ]
+  },
+  {
+    "id": 257,
+    "level": 26,
+    "native": "Nidula mi og basketball",
+    "translation": "バスケをしました",
+    "words": [
+      "Nidula",
+      "mi",
+      "og",
+      "basketball"
+    ]
+  },
+  {
+    "id": 258,
+    "level": 26,
+    "native": "Nipaligo ko sa dagat",
+    "translation": "海で泳ぎました",
+    "words": [
+      "Nipaligo",
+      "ko",
+      "sa",
+      "dagat"
+    ]
+  },
+  {
+    "id": 259,
+    "level": 26,
+    "native": "Nitukar siya og gitara",
+    "translation": "彼はギターを弾きました",
+    "words": [
+      "Nitukar",
+      "siya",
+      "og",
+      "gitara"
+    ]
+  },
+  {
+    "id": 260,
+    "level": 26,
+    "native": "Nihimo ko og kape",
+    "translation": "コーヒーを作りました",
+    "words": [
+      "Nihimo",
+      "ko",
+      "og",
+      "kape"
+    ]
+  },
+  {
+    "id": 261,
     "level": 27,
-    "questions": [
-      { "cebuano": "Unsay nindot nga suroyan diri?", "japanese": "この辺でおすすめの遊び場はどこですか？", "audio": "suroyan" },
-      { "cebuano": "Adto ta sa dagat", "japanese": "海に行きましょう", "audio": "adto_dagat" },
-      { "cebuano": "Nindot ang view diri", "japanese": "ここは景色がいいですね", "audio": "view" },
-      { "cebuano": "Picture-picture ta", "japanese": "写真を撮りましょう", "audio": "picture" },
-      { "cebuano": "Picturan ko nimo palihug", "japanese": "写真を撮ってもらえますか？", "audio": "picturan_ko" },
-      { "cebuano": "Usa pa", "japanese": "もう一枚", "audio": "usa_pa" },
-      { "cebuano": "Pahiyom!", "japanese": "笑って！（スマイル）", "audio": "pahiyom" },
-      { "cebuano": "I-send sa ako ha", "japanese": "私に（写真を）送ってね", "audio": "isend_sa_ako" },
-      { "cebuano": "Facebook lang", "japanese": "フェイスブックでいいよ", "audio": "facebook" },
-      { "cebuano": "Add ko nimo", "japanese": "友達申請するね", "audio": "add_ko" }
+    "native": "Gahapon sa buntag nag jogging ko",
+    "translation": "昨日の朝ジョギングしました",
+    "words": [
+      "Gahapon",
+      "sa",
+      "buntag",
+      "nag",
+      "jogging",
+      "ko"
     ]
   },
   {
+    "id": 262,
+    "level": 27,
+    "native": "Gahapon sa hapon nag study ko",
+    "translation": "昨日の午後勉強しました",
+    "words": [
+      "Gahapon",
+      "sa",
+      "hapon",
+      "nag",
+      "study",
+      "ko"
+    ]
+  },
+  {
+    "id": 263,
+    "level": 27,
+    "native": "Gahapon gabii nag movie ko",
+    "translation": "昨夜映画を観ました",
+    "words": [
+      "Gahapon",
+      "gabii",
+      "nag",
+      "movie",
+      "ko"
+    ]
+  },
+  {
+    "id": 264,
+    "level": 27,
+    "native": "Ganina buntag nikaon ko",
+    "translation": "さっき朝食を食べました",
+    "words": [
+      "Ganina",
+      "buntag",
+      "nikaon",
+      "ko"
+    ]
+  },
+  {
+    "id": 265,
+    "level": 27,
+    "native": "Ganina lang nahuman ang meeting",
+    "translation": "さっき会議が終わりました",
+    "words": [
+      "Ganina",
+      "lang",
+      "nahuman",
+      "ang",
+      "meeting"
+    ]
+  },
+  {
+    "id": 266,
+    "level": 27,
+    "native": "Ganina sa udto nag lunch mi",
+    "translation": "さっき昼食を取りました",
+    "words": [
+      "Ganina",
+      "sa",
+      "udto",
+      "nag",
+      "lunch",
+      "mi"
+    ]
+  },
+  {
+    "id": 267,
+    "level": 27,
+    "native": "Gahapon ngadto sa park naglakaw ko",
+    "translation": "昨日公園を散歩しました",
+    "words": [
+      "Gahapon",
+      "ngadto",
+      "sa",
+      "park",
+      "naglakaw",
+      "ko"
+    ]
+  },
+  {
+    "id": 268,
+    "level": 27,
+    "native": "Ganina sa opisina nag trabaho ko",
+    "translation": "さっきオフィスで働きました",
+    "words": [
+      "Ganina",
+      "sa",
+      "opisina",
+      "nag",
+      "trabaho",
+      "ko"
+    ]
+  },
+  {
+    "id": 269,
+    "level": 27,
+    "native": "Gahapon gabii nag guitar siya",
+    "translation": "昨夜彼はギターを弾きました",
+    "words": [
+      "Gahapon",
+      "gabii",
+      "nag",
+      "guitar",
+      "siya"
+    ]
+  },
+  {
+    "id": 270,
+    "level": 27,
+    "native": "Ganina buntag nagtanom ko",
+    "translation": "今朝植木をしました",
+    "words": [
+      "Ganina",
+      "buntag",
+      "nagtanom",
+      "ko"
+    ]
+  },
+  {
+    "id": 271,
     "level": 28,
-    "questions": [
-      { "cebuano": "Unsay imong gusto?", "japanese": "何が欲しいですか？", "audio": "unsay_gusto" },
-      { "cebuano": "Gusto ko og kape", "japanese": "コーヒーが欲しいです", "audio": "gusto_kape" },
-      { "cebuano": "Mas maayo pa", "japanese": "もっといいです", "audio": "mas_maayo" },
-      { "cebuano": "Pareho ra na", "japanese": "それと同じです", "audio": "pareho_ra" },
-      { "cebuano": "Lahi ra ni", "japanese": "これは違います（別物です）", "audio": "lahi_ra" },
-      { "cebuano": "Pili lang", "japanese": "選んでいいよ", "audio": "pili_lang" },
-      { "cebuano": "Bisan unsa", "japanese": "なんでもいいよ", "audio": "bisan_unsa" },
-      { "cebuano": "Bisan kinsa", "japanese": "だれでもいいよ", "audio": "bisan_kinsa" },
-      { "cebuano": "Bisan asa", "japanese": "どこでもいいよ", "audio": "bisan_asa" },
-      { "cebuano": "Wala na jud", "japanese": "本当にもうないです", "audio": "wala_jud" }
+    "native": "Humana ko sa trabaho",
+    "translation": "仕事は終わりました",
+    "words": [
+      "Humana",
+      "ko",
+      "sa",
+      "trabaho"
     ]
   },
   {
+    "id": 272,
+    "level": 28,
+    "native": "Humana na ang report",
+    "translation": "報告書は終わりました",
+    "words": [
+      "Humana",
+      "na",
+      "ang",
+      "report"
+    ]
+  },
+  {
+    "id": 273,
+    "level": 28,
+    "native": "Humana sila ug luto",
+    "translation": "彼らは料理を終えました",
+    "words": [
+      "Humana",
+      "sila",
+      "ug",
+      "luto"
+    ]
+  },
+  {
+    "id": 274,
+    "level": 28,
+    "native": "Humana ko og laba",
+    "translation": "洗濯を終えました",
+    "words": [
+      "Humana",
+      "ko",
+      "og",
+      "laba"
+    ]
+  },
+  {
+    "id": 275,
+    "level": 28,
+    "native": "Humana ang meeting",
+    "translation": "会議が終わりました",
+    "words": [
+      "Humana",
+      "ang",
+      "meeting"
+    ]
+  },
+  {
+    "id": 276,
+    "level": 28,
+    "native": "Wala pa ko mahuman og basa",
+    "translation": "読み終えていません",
+    "words": [
+      "Wala",
+      "pa",
+      "ko",
+      "mahuman",
+      "og",
+      "basa"
+    ]
+  },
+  {
+    "id": 277,
+    "level": 28,
+    "native": "Wala pa sila nakaabot",
+    "translation": "まだ到着していません",
+    "words": [
+      "Wala",
+      "pa",
+      "sila",
+      "nakaabot"
+    ]
+  },
+  {
+    "id": 278,
+    "level": 28,
+    "native": "Wala pa mi nakabayad",
+    "translation": "まだ支払っていません",
+    "words": [
+      "Wala",
+      "pa",
+      "mi",
+      "nakabayad"
+    ]
+  },
+  {
+    "id": 279,
+    "level": 28,
+    "native": "Wala pa ko nakaluto",
+    "translation": "まだ料理していません",
+    "words": [
+      "Wala",
+      "pa",
+      "ko",
+      "nakaluto"
+    ]
+  },
+  {
+    "id": 280,
+    "level": 28,
+    "native": "Wala pa mahuman ang proyekto",
+    "translation": "プロジェクトはまだ終わっていません",
+    "words": [
+      "Wala",
+      "pa",
+      "mahuman",
+      "ang",
+      "proyekto"
+    ]
+  },
+  {
+    "id": 281,
     "level": 29,
-    "questions": [
-      { "cebuano": "Sabot ta ha?", "japanese": "了解（約束）だよ？", "audio": "sabot_ha" },
-      { "cebuano": "Ayaw kalimot", "japanese": "忘れないで", "audio": "ayaw_kalimot" },
-      { "cebuano": "Nakalimot ko", "japanese": "忘れました", "audio": "nakalimot" },
-      { "cebuano": "Hinumdumi ni", "japanese": "これを覚えておいて", "audio": "hinumdumi" },
-      { "cebuano": "Makahinumdom pa ko", "japanese": "まだ覚えています", "audio": "makahinumdom" },
-      { "cebuano": "Lisod hinumduman", "japanese": "思い出すのが難しいです", "audio": "lisod_hinumduman" },
-      { "cebuano": "Sa tinuod lang", "japanese": "実を言うと", "audio": "sa_tinuod_lang" },
-      { "cebuano": "Bitaw sa?", "japanese": "本当にそうだよね？", "audio": "bitaw_sa" },
-      { "cebuano": "Mao gyud na", "japanese": "まさにその通りです", "audio": "mao_gyud" },
-      { "cebuano": "Sakto ka", "japanese": "あなたは正しい", "audio": "sakto_ka" }
+    "native": "Wala ko kabalo",
+    "translation": "知りませんでした",
+    "words": [
+      "Wala",
+      "ko",
+      "kabalo"
     ]
   },
   {
+    "id": 282,
+    "level": 29,
+    "native": "Wala ko nipalit",
+    "translation": "買いませんでした",
+    "words": [
+      "Wala",
+      "ko",
+      "nipalit"
+    ]
+  },
+  {
+    "id": 283,
+    "level": 29,
+    "native": "Wala ko nakaadto",
+    "translation": "行きませんでした",
+    "words": [
+      "Wala",
+      "ko",
+      "nakaadto"
+    ]
+  },
+  {
+    "id": 284,
+    "level": 29,
+    "native": "Wala siya miadto sa klase",
+    "translation": "彼は授業に行きませんでした",
+    "words": [
+      "Wala",
+      "siya",
+      "miadto",
+      "sa",
+      "klase"
+    ]
+  },
+  {
+    "id": 285,
+    "level": 29,
+    "native": "Wala mi nakadawat sa sulat",
+    "translation": "手紙を受け取っていません",
+    "words": [
+      "Wala",
+      "mi",
+      "nakadawat",
+      "sa",
+      "sulat"
+    ]
+  },
+  {
+    "id": 286,
+    "level": 29,
+    "native": "Wala ko nakahinumdom",
+    "translation": "覚えていません",
+    "words": [
+      "Wala",
+      "ko",
+      "nakahinumdom"
+    ]
+  },
+  {
+    "id": 287,
+    "level": 29,
+    "native": "Wala ko nakainom ug tubig",
+    "translation": "水を飲んでいません",
+    "words": [
+      "Wala",
+      "ko",
+      "nakainom",
+      "ug",
+      "tubig"
+    ]
+  },
+  {
+    "id": 288,
+    "level": 29,
+    "native": "Wala ko natulog sayo",
+    "translation": "早く寝ませんでした",
+    "words": [
+      "Wala",
+      "ko",
+      "natulog",
+      "sayo"
+    ]
+  },
+  {
+    "id": 289,
+    "level": 29,
+    "native": "Wala siya nikaon sa panihapon",
+    "translation": "彼女は夕食を食べませんでした",
+    "words": [
+      "Wala",
+      "siya",
+      "nikaon",
+      "sa",
+      "panihapon"
+    ]
+  },
+  {
+    "id": 290,
+    "level": 29,
+    "native": "Wala mi nakahuman sa dula",
+    "translation": "試合を最後までできませんでした",
+    "words": [
+      "Wala",
+      "mi",
+      "nakahuman",
+      "sa",
+      "dula"
+    ]
+  },
+  {
+    "id": 291,
     "level": 30,
-    "questions": [
-      { "cebuano": "Salamat sa tanan", "japanese": "いろいろとありがとうございました", "audio": "salamat_tanan" },
-      { "cebuano": "Nalipay ko nga kaila ta", "japanese": "あなたと知り合えて嬉しいです", "audio": "kaila_ta" },
-      { "cebuano": "Hinaot nga magkita ta pag-usab", "japanese": "また会えることを願っています", "audio": "magkita_usab" },
-      { "cebuano": "Dili ko malimot nimo", "japanese": "あなたのことは忘れません", "audio": "dili_malimot" },
-      { "cebuano": "Pabilin nga maayo", "japanese": "元気でいてね（良いままでいて）", "audio": "pabilin_maayo" },
-      { "cebuano": "Good luck sa imong kinabuhi", "japanese": "あなたの人生に幸あれ", "audio": "good_luck_life" },
-      { "cebuano": "Kanunay kang mag-amping", "japanese": "いつも気をつけてね", "audio": "kanunay_amping" },
-      { "cebuano": "Salamat sa pagtudlo nako", "japanese": "教えてくれてありがとう", "audio": "salamat_pagtudlo" },
-      { "cebuano": "Gimingaw nako sa Cebu", "japanese": "もうセブが恋しいです", "audio": "mingaw_cebu" },
-      { "cebuano": "Daghan kaayong salamat!", "japanese": "本当にありがとうございました！", "audio": "daghan_salamat" }
+    "native": "Nakaadto na ka sa Cebu",
+    "translation": "セブへ行ったことありますか？",
+    "words": [
+      "Nakaadto",
+      "na",
+      "ka",
+      "sa",
+      "Cebu"
+    ]
+  },
+  {
+    "id": 292,
+    "level": 30,
+    "native": "Nakaon na ka ug durian",
+    "translation": "ドリアンを食べたことありますか？",
+    "words": [
+      "Nakaon",
+      "na",
+      "ka",
+      "ug",
+      "durian"
+    ]
+  },
+  {
+    "id": 293,
+    "level": 30,
+    "native": "Nakasulay ka og zipline",
+    "translation": "ジップラインに乗ったことありますか？",
+    "words": [
+      "Nakasulay",
+      "ka",
+      "og",
+      "zipline"
+    ]
+  },
+  {
+    "id": 294,
+    "level": 30,
+    "native": "Nakakita ka sa Chocolate Hills",
+    "translation": "チョコレートヒルズを見たことありますか？",
+    "words": [
+      "Nakakita",
+      "ka",
+      "sa",
+      "Chocolate",
+      "Hills"
+    ]
+  },
+  {
+    "id": 295,
+    "level": 30,
+    "native": "Nakasuroy mi sa Bohol",
+    "translation": "私たちはボホールへ行ったことがあります",
+    "words": [
+      "Nakasuroy",
+      "mi",
+      "sa",
+      "Bohol"
+    ]
+  },
+  {
+    "id": 296,
+    "level": 30,
+    "native": "Nakaapil ko sa Sinulog",
+    "translation": "シヌログ祭に参加したことがあります",
+    "words": [
+      "Nakaapil",
+      "ko",
+      "sa",
+      "Sinulog"
+    ]
+  },
+  {
+    "id": 297,
+    "level": 30,
+    "native": "Nakaadto ko sa Camiguin",
+    "translation": "カミギンに行ったことがあります",
+    "words": [
+      "Nakaadto",
+      "ko",
+      "sa",
+      "Camiguin"
+    ]
+  },
+  {
+    "id": 298,
+    "level": 30,
+    "native": "Nakatrabaho siya sa gawas nasud",
+    "translation": "彼は海外で働いたことがあります",
+    "words": [
+      "Nakatrabaho",
+      "siya",
+      "sa",
+      "gawas",
+      "nasud"
+    ]
+  },
+  {
+    "id": 299,
+    "level": 30,
+    "native": "Nakadula sila og professional basketball",
+    "translation": "彼らはプロのバスケをしたことがあります",
+    "words": [
+      "Nakadula",
+      "sila",
+      "og",
+      "professional",
+      "basketball"
+    ]
+  },
+  {
+    "id": 300,
+    "level": 30,
+    "native": "Nakatilaw ko ug kinilaw",
+    "translation": "キニラウを食べたことがあります",
+    "words": [
+      "Nakatilaw",
+      "ko",
+      "ug",
+      "kinilaw"
     ]
   }
 ]
