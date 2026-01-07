@@ -4,6 +4,7 @@ import android.app.Activity
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
@@ -81,27 +82,20 @@ fun ListeningScreen(
     val clearedLevel by viewModel.clearedLevel.collectAsState()
     val comboCount by viewModel.comboCount.collectAsState()
 
-    var voiceHintRemaining by remember { mutableStateOf(GameDataManager.getHintCount(context)) }
-    var showHintRecoveryDialog by remember { mutableStateOf(false) }
+    val voiceHintRemaining by viewModel.voiceHintRemaining.collectAsState()
+    val showHintRecoveryDialog by viewModel.showHintRecoveryDialog.collectAsState()
+    var hintPlaybackTrigger by remember { mutableStateOf(0) }
 
     // TTSの準備
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
 
-    // フクロウ先生の声（低め・ゆっくり）
-    val speakOwlVoice = { text: String ->
-        tts?.let {
-            it.setPitch(0.7f)
-            it.setSpeechRate(0.85f)
-            it.speak(text, TextToSpeech.QUEUE_FLUSH, null, "OwlVoice")
-        }
-    }
-
-    // 単語読み上げ（標準）
+    // フクロウ先生の声（全TTS共通）
     val speakWord = { word: String ->
         tts?.let {
-            it.setPitch(1.0f)
-            it.setSpeechRate(1.0f)
-            it.speak(word, TextToSpeech.QUEUE_FLUSH, null, "WordVoice")
+            it.stop()
+            it.setPitch(0.7f)
+            it.setSpeechRate(0.9f)
+            it.speak(word, TextToSpeech.QUEUE_FLUSH, null, "WordVoice_$word")
         }
     }
 
@@ -121,6 +115,7 @@ fun ListeningScreen(
 
     DisposableEffect(context) {
         var ttsInit: TextToSpeech? = null
+
         ttsInit = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 ttsInit?.let { instance ->
@@ -131,6 +126,8 @@ fun ListeningScreen(
                     if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                         instance.setLanguage(Locale.US)
                     }
+                    instance.setPitch(0.7f)
+                    instance.setSpeechRate(0.9f)
                 }
             }
         }
@@ -138,23 +135,57 @@ fun ListeningScreen(
         onDispose { ttsInit?.stop(); ttsInit?.shutdown() }
     }
 
+    LaunchedEffect(hintPlaybackTrigger) {
+        if (hintPlaybackTrigger == 0) return@LaunchedEffect
+        viewModel.playAudio()
+    }
+
+    fun requestHintPlayback() {
+        if (isPlaying) return
+        viewModel.processHintRequest()
+    }
+
     LaunchedEffect(level) {
         sessionManager.startSession()
+        Log.d("ListeningScreen", "Loading questions for level $level")
         viewModel.loadQuestions(level)
+    }
+    
+    // セッション状態を監視し、UIが確実に更新されるようにする
+    LaunchedEffect(session) {
+        Log.d("ListeningScreen", "Session state changed: ${session?.let { "questions=${it.questions.size}, completed=${it.completed}" } ?: "null"}")
+        if (session != null && session.questions.isNotEmpty()) {
+            Log.d("ListeningScreen", "Session loaded successfully with ${session.questions.size} questions")
+        }
+    }
+    
+    // 現在の問題変化を監視
+    LaunchedEffect(currentQuestion) {
+        Log.d("ListeningScreen", "Current question changed: ${currentQuestion?.phrase}")
     }
 
     LaunchedEffect(lessonResult, clearedLevel, session?.completed) {
         val result = lessonResult
-        val levelCleared = clearedLevel
-        if (session?.completed == true && result != null && levelCleared != null) {
-            LessonStatusManager.setLessonCleared(context, level)
+        if (session?.completed == true && result != null) {
+            val levelCleared = clearedLevel
+            val displayLevel = levelCleared ?: level
+            val leveledUpFlag = if (result.leveledUp) 1 else 0
+            val destinationRoute = "result_screen/${result.correctCount}/${result.totalQuestions}/${result.xpEarned}/$displayLevel/$leveledUpFlag"
+            val navigateToResult = {
+                navController.navigate(destinationRoute) {
+                    popUpTo(AppRoute.Listening.route) { inclusive = true }
+                }
+                viewModel.clearLessonCompletion()
+            }
+            if (result.leveledUp) {
+                LessonStatusManager.setLessonCleared(context, level)
+            }
             if (activity != null) {
                 AdManager.checkAndShowInterstitial(activity) {
-                    navController.navigate("result_screen/${result.correctCount}/${result.xpEarned}/$levelCleared") {
-                        popUpTo(AppRoute.Listening.route) { inclusive = true }
-                    }
-                    viewModel.clearLessonCompletion()
+                    navigateToResult()
                 }
+            } else {
+                navigateToResult()
             }
         }
     }
@@ -225,27 +256,35 @@ fun ListeningScreen(
                             contentScale = ContentScale.Fit
                         )
                         Button(
-                            onClick = {
-                                // 通常ヒント
-                                if (voiceHintRemaining > 0) {
-                                    speakOwlVoice(question.phrase)
-                                    viewModel.playAudio()
-                                    voiceHintRemaining = GameDataManager.useHint(context)
-                                } else {
-                                    showHintRecoveryDialog = true
-                                }
-                            },
+                            onClick = { requestHintPlayback() },
                             enabled = !isPlaying,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D3246)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (voiceHintRemaining > 0) Color(0xFF2D3246) else Color(0xFFFFA726)
+                            ),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Icon(Icons.Default.VolumeUp, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("ヒント ($voiceHintRemaining)", color = Color.White, fontSize = 13.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = if (voiceHintRemaining > 0) "ヒント ($voiceHintRemaining)" else "広告で回復",
+                                color = Color.White, 
+                                fontSize = 13.sp
+                            )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    // 問題文ラベル
+                    Text(
+                        text = "問題文",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     // 問題文
                     Box(
@@ -310,18 +349,7 @@ fun ListeningScreen(
                                 exit = fadeOut()
                             ) {
                                 ResultCard(
-                                    isCorrect = isCorrect,
-                                    onPlayHint = {
-                                        // ★修正：不正解時の「答えを聞く」もヒント回数を消費！
-                                        if (voiceHintRemaining > 0) {
-                                            speakOwlVoice(question.phrase)
-                                            viewModel.playAudio()
-                                            voiceHintRemaining = GameDataManager.useHint(context)
-                                        } else {
-                                            // ヒントがない場合は動画へ誘導
-                                            showHintRecoveryDialog = true
-                                        }
-                                    }
+                                    isCorrect = isCorrect
                                 )
                             }
                         }
@@ -333,7 +361,7 @@ fun ListeningScreen(
 
     if (showHintRecoveryDialog) {
         AlertDialog(
-            onDismissRequest = { showHintRecoveryDialog = false },
+            onDismissRequest = { viewModel.dismissHintRecoveryDialog() },
             confirmButton = {
                 TextButton(onClick = {
                     if (activity != null) {
@@ -341,9 +369,11 @@ fun ListeningScreen(
                             activity = activity,
                             onRewardEarned = {
                                 GameDataManager.recoverHints(context)
-                                voiceHintRemaining = 3
-                                showHintRecoveryDialog = false
+                                viewModel.onHintRecoveryEarned()
                                 Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
+                                
+                                // 広告視聴後、すぐにヒントを再生
+                                viewModel.processHintRequest()
                             },
                             onAdClosed = {}
                         )
@@ -353,7 +383,7 @@ fun ListeningScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showHintRecoveryDialog = false }) {
+                TextButton(onClick = { viewModel.dismissHintRecoveryDialog() }) {
                     Text("閉じる")
                 }
             },
@@ -365,7 +395,7 @@ fun ListeningScreen(
 
 // 以下、変更なしの部品
 @Composable
-private fun ResultCard(isCorrect: Boolean, onPlayHint: () -> Unit) {
+private fun ResultCard(isCorrect: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         colors = CardDefaults.cardColors(containerColor = if (isCorrect) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)),
@@ -383,17 +413,7 @@ private fun ResultCard(isCorrect: Boolean, onPlayHint: () -> Unit) {
             } else {
                 Text("残念...", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 Spacer(Modifier.height(16.dp))
-                Text("ヒントを聞いてもう一度！", color = Color.Gray, fontSize = 14.sp)
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = onPlayHint,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA726)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.VolumeUp, null, tint = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("答えを聞く")
-                }
+                Text("ヒントを聞いてみて", color = Color.Gray, fontSize = 14.sp)
             }
         }
     }

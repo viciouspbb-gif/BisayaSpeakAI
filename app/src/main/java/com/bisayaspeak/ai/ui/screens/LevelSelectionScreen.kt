@@ -1,8 +1,10 @@
 package com.bisayaspeak.ai.ui.screens
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.ads.AdManager
@@ -31,6 +34,25 @@ fun LevelSelectionScreen(
     val context = LocalContext.current
     var refreshTrigger by remember { mutableStateOf(0) }
     var showAdDialogForLevel by remember { mutableStateOf<Int?>(null) }
+    val sectionHeaders = listOf(
+        1 to "第1章：超基礎・挨拶",
+        6 to "第2章：2語文・意思表示",
+        11 to "第3章：疑問詞・自己紹介",
+        16 to "第4章：日常フレーズ",
+        21 to "第5章：未来の話・予定",
+        26 to "第6章：過去の話・完了"
+    ).associate { it }
+    val activity = context as? Activity
+
+    fun startLevel(level: Int) {
+        if (level <= 10 || activity == null) {
+            onLevelSelected(level)
+        } else {
+            AdManager.checkAndShowInterstitial(activity) {
+                onLevelSelected(level)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -60,28 +82,39 @@ fun LevelSelectionScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = modifier.padding(padding)
             ) {
-                items(30) { index ->
-                    val level = index + 1
+                for (level in 1..30) {
+                    sectionHeaders[level]?.let { title ->
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                    }
+
                     val status = LessonStatusManager.getLessonStatus(context, level, isPro)
 
-                    LevelButton(
-                        level = level,
-                        status = status,
-                        onClick = {
-                            when (status) {
-                                LessonStatusManager.Status.OPEN,
-                                LessonStatusManager.Status.CLEARED -> {
-                                    onLevelSelected(level)
-                                }
-                                LessonStatusManager.Status.NEED_AD -> {
-                                    showAdDialogForLevel = level
-                                }
-                                LessonStatusManager.Status.LOCKED -> {
-                                    Toast.makeText(context, "前のレベルをクリアしてね！", Toast.LENGTH_SHORT).show()
+                    item {
+                        LevelButton(
+                            level = level,
+                            status = status,
+                            onClick = {
+                                when (status) {
+                                    LessonStatusManager.Status.OPEN,
+                                    LessonStatusManager.Status.CLEARED -> {
+                                        startLevel(level)
+                                    }
+                                    LessonStatusManager.Status.NEED_AD -> {
+                                        showAdDialogForLevel = level
+                                    }
+                                    LessonStatusManager.Status.LOCKED -> {
+                                        Toast.makeText(context, "前のレベルをクリアしてね！", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
