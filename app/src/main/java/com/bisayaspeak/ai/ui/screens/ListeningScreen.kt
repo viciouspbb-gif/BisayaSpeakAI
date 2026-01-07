@@ -372,8 +372,7 @@ fun ListeningScreen(
                                 viewModel.onHintRecoveryEarned()
                                 Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
                                 
-                                // 広告視聴後、すぐにヒントを再生
-                                viewModel.processHintRequest()
+                                // 広告視聴後はヒントを回復するだけで、自動再生はしない
                             },
                             onAdClosed = {}
                         )
