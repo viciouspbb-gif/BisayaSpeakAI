@@ -10,20 +10,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -64,11 +60,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.ads.AdManager
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 
 enum class FeatureTier {
     PRO,
@@ -230,7 +230,15 @@ fun HomeScreen(
             modifier = Modifier.padding(bottom = 20.dp)
         )
 
-        BannerPlaceholder()
+        // ★修正ポイント：プレースホルダーを削除し、本物の広告バナーを表示
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            AdMobBanner()
+        }
 
         if (showProDialog) {
             AlertDialog(
@@ -263,6 +271,22 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(60.dp))
         Spacer(modifier = Modifier.navigationBarsPadding())
     }
+}
+
+// ■ バナー広告を表示する部品
+@Composable
+fun AdMobBanner(modifier: Modifier = Modifier) {
+    AndroidView(
+        modifier = modifier.fillMaxWidth(),
+        factory = { context ->
+            AdView(context).apply {
+                setAdSize(AdSize.BANNER)
+                // テスト用バナーID (AdManager.BANNER_TEST_IDを使用)
+                adUnitId = AdManager.BANNER_TEST_ID
+                loadAd(AdRequest.Builder().build())
+            }
+        }
+    )
 }
 
 @Composable
@@ -516,25 +540,7 @@ private fun getOwlAdvice(homeStatus: HomeStatus): String {
     }
 }
 
-@Composable
-private fun BannerPlaceholder(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF1E293B).copy(alpha = 0.9f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "広告スペース（AdMob）",
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = Color(0xFF9CA3AF),
-                fontWeight = FontWeight.Medium
-            )
-        )
-    }
-}
+// BannerPlaceholder は削除しました
 
 @Composable
 private fun StartLearningCard(
