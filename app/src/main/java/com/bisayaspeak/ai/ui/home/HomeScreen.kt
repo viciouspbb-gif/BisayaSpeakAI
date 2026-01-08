@@ -40,12 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +59,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.launch
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.ads.AdsPolicy
@@ -114,6 +111,16 @@ fun HomeScreen(
     var showProDialog by remember { mutableStateOf(false) }
     var showOwlAdviceDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // バナー再ロード（onResume 相当）
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            AdManager.loadInterstitial(context)
+            AdManager.loadReward(context)
+        }
+    }
 
     val proFeatures = listOf(
         FeatureItem(

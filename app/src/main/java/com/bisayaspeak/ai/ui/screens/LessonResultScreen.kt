@@ -52,7 +52,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bisayaspeak.ai.R
-import com.bisayaspeak.ai.ads.AdMobBanner // ★共通部品をインポート
+import com.bisayaspeak.ai.ads.AdMobBanner
+import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,11 +74,6 @@ fun LessonResultScreen(
     val normalizedTotal = totalQuestions.coerceAtLeast(1)
     val accuracy = (correctCount / normalizedTotal.toFloat()).coerceIn(0f, 1f)
     val passed = leveledUp
-    
-    // ViewModelからフクロウのアドバイスを再生
-    LaunchedEffect(leveledUp, correctCount, totalQuestions) {
-        viewModel?.playOwlAdviceForResult(leveledUp, correctCount, totalQuestions)
-    }
 
     val gradient = Brush.verticalGradient(
         colors = listOf(

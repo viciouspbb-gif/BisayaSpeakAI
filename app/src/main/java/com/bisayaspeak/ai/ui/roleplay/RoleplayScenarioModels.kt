@@ -47,6 +47,23 @@ private val lv1AirportPrompt = """
 
 val roleplayScenarioDefinitions: List<RoleplayScenarioDefinition> = listOf(
     RoleplayScenarioDefinition(
+        id = "rp_tarsier_morning",
+        level = 1,
+        title = "LV1: タルシエ先生の朝",
+        description = "ボホールの森でタルシエ先生と朝のあいさつ修行",
+        situation = "タルシエ先生（タリ）と朝の挨拶レッスン",
+        aiRole = "タルシエ先生タリ（優しく茶目っ気がある）",
+        goal = "朝の定番フレーズを3ターンで交わし切る",
+        iconEmoji = "🐒",
+        initialMessage = "Maayong buntag! Ako si Tarsier Master Tali.",
+        systemPrompt = "",
+        hintPhrases = listOf(
+            HintPhrase("Maayong buntag!", "おはよう！"),
+            HintPhrase("Kumusta ka?", "元気？"),
+            HintPhrase("Sige, babay!", "じゃあね、バイバイ！")
+        )
+    ),
+    RoleplayScenarioDefinition(
         id = "rp_airport",
         level = 1,
         title = "LV1: 空港",

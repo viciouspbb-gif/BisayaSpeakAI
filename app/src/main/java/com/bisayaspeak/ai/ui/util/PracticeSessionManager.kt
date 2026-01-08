@@ -2,7 +2,7 @@ package com.bisayaspeak.ai.ui.util
 
 import android.app.Activity
 import android.util.Log
-import com.bisayaspeak.ai.ui.ads.AdMobManager
+import com.bisayaspeak.ai.ads.AdManager
 
 /**
  * 全練習モード共通の広告管理マネージャー
@@ -64,9 +64,9 @@ class PracticeSessionManager(
         adShownForSession = true
         
         Log.d(TAG, "Showing interstitial ad on session complete")
-        activity?.let {
-            AdMobManager.showInterstitial(it) {
-                AdMobManager.loadInterstitial(it)
+        activity?.let { safeActivity ->
+            AdManager.showInterstitialWithTimeout(safeActivity, timeoutMs = 3_000L) {
+                AdManager.loadInterstitial(safeActivity.applicationContext)
                 onAdDismissed()
             }
         } ?: onAdDismissed()
@@ -104,9 +104,9 @@ class PracticeSessionManager(
         adShownForSession = true
         
         Log.d(TAG, "Showing interstitial ad on session interruption")
-        activity?.let {
-            AdMobManager.showInterstitial(it) {
-                AdMobManager.loadInterstitial(it)
+        activity?.let { safeActivity ->
+            AdManager.showInterstitialWithTimeout(safeActivity, timeoutMs = 3_000L) {
+                AdManager.loadInterstitial(safeActivity.applicationContext)
                 onAdDismissed()
             }
         } ?: onAdDismissed()
@@ -130,9 +130,9 @@ class PracticeSessionManager(
         }
         
         Log.d(TAG, "Showing interstitial ad on retry success")
-        activity?.let {
-            AdMobManager.showInterstitial(it) {
-                AdMobManager.loadInterstitial(it)
+        activity?.let { safeActivity ->
+            AdManager.showInterstitialWithTimeout(safeActivity, timeoutMs = 3_000L) {
+                AdManager.loadInterstitial(safeActivity.applicationContext)
                 onAdDismissed()
             }
         } ?: onAdDismissed()

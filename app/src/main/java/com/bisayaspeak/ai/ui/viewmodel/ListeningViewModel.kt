@@ -20,8 +20,11 @@ import com.bisayaspeak.ai.data.repository.QuestionRepository
 import com.bisayaspeak.ai.data.repository.UsageRepository
 import com.bisayaspeak.ai.data.repository.UserProgressRepository
 import com.bisayaspeak.ai.ads.AdManager
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.*
@@ -81,8 +84,11 @@ class ListeningViewModel(
     val showHintRecoveryDialog: StateFlow<Boolean> = _showHintRecoveryDialog.asStateFlow()
     
     // リワード広告のプリロード状態
+    enum class RewardAdState { LOADING, READY, FAILED }
     private val _rewardedAdLoaded = MutableStateFlow(false)
-    val rewardedAdLoaded: StateFlow<Boolean> = _rewardedAdLoaded.asStateFlow()
+    val rewardedAdLoaded: StateFlow<Boolean> get() = _rewardedAdLoaded
+    private val _rewardedAdState = MutableStateFlow(RewardAdState.LOADING)
+    val rewardedAdState: StateFlow<RewardAdState> = _rewardedAdState.asStateFlow()
     
     // フクロウ先生の声設定（一定速度）
     private val _speechRate = MutableStateFlow(0.9f)
@@ -394,59 +400,6 @@ class ListeningViewModel(
             if (sessionQuestions.isNotEmpty()) {
                 loadNextQuestion()
             }
-        }
-    }
-    
-    fun playOwlAdviceForResult(passed: Boolean, score: Int, totalQuestions: Int) {
-        viewModelScope.launch {
-            try {
-                val userLevel = getUserLevelFromXp()
-                val percentage = if (totalQuestions > 0) (score.toFloat() / totalQuestions * 100) else 0f
-                
-                val advice = when {
-                    userLevel == 30 && passed -> "見事じゃ！ジンベエザメと泳ぐ達人になったな！ここからが本番じゃ。プレミアムな世界を覗いてみるか？"
-                    passed && percentage >= 100f -> getOwlMasterMessage(userLevel) + "見事じゃ！完璧な出来栄えじゃな！"
-                    passed && percentage >= 80f -> getOwlMasterMessage(userLevel) + "おしいのう！あと少しで全問正解じゃったのに。"
-                    passed && percentage >= 50f -> getOwlMasterMessage(userLevel) + "むぅ、もう少しでレベルアップじゃ！"
-                    passed -> getOwlMasterMessage(userLevel) + "まだまだ修行が必要じゃな。"
-                    else -> getOwlMasterMessage(userLevel) + "しっかり復習して出直してくるのじゃ！"
-                }
-                
-                // 待機・再試行ロジック付きで再生
-                playWordSoundWithRetry(advice, maxRetries = 3)
-                
-                Log.d("ListeningViewModel", "Owl advice played for result screen: $advice")
-            } catch (e: Exception) {
-                Log.e("ListeningViewModel", "Failed to play owl advice for result: ${e.message}")
-            }
-        }
-    }
-    
-    suspend fun speakWord(word: String) {
-        // TTS初期化を最大1秒待機
-        val maxWaitTime = 1000
-        val startTime = System.currentTimeMillis()
-        
-        while (!_ttsInitialized.value && System.currentTimeMillis() - startTime < maxWaitTime) {
-            kotlinx.coroutines.delay(100)
-        }
-        
-        if (!_ttsInitialized.value) {
-            Log.w("ListeningViewModel", "TTS not initialized after waiting, skipping word speech")
-            return
-        }
-        
-        tts?.let {
-            viewModelScope.launch {
-                val userLevel = getUserLevelFromXp()
-                val speechRate = getSpeechRateForLevel(userLevel)
-                it.setPitch(PITCH_FIXED)
-                it.setSpeechRate(speechRate)
-                it.speak(word, TextToSpeech.QUEUE_ADD, null, "word_feedback")
-                Log.d("ListeningViewModel", "Speaking word: $word with pitch $PITCH_FIXED, rate $speechRate (level $userLevel)")
-            }
-        } ?: run {
-            Log.w("ListeningViewModel", "TTS not available for word speech")
         }
     }
     
@@ -1377,6 +1330,7 @@ class ListeningViewModel(
     // 広告関連
     private fun preloadRewardedAd() {
         _rewardedAdLoaded.value = false // 厳格に初期状態を設定
+        _rewardedAdState.value = RewardAdState.LOADING
         Log.d("ListeningViewModel", "Preloading rewarded ad - initial state: NOT READY")
         
         // AdManagerにコールバックを設定
@@ -1420,11 +1374,16 @@ class ListeningViewModel(
         }
     }
     
+    fun retryRewardedAdLoad() {
+        startAdReloading()
+    }
+
     private fun startAdReloading() {
         viewModelScope.launch {
             try {
                 Log.d("ListeningViewModel", "Starting ad reload - setting to LOADING state")
                 _rewardedAdLoaded.value = false // 厳格に読み込み中状態を設定
+                _rewardedAdState.value = RewardAdState.LOADING
                 
                 // AdManagerの実際のリロードメソッドを呼び出す
                 val context = getApplication<Application>()
@@ -1440,11 +1399,13 @@ class ListeningViewModel(
                 
                 if (!_rewardedAdLoaded.value) {
                     Log.w("ListeningViewModel", "Ad reload timeout - keeping NOT READY state")
+                    _rewardedAdState.value = RewardAdState.FAILED
                 }
                 
             } catch (e: Exception) {
                 Log.e("ListeningViewModel", "Failed to reload ad: ${e.message}")
                 _rewardedAdLoaded.value = false // 失敗時は厳格にNOT READY状態を維持
+                _rewardedAdState.value = RewardAdState.FAILED
             }
         }
     }
@@ -1453,6 +1414,7 @@ class ListeningViewModel(
     fun onAdManagerAdLoaded() {
         viewModelScope.launch {
             _rewardedAdLoaded.value = true
+            _rewardedAdState.value = RewardAdState.READY
             Log.d("ListeningViewModel", "AdManager reported ad loaded - UI updated to ready state")
         }
     }
@@ -1460,6 +1422,7 @@ class ListeningViewModel(
     fun onAdManagerAdLoadFailed() {
         viewModelScope.launch {
             _rewardedAdLoaded.value = false
+            _rewardedAdState.value = RewardAdState.FAILED
             Log.d("ListeningViewModel", "AdManager reported ad load failed - UI updated to loading state")
         }
     }
