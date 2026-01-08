@@ -21,8 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -66,18 +64,14 @@ fun RoleplayChatScreen(
     viewModel: RoleplayChatViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val listState = rememberLazyListState()
-    val messages = uiState.messages
 
     LaunchedEffect(scenarioId) {
         viewModel.loadScenario(scenarioId)
     }
 
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
-        }
-    }
+    var showHint by remember { mutableStateOf(false) }
+    val latestAiLine: ChatMessage? = uiState.messages.lastOrNull { !it.isUser }
+    val hintCandidate: RoleplayOption? = uiState.options.firstOrNull()
 
     val scenarioTitle = uiState.currentScenario?.title ?: "AI ロールプレイ"
 
@@ -100,7 +94,7 @@ fun RoleplayChatScreen(
                 )
             )
         },
-        containerColor = Color(0xFF121212),
+        containerColor = Color(0xFF0F172A),
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Column(
@@ -108,31 +102,68 @@ fun RoleplayChatScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .windowInsetsPadding(WindowInsets.safeDrawing)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0F172A),
+                            Color(0xFF172554),
+                            Color(0xFF0F172A)
+                        )
+                    )
+                )
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(messages, key = { it.id }) { message ->
-                    ChatMessageItem(message)
-                }
-            }
+            Spacer(modifier = Modifier.height(32.dp))
 
-            RoleplayOptionsPanel(
-                isLoading = uiState.isLoading,
-                options = uiState.options,
-                revealedHintIds = uiState.revealedHintOptionIds,
-                onSelect = { optionId -> viewModel.selectOption(optionId) },
-                onRevealHint = { optionId -> viewModel.revealHint(optionId) }
+            Image(
+                painter = painterResource(id = R.drawable.char_owl),
+                contentDescription = "フクロウ師匠",
+                modifier = Modifier
+                    .size(180.dp)
+                    .padding(bottom = 16.dp),
+                contentScale = ContentScale.Fit
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = latestAiLine?.text ?: uiState.currentScenario?.initialMessage
+                ?: "Maayong buntag! はじめようかの？",
+                color = Color.White,
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            )
 
-            SmartAdBanner(isPremium = isPremium)
+            Button(
+                onClick = { showHint = !showHint },
+                enabled = hintCandidate != null,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = if (showHint) "ヒントを隠す" else "ヒントを見る")
+            }
+
+            if (showHint && hintCandidate != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = hintCandidate.hint ?: "ヒントはまだありません。",
+                    color = Color(0xFFDBEAFE),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0x3322568E),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        )
+                        .padding(16.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }

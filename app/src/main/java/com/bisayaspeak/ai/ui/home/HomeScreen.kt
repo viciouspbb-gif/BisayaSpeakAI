@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Translate
@@ -66,6 +65,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
+import com.bisayaspeak.ai.ui.ads.AdsPolicy
+import com.bisayaspeak.ai.ui.ads.AdMobBanner
+import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -89,7 +91,6 @@ enum class FeatureId {
     TRANSLATE,
     PRONUNCIATION,
     LISTENING,
-    QUIZ,
     FLASHCARDS,
     ROLE_PLAY,
     AI_CHAT,
@@ -130,14 +131,6 @@ fun HomeScreen(
             icon = Icons.Filled.Psychology,
             tier = FeatureTier.PREMIUM,
             isLocked = !isPremiumPlan
-        ),
-        FeatureItem(
-            id = FeatureId.QUIZ,
-            title = "おさらいクイズ",
-            subtitle = "苦手克服・総復習",
-            icon = Icons.Filled.Quiz,
-            tier = FeatureTier.PRO,
-            isLocked = !isProUnlocked && !isPremiumPlan
         ),
         FeatureItem(
             id = FeatureId.ROLE_PLAY,
@@ -230,14 +223,16 @@ fun HomeScreen(
             modifier = Modifier.padding(bottom = 20.dp)
         )
 
-        // ★修正ポイント：プレースホルダーを削除し、本物の広告バナーを表示
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            AdMobBanner()
+        // 
+        if (AdsPolicy.areAdsEnabled) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                AdMobBanner(adUnitId = AdManager.BANNER_TEST_ID)
+            }
         }
 
         if (showProDialog) {
@@ -271,22 +266,6 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(60.dp))
         Spacer(modifier = Modifier.navigationBarsPadding())
     }
-}
-
-// ■ バナー広告を表示する部品
-@Composable
-fun AdMobBanner(modifier: Modifier = Modifier) {
-    AndroidView(
-        modifier = modifier.fillMaxWidth(),
-        factory = { context ->
-            AdView(context).apply {
-                setAdSize(AdSize.BANNER)
-                // テスト用バナーID (AdManager.BANNER_TEST_IDを使用)
-                adUnitId = AdManager.BANNER_TEST_ID
-                loadAd(AdRequest.Builder().build())
-            }
-        }
-    )
 }
 
 @Composable
@@ -425,7 +404,7 @@ private fun HomeStatusCard(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "現在のレベル",
+                            text = "称号レベル",
                             color = Color.White.copy(alpha = 0.8f),
                             style = MaterialTheme.typography.labelMedium
                         )
@@ -435,6 +414,20 @@ private fun HomeStatusCard(
                             maxFontSize = 32.sp,
                             minFontSize = 20.sp,
                             fontWeight = FontWeight.Black
+                        )
+                    }
+                    Surface(
+                        color = Color.White.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(50),
+                        modifier = Modifier.align(Alignment.Start)
+                    ) {
+                        AutoSizeText(
+                            text = getTitleByXp(homeStatus.totalXp),
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            maxFontSize = 14.sp,
+                            minFontSize = 10.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                     Surface(
@@ -537,6 +530,55 @@ private fun getOwlAdvice(homeStatus: HomeStatus): String {
         homeStatus.currentLevel in 2..3 -> "おっ、少し慣れてきたようじゃな！次は単語量を増やしてみようか。"
         homeStatus.totalXp >= 500 -> "経験値が貯まってきたのう。今こそリスニングで耳を鍛えて会話力を一段上げるのじゃ。"
         else -> "調子はどうじゃ？焦らず楽しむことが継続の秘訣じゃぞ！"
+    }
+}
+
+/**
+ * 累計XPに基づいて称号を取得
+ */
+private fun getTitleByXp(totalXp: Int): String {
+    // レベルベースの称号システムに変更
+    val userLevel = (totalXp / 100).coerceAtLeast(1)
+    return when (userLevel) {
+        1 -> "はじめてのビサヤ（空港・挨拶）"
+        2 -> "はじめてのビサヤ（空港・挨拶）"
+        3 -> "はじめてのビサヤ（空港・挨拶）"
+        4 -> "はじめてのビサヤ（空港・挨拶）"
+        5 -> "マクタン島に上陸（海・リゾート）"
+        6 -> "マクタン島に上陸（海・リゾート）"
+        7 -> "マクタン島に上陸（海・リゾート）"
+        8 -> "マクタン島に上陸（海・リゾート）"
+        9 -> "マクタン島に上陸（海・リゾート）"
+        10 -> "サントニーニョ参拝（歴史・祈り）"
+        11 -> "サントニーニョ参拝（歴史・祈り）"
+        12 -> "サントニーニョ参拝（歴史・祈り）"
+        13 -> "サントニーニョ参拝（歴史・祈り）"
+        14 -> "サントニーニョ参拝（歴史・祈り）"
+        15 -> "ジプニーでお出かけ（移動・冒険）"
+        16 -> "ジプニーでお出かけ（移動・冒険）"
+        17 -> "ジプニーでお出かけ（移動・冒険）"
+        18 -> "ジプニーでお出かけ（移動・冒険）"
+        19 -> "ジプニーでお出かけ（移動・冒険）"
+        20 -> "コロン通りの買い物上手（市場・交渉）"
+        21 -> "コロン通りの買い物上手（市場・交渉）"
+        22 -> "コロン通りの買い物上手（市場・交渉）"
+        23 -> "コロン通りの買い物上手（市場・交渉）"
+        24 -> "コロン通りの買い物上手（市場・交渉）"
+        25 -> "アイランドホッピング（未開の島々）"
+        26 -> "アイランドホッピング（未開の島々）"
+        27 -> "アイランドホッピング（未開の島々）"
+        28 -> "アイランドホッピング（未開の島々）"
+        29 -> "アイランドホッピング（未開の島々）"
+        30 -> "ジンベエザメと泳ぐ（セブの達人！）"
+        else -> when {
+            userLevel <= 4 -> "はじめてのビサヤ（空港・挨拶）"
+            userLevel <= 9 -> "マクタン島に上陸（海・リゾート）"
+            userLevel <= 14 -> "サントニーニョ参拝（歴史・祈り）"
+            userLevel <= 19 -> "ジプニーでお出かけ（移動・冒険）"
+            userLevel <= 24 -> "コロン通りの買い物上手（市場・交渉）"
+            userLevel <= 29 -> "アイランドホッピング（未開の島々）"
+            else -> "ジンベエザメと泳ぐ（セブの達人！）"
+        }
     }
 }
 

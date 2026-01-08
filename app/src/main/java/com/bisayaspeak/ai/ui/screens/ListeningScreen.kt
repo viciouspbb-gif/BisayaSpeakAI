@@ -1,6 +1,7 @@
 package com.bisayaspeak.ai.ui.screens
 
 import android.app.Activity
+import android.content.Context
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.speech.tts.TextToSpeech
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -48,96 +50,87 @@ import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.navigation.AppRoute
-import com.bisayaspeak.ai.ui.util.PracticeSessionManager
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
-import com.google.android.flexbox.AlignItems
-import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayout
+import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.JustifyContent
-import java.util.Locale
+import com.google.android.flexbox.AlignItems
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * 全端末共通ルール：広告ボタン黄色＝即実行
+ */
+private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, viewModel: ListeningViewModel, rewardedAdLoaded: Boolean) {
+    // 全端末共通ルール：黄色＝準備完了＝即再生
+    if (rewardedAdLoaded) {
+        Log.d("ListeningScreen", "Ad ready - executing immediate playback (universal rule)")
+        
+        if (activity != null) {
+            AdManager.showRewardAd(
+                activity = activity,
+                onRewardEarned = {
+                    // 広告視聴完了時のみヒントを復活
+                    viewModel.recoverHintsThroughAd()
+                    Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
+                    Log.d("ListeningScreen", "Reward earned, hints recovered through ad watching")
+                },
+                onAdClosed = {
+                    Log.d("ListeningScreen", "Reward ad closed")
+                }
+            )
+        } else {
+            Log.e("ListeningScreen", "Activity is null, cannot show ad")
+            Toast.makeText(context, "エラー：広告を表示できません", Toast.LENGTH_SHORT).show()
+        }
+    } else {
+        // 黄色でない場合は何もしない（表示の嘘を完全排除）
+        Log.w("ListeningScreen", "Ad not ready - button should be disabled, no action taken")
+    }
+}
+
 @Composable
 fun ListeningScreen(
-    level: Int,
-    isPremium: Boolean = false,
-    onNavigateBack: () -> Unit,
-    onShowRewardedAd: (() -> Unit) -> Unit = {},
     navController: NavHostController,
+    level: Int,
     viewModel: ListeningViewModel
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
-
-    val sessionManager = remember { PracticeSessionManager(isPremium) }
-    val session = viewModel.session.collectAsState().value
-    val currentQuestion = viewModel.currentQuestion.collectAsState().value
-    val selectedWords by viewModel.selectedWords.collectAsState()
-    val shuffledWords by viewModel.shuffledWords.collectAsState()
-    val isPlaying by viewModel.isPlaying.collectAsState()
+    val session by viewModel.session.collectAsState()
+    val currentQuestion by viewModel.currentQuestion.collectAsState()
     val showResult by viewModel.showResult.collectAsState()
     val isCorrect by viewModel.isCorrect.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
     val lessonResult by viewModel.lessonResult.collectAsState()
     val clearedLevel by viewModel.clearedLevel.collectAsState()
     val comboCount by viewModel.comboCount.collectAsState()
-
     val voiceHintRemaining by viewModel.voiceHintRemaining.collectAsState()
     val showHintRecoveryDialog by viewModel.showHintRecoveryDialog.collectAsState()
-    var hintPlaybackTrigger by remember { mutableStateOf(0) }
+    val rewardedAdLoaded by viewModel.rewardedAdLoaded.collectAsState()
 
-    // TTSの準備
-    var tts by remember { mutableStateOf<TextToSpeech?>(null) }
+    val selectedWords by viewModel.selectedWords.collectAsState()
+    val shuffledWords by viewModel.shuffledWords.collectAsState()
 
-    // フクロウ先生の声（全TTS共通）
-    val speakWord = { word: String ->
-        tts?.let {
-            it.stop()
-            it.setPitch(0.7f)
-            it.setSpeechRate(0.9f)
-            it.speak(word, TextToSpeech.QUEUE_FLUSH, null, "WordVoice_$word")
-        }
-    }
-
-    val handleBackNavigation = {
-        if (activity != null) {
-            AdManager.checkAndShowInterstitial(activity) {
-                if (session != null && !session.completed) {
-                    sessionManager.onSessionInterrupted(activity) { onNavigateBack() }
-                } else {
-                    onNavigateBack()
-                }
+    fun handleBackNavigation() {
+        if (session?.completed == true) {
+            navController.navigate(AppRoute.LevelSelection.route) {
+                popUpTo(AppRoute.Listening.route) { inclusive = true }
             }
         } else {
-            onNavigateBack()
-        }
-    }
-
-    DisposableEffect(context) {
-        var ttsInit: TextToSpeech? = null
-
-        ttsInit = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                ttsInit?.let { instance ->
-                    var result = instance.setLanguage(Locale("id"))
-                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        result = instance.setLanguage(Locale("fil"))
-                    }
-                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        instance.setLanguage(Locale.US)
-                    }
-                    instance.setPitch(0.7f)
-                    instance.setSpeechRate(0.9f)
+            // レッスンキャンセル時にも広告カウンターを更新
+            viewModel.incrementAdCounter()
+            
+            // 広告表示が必要な場合は強制表示
+            if (activity != null) {
+                AdManager.checkAndShowInterstitial(activity) {
+                    navController.popBackStack()
                 }
+            } else {
+                navController.popBackStack()
             }
         }
-        tts = ttsInit
-        onDispose { ttsInit?.stop(); ttsInit?.shutdown() }
-    }
-
-    LaunchedEffect(hintPlaybackTrigger) {
-        if (hintPlaybackTrigger == 0) return@LaunchedEffect
-        viewModel.playAudio()
     }
 
     fun requestHintPlayback() {
@@ -146,16 +139,16 @@ fun ListeningScreen(
     }
 
     LaunchedEffect(level) {
-        sessionManager.startSession()
         Log.d("ListeningScreen", "Loading questions for level $level")
         viewModel.loadQuestions(level)
     }
     
     // セッション状態を監視し、UIが確実に更新されるようにする
     LaunchedEffect(session) {
-        Log.d("ListeningScreen", "Session state changed: ${session?.let { "questions=${it.questions.size}, completed=${it.completed}" } ?: "null"}")
-        if (session != null && session.questions.isNotEmpty()) {
-            Log.d("ListeningScreen", "Session loaded successfully with ${session.questions.size} questions")
+        val currentSession = session
+        Log.d("ListeningScreen", "Session state changed: ${currentSession?.let { "questions=${it.questions.size}, completed=${it.completed}" } ?: "null"}")
+        if (currentSession != null && currentSession.questions.isNotEmpty()) {
+            Log.d("ListeningScreen", "Session loaded successfully with ${currentSession.questions.size} questions")
         }
     }
     
@@ -166,11 +159,18 @@ fun ListeningScreen(
 
     LaunchedEffect(lessonResult, clearedLevel, session?.completed) {
         val result = lessonResult
-        if (session?.completed == true && result != null) {
+        val currentSession = session
+        if (currentSession?.completed == true && result != null) {
             val levelCleared = clearedLevel
             val displayLevel = levelCleared ?: level
             val leveledUpFlag = if (result.leveledUp) 1 else 0
-            val destinationRoute = "result_screen/${result.correctCount}/${result.totalQuestions}/${result.xpEarned}/$displayLevel/$leveledUpFlag"
+            // AppRoute.LessonResult.route を使用して正しいルートを生成
+            val destinationRoute = AppRoute.LessonResult.route
+                .replace("{correctCount}", result.correctCount.toString())
+                .replace("{totalQuestions}", result.totalQuestions.toString())
+                .replace("{earnedXP}", result.xpEarned.toString())
+                .replace("{clearedLevel}", displayLevel.toString())
+                .replace("{leveledUp}", leveledUpFlag.toString())
             val navigateToResult = {
                 navController.navigate(destinationRoute) {
                     popUpTo(AppRoute.Listening.route) { inclusive = true }
@@ -256,17 +256,33 @@ fun ListeningScreen(
                             contentScale = ContentScale.Fit
                         )
                         Button(
-                            onClick = { requestHintPlayback() },
-                            enabled = !isPlaying,
+                            onClick = { 
+                                if (voiceHintRemaining > 0) {
+                                    requestHintPlayback()
+                                } else {
+                                    // 全端末共通ルール：黄色＝即実行
+                                    executeAdPlaybackIfReady(activity, context, viewModel, rewardedAdLoaded)
+                                }
+                            },
+                            enabled = !isPlaying && (voiceHintRemaining > 0 || rewardedAdLoaded),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (voiceHintRemaining > 0) Color(0xFF2D3246) else Color(0xFFFFA726)
+                                containerColor = when {
+                                    voiceHintRemaining > 0 -> Color(0xFF2D3246) // 青色（ヒントあり）
+                                    rewardedAdLoaded -> Color(0xFFFFA726) // 黄色（広告準備完了）
+                                    else -> Color(0xFF333333) // 黒色（広告準備中）
+                                },
+                                disabledContainerColor = Color(0xFF333333) // 無効時は黒色
                             ),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Icon(Icons.Default.VolumeUp, null, tint = Color.White, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                text = if (voiceHintRemaining > 0) "ヒント ($voiceHintRemaining)" else "広告で回復",
+                                text = when {
+                                    voiceHintRemaining > 0 -> "ヒント ($voiceHintRemaining)"
+                                    rewardedAdLoaded -> "広告で回復"
+                                    else -> "広告準備中..."
+                                },
                                 color = Color.White, 
                                 fontSize = 13.sp
                             )
@@ -292,7 +308,7 @@ fun ListeningScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = question.meaning.ifBlank { question.phrase },
+                            text = question?.meaning?.ifBlank { question?.phrase } ?: "",
                             color = Color.White,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
@@ -310,7 +326,7 @@ fun ListeningScreen(
                         Text("あなたの回答", color = Color.Gray, fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         AnswerSlots(
-                            slotCount = question.correctOrder.size,
+                            slotCount = question?.correctOrder?.size ?: 0,
                             selectedWords = selectedWords,
                             onRemoveWord = { index -> viewModel.removeWordAt(index) }
                         )
@@ -335,8 +351,7 @@ fun ListeningScreen(
                                     selectedWords = selectedWords,
                                     showResult = showResult,
                                     onSelectWord = { word ->
-                                        speakWord(word)
-                                        viewModel.selectWord(word)
+                                        viewModel.selectWord(word) // 音声フィードバックはViewModel側で実行
                                     }
                                 )
                             }
@@ -365,20 +380,34 @@ fun ListeningScreen(
             confirmButton = {
                 TextButton(onClick = {
                     if (activity != null) {
-                        AdManager.showRewardAd(
-                            activity = activity,
-                            onRewardEarned = {
-                                GameDataManager.recoverHints(context)
-                                viewModel.onHintRecoveryEarned()
-                                Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
-                                
-                                // 広告視聴後はヒントを回復するだけで、自動再生はしない
-                            },
-                            onAdClosed = {}
-                        )
+                        if (rewardedAdLoaded) {
+                            // 広告がプリロード済みの場合、即時表示
+                            AdManager.showRewardAd(
+                                activity = activity,
+                                onRewardEarned = {
+                                    // 広告視聴完了時のみヒントを復活
+                                    viewModel.recoverHintsThroughAd()
+                                    Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
+                                    
+                                    // 広告視聴後はヒントを回復するだけで、自動再生はしない
+                                },
+                                onAdClosed = {}
+                            )
+                        } else {
+                            // 広告が準備できていない場合、ロードしてから表示
+                            AdManager.showRewardAd(
+                                activity = activity,
+                                onRewardEarned = {
+                                    // 広告視聴完了時のみヒントを復活
+                                    viewModel.recoverHintsThroughAd()
+                                    Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
+                                },
+                                onAdClosed = {}
+                            )
+                        }
                     }
                 }) {
-                    Text("動画を見て回復")
+                    Text(if (rewardedAdLoaded) "動画を見てヒントを回復" else "広告を読み込み中...")
                 }
             },
             dismissButton = {
@@ -392,7 +421,6 @@ fun ListeningScreen(
     }
 }
 
-// 以下、変更なしの部品
 @Composable
 private fun ResultCard(isCorrect: Boolean) {
     Card(
