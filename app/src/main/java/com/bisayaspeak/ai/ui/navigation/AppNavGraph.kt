@@ -168,7 +168,6 @@ fun AppNavGraph(
 
                             FeatureId.PRONUNCIATION -> if (!isLiteBuild) navController.navigate(AppRoute.PracticeCategories.route)
                             FeatureId.LISTENING -> navController.navigate(AppRoute.LevelSelection.route)
-                            FeatureId.QUIZ -> navController.navigate(AppRoute.LevelSelection.route)
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
@@ -320,19 +319,21 @@ fun AppNavGraph(
 
         composable(
             route = AppRoute.LessonResult.route,
-            arguments = listOf(
-                navArgument("correctCount") { type = NavType.IntType },
-                navArgument("totalQuestions") { type = NavType.IntType },
-                navArgument("earnedXP") { type = NavType.IntType },
-                navArgument("clearedLevel") { type = NavType.IntType },
-                navArgument("leveledUp") { type = NavType.IntType }
-            )
+            arguments = listOf(navArgument("correctCount") { type = NavType.IntType },
+                           navArgument("totalQuestions") { type = NavType.IntType },
+                           navArgument("earnedXP") { type = NavType.IntType },
+                           navArgument("clearedLevel") { type = NavType.IntType },
+                           navArgument("leveledUp") { type = NavType.BoolType })
         ) { backStackEntry ->
             val correctCount = backStackEntry.arguments?.getInt("correctCount") ?: 0
             val totalQuestions = backStackEntry.arguments?.getInt("totalQuestions") ?: 0
             val earnedXP = backStackEntry.arguments?.getInt("earnedXP") ?: 0
             val clearedLevel = backStackEntry.arguments?.getInt("clearedLevel") ?: 1
-            val leveledUp = backStackEntry.arguments?.getInt("leveledUp") == 1
+            val leveledUp = backStackEntry.arguments?.getBoolean("leveledUp") ?: false
+            
+            // ViewModelを取得
+            val listeningViewModel: ListeningViewModel = viewModel()
+            
             LessonResultScreen(
                 correctCount = correctCount,
                 totalQuestions = totalQuestions,
@@ -346,8 +347,28 @@ fun AppNavGraph(
                 },
                 onPracticeAgain = {
                     navController.popBackStack()
-                }
+                },
+                viewModel = listeningViewModel
             )
+        }
+
+        composable(
+            route = AppRoute.MissionTalk.route,
+            arguments = listOf(navArgument("missionId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val missionId = backStackEntry.arguments?.getString("missionId")
+            if (!isPremiumPlan) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(AppRoute.Upgrade.route)
+                }
+            } else if (missionId != null) {
+                MissionTalkScreen(
+                    scenarioId = missionId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            } else {
+                navController.popBackStack()
+            }
         }
 
         if (!isLiteBuild) {
@@ -356,7 +377,6 @@ fun AppNavGraph(
                     TranslateScreen(
                         isPremium = isPremiumPlan,
                         onOpenPremiumInfo = { /* Premium not implemented */ },
-
                         onOpenConversationMode = { /* Conversation mode not implemented */ }
                     )
                 }
@@ -411,7 +431,6 @@ fun AppNavGraph(
                 BannerScreenContainer(userPlan = userPlan) {
                     PracticeWordListScreen(
                         category = category,
-
                         onNavigateBack = { navController.popBackStack() },
                         onWordClick = { wordId ->
                             navController.navigate("practice/word/$wordId")
@@ -442,25 +461,9 @@ fun AppNavGraph(
         ) { backStackEntry ->
             val level = backStackEntry.arguments?.getInt("level") ?: 1
             val viewModel: ListeningViewModel = viewModel(factory = listeningViewModelFactory)
-            ListeningScreen(
+            com.bisayaspeak.ai.ui.screens.ListeningScreen(
                 navController = navController,
                 level = level,
-                isPremium = isPremiumPlan,
-                onNavigateBack = { navController.popBackStack() },
-                onShowRewardedAd = { onComplete: () -> Unit ->
-                    val act = activity
-                    val ctx = context
-                    if (act != null) {
-                        AdManager.showRewardAd(
-                            activity = act,
-                            onRewardEarned = onComplete,
-                            onAdClosed = { AdManager.loadReward(act) }
-                        )
-                    } else {
-                        onComplete()
-                        AdManager.loadReward(ctx)
-                    }
-                },
                 viewModel = viewModel
             )
         }

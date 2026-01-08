@@ -24,6 +24,9 @@ object AdManager {
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd? = null
     private var playCounter = 0
+    
+    // ViewModel連携用コールバック
+    private var adLoadCallback: ((Boolean) -> Unit)? = null
 
     fun initialize(context: Context) {
         MobileAds.initialize(context) {}
@@ -52,13 +55,31 @@ object AdManager {
                     rewardedAd = ad
                     // 準備完了トースト（デバッグ用：うざければ消してOK）
                     Toast.makeText(context, "動画広告の準備完了！", Toast.LENGTH_SHORT).show()
+                    
+                    // ViewModelに通知
+                    adLoadCallback?.invoke(true)
+                    Log.d("AdManager", "Rewarded ad loaded successfully")
                 }
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     rewardedAd = null
                     // ★ここ！失敗したらエラー内容を表示する
                     Toast.makeText(context, "動画読込エラー: ${adError.message}", Toast.LENGTH_LONG).show()
+                    
+                    // ViewModelに通知
+                    adLoadCallback?.invoke(false)
+                    Log.e("AdManager", "Rewarded ad load failed: ${adError.message}")
                 }
             })
+    }
+    
+    // 広告状態確認メソッド
+    fun isRewardedAdReady(): Boolean {
+        return rewardedAd != null
+    }
+    
+    // ViewModel連携用コールバック設定
+    fun setAdLoadCallback(callback: (Boolean) -> Unit) {
+        adLoadCallback = callback
     }
 
     fun checkAndShowInterstitial(activity: Activity, onAdClosed: () -> Unit) {
