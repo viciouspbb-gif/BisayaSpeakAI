@@ -179,13 +179,16 @@ fun ListeningScreen(
                 LessonStatusManager.setLessonCleared(context, level)
             }
             if (activity != null) {
+                Log.e("ListeningScreen", "★★★ SHOWING INTERSTITIAL WITH 3 SECOND TIMEOUT ★★★")
                 AdManager.showInterstitialWithTimeout(
                     activity = activity,
-                    timeoutMs = 2_000L
+                    timeoutMs = 3_000L
                 ) {
+                    Log.e("ListeningScreen", "★★★ TIMEOUT OR AD CLOSED, FORCING NAVIGATION ★★★")
                     navigateToResult()
                 }
             } else {
+                Log.e("ListeningScreen", "★★★ NO ACTIVITY, FORCING NAVIGATION ★★★")
                 navigateToResult()
             }
         }
