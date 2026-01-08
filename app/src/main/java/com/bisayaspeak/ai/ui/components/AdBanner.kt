@@ -1,13 +1,16 @@
 package com.bisayaspeak.ai.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bisayaspeak.ai.ui.ads.AdsPolicy
 import com.google.android.gms.ads.AdRequest
@@ -25,8 +28,10 @@ fun AdBanner(
     isPremium: Boolean,
     modifier: Modifier = Modifier
 ) {
+    Log.e("AdBanner", "★★★ AdBanner CALLED ★★★")
     // Premium会員または広告無効時は非表示
     if (isPremium || !AdsPolicy.areAdsEnabled) {
+        Log.e("AdBanner", "Premium or ads disabled, hiding banner")
         return
     }
     
@@ -39,18 +44,37 @@ fun AdBanner(
             .padding(vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
-        AndroidView(
-            factory = { ctx ->
-                AdView(ctx).apply {
-                    setAdSize(AdSize.BANNER)
-                    adUnitId = AdUnitIds.BANNER_MAIN
-                    loadAd(AdRequest.Builder().build())
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        )
+        // 初期化チェックを追加
+        if (!AdManager.isInitialized()) {
+            Log.e("AdBanner", "AdManager not initialized, showing dummy view")
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .background(Color.DarkGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Ad Loading...",
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
+        } else {
+            Log.e("AdBanner", "AdManager initialized, showing real banner")
+            AndroidView(
+                factory = { ctx ->
+                    AdView(ctx).apply {
+                        setAdSize(AdSize.BANNER)
+                        adUnitId = AdUnitIds.BANNER_MAIN
+                        loadAd(AdRequest.Builder().build())
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            )
+        }
     }
 }
 
