@@ -162,7 +162,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     
     // AdMob
-    implementation("com.google.android.gms:play-services-ads:23.0.0")
+    implementation("com.google.android.gms:play-services-ads:23.6.0")
     
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))

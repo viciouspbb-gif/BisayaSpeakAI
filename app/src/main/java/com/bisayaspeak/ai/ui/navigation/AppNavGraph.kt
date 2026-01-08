@@ -72,7 +72,8 @@ enum class AppRoute(val route: String) {
     PracticeCategory("practice/category/{category}"),
     PracticeWord("practice/word/{id}"),
     Listening("listening/{level}"),
-        RolePlay("roleplay"),
+    RolePlayList("roleplay_list"),
+    RolePlayChat("roleplay_chat/{scenarioId}"),
     RolePlayScenario("role_play_scenario/{scenarioId}"),
     Account("account"),
     SignIn("signin"),
@@ -170,7 +171,8 @@ fun AppNavGraph(
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
-                            FeatureId.ROLE_PLAY -> navController.navigate("roleplay_list")
+                            FeatureId.ROLE_PLAY -> navController.navigate(AppRoute.RolePlayList.route)
+
                             else -> { /* Legacy/unused features */ }
                         }
                     },
@@ -467,9 +469,22 @@ fun AppNavGraph(
             )
         }
 
+        composable(AppRoute.RolePlayList.route) {
+            BannerScreenContainer(userPlan = userPlan) {
+                RoleplayListScreen(
+                    userCurrentLevel = homeStatus.currentLevel,
+                    onScenarioClick = { scenario ->
+                        navController.navigate(
+                            AppRoute.RolePlayChat.route.replace("{scenarioId}", scenario.id)
+                        )
+                    }
+                )
+            }
+        }
+
         // チャット画面（無条件で追加）
         composable(
-            route = "roleplay_chat/{scenarioId}",
+            route = AppRoute.RolePlayChat.route,
             arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
         ) { backStackEntry ->
             val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: ""
