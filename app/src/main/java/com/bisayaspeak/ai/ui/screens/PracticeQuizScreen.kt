@@ -38,7 +38,7 @@ import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.model.PronunciationStatus
 import com.bisayaspeak.ai.data.repository.PronunciationRepository
 import com.bisayaspeak.ai.data.repository.PronunciationFeedbackRepository
-import com.bisayaspeak.ai.ui.ads.AdMobManager
+import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.components.SmartAdBanner
 import com.bisayaspeak.ai.util.AudioRecorder
 import com.bisayaspeak.ai.util.PronunciationThreshold

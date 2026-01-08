@@ -2,7 +2,7 @@ package com.bisayaspeak.ai.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,6 +14,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
+import com.bisayaspeak.ai.ads.AdManager
 
 /**
  * 広告バナー（画面下部固定用）
@@ -83,6 +84,12 @@ fun SmartAdBanner(
                     adUnitId = AdUnitIds.BANNER_MAIN
                     loadAd(AdRequest.Builder().build())
                 }
+            },
+            onRelease = { adView ->
+                adView.destroy()
+            },
+            update = { adView ->
+                adView.loadAd(AdRequest.Builder().build())
             },
             modifier = Modifier
                 .fillMaxWidth()

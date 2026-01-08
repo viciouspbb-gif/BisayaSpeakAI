@@ -34,7 +34,7 @@ import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.model.PronunciationStatus
 import com.bisayaspeak.ai.data.repository.PronunciationRepository
 import com.bisayaspeak.ai.data.repository.PronunciationFeedbackRepository
-import com.bisayaspeak.ai.ui.ads.AdMobManager
+import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.components.SmartAdBanner
 import com.bisayaspeak.ai.util.AudioRecorder
 import com.bisayaspeak.ai.util.PronunciationThreshold
@@ -377,9 +377,9 @@ fun PracticeWordDetailScreen(
                                         // 無音Try Againが3回連続 → インタースティシャル広告
                                         if (!isPremium && silentTryAgainCount >= 3) {
                                             val activity = context as? Activity
-                                            activity?.let {
-                                                AdMobManager.showInterstitial(it) {
-                                                    AdMobManager.loadInterstitial(context)
+                                            activity?.let { safeActivity ->
+                                                AdManager.showInterstitialWithTimeout(safeActivity, timeoutMs = 3_000L) {
+                                                    AdManager.loadInterstitial(context)
                                                 }
                                             }
                                             silentTryAgainCount = 0
@@ -439,9 +439,9 @@ fun PracticeWordDetailScreen(
                                                             if (tryAgainCount >= 3) {
                                                                 // 3回連続Try Again → インタースティシャル広告
                                                                 val activity = context as? Activity
-                                                                activity?.let {
-                                                                    AdMobManager.showInterstitial(it) {
-                                                                        AdMobManager.loadInterstitial(context)
+                                                                activity?.let { safeActivity ->
+                                                                    AdManager.showInterstitialNow(safeActivity) {
+                                                                        AdManager.loadInterstitial(context)
                                                                     }
                                                                 }
                                                                 tryAgainCount = 0
@@ -453,9 +453,9 @@ fun PracticeWordDetailScreen(
                                                             if (perfectCount >= 2) {
                                                                 // 2回Perfect成功 → インタースティシャル広告
                                                                 val activity = context as? Activity
-                                                                activity?.let {
-                                                                    AdMobManager.showInterstitial(it) {
-                                                                        AdMobManager.loadInterstitial(context)
+                                                                activity?.let { safeActivity ->
+                                                                    AdManager.showInterstitialNow(safeActivity) {
+                                                                        AdManager.loadInterstitial(context)
                                                                     }
                                                                 }
                                                                 perfectCount = 0

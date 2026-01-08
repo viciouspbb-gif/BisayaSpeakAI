@@ -36,7 +36,6 @@ import com.bisayaspeak.ai.ui.account.AccountUiState
 import com.bisayaspeak.ai.ui.account.LoginType
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
-import com.bisayaspeak.ai.ui.ads.AdMobManager
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.home.FeatureId
 import com.bisayaspeak.ai.ui.home.HomeScreen

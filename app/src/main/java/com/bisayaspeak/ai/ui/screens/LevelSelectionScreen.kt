@@ -1,7 +1,6 @@
 package com.bisayaspeak.ai.ui.screens
 
 import android.app.Activity
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -109,7 +108,7 @@ fun LevelSelectionScreen(
                                         showAdDialogForLevel = level
                                     }
                                     LessonStatusManager.Status.LOCKED -> {
-                                        Toast.makeText(context, "前のレベルをクリアしてね！", Toast.LENGTH_SHORT).show()
+                                        android.util.Log.d("LevelSelection", "Level locked - need to clear previous level")
                                     }
                                 }
                             }
@@ -135,7 +134,7 @@ fun LevelSelectionScreen(
                             onRewardEarned = {
                                 LessonStatusManager.setLessonUnlockedByAd(context, level)
                                 refreshTrigger++
-                                Toast.makeText(context, "解放しました！", Toast.LENGTH_SHORT).show()
+                                android.util.Log.d("LevelSelection", "Level unlocked by ad")
                             },
                             onAdClosed = {}
                         )

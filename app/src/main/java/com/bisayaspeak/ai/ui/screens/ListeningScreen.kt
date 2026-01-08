@@ -8,7 +8,6 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -73,7 +72,6 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
                 onRewardEarned = {
                     // 広告視聴完了時のみヒントを復活
                     viewModel.recoverHintsThroughAd()
-                    Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
                     Log.d("ListeningScreen", "Reward earned, hints recovered through ad watching")
                 },
                 onAdClosed = {
@@ -82,7 +80,6 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
             )
         } else {
             Log.e("ListeningScreen", "Activity is null, cannot show ad")
-            Toast.makeText(context, "エラー：広告を表示できません", Toast.LENGTH_SHORT).show()
         }
     } else {
         // 黄色でない場合は何もしない（表示の嘘を完全排除）
@@ -109,6 +106,7 @@ fun ListeningScreen(
     val voiceHintRemaining by viewModel.voiceHintRemaining.collectAsState()
     val showHintRecoveryDialog by viewModel.showHintRecoveryDialog.collectAsState()
     val rewardedAdLoaded by viewModel.rewardedAdLoaded.collectAsState()
+    val rewardedAdState by viewModel.rewardedAdState.collectAsState()
 
     val selectedWords by viewModel.selectedWords.collectAsState()
     val shuffledWords by viewModel.shuffledWords.collectAsState()
@@ -181,7 +179,10 @@ fun ListeningScreen(
                 LessonStatusManager.setLessonCleared(context, level)
             }
             if (activity != null) {
-                AdManager.checkAndShowInterstitial(activity) {
+                AdManager.showInterstitialWithTimeout(
+                    activity = activity,
+                    timeoutMs = 3_000L
+                ) {
                     navigateToResult()
                 }
             } else {
@@ -255,23 +256,29 @@ fun ListeningScreen(
                             modifier = Modifier.size(56.dp),
                             contentScale = ContentScale.Fit
                         )
+                        val hintButtonEnabled = !isPlaying && (
+                            voiceHintRemaining > 0 ||
+                                rewardedAdState == ListeningViewModel.RewardAdState.READY ||
+                                rewardedAdState == ListeningViewModel.RewardAdState.FAILED
+                            )
                         Button(
-                            onClick = { 
-                                if (voiceHintRemaining > 0) {
-                                    requestHintPlayback()
-                                } else {
-                                    // 全端末共通ルール：黄色＝即実行
-                                    executeAdPlaybackIfReady(activity, context, viewModel, rewardedAdLoaded)
+                            onClick = {
+                                when {
+                                    voiceHintRemaining > 0 -> requestHintPlayback()
+                                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> executeAdPlaybackIfReady(activity, context, viewModel, true)
+                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> viewModel.retryRewardedAdLoad()
+                                    else -> Log.d("ListeningScreen", "Hint button pressed but ad still loading")
                                 }
                             },
-                            enabled = !isPlaying && (voiceHintRemaining > 0 || rewardedAdLoaded),
+                            enabled = hintButtonEnabled,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = when {
-                                    voiceHintRemaining > 0 -> Color(0xFF2D3246) // 青色（ヒントあり）
-                                    rewardedAdLoaded -> Color(0xFFFFA726) // 黄色（広告準備完了）
-                                    else -> Color(0xFF333333) // 黒色（広告準備中）
+                                    voiceHintRemaining > 0 -> Color(0xFF2D3246)
+                                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> Color(0xFFFFA726)
+                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> Color(0xFF4E342E)
+                                    else -> Color(0xFF333333)
                                 },
-                                disabledContainerColor = Color(0xFF333333) // 無効時は黒色
+                                disabledContainerColor = Color(0xFF333333)
                             ),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
@@ -280,10 +287,11 @@ fun ListeningScreen(
                             Text(
                                 text = when {
                                     voiceHintRemaining > 0 -> "ヒント ($voiceHintRemaining)"
-                                    rewardedAdLoaded -> "広告で回復"
+                                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> "広告で回復"
+                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> "再試行する"
                                     else -> "広告準備中..."
                                 },
-                                color = Color.White, 
+                                color = Color.White,
                                 fontSize = 13.sp
                             )
                         }
@@ -387,7 +395,7 @@ fun ListeningScreen(
                                 onRewardEarned = {
                                     // 広告視聴完了時のみヒントを復活
                                     viewModel.recoverHintsThroughAd()
-                                    Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
+                                    Log.d("ListeningScreen", "Hint recovery ad watched (preloaded)")
                                     
                                     // 広告視聴後はヒントを回復するだけで、自動再生はしない
                                 },
@@ -400,7 +408,7 @@ fun ListeningScreen(
                                 onRewardEarned = {
                                     // 広告視聴完了時のみヒントを復活
                                     viewModel.recoverHintsThroughAd()
-                                    Toast.makeText(context, "ヒントが全回復しました！", Toast.LENGTH_SHORT).show()
+                                    Log.d("ListeningScreen", "Hint recovery ad watched (on-demand)")
                                 },
                                 onAdClosed = {}
                             )

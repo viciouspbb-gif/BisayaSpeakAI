@@ -1,7 +1,6 @@
 package com.bisayaspeak.ai
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.AlertDialog
@@ -15,10 +14,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.billing.BillingManager
 import com.bisayaspeak.ai.data.PurchaseStore
 import com.bisayaspeak.ai.data.model.UserPlan
-import com.bisayaspeak.ai.ui.ads.AdMobManager
 import com.bisayaspeak.ai.ui.navigation.AppNavGraph
 import com.bisayaspeak.ai.ui.theme.BisayaSpeakAITheme
 import com.bisayaspeak.ai.update.UpdateCheckResult
@@ -35,8 +34,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // AdMob初期化（テストデバイスID設定含む）
-        AdMobManager.initialize(this)
+        AdManager.initialize(this)
         
         // Billing初期化と購入リストア
         billingManager = BillingManager(this)
@@ -127,11 +125,7 @@ class MainActivity : ComponentActivity() {
         
         updateManager.onDownloadCompleted = {
             runOnUiThread {
-                Toast.makeText(
-                    this,
-                    "Update downloaded. Restart to install.",
-                    Toast.LENGTH_LONG
-                ).show()
+                android.util.Log.d("MainActivity", "Update downloaded. Restart to install.")
                 // ユーザーに再起動を促す
                 updateManager.completeUpdate()
             }
@@ -139,11 +133,7 @@ class MainActivity : ComponentActivity() {
         
         updateManager.onUpdateFailed = { error ->
             runOnUiThread {
-                Toast.makeText(
-                    this,
-                    "Update failed: $error",
-                    Toast.LENGTH_LONG
-                ).show()
+                android.util.Log.d("MainActivity", "Update failed: $error")
             }
         }
     }
