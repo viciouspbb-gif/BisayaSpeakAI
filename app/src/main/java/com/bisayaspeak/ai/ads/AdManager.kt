@@ -218,7 +218,7 @@ object AdManager {
 
     fun showInterstitialWithTimeout(
         activity: Activity,
-        timeoutMs: Long = 3_000L,
+        timeoutMs: Long = 2_000L,
         onAdClosed: () -> Unit
     ) {
         if (!AdsPolicy.areAdsEnabled) {

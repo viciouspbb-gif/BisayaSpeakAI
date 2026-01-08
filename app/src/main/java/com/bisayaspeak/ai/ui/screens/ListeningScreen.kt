@@ -181,7 +181,7 @@ fun ListeningScreen(
             if (activity != null) {
                 AdManager.showInterstitialWithTimeout(
                     activity = activity,
-                    timeoutMs = 3_000L
+                    timeoutMs = 2_000L
                 ) {
                     navigateToResult()
                 }
