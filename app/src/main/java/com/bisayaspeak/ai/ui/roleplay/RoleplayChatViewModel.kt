@@ -7,6 +7,7 @@ import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
 import com.bisayaspeak.ai.utils.MistakeManager
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.LessonStatusManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,7 +46,8 @@ data class RoleplayUiState(
     val showCompletionDialog: Boolean = false,
     val completionScore: Int = 0,
     val pendingUnlockLevel: Int? = null,
-    val pendingResult: RoleplayResultPayload? = null
+    val pendingResult: RoleplayResultPayload? = null,
+    val lockedOption: RoleplayOption? = null
 )
 
 class RoleplayChatViewModel(
@@ -56,6 +58,7 @@ class RoleplayChatViewModel(
         private const val START_TOKEN = "[START_CONVERSATION]"
         private const val COMPLETION_SCORE = 90
         private const val COMPLETION_THRESHOLD = 80
+        private const val ANSWER_TRANSITION_DELAY_MS = 800L
     }
 
     private val _uiState = MutableStateFlow(RoleplayUiState())
@@ -110,21 +113,25 @@ class RoleplayChatViewModel(
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
                 completedTurns = it.completedTurns + 1,
-                successfulTurns = it.successfulTurns + if (usedHint) 0 else 1
+                successfulTurns = it.successfulTurns + if (usedHint) 0 else 1,
+                lockedOption = option
             )
         }
 
-        scriptedRuntime?.let {
-            if (it.turnPointer >= it.scenario.turns.size) {
-                finalizeScriptedScenario()
-            } else {
-                deliverScriptedTurn()
+        viewModelScope.launch {
+            delay(ANSWER_TRANSITION_DELAY_MS)
+            scriptedRuntime?.let {
+                if (it.turnPointer >= it.scenario.turns.size) {
+                    finalizeScriptedScenario()
+                } else {
+                    deliverScriptedTurn()
+                }
+                return@launch
             }
-            return
-        }
 
-        val scenario = _uiState.value.currentScenario ?: return
-        requestAiTurn(scenario, option.text)
+            val scenario = _uiState.value.currentScenario ?: return@launch
+            requestAiTurn(scenario, option.text)
+        }
     }
 
     fun markHintPeeked(optionId: String) {
@@ -185,7 +192,8 @@ class RoleplayChatViewModel(
                 messages = it.messages + aiMsg,
                 isLoading = false,
                 options = options,
-                peekedHintOptionIds = emptySet()
+                peekedHintOptionIds = emptySet(),
+                lockedOption = null
             )
         }
         runtime.turnPointer++
@@ -289,7 +297,8 @@ class RoleplayChatViewModel(
                 showCompletionDialog = false,
                 completionScore = score,
                 pendingUnlockLevel = if (score >= COMPLETION_THRESHOLD) scenarioLevel + 1 else null,
-                pendingResult = payload
+                pendingResult = payload,
+                lockedOption = null
             )
         }
     }

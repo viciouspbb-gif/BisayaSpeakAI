@@ -195,7 +195,8 @@ fun RoleplayChatScreen(
                     .fillMaxWidth()
                     .height(96.dp)
                     .onGloballyPositioned { dropZoneBounds.value = it.windowRect() },
-                isHighlighted = activeDragOptionId != null
+                isHighlighted = activeDragOptionId != null,
+                lockedOption = uiState.lockedOption
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -416,7 +417,8 @@ private fun ResponsePanel(
 @Composable
 private fun DropConfirmationTray(
     modifier: Modifier = Modifier,
-    isHighlighted: Boolean
+    isHighlighted: Boolean,
+    lockedOption: RoleplayOption?
 ) {
     val borderColor = if (isHighlighted) Color(0xFF66F6D5) else Color(0xFF1F2A44)
     val backgroundColor = if (isHighlighted) Color(0xFF0F263D) else Color(0xFF091427)
@@ -428,11 +430,32 @@ private fun DropConfirmationTray(
             .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(28.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "回答ボックス",
-            color = Color.White,
-            fontWeight = FontWeight.Bold
-        )
+        if (lockedOption == null) {
+            Text(
+                text = "回答ボックス",
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "あなたの回答",
+                    color = Color(0xFF8FD3FF),
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = lockedOption.text,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
     }
 }
 
