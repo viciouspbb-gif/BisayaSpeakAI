@@ -107,7 +107,6 @@ fun ListeningScreen(
     val showHintRecoveryDialog by viewModel.showHintRecoveryDialog.collectAsState()
     val rewardedAdLoaded by viewModel.rewardedAdLoaded.collectAsState()
     val rewardedAdState by viewModel.rewardedAdState.collectAsState()
-
     val selectedWords by viewModel.selectedWords.collectAsState()
     val shuffledWords by viewModel.shuffledWords.collectAsState()
 
@@ -179,10 +178,10 @@ fun ListeningScreen(
                 LessonStatusManager.setLessonCleared(context, level)
             }
             if (activity != null) {
-                Log.e("ListeningScreen", "★★★ SHOWING INTERSTITIAL WITH 3 SECOND TIMEOUT ★★★")
+                Log.e("ListeningScreen", "★★★ SHOWING INTERSTITIAL WITH 2 SECOND TIMEOUT ★★★")
                 AdManager.showInterstitialWithTimeout(
                     activity = activity,
-                    timeoutMs = 3_000L
+                    timeoutMs = 2_000L
                 ) {
                     Log.e("ListeningScreen", "★★★ TIMEOUT OR AD CLOSED, FORCING NAVIGATION ★★★")
                     navigateToResult()
