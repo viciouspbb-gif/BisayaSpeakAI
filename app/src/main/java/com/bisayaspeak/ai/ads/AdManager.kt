@@ -53,26 +53,23 @@ object AdManager {
     fun initialize(context: Context) {
         Log.e("AdManager", "★★★ initialize CALLED ★★★")
         if (!AdsPolicy.areAdsEnabled) {
-            Log.e("AdManager", "Ads disabled, skipping initialization")
+            Log.e("AdManager", "Ads disabled, skipping reward load")
             return
         }
-        if (initializationJob?.isActive == true) {
-            Log.e("AdManager", "Initialization already in progress")
-            return
+        scope.launch {
+            loadRewardInternal(context.applicationContext)
         }
-
-        val appContext = context.applicationContext
         initializationJob = scope.launch {
             try {
                 Log.e("AdManager", "Starting initialization with delay ${INIT_DELAY_MS}ms")
                 delay(INIT_DELAY_MS)
                 withContext(Dispatchers.Main) {
                     Log.e("AdManager", "Calling MobileAds.initialize...")
-                    MobileAds.initialize(appContext) {
+                    MobileAds.initialize(context.applicationContext) {
                         Log.e("AdManager", "MobileAds.initialize completed: adapters=${it.adapterStatusMap.keys}")
                         isInitialized = true
-                        scope.launch { loadInterstitialInternal(appContext) }
-                        scope.launch { loadRewardInternal(appContext) }
+                        scope.launch { loadInterstitialInternal(context.applicationContext) }
+                        scope.launch { loadRewardInternal(context.applicationContext) }
                     }
                 }
             } catch (e: Exception) {
@@ -87,10 +84,6 @@ object AdManager {
             Log.e("AdManager", "Ads disabled, skipping interstitial load")
             return
         }
-        if (!isInitialized) {
-            Log.e("AdManager", "Not initialized yet, skipping interstitial load")
-            return
-        }
         scope.launch {
             loadInterstitialInternal(context.applicationContext)
         }
@@ -100,10 +93,6 @@ object AdManager {
         Log.e("AdManager", "★★★ loadReward CALLED ★★★")
         if (!AdsPolicy.areAdsEnabled) {
             Log.e("AdManager", "Ads disabled, skipping reward load")
-            return
-        }
-        if (!isInitialized) {
-            Log.e("AdManager", "Not initialized yet, skipping reward load")
             return
         }
         scope.launch {
