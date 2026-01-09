@@ -52,8 +52,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bisayaspeak.ai.R
-import com.bisayaspeak.ai.ads.AdMobBanner
-import com.bisayaspeak.ai.ads.AdManager
+import com.bisayaspeak.ai.ui.ads.AdMobBanner
+import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -141,7 +141,7 @@ fun LessonResultScreen(
                         .padding(top = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    AdMobBanner()
+                    AdMobBanner(adUnitId = AdUnitIds.BANNER_MAIN)
                 }
 
                 Spacer(modifier = Modifier.navigationBarsPadding())

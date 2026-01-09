@@ -52,7 +52,8 @@ fun RoleplayListScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 32.dp)
         ) {
             items(roleplayScenarios) { scenario ->
                 RoleplayCard(
@@ -70,6 +71,7 @@ fun RoleplayCard(scenario: RoleplayScenario, isLocked: Boolean, onClick: () -> U
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 4.dp)
             .clickable(enabled = !isLocked) { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (isLocked) Color(0xFF2C2C2C) else Color(0xFF3E4158)
@@ -78,9 +80,10 @@ fun RoleplayCard(scenario: RoleplayScenario, isLocked: Boolean, onClick: () -> U
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -104,11 +107,11 @@ fun RoleplayCard(scenario: RoleplayScenario, isLocked: Boolean, onClick: () -> U
                     )
                 }
             }
-            Spacer(modifier = Modifier.width(16.dp))
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .alpha(if (isLocked) 0.5f else 1f)
+                    .alpha(if (isLocked) 0.5f else 1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
                     text = "Lv ${scenario.requiredLevel}: ${scenario.title}",

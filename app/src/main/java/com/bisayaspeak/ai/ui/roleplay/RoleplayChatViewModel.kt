@@ -23,6 +23,14 @@ data class RoleplayOption(
     val tone: String? = null
 )
 
+data class RoleplayResultPayload(
+    val correctCount: Int,
+    val totalQuestions: Int,
+    val earnedXp: Int,
+    val clearedLevel: Int,
+    val leveledUp: Boolean
+)
+
 data class RoleplayUiState(
     val currentScenario: RoleplayScenarioDefinition? = null,
     val missionGoal: String = "",
@@ -36,7 +44,8 @@ data class RoleplayUiState(
     val successfulTurns: Int = 0,
     val showCompletionDialog: Boolean = false,
     val completionScore: Int = 0,
-    val pendingUnlockLevel: Int? = null
+    val pendingUnlockLevel: Int? = null,
+    val pendingResult: RoleplayResultPayload? = null
 )
 
 class RoleplayChatViewModel(
@@ -130,6 +139,10 @@ class RoleplayChatViewModel(
         _uiState.update { it.copy(showCompletionDialog = false) }
     }
 
+    fun consumePendingResult() {
+        _uiState.update { it.copy(pendingResult = null) }
+    }
+
     fun markUnlockHandled() {
         _uiState.update { it.copy(pendingUnlockLevel = null) }
     }
@@ -178,22 +191,13 @@ class RoleplayChatViewModel(
         runtime.turnPointer++
     }
 
+    fun forceCompleteScenario() {
+        queueCompletion(calculateScore())
+    }
+
     private fun finalizeScriptedScenario() {
         scriptedRuntime = null
-        val score = if (_uiState.value.completedTurns > 0) {
-            ((_uiState.value.successfulTurns.toFloat() / _uiState.value.completedTurns.toFloat()) * 100).toInt()
-        } else {
-            COMPLETION_SCORE
-        }
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                options = emptyList(),
-                showCompletionDialog = true,
-                completionScore = score,
-                pendingUnlockLevel = if (score >= COMPLETION_THRESHOLD) 2 else null
-            )
-        }
+        queueCompletion(calculateScore())
     }
 
     private fun requestAiTurn(
@@ -251,6 +255,51 @@ class RoleplayChatViewModel(
                 options = options,
                 peekedHintOptionIds = emptySet()
             )
+        }
+
+        if (options.isEmpty()) {
+            queueCompletion(calculateScore())
+        }
+    }
+
+    private fun buildResultPayload(score: Int): RoleplayResultPayload {
+        val totalTurns = _uiState.value.completedTurns.coerceAtLeast(1)
+        val successful = _uiState.value.successfulTurns.coerceAtMost(totalTurns)
+        val xp = (successful * 20).coerceAtLeast(10)
+        val clearedLevel = _uiState.value.currentScenario?.level ?: 1
+        val leveledUp = score >= COMPLETION_THRESHOLD
+        return RoleplayResultPayload(
+            correctCount = successful,
+            totalQuestions = totalTurns,
+            earnedXp = xp,
+            clearedLevel = clearedLevel,
+            leveledUp = leveledUp
+        )
+    }
+
+    private fun queueCompletion(score: Int) {
+        if (_uiState.value.pendingResult != null) return
+        val scenarioLevel = _uiState.value.currentScenario?.level ?: 1
+        val payload = buildResultPayload(score)
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                options = emptyList(),
+                peekedHintOptionIds = emptySet(),
+                showCompletionDialog = false,
+                completionScore = score,
+                pendingUnlockLevel = if (score >= COMPLETION_THRESHOLD) scenarioLevel + 1 else null,
+                pendingResult = payload
+            )
+        }
+    }
+
+    private fun calculateScore(): Int {
+        val turns = _uiState.value.completedTurns
+        return if (turns > 0) {
+            ((_uiState.value.successfulTurns.toFloat() / turns.toFloat()) * 100).toInt().coerceIn(0, 100)
+        } else {
+            COMPLETION_SCORE
         }
     }
 

@@ -212,7 +212,12 @@ class ListeningViewModel(
 
     fun playAudio() {
         if (_voiceHintRemaining.value <= 0) {
-            _showHintRecoveryDialog.value = true
+            // 広告ロードが完了していなくても即座にヒントを再生（暫定バイパス）
+            Log.w("ListeningViewModel", "Hints depleted - bypassing ad wait and playing immediately")
+            _showHintRecoveryDialog.value = false
+            performAudioPlayback()
+            // 裏で広告ロードは継続
+            startAdReloading()
             return
         }
         _voiceHintRemaining.value = (_voiceHintRemaining.value - 1).coerceAtLeast(0)
@@ -316,6 +321,14 @@ class ListeningViewModel(
     fun clearLessonCompletion() {
         _lessonResult.value = null
         _clearedLevel.value = null
+        _session.value = _session.value?.copy(completed = false)
+    }
+
+    fun forceHintPlaybackWithoutAds() {
+        Log.w("ListeningViewModel", "Force-playing hint without ads")
+        _showHintRecoveryDialog.value = false
+        performAudioPlayback()
+        startAdReloading()
     }
 
     fun loadQuestions(level: Int) {

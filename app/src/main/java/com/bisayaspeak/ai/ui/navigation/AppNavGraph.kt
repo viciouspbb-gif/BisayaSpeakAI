@@ -3,6 +3,7 @@
 package com.bisayaspeak.ai.ui.navigation
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -192,7 +193,7 @@ fun AppNavGraph(
                         onCreateAccount = {},
                         onLogout = {},
                         onOpenPremiumInfo = { /* Premium info not implemented */ },
-                        onOpenFeedback = { /* Lite版ではフィードバック画面を利用しない */ },
+                        onOpenFeedback = { /* Lite版ではフィードバチE��画面を利用しなぁE*/ },
                         showPremiumTestToggle = false,
                         premiumTestEnabled = isPremiumPlan,
                         onTogglePremiumTest = null,
@@ -332,7 +333,7 @@ fun AppNavGraph(
             val clearedLevel = backStackEntry.arguments?.getInt("clearedLevel") ?: 1
             val leveledUp = backStackEntry.arguments?.getBoolean("leveledUp") ?: false
             
-            // ViewModelを取得
+            // ViewModelを取征E
             val listeningViewModel: ListeningViewModel = viewModel()
             
             LessonResultScreen(
@@ -399,7 +400,7 @@ fun AppNavGraph(
                     PracticeCategoryScreen(
                         onNavigateBack = { navController.popBackStack() },
                         onCategorySelected = { category ->
-                            // 5問連続出題画面に遷移
+                            // 5問連続�E題画面に遷移
                             navController.navigate("practice/quiz/$category")
                         },
                         userPlan = userPlan,
@@ -408,7 +409,7 @@ fun AppNavGraph(
                 }
             }
 
-            // Practice Quiz (5問連続出題)
+            // Practice Quiz (5問連続�E顁E
             composable(
                 route = "practice/quiz/{category}",
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
@@ -423,7 +424,7 @@ fun AppNavGraph(
                 }
             }
 
-            // Practice Word List by Category (旧画面 - 必要に応じて残す)
+            // Practice Word List by Category (旧画面 - 忁E��に応じて残す)
             composable(
                 route = "practice/category/{category}",
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
@@ -482,7 +483,7 @@ fun AppNavGraph(
             }
         }
 
-        // チャット画面（無条件で追加）
+        // チャチE��画面�E�無条件で追加�E�E
         composable(
             route = AppRoute.RolePlayChat.route,
             arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
@@ -490,11 +491,30 @@ fun AppNavGraph(
             val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: ""
             RoleplayChatScreen(
                 scenarioId = scenarioId,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onCompleted = { result ->
+                    val destinationRoute = AppRoute.LessonResult.route
+                        .replace("{correctCount}", result.correctCount.toString())
+                        .replace("{totalQuestions}", result.totalQuestions.toString())
+                        .replace("{earnedXP}", result.earnedXp.toString())
+                        .replace("{clearedLevel}", result.clearedLevel.toString())
+                        .replace("{leveledUp}", result.leveledUp.toString())
+                    val alreadyOnResult = navController.currentDestination?.route
+                        ?.startsWith("result_screen") == true
+                    if (!alreadyOnResult) {
+                        try {
+                            navController.navigate(destinationRoute) {
+                                popUpTo(AppRoute.RolePlayChat.route) { inclusive = true }
+                            }
+                        } catch (e: IllegalArgumentException) {
+                            Log.e("AppNavGraph", "Failed to navigate to LessonResultScreen", e)
+                        }
+                    }
+                }
             )
         }
 
-        // 既存のモックシナリオ用（念のため残しています）
+        // 既存�EモチE��シナリオ用�E�念のため残してぁE��す！E
         composable(
             route = "role_play_scenario/{scenarioId}",
             arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
@@ -512,7 +532,7 @@ fun AppNavGraph(
                     )
                 }
             } else {
-                // シナリオが見つからない場合は戻る
+                // シナリオが見つからなぁE��合�E戻めE
                 LaunchedEffect(Unit) {
                     navController.popBackStack()
                 }

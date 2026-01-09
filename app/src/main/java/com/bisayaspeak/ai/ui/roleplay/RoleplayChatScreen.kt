@@ -2,7 +2,6 @@
 
 import android.view.MotionEvent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -16,10 +15,13 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -92,6 +94,7 @@ fun RoleplayChatScreen(
     scenarioId: String,
     onBackClick: () -> Unit,
     isPremium: Boolean = false,
+    onCompleted: (RoleplayResultPayload) -> Unit,
     viewModel: RoleplayChatViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -120,10 +123,15 @@ fun RoleplayChatScreen(
         }
     }
 
-    var showTranslation by remember { mutableStateOf(false) }
-    var showHint by remember { mutableStateOf(false) }
     val latestAiLine: ChatMessage? = uiState.messages.lastOrNull { !it.isUser }
-    val hintCandidate: RoleplayOption? = uiState.options.firstOrNull()
+    val pendingResult = uiState.pendingResult
+
+    LaunchedEffect(pendingResult) {
+        pendingResult?.let {
+            onCompleted(it)
+            viewModel.consumePendingResult()
+        }
+    }
 
     val scenarioTitle = uiState.currentScenario?.title ?: "AI ロールプレイ"
 
@@ -171,8 +179,8 @@ fun RoleplayChatScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Image(
-                painter = painterResource(id = R.drawable.char_owl),
-                contentDescription = "フクロウ師匠",
+                painter = painterResource(id = R.drawable.char_tarsier),
+                contentDescription = "タルシエ先生",
                 modifier = Modifier
                     .size(180.dp)
                     .padding(bottom = 16.dp),
@@ -180,15 +188,15 @@ fun RoleplayChatScreen(
             )
 
             val isSpeaking = latestAiLine?.id != null && speakingMessageId == latestAiLine.id
-            val bubbleColor by animateColorAsState(
-                targetValue = when {
-                    showTranslation -> Color(0xFF2C3A5A)
-                    isSpeaking -> Color(0xFF1F2E4C)
-                    else -> Color(0xFF151F2B)
-                },
-                animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
-                label = "bubbleColor"
-            )
+            val bubbleColor = Color(0xFFFFF4DB)
+            val bubbleBorderColor = Color(0xFFFFE3AC)
+            val primaryTextColor = Color(0xFF5B3600)
+            val translationColor = Color(0xCC5B3600)
+            val aiLineText = latestAiLine?.text
+                ?: uiState.currentScenario?.initialMessage
+                ?: "Maayong buntag! はじめようかの？"
+            val translationText = latestAiLine?.translation.orEmpty()
+            var aiTranslationVisible by remember(latestAiLine?.id) { mutableStateOf(false) }
 
             Box(
                 modifier = Modifier
@@ -198,77 +206,65 @@ fun RoleplayChatScreen(
                 Surface(
                     color = bubbleColor,
                     shape = RoundedCornerShape(28.dp),
-                    tonalElevation = if (isSpeaking) 6.dp else 2.dp,
+                    tonalElevation = if (isSpeaking) 8.dp else 2.dp,
+                    shadowElevation = if (isSpeaking) 10.dp else 2.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .pointerInteropFilter { motionEvent ->
-                            when (motionEvent.action) {
-                                MotionEvent.ACTION_DOWN -> showTranslation = true
-                                MotionEvent.ACTION_UP,
-                                MotionEvent.ACTION_CANCEL -> showTranslation = false
+                        .border(width = 1.dp, color = bubbleBorderColor, shape = RoundedCornerShape(28.dp))
+                        .pointerInteropFilter { event ->
+                            when (event.action) {
+                                MotionEvent.ACTION_DOWN -> {
+                                    if (translationText.isNotBlank()) aiTranslationVisible = true
+                                    false
+                                }
+                                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                                    aiTranslationVisible = false
+                                    false
+                                }
+                                else -> false
                             }
-                            true
                         }
                 ) {
-                    Text(
-                        text = latestAiLine?.text ?: uiState.currentScenario?.initialMessage
-                            ?: "Maayong buntag! はじめようかの？",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center,
-                        fontWeight = if (isSpeaking) FontWeight.Black else FontWeight.SemiBold,
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 18.dp)
-                    )
-                }
-
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = showTranslation && latestAiLine?.translation != null,
-                    enter = fadeIn(tween(150)) + slideInVertically { it / 2 },
-                    exit = fadeOut(tween(150)) + slideOutVertically { it / 2 },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .offset(y = 12.dp)
-                ) {
-                    Surface(
-                        color = Color(0xFF253554),
-                        shape = RoundedCornerShape(18.dp),
-                        tonalElevation = 4.dp
+                            .padding(horizontal = 24.dp, vertical = 18.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = latestAiLine?.translation ?: "",
-                            color = Color(0xFFDCEBFF),
+                            text = aiLineText,
+                            color = primaryTextColor,
+                            fontSize = 20.sp,
                             textAlign = TextAlign.Center,
-                            fontSize = 15.sp,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            fontWeight = if (isSpeaking) FontWeight.Black else FontWeight.SemiBold
                         )
+
+                        AnimatedVisibility(
+                            visible = aiTranslationVisible && translationText.isNotBlank(),
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            Text(
+                                text = translationText,
+                                color = translationColor,
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .fillMaxWidth()
+                            )
+                        }
+
+                        if (!aiTranslationVisible && translationText.isNotBlank()) {
+                            Text(
+                                text = "長押しで日本語訳",
+                                color = translationColor.copy(alpha = 0.7f),
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(top = 6.dp)
+                            )
+                        }
                     }
                 }
-            }
-
-            Button(
-                onClick = { showHint = !showHint },
-                enabled = hintCandidate != null,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = if (showHint) "ヒントを隠す" else "ヒントを見る")
-            }
-
-            if (showHint && hintCandidate != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = hintCandidate.hint ?: "ヒントはまだありません。",
-                    color = Color(0xFFDBEAFE),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = Color(0x3322568E),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                        )
-                        .padding(16.dp)
-                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -293,16 +289,6 @@ fun RoleplayChatScreen(
             Spacer(modifier = Modifier.height(48.dp))
         }
 
-        if (uiState.showCompletionDialog) {
-            CompletionCelebrationDialog(
-                passed = uiState.completionScore >= 80,
-                score = uiState.completionScore,
-                onDismiss = {
-                    viewModel.dismissCompletionDialog()
-                    viewModel.markUnlockHandled()
-                }
-            )
-        }
     }
 }
 
@@ -345,7 +331,9 @@ fun RoleplayOptionItem(
     onSelect: (String) -> Unit,
     onPeekHint: (String) -> Unit
 ) {
-    var hintVisible by remember(option.id) { mutableStateOf(false) }
+    var isPressing by remember(option.id) { mutableStateOf(false) }
+    var hasPeeked by remember(option.id) { mutableStateOf(false) }
+    val translationAvailable = !option.hint.isNullOrBlank()
 
     Box(
         modifier = Modifier
@@ -359,14 +347,17 @@ fun RoleplayOptionItem(
                 .pointerInteropFilter { event ->
                     when (event.action) {
                         MotionEvent.ACTION_DOWN -> {
-                            if (!hintVisible) {
-                                hintVisible = true
-                                onPeekHint(option.id)
+                            if (translationAvailable) {
+                                isPressing = true
+                                if (!hasPeeked) {
+                                    onPeekHint(option.id)
+                                    hasPeeked = true
+                                }
                             }
                             false
                         }
                         MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                            hintVisible = false
+                            isPressing = false
                             false
                         }
                         else -> false
@@ -378,93 +369,22 @@ fun RoleplayOptionItem(
                 contentColor = Color.White
             )
         ) {
-            Text(
-                text = option.text,
-                fontSize = 16.sp
-            )
-        }
-
-        AnimatedVisibility(
-            visible = hintVisible && option.hint != null,
-            enter = fadeIn(tween(150)) + slideInVertically { -it / 3 },
-            exit = fadeOut(tween(120)) + slideOutVertically { -it / 3 },
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset(y = (-42).dp)
-        ) {
-            Surface(
-                color = Color(0xCC1C253C),
-                shape = RoundedCornerShape(12.dp),
-                tonalElevation = 4.dp
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = option.hint ?: "",
-                    fontSize = 13.sp,
-                    color = Color(0xFFDBEAFE),
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    text = if (isPressing && translationAvailable) option.hint!! else option.text,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
-            }
-        }
-    }
-}
-
-@Composable
-fun CompletionCelebrationDialog(
-    passed: Boolean,
-    score: Int,
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        val bounce = rememberInfiniteTransition(label = "monkey-bounce").animateFloat(
-            initialValue = 0f,
-            targetValue = 12f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(900, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "monkey-bounce-anim"
-        )
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = Color(0xFF0D172A),
-            tonalElevation = 8.dp
-        ) {
-            Column(
-                modifier = Modifier
-                    .widthIn(min = 280.dp)
-                    .padding(horizontal = 24.dp, vertical = 28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = if (passed) "Level 2 解放！" else "もう一度挑戦！",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "スコア: $score%",
-                    color = Color(0xFF9CC1FF),
-                    fontSize = 16.sp
-                )
-                Text(
-                    text = "🐒",
-                    fontSize = 56.sp,
-                    modifier = Modifier.offset(y = (-bounce.value).dp)
-                )
-                Text(
-                    text = if (passed) "タルシエ先生が喜んで跳ねています！" else "タルシエ先生はまだ見守っています。",
-                    color = Color(0xFFBFD6FF),
-                    textAlign = TextAlign.Center
-                )
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C6EF5))
-                ) {
-                    Text(text = if (passed) "続けてLv.2へ" else "戻る")
+                if (!isPressing && translationAvailable) {
+                    Text(
+                        text = "長押しで日本語訳",
+                        fontSize = 12.sp,
+                        color = Color(0xFFB3DAFF),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
         }
     }
 }
+

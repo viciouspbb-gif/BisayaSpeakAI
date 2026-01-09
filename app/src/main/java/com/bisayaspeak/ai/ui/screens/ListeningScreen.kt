@@ -47,7 +47,9 @@ import com.bisayaspeak.ai.GameDataManager
 import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
-import com.bisayaspeak.ai.ads.AdMobBanner
+import com.bisayaspeak.ai.ui.ads.AdMobBanner
+import com.bisayaspeak.ai.ui.ads.AdUnitIds
+import com.bisayaspeak.ai.ui.ads.AdsPolicy
 import com.bisayaspeak.ai.ui.navigation.AppRoute
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.google.android.flexbox.FlexboxLayout
@@ -110,6 +112,14 @@ fun ListeningScreen(
     val selectedWords by viewModel.selectedWords.collectAsState()
     val shuffledWords by viewModel.shuffledWords.collectAsState()
 
+    var navigationTriggered by remember { mutableStateOf(false) }
+
+    LaunchedEffect(session?.completed) {
+        if (session?.completed != true) {
+            navigationTriggered = false
+        }
+    }
+
     fun handleBackNavigation() {
         if (session?.completed == true) {
             navController.navigate(AppRoute.LevelSelection.route) {
@@ -169,24 +179,29 @@ fun ListeningScreen(
                 .replace("{clearedLevel}", displayLevel.toString())
                 .replace("{leveledUp}", leveledUpFlag.toString())
             val navigateToResult = {
-                navController.navigate(destinationRoute) {
-                    popUpTo(AppRoute.Listening.route) { inclusive = true }
+                if (!navigationTriggered) {
+                    navigationTriggered = true
+                    navController.navigate(destinationRoute) {
+                        popUpTo(AppRoute.Listening.route) { inclusive = true }
+                    }
+                    viewModel.clearLessonCompletion()
                 }
-                viewModel.clearLessonCompletion()
             }
             if (result.leveledUp) {
                 LessonStatusManager.setLessonCleared(context, level)
             }
             if (activity != null) {
-                Log.e("ListeningScreen", "★★★ SHOWING INTERSTITIAL WITH 2 SECOND TIMEOUT ★★★")
+                Log.e("DEBUG_ADS", "[ListeningScreen] 広告表示開始 (LaunchedEffect)")
                 AdManager.showInterstitialWithTimeout(
                     activity = activity,
                     timeoutMs = 2_000L
                 ) {
+                    Log.e("DEBUG_ADS", "[ListeningScreen] navigateToResult 実行直前 (LaunchedEffect)")
                     Log.e("ListeningScreen", "★★★ TIMEOUT OR AD CLOSED, FORCING NAVIGATION ★★★")
                     navigateToResult()
                 }
             } else {
+                Log.e("DEBUG_ADS", "[ListeningScreen] Activityがnullのため直接navigateToResult 実行直前")
                 Log.e("ListeningScreen", "★★★ NO ACTIVITY, FORCING NAVIGATION ★★★")
                 navigateToResult()
             }
@@ -211,7 +226,7 @@ fun ListeningScreen(
                         .background(Color.Black),
                     contentAlignment = Alignment.Center
                 ) {
-                    AdMobBanner()
+                    AdMobBanner(adUnitId = AdUnitIds.BANNER_MAIN)
                 }
                 Spacer(modifier = Modifier.navigationBarsPadding())
             }
@@ -248,27 +263,32 @@ fun ListeningScreen(
 
                     // キャラ & ヒントボタン
                     Row(
-                        modifier = Modifier.fillMaxWidth().height(60.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.char_owl),
-                            contentDescription = "Owl",
+                            contentDescription = "フクロウ先生",
                             modifier = Modifier.size(56.dp),
                             contentScale = ContentScale.Fit
                         )
+                        val adsEnabled = AdsPolicy.areAdsEnabled
                         val hintButtonEnabled = !isPlaying && (
                             voiceHintRemaining > 0 ||
                                 rewardedAdState == ListeningViewModel.RewardAdState.READY ||
-                                rewardedAdState == ListeningViewModel.RewardAdState.FAILED
+                                rewardedAdState == ListeningViewModel.RewardAdState.FAILED ||
+                                !adsEnabled
                             )
                         Button(
                             onClick = {
                                 when {
                                     voiceHintRemaining > 0 -> requestHintPlayback()
+                                    !adsEnabled -> viewModel.forceHintPlaybackWithoutAds()
                                     rewardedAdState == ListeningViewModel.RewardAdState.READY -> executeAdPlaybackIfReady(activity, context, viewModel, true)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> viewModel.retryRewardedAdLoad()
+                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> viewModel.forceHintPlaybackWithoutAds()
                                     else -> Log.d("ListeningScreen", "Hint button pressed but ad still loading")
                                 }
                             },
@@ -277,7 +297,7 @@ fun ListeningScreen(
                                 containerColor = when {
                                     voiceHintRemaining > 0 -> Color(0xFF2D3246)
                                     rewardedAdState == ListeningViewModel.RewardAdState.READY -> Color(0xFFFFA726)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> Color(0xFF4E342E)
+                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> Color(0xFF4E342E)
                                     else -> Color(0xFF333333)
                                 },
                                 disabledContainerColor = Color(0xFF333333)
@@ -289,8 +309,8 @@ fun ListeningScreen(
                             Text(
                                 text = when {
                                     voiceHintRemaining > 0 -> "ヒント ($voiceHintRemaining)"
-                                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> "広告で回復"
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> "再試行する"
+                                    rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> "広告で回復"
+                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> "ヒントを見る"
                                     else -> "広告準備中..."
                                 },
                                 color = Color.White,
@@ -314,7 +334,9 @@ fun ListeningScreen(
 
                     // 問題文
                     Box(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 40.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
