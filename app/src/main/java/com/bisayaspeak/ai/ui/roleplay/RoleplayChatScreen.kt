@@ -1,5 +1,6 @@
 ﻿package com.bisayaspeak.ai.ui.roleplay
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -9,9 +10,9 @@ import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.consumePositionChange
@@ -65,8 +67,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalViewConfiguration
-import androidx.compose.ui.platform.ViewConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -183,10 +184,11 @@ fun RoleplayChatScreen(
                 speakingMessageId = speakingMessageId,
                 initialLine = uiState.currentScenario?.initialMessage,
                 modifier = Modifier
-                    .weight(0.45f)
                     .fillMaxWidth()
+                    .wrapContentHeight()
             )
-            Spacer(modifier = Modifier.height(12.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             DropConfirmationTray(
                 modifier = Modifier
@@ -196,12 +198,12 @@ fun RoleplayChatScreen(
                 isHighlighted = activeDragOptionId != null
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             ResponsePanel(
                 modifier = Modifier
-                    .weight(0.55f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .weight(1f),
                 isLoading = uiState.isLoading,
                 options = uiState.options,
                 peekedHintIds = uiState.peekedHintOptionIds,
@@ -235,14 +237,14 @@ private fun Rect.translate(dx: Float, dy: Float): Rect {
     )
 }
 
-private fun Offset.distanceSquaredTo(other: Offset): Float {
-    val dx = x - other.x
-    val dy = y - other.y
-    return dx * dx + dy * dy
+private fun Rect.expand(by: Float): Rect {
+    return Rect(
+        left - by,
+        top - by,
+        right + by,
+        bottom + by
+    )
 }
-
-private val ViewConfiguration.doubleTapSlop: Float
-    get() = touchSlop * 2f
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -284,16 +286,17 @@ private fun StageSection(
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .pointerInput(bubbleKey, translationText) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        if (translationText.isBlank()) {
-                            waitForUpOrCancellation()
-                            return@awaitEachGesture
+                    detectTapGestures(
+                        onPress = {
+                            if (translationText.isBlank()) {
+                                tryAwaitRelease()
+                                return@detectTapGestures
+                            }
+                            showTranslation = true
+                            tryAwaitRelease()
+                            showTranslation = false
                         }
-                        showTranslation = true
-                        waitForUpOrCancellation()
-                        showTranslation = false
-                    }
+                    )
                 },
             color = Color(0xFFFFF4DB),
             shape = RoundedCornerShape(32.dp),
@@ -447,7 +450,7 @@ private fun RoleplayOptionCard(
     var dragOffset by remember(option.id) { mutableStateOf(Offset.Zero) }
     var optionBounds by remember(option.id) { mutableStateOf<Rect?>(null) }
     val translationAvailable = !option.hint.isNullOrBlank()
-    val viewConfiguration = LocalViewConfiguration.current
+    val density = LocalDensity.current
 
     Surface(
         modifier = Modifier
@@ -457,43 +460,21 @@ private fun RoleplayOptionCard(
             .onGloballyPositioned { coords ->
                 optionBounds = coords.windowRect()
             }
-            .pointerInput(option.id, translationAvailable, viewConfiguration) {
-                val doubleTapTimeout = viewConfiguration.doubleTapTimeoutMillis
-                val doubleTapDistanceSquared = viewConfiguration.doubleTapSlop * viewConfiguration.doubleTapSlop
-                var lastTapTime = 0L
-                var lastTapPosition = Offset.Unspecified
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val downPosition = down.position
-                    if (translationAvailable) {
-                        showTranslation = true
-                        if (!hasPeeked) {
-                            onPeekHint(option.id)
-                            hasPeeked = true
+            .pointerInput(option.id, translationAvailable) {
+                detectTapGestures(
+                    onPress = {
+                        if (translationAvailable) {
+                            showTranslation = true
+                            if (!hasPeeked) {
+                                onPeekHint(option.id)
+                                hasPeeked = true
+                            }
                         }
-                    }
-                    val up = waitForUpOrCancellation()
-                    if (translationAvailable) {
+                        tryAwaitRelease()
                         showTranslation = false
-                    }
-                    if (up == null) {
-                        lastTapTime = 0L
-                        lastTapPosition = Offset.Unspecified
-                        return@awaitEachGesture
-                    }
-                    val now = up.uptimeMillis
-                    val withinTime = lastTapTime != 0L && now - lastTapTime <= doubleTapTimeout
-                    val withinDistance =
-                        lastTapPosition != Offset.Unspecified && lastTapPosition.distanceSquaredTo(downPosition) <= doubleTapDistanceSquared
-                    if (withinTime && withinDistance) {
-                        onSelect(option.id)
-                        lastTapTime = 0L
-                        lastTapPosition = Offset.Unspecified
-                    } else {
-                        lastTapTime = now
-                        lastTapPosition = downPosition
-                    }
-                }
+                    },
+                    onDoubleTap = { onSelect(option.id) }
+                )
             }
             .pointerInput(option.id, trayBounds()) {
                 detectDragGestures(
@@ -506,8 +487,10 @@ private fun RoleplayOptionCard(
                     },
                     onDragEnd = {
                         val currentRect = optionBounds?.translate(dragOffset.x, dragOffset.y)
-                        val dropRect = trayBounds()
-                        if (currentRect != null && dropRect != null && currentRect.overlaps(dropRect)) {
+                        val expandedDropRect = trayBounds()?.expand(by = with(density) { 20.dp.toPx() })
+                        val hit = currentRect != null && expandedDropRect != null && expandedDropRect.overlaps(currentRect)
+                        if (hit) {
+                            Log.d("RoleplayChat", "Drop success for option=${option.id}")
                             onSelect(option.id)
                         }
                         dragOffset = Offset.Zero
