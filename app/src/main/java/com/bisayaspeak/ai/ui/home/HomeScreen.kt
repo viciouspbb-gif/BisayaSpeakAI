@@ -238,7 +238,7 @@ fun HomeScreen(
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                AdMobBanner(adUnitId = AdManager.BANNER_TEST_ID)
+                AdMobBanner(adUnitId = AdUnitIds.BANNER_MAIN)
             }
         }
 

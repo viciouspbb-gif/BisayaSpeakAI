@@ -21,7 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.ads.AdManager
-import com.bisayaspeak.ai.ads.AdMobBanner // ★共通部品をインポート
+import com.bisayaspeak.ai.ui.ads.AdMobBanner
+import com.bisayaspeak.ai.ui.ads.AdUnitIds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,14 +60,14 @@ fun LevelSelectionScreen(
         },
         bottomBar = {
             Column {
-                // ■ バナー広告 (引数なしで呼び出す！)
+                // ■ バナー広告
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    AdMobBanner()
+                    AdMobBanner(adUnitId = AdUnitIds.BANNER_MAIN)
                 }
 
                 Spacer(modifier = Modifier.navigationBarsPadding())

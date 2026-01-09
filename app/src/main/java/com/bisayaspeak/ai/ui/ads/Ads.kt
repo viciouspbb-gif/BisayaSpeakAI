@@ -25,6 +25,8 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
  * Releaseビルド時は本番IDを使用します。
  */
 object AdUnitIds {
+    private const val USE_TEST_ADS = true
+    private val FORCE_PROD = !USE_TEST_ADS
     private val IS_DEBUG = com.bisayaspeak.ai.BuildConfig.DEBUG
     
     // Google公式テストID
@@ -37,14 +39,16 @@ object AdUnitIds {
     private const val PROD_INTERSTITIAL = "ca-app-pub-2676999942952051/2023179674"
     private const val PROD_REWARDED = "ca-app-pub-2676999942952051/7383317569"
     
+    private fun shouldUseTestAds(): Boolean = IS_DEBUG && !FORCE_PROD
+    
     // バナー（ホーム／アカウント／共通）
-    val BANNER_MAIN = if (IS_DEBUG) TEST_BANNER else PROD_BANNER
+    val BANNER_MAIN = if (shouldUseTestAds()) TEST_BANNER else PROD_BANNER
 
     // インタースティシャル（クイズ開始など）
-    val INTERSTITIAL_MAIN = if (IS_DEBUG) TEST_INTERSTITIAL else PROD_INTERSTITIAL
+    val INTERSTITIAL_MAIN = if (shouldUseTestAds()) TEST_INTERSTITIAL else PROD_INTERSTITIAL
 
     // リワード（クイズ終了／発音／リスニング／ロールプレイなど）
-    val REWARDED_MAIN = if (IS_DEBUG) TEST_REWARDED else PROD_REWARDED
+    val REWARDED_MAIN = if (shouldUseTestAds()) TEST_REWARDED else PROD_REWARDED
 }
 
 /**

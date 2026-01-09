@@ -6,7 +6,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 
+import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.ads.AdsPolicy
+
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -16,6 +18,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,15 +27,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.min
 
 object AdManager {
 
     // テスト用ID
     const val BANNER_TEST_ID = "ca-app-pub-3940256099942544/6300978111"
 
-    private const val AD_UNIT_ID_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
-    private const val AD_UNIT_ID_REWARD = "ca-app-pub-3940256099942544/5224354917"
+    private val AD_UNIT_ID_INTERSTITIAL = AdUnitIds.INTERSTITIAL_MAIN
+    private val AD_UNIT_ID_REWARD = AdUnitIds.REWARDED_MAIN
 
     private const val INIT_DELAY_MS = 1_000L
     private const val MIN_BACKOFF_MS = 2_000L
@@ -259,15 +261,19 @@ object AdManager {
         onAdClosed: () -> Unit
     ) {
         Log.e("AdManager", "★★★ showInterstitialWithTimeout CALLED ★★★ timeoutMs=$timeoutMs")
+        Log.e("DEBUG_ADS", "[AdManager] showInterstitialWithTimeout 呼び出し (timeoutMs=$timeoutMs)")
         if (!AdsPolicy.areAdsEnabled) {
             Log.e("AdManager", "Ads disabled, calling onAdClosed immediately")
+            Log.e("DEBUG_ADS", "[AdManager] Ads無効のため即座にonAdClosed")
             onAdClosed.safeInvoke()
             return
         }
 
         val finished = AtomicBoolean(false)
         val handler = Handler(Looper.getMainLooper())
+        Log.e("DEBUG_ADS", "[AdManager] 2秒タイマー作動開始")
         val timeoutRunnable = Runnable {
+            Log.e("DEBUG_ADS", "[AdManager] タイムアウト発生 -> navigateToResult 強制呼び出し")
             if (finished.compareAndSet(false, true)) {
                 Log.e("AdManager", "★★★ TIMEOUT REACHED ★★★ ($timeoutMs ms), forcing navigation")
                 onAdClosed.safeInvoke()
@@ -275,8 +281,9 @@ object AdManager {
         }
         handler.postDelayed(timeoutRunnable, timeoutMs)
 
-        fun finish() {
+        fun finish(reason: String) {
             if (finished.compareAndSet(false, true)) {
+                Log.e("DEBUG_ADS", "[AdManager] finish 呼び出し reason=$reason -> onAdClosed 実行")
                 Log.e("AdManager", "★★★ FINISH CALLED ★★★")
                 handler.removeCallbacks(timeoutRunnable)
                 onAdClosed.safeInvoke()
@@ -287,13 +294,13 @@ object AdManager {
             val ad = interstitialAd
             if (ad == null) {
                 Log.e("AdManager", "★★★ NO AD AVAILABLE ★★★, skipping ad and forcing navigation")
-                handler.removeCallbacks(timeoutRunnable)
-                finish()
+                Log.e("DEBUG_ADS", "[AdManager] interstitialAd == null -> タイムアウト待ちでnavigate予定")
                 loadInterstitial(activity.applicationContext)
                 return
             }
 
             Log.e("AdManager", "★★★ SHOWING INTERSTITIAL AD ★★★")
+            Log.e("DEBUG_ADS", "[AdManager] interstitialAd.show() 実行 (メインスレッドへpost)")
             activity.runOnUiThread {
                 try {
                     ad.fullScreenContentCallback = object : FullScreenContentCallback() {
@@ -301,7 +308,7 @@ object AdManager {
                             Log.e("AdManager", "★★★ onAdDismissedFullScreenContent CALLED ★★★")
                             interstitialAd = null
                             loadInterstitial(activity.applicationContext)
-                            finish()
+                            finish("onAdDismissedFullScreenContent")
                         }
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
@@ -309,7 +316,7 @@ object AdManager {
                             interstitialAd = null
                             Log.e("AdManager", "Interstitial timeout show failed: ${adError.message}")
                             loadInterstitial(activity.applicationContext)
-                            finish()
+                            finish("onAdFailedToShowFullScreenContent")
                         }
                     }
                     ad.show(activity)
@@ -317,13 +324,12 @@ object AdManager {
                     Log.e("AdManager", "★★★ EXCEPTION IN SHOW AD ★★★: ${e.message}", e)
                     interstitialAd = null
                     loadInterstitial(activity.applicationContext)
-                    finish()
+                    finish("exception_in_runOnUiThread")
                 }
             }
         } catch (e: Exception) {
             Log.e("AdManager", "★★★ EXCEPTION IN showInterstitialWithTimeout ★★★: ${e.message}", e)
-            handler.removeCallbacks(timeoutRunnable)
-            finish()
+            finish("exception_before_show")
         }
     }
 
