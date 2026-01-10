@@ -21,7 +21,11 @@ data class RoleplayOption(
     val id: String = UUID.randomUUID().toString(),
     val text: String,
     val hint: String? = null,
-    val tone: String? = null
+    val tone: String? = null,
+    val nextTurnId: String? = null,
+    val branchKey: String? = null,
+    val branchValue: String? = null,
+    val requiresPro: Boolean = false
 )
 
 data class RoleplayResultPayload(
@@ -47,7 +51,8 @@ data class RoleplayUiState(
     val completionScore: Int = 0,
     val pendingUnlockLevel: Int? = null,
     val pendingResult: RoleplayResultPayload? = null,
-    val lockedOption: RoleplayOption? = null
+    val lockedOption: RoleplayOption? = null,
+    val isProUser: Boolean = false
 )
 
 class RoleplayChatViewModel(
@@ -58,7 +63,8 @@ class RoleplayChatViewModel(
         private const val START_TOKEN = "[START_CONVERSATION]"
         private const val COMPLETION_SCORE = 90
         private const val COMPLETION_THRESHOLD = 80
-        private const val ANSWER_TRANSITION_DELAY_MS = 800L
+        private const val LOCKED_OPTION_HOLD_MS = 500L
+        private const val POST_CLEAR_SILENCE_MS = 1000L
     }
 
     private val _uiState = MutableStateFlow(RoleplayUiState())
@@ -69,11 +75,21 @@ class RoleplayChatViewModel(
 
     private val history = mutableListOf<MissionHistoryMessage>()
     private var scriptedRuntime: ScriptedRuntime? = null
+    private var isProVersion: Boolean = false
+    private val branchFacts = mutableMapOf<String, String>()
 
-    fun loadScenario(scenarioId: String) {
+    fun setProAccess(enabled: Boolean) {
+        if (isProVersion == enabled) return
+        isProVersion = enabled
+        _uiState.update { it.copy(isProUser = enabled) }
+    }
+
+    fun loadScenario(scenarioId: String, isProUser: Boolean = isProVersion) {
         val definition = getRoleplayScenarioDefinition(scenarioId)
         history.clear()
+        branchFacts.clear()
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
+        isProVersion = isProUser
 
         _uiState.value = RoleplayUiState(
             currentScenario = definition,
@@ -81,7 +97,8 @@ class RoleplayChatViewModel(
             aiCharacterName = definition.aiRole,
             systemPrompt = definition.systemPrompt,
             messages = emptyList(),
-            isLoading = scriptedRuntime == null
+            isLoading = scriptedRuntime == null,
+            isProUser = isProVersion
         )
 
         scriptedRuntime?.let {
@@ -94,6 +111,7 @@ class RoleplayChatViewModel(
 
     fun selectOption(optionId: String) {
         val option = _uiState.value.options.find { it.id == optionId } ?: return
+        if (!_uiState.value.isProUser && option.requiresPro) return
         if (_uiState.value.isLoading && scriptedRuntime == null) return
 
         val userMsg = ChatMessage(
@@ -113,25 +131,39 @@ class RoleplayChatViewModel(
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
                 completedTurns = it.completedTurns + 1,
-                successfulTurns = it.successfulTurns + if (usedHint) 0 else 1,
+                successfulTurns = it.successfulTurns + 1,
                 lockedOption = option
             )
         }
 
-        viewModelScope.launch {
-            delay(ANSWER_TRANSITION_DELAY_MS)
-            scriptedRuntime?.let {
-                if (it.turnPointer >= it.scenario.turns.size) {
-                    finalizeScriptedScenario()
-                } else {
-                    deliverScriptedTurn()
-                }
-                return@launch
+        option.branchKey?.let { key ->
+            option.branchValue?.let { value ->
+                branchFacts[key] = value
             }
-
-            val scenario = _uiState.value.currentScenario ?: return@launch
-            requestAiTurn(scenario, option.text)
         }
+
+        viewModelScope.launch {
+            delay(LOCKED_OPTION_HOLD_MS)
+            _uiState.update { it.copy(lockedOption = null) }
+            delay(POST_CLEAR_SILENCE_MS)
+            proceedToNextTurn(option)
+        }
+    }
+
+    private suspend fun proceedToNextTurn(option: RoleplayOption) {
+        scriptedRuntime?.let {
+            val nextTurnId = resolveNextTurnId(option, it)
+            if (nextTurnId == null) {
+                finalizeScriptedScenario()
+            } else {
+                it.currentTurnId = nextTurnId
+                deliverScriptedTurn()
+            }
+            return
+        }
+
+        val scenario = _uiState.value.currentScenario ?: return
+        requestAiTurn(scenario, option.text)
     }
 
     fun markHintPeeked(optionId: String) {
@@ -166,11 +198,18 @@ class RoleplayChatViewModel(
 
     private fun deliverScriptedTurn() {
         val runtime = scriptedRuntime ?: return
-        val turn = runtime.scenario.turns.getOrNull(runtime.turnPointer)
+        val nextTurnId = runtime.currentTurnId
+        if (nextTurnId == null) {
+            finalizeScriptedScenario()
+            return
+        }
+        val turn = runtime.scenario.turns[nextTurnId]
         if (turn == null) {
             finalizeScriptedScenario()
             return
         }
+        runtime.awaitingTurnId = turn.id
+        runtime.currentTurnId = null
 
         history.add(MissionHistoryMessage(turn.aiText, isUser = false))
         val aiMsg = ChatMessage(
@@ -183,9 +222,14 @@ class RoleplayChatViewModel(
         val options = turn.options.map {
             RoleplayOption(
                 text = it.text,
-                hint = it.translation
+                hint = if (isProVersion) it.translation else null,
+                tone = null,
+                nextTurnId = it.nextTurnId,
+                branchKey = it.branchKey,
+                branchValue = it.branchValue,
+                requiresPro = it.requiresPro
             )
-        }
+        }.filterForAccess()
 
         _uiState.update {
             it.copy(
@@ -196,7 +240,6 @@ class RoleplayChatViewModel(
                 lockedOption = null
             )
         }
-        runtime.turnPointer++
     }
 
     fun forceCompleteScenario() {
@@ -231,7 +274,8 @@ class RoleplayChatViewModel(
                         messages = it.messages + errorMsg,
                         isLoading = false,
                         options = emptyList(),
-                        peekedHintOptionIds = emptySet()
+                        peekedHintOptionIds = emptySet(),
+                        lockedOption = null
                     )
                 }
             }
@@ -244,24 +288,26 @@ class RoleplayChatViewModel(
         val aiMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
             text = aiText,
-            isUser = false
+            isUser = false,
+            voiceCue = GeminiVoiceCue.HIGH_PITCH
         )
         val options = payload.options
             .filter { it.text.isNotBlank() }
             .map {
                 RoleplayOption(
                     text = it.text,
-                    hint = it.translation,
+                    hint = if (isProVersion) it.translation else null,
                     tone = it.tone
                 )
-            }
+            }.filterForAccess()
 
         _uiState.update {
             it.copy(
                 messages = it.messages + aiMsg,
                 isLoading = false,
                 options = options,
-                peekedHintOptionIds = emptySet()
+                peekedHintOptionIds = emptySet(),
+                lockedOption = null
             )
         }
 
@@ -389,71 +435,170 @@ class RoleplayChatViewModel(
         val translation: String?,
         val tone: String?
     )
+
+    private fun List<RoleplayOption>.filterForAccess(): List<RoleplayOption> {
+        if (isProVersion) return this
+        return this.filterNot { it.requiresPro }
+    }
+
+    private fun resolveNextTurnId(option: RoleplayOption, runtime: ScriptedRuntime): String? {
+        option.nextTurnId?.let { return it }
+        val lastTurnId = runtime.awaitingTurnId ?: return null
+        val turn = runtime.scenario.turns[lastTurnId] ?: return null
+        return turn.defaultNextId
+    }
 }
 
 private data class ScriptedScenario(
-    val turns: List<ScriptedTurn>
+    val startTurnId: String,
+    val turns: Map<String, ScriptedTurn>
 )
 
 private data class ScriptedTurn(
+    val id: String,
     val aiText: String,
     val translation: String,
-    val voiceCue: GeminiVoiceCue = GeminiVoiceCue.DEFAULT,
-    val options: List<ScriptedOption>
+    val voiceCue: GeminiVoiceCue = GeminiVoiceCue.HIGH_PITCH,
+    val options: List<ScriptedOption> = emptyList(),
+    val defaultNextId: String? = null
 )
 
 private data class ScriptedOption(
     val text: String,
-    val translation: String
+    val translation: String,
+    val nextTurnId: String? = null,
+    val branchKey: String? = null,
+    val branchValue: String? = null,
+    val requiresPro: Boolean = false
 )
 
 private class ScriptedRuntime(val scenario: ScriptedScenario) {
-    var turnPointer: Int = 0
+    var currentTurnId: String? = scenario.startTurnId
+    var awaitingTurnId: String? = null
 }
 
 private val scriptedScenarioDefinitions: Map<String, ScriptedScenario> = mapOf(
     "rp_tarsier_morning" to ScriptedScenario(
-        turns = listOf(
-            ScriptedTurn(
+        startTurnId = "intro",
+        turns = mapOf(
+            "intro" to ScriptedTurn(
+                id = "intro",
                 aiText = "Maayong buntag! Ako si Tarsier Master Tali. Handom ko nga ma-init imong adlaw.",
                 translation = "おはよう！タルシエ先生タリだよ。今日も良い朝にしよう。",
+                voiceCue = GeminiVoiceCue.HIGH_PITCH,
                 options = listOf(
                     ScriptedOption(
                         text = "Maayong buntag, Tali! Andam ko sa leksyon.",
-                        translation = "おはようタリ！レッスンの準備できてるよ。"
+                        translation = "おはようタリ！レッスンの準備できてるよ。",
+                        nextTurnId = "mood_check",
+                        branchKey = "greeting",
+                        branchValue = "energetic"
                     ),
                     ScriptedOption(
                         text = "Maayong buntag! Nalipay ko makakita nimo.",
-                        translation = "おはよう！会えてうれしいよ。"
+                        translation = "おはよう！会えてうれしいよ。",
+                        nextTurnId = "mood_check",
+                        branchKey = "greeting",
+                        branchValue = "tender"
                     )
-                )
+                ),
+                defaultNextId = "mood_check"
             ),
-            ScriptedTurn(
-                aiText = "Kumusta ka? Murag daghan ka'g enerhiya ron!",
-                translation = "調子はどう？エネルギー満タンみたいだね！",
-                voiceCue = GeminiVoiceCue.WHISPER,
+            "mood_check" to ScriptedTurn(
+                id = "mood_check",
+                aiText = "Kumusta ka karon? Murag daghan ka'g enerhiya ron!",
+                translation = "調子はどう？すごく元気そうだね！",
+                voiceCue = GeminiVoiceCue.HIGH_PITCH,
                 options = listOf(
                     ScriptedOption(
                         text = "Maayo ra ko, salamat! Motivated ko kaayo.",
-                        translation = "元気だよ、ありがとう！やる気満々。"
+                        translation = "元気だよ、ありがとう！やる気満々。",
+                        nextTurnId = "react_positive",
+                        branchKey = "mood",
+                        branchValue = "positive"
                     ),
                     ScriptedOption(
                         text = "Gikapoy gamay pero padayon gihapon.",
-                        translation = "ちょっと疲れてるけど頑張るよ。"
+                        translation = "ちょっと疲れてるけど頑張るよ。",
+                        nextTurnId = "react_tired",
+                        branchKey = "mood",
+                        branchValue = "tired"
+                    )
+                ),
+                defaultNextId = "react_positive"
+            ),
+            "react_positive" to ScriptedTurn(
+                id = "react_positive",
+                aiText = "Nice kaayo! Ang imong energy makahawa. Sugdan nato ang papel-play adventure!",
+                translation = "いいね！そのエネルギーが伝わってくるよ。さあ紙芝居アドベンチャーを始めよう！",
+                voiceCue = GeminiVoiceCue.HIGH_PITCH,
+                options = listOf(
+                    ScriptedOption(
+                        text = "Ready ko! Asa ta maglakaw?",
+                        translation = "準備完了！どこに行こうか？",
+                        nextTurnId = "wrap_confident"
+                    ),
+                    ScriptedOption(
+                        text = "Game! Dad-a ko sa imong secret shortcut.",
+                        translation = "ゲーム開始！秘密の近道を見せて。",
+                        nextTurnId = "wrap_confident",
+                        requiresPro = true
+                    )
+                ),
+                defaultNextId = "wrap_confident"
+            ),
+            "react_tired" to ScriptedTurn(
+                id = "react_tired",
+                aiText = "Sige lang, naa ra ko diri motabang nimo. Dali ra ni, promise!",
+                translation = "大丈夫、私がそばで支えるから。あっという間だよ！",
+                voiceCue = GeminiVoiceCue.HIGH_PITCH,
+                options = listOf(
+                    ScriptedOption(
+                        text = "Salamat, Tali! Hinay-hinay lang ta.",
+                        translation = "ありがとうタリ！ゆっくり進もう。",
+                        nextTurnId = "wrap_encourage"
+                    ),
+                    ScriptedOption(
+                        text = "Okay ra, kay kung naa ka diha kusgan ko.",
+                        translation = "君がいるなら頑張れるよ。",
+                        nextTurnId = "wrap_encourage"
+                    )
+                ),
+                defaultNextId = "wrap_encourage"
+            ),
+            "wrap_confident" to ScriptedTurn(
+                id = "wrap_confident",
+                aiText = "Tan-awa! Sa imong pagpili, mas ni-bright ang kagabhion. Balik ta unya para sa sunod nga page!",
+                translation = "ほら！君の選択で夜道も明るくなったよ。また次のページで会おうね！",
+                voiceCue = GeminiVoiceCue.HIGH_PITCH,
+                options = listOf(
+                    ScriptedOption(
+                        text = "Magkita ta unya! Dal-i ko sunod nga lakaw.",
+                        translation = "またね！次の散歩も早くしたい。",
+                        nextTurnId = null
+                    ),
+                    ScriptedOption(
+                        text = "Mo-report ko kay Sensei sunod ha!",
+                        translation = "次は先生に報告するね！",
+                        nextTurnId = null
                     )
                 )
             ),
-            ScriptedTurn(
-                aiText = "Sige, babay! Balika ko unya ha, aron mas kusgan imong Bisaya.",
-                translation = "じゃあね！また戻ってきて、もっとビサヤ語を鍛えよう！",
+            "wrap_encourage" to ScriptedTurn(
+                id = "wrap_encourage",
+                aiText = "Nakaya ra nimo bisan kapoy! Proud kaayo ko nimo. Pahuway gamay, unya balik para sa chapter 2.",
+                translation = "疲れててもやり遂げたね！とっても誇らしいよ。少し休んでから第2章で会おう！",
+                voiceCue = GeminiVoiceCue.HIGH_PITCH,
                 options = listOf(
                     ScriptedOption(
-                        text = "Sige, babay! Kita ta puhon.",
-                        translation = "またね！また会おう。"
+                        text = "Sige, pahulay sa ko. Kita ta usab!",
+                        translation = "うん、ちょっと休むね。また会おう！",
+                        nextTurnId = null
                     ),
                     ScriptedOption(
-                        text = "Daghang salamat, Master Tali!",
-                        translation = "ありがとう、タリ先生！"
+                        text = "Thanks sa encouragement! Mag practice ko.",
+                        translation = "励ましありがとう！練習しておくね。",
+                        nextTurnId = null
                     )
                 )
             )

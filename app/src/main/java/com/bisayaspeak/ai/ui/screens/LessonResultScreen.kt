@@ -1,8 +1,9 @@
 package com.bisayaspeak.ai.ui.screens
 
-import android.speech.tts.TextToSpeech
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,7 +37,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,8 +46,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,6 +58,8 @@ import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
+import com.bisayaspeak.ai.voice.GeminiVoiceCue
+import com.bisayaspeak.ai.voice.GeminiVoiceService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,9 +75,9 @@ fun LessonResultScreen(
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val voiceService = remember { GeminiVoiceService(context) }
 
     val normalizedTotal = totalQuestions.coerceAtLeast(1)
-    val accuracy = (correctCount / normalizedTotal.toFloat()).coerceIn(0f, 1f)
     val passed = leveledUp
 
     val gradient = Brush.verticalGradient(
@@ -82,6 +87,11 @@ fun LessonResultScreen(
         )
     )
     val progress = (correctCount / normalizedTotal.toFloat()).coerceIn(0f, 1f)
+
+    DisposableEffect(Unit) {
+        Log.d("LessonResultScreen", "Displayed result screen")
+        onDispose { voiceService.shutdown() }
+    }
 
     Scaffold(
         topBar = {
@@ -178,11 +188,17 @@ fun LessonResultScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(
-                                text = if (passed) "Great Job!" else "Nice Try!",
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
+                            InteractiveResultText(
+                                text = if (passed) "Linghod kaayo!" else "Hapit na gyud!",
+                                translation = if (passed) "素晴らしい！よくできました。" else "あと一歩でクリアです！",
+                                voiceService = voiceService,
+                                modifier = Modifier.fillMaxWidth(),
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
                             Image(
                                 painter = painterResource(id = R.drawable.char_owl),
@@ -254,18 +270,61 @@ fun LessonResultScreen(
                             )
                         }
                         Column {
-                            Text(
-                                text = if (passed) "次のレベルが解放されました！" else "あと少しでレベルアップ！",
-                                fontWeight = FontWeight.Bold
+                            InteractiveResultText(
+                                text = if (passed) "Naablihan na nimo ang sunod nga lebel!" else "Gamaya na lang para mo-level up!",
+                                translation = if (passed) "次のレベルが解放されました！" else "あと少しでレベルアップ！",
+                                voiceService = voiceService,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
-                            Text(
-                                text = if (passed) "引き続き学習を続けましょう。" else "もう一度挑戦してみましょう。",
-                                style = MaterialTheme.typography.bodyMedium
+                            InteractiveResultText(
+                                text = if (passed) "Padayon lang sa pagtuon ha?" else "Balika nato ang lesson ug praktis pa!",
+                                translation = if (passed) "引き続き学習を続けましょう。" else "もう一度挑戦してみましょう。",
+                                voiceService = voiceService,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             )
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun InteractiveResultText(
+    text: String,
+    translation: String,
+    voiceService: GeminiVoiceService?,
+    style: TextStyle = LocalTextStyle.current,
+    modifier: Modifier = Modifier
+) {
+    var showTranslation by remember { mutableStateOf(false) }
+    Box(
+        modifier = modifier.pointerInput(text, translation) {
+            detectTapGestures(
+                onPress = {
+                    showTranslation = true
+                    try {
+                        tryAwaitRelease()
+                    } finally {
+                        showTranslation = false
+                    }
+                },
+                onTap = {
+                    voiceService?.stop()
+                    voiceService?.speak(text)
+                }
+            )
+        }
+    ) {
+        Text(
+            text = if (showTranslation && translation.isNotBlank()) translation else text,
+            style = style
+        )
     }
 }
