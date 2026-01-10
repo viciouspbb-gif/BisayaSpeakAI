@@ -8,6 +8,7 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import java.util.Locale
+import java.util.concurrent.ConcurrentLinkedQueue
 
 enum class GeminiVoiceCue {
     DEFAULT,
@@ -16,38 +17,48 @@ enum class GeminiVoiceCue {
 }
 
 class GeminiVoiceService(private val context: Context) {
-    private val tts: TextToSpeech by lazy {
-        TextToSpeech(context) { status ->
+    init {
+        GeminiVoiceSupervisor.register(this)
+        initializeTts()
+    }
+
+    private lateinit var tts: TextToSpeech
+
+    private fun initializeTts() {
+        if (::tts.isInitialized) return
+        tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 val result = tts.setLanguage(Locale("ceb", "PH"))
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                     tts.setLanguage(Locale.US)
                 }
                 ready = true
+                Log.d("GeminiVoiceService", "TextToSpeech initialized successfully (locale=${tts.voice?.locale})")
+                flushPendingQueue()
             } else {
                 Log.e("GeminiVoiceService", "Failed to initialize TextToSpeech: status=$status")
             }
-        }.apply {
-            setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) {
-                    mainHandler.post { currentOnStart?.invoke() }
-                }
-
-                override fun onDone(utteranceId: String?) {
-                    mainHandler.post { currentOnComplete?.invoke() }
-                }
-
-                override fun onError(utteranceId: String?) {
-                    mainHandler.post {
-                        currentOnError?.invoke(IllegalStateException("Gemini TTS playback error"))
-                    }
-                }
-            })
         }
+        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {
+                mainHandler.post { currentOnStart?.invoke() }
+            }
+
+            override fun onDone(utteranceId: String?) {
+                mainHandler.post { currentOnComplete?.invoke() }
+            }
+
+            override fun onError(utteranceId: String?) {
+                mainHandler.post {
+                    currentOnError?.invoke(IllegalStateException("Gemini TTS playback error"))
+                }
+            }
+        })
     }
 
     @Volatile
     private var ready: Boolean = false
+    private val pendingQueue = ConcurrentLinkedQueue<QueuedSpeech>()
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private var currentOnStart: (() -> Unit)? = null
@@ -61,16 +72,22 @@ class GeminiVoiceService(private val context: Context) {
         onComplete: (() -> Unit)? = null,
         onError: ((Throwable) -> Unit)? = null
     ) {
+        val speechRequest = QueuedSpeech(text, cue, onStart, onComplete, onError)
         if (!ready) {
-            onError?.invoke(IllegalStateException("GeminiVoiceService not ready"))
+            pendingQueue.offer(speechRequest)
+            Log.d("GeminiVoiceService", "TTS not ready. Queued text length=${text.length}")
             return
         }
 
-        currentOnComplete = onComplete
-        currentOnError = onError
-        currentOnStart = onStart
+        playSpeech(speechRequest)
+    }
 
-        val params = cue.voiceParams()
+    private fun playSpeech(request: QueuedSpeech) {
+        currentOnComplete = request.onComplete
+        currentOnError = request.onError
+        currentOnStart = request.onStart
+
+        val params = request.cue.voiceParams()
         tts.setPitch(params.pitch)
         tts.setSpeechRate(params.rate)
 
@@ -79,13 +96,22 @@ class GeminiVoiceService(private val context: Context) {
         }
 
         val utteranceId = "gemini-${System.currentTimeMillis()}"
-        val result = tts.speak(text, TextToSpeech.QUEUE_FLUSH, bundle, utteranceId)
+        val result = tts.speak(request.text, TextToSpeech.QUEUE_FLUSH, bundle, utteranceId)
         if (result != TextToSpeech.SUCCESS) {
-            onError?.invoke(IllegalStateException("Failed to start Gemini voice playback ($result)"))
+            request.onError?.invoke(IllegalStateException("Failed to start Gemini voice playback ($result)"))
+        }
+    }
+
+    private fun flushPendingQueue() {
+        while (pendingQueue.isNotEmpty()) {
+            val request = pendingQueue.poll() ?: continue
+            Log.d("GeminiVoiceService", "Flushing queued text length=${request.text.length}")
+            playSpeech(request)
         }
     }
 
     fun stop() {
+        Log.d("GeminiVoiceService", "Stopping current TTS playback")
         tts.stop()
         currentOnStart = null
         currentOnComplete = null
@@ -93,8 +119,19 @@ class GeminiVoiceService(private val context: Context) {
     }
 
     fun shutdown() {
+        Log.d("GeminiVoiceService", "Shutting down TextToSpeech engine")
         stop()
         tts.shutdown()
+        GeminiVoiceSupervisor.unregister(this)
+    }
+
+    fun clearQueue() {
+        pendingQueue.clear()
+    }
+
+    fun stopAndClearQueue() {
+        clearQueue()
+        stop()
     }
 
     private fun GeminiVoiceCue.voiceParams(): VoiceParams {
@@ -110,4 +147,37 @@ class GeminiVoiceService(private val context: Context) {
         val rate: Float,
         val volume: Float
     )
+
+    private data class QueuedSpeech(
+        val text: String,
+        val cue: GeminiVoiceCue,
+        val onStart: (() -> Unit)?,
+        val onComplete: (() -> Unit)?,
+        val onError: ((Throwable) -> Unit)?
+    )
+
+    companion object {
+        fun stopAllActive() {
+            GeminiVoiceSupervisor.stopAndClearAll()
+        }
+    }
+}
+
+private object GeminiVoiceSupervisor {
+    private val services = mutableSetOf<GeminiVoiceService>()
+
+    @Synchronized
+    fun register(service: GeminiVoiceService) {
+        services.add(service)
+    }
+
+    @Synchronized
+    fun unregister(service: GeminiVoiceService) {
+        services.remove(service)
+    }
+
+    @Synchronized
+    fun stopAndClearAll() {
+        services.forEach { it.stopAndClearQueue() }
+    }
 }

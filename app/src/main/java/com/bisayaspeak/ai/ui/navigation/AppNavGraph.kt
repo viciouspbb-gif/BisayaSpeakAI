@@ -62,6 +62,7 @@ import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.TranslateScreen
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
+import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.google.firebase.auth.FirebaseAuth
 
 enum class AppRoute(val route: String) {
@@ -117,7 +118,7 @@ fun AppNavGraph(
         }
     }
 
-    // 簡易的な UI State
+    // 邁｡譏鍋噪縺ｪ UI State
     val homeViewModel: HomeViewModel = viewModel()
     val homeStatus by homeViewModel.homeStatus.collectAsState()
     val isPaidPlan = userPlan != UserPlan.LITE
@@ -193,7 +194,7 @@ fun AppNavGraph(
                         onCreateAccount = {},
                         onLogout = {},
                         onOpenPremiumInfo = { /* Premium info not implemented */ },
-                        onOpenFeedback = { /* Lite版ではフィードバチE��画面を利用しなぁE*/ },
+                        onOpenFeedback = { /* Lite迚医〒縺ｯ繝輔ぅ繝ｼ繝峨ヰ繝・け逕ｻ髱｢繧貞茜逕ｨ縺励↑縺・*/ },
                         showPremiumTestToggle = false,
                         premiumTestEnabled = isPremiumPlan,
                         onTogglePremiumTest = null,
@@ -321,21 +322,20 @@ fun AppNavGraph(
 
         composable(
             route = AppRoute.LessonResult.route,
-            arguments = listOf(navArgument("correctCount") { type = NavType.IntType },
-                           navArgument("totalQuestions") { type = NavType.IntType },
-                           navArgument("earnedXP") { type = NavType.IntType },
-                           navArgument("clearedLevel") { type = NavType.IntType },
-                           navArgument("leveledUp") { type = NavType.BoolType })
+            arguments = listOf(
+                navArgument("correctCount") { type = NavType.IntType },
+                navArgument("totalQuestions") { type = NavType.IntType },
+                navArgument("earnedXP") { type = NavType.IntType },
+                navArgument("clearedLevel") { type = NavType.IntType },
+                navArgument("leveledUp") { type = NavType.BoolType }
+            )
         ) { backStackEntry ->
             val correctCount = backStackEntry.arguments?.getInt("correctCount") ?: 0
             val totalQuestions = backStackEntry.arguments?.getInt("totalQuestions") ?: 0
             val earnedXP = backStackEntry.arguments?.getInt("earnedXP") ?: 0
             val clearedLevel = backStackEntry.arguments?.getInt("clearedLevel") ?: 1
             val leveledUp = backStackEntry.arguments?.getBoolean("leveledUp") ?: false
-            
-            // ViewModelを取征E
-            val listeningViewModel: ListeningViewModel = viewModel()
-            
+            val listeningViewModel: ListeningViewModel = viewModel(factory = listeningViewModelFactory)
             LessonResultScreen(
                 correctCount = correctCount,
                 totalQuestions = totalQuestions,
@@ -400,7 +400,7 @@ fun AppNavGraph(
                     PracticeCategoryScreen(
                         onNavigateBack = { navController.popBackStack() },
                         onCategorySelected = { category ->
-                            // 5問連続�E題画面に遷移
+                            // 5蝠城｣邯壼・鬘檎判髱｢縺ｫ驕ｷ遘ｻ
                             navController.navigate("practice/quiz/$category")
                         },
                         userPlan = userPlan,
@@ -409,7 +409,7 @@ fun AppNavGraph(
                 }
             }
 
-            // Practice Quiz (5問連続�E顁E
+            // Practice Quiz (5蝠城｣邯壼・鬘・
             composable(
                 route = "practice/quiz/{category}",
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
@@ -424,7 +424,7 @@ fun AppNavGraph(
                 }
             }
 
-            // Practice Word List by Category (旧画面 - 忁E��に応じて残す)
+            // Practice Word List by Category (譌ｧ逕ｻ髱｢ - 蠢・ｦ√↓蠢懊§縺ｦ谿九☆)
             composable(
                 route = "practice/category/{category}",
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
@@ -483,7 +483,7 @@ fun AppNavGraph(
             }
         }
 
-        // チャチE��画面�E�無条件で追加�E�E
+        // 繝√Ε繝・ヨ逕ｻ髱｢・育┌譚｡莉ｶ縺ｧ霑ｽ蜉�・・
         composable(
             route = AppRoute.RolePlayChat.route,
             arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
@@ -491,8 +491,11 @@ fun AppNavGraph(
             val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: ""
             RoleplayChatScreen(
                 scenarioId = scenarioId,
+                isProVersion = isProUnlocked,
                 onBackClick = { navController.popBackStack() },
                 onCompleted = { result ->
+                    Log.d("AppNavigation", "Roleplay completion -> navigating to LessonResult. Stopping all TTS.")
+                    GeminiVoiceService.stopAllActive()
                     val destinationRoute = AppRoute.LessonResult.route
                         .replace("{correctCount}", result.correctCount.toString())
                         .replace("{totalQuestions}", result.totalQuestions.toString())
@@ -514,7 +517,7 @@ fun AppNavGraph(
             )
         }
 
-        // 既存�EモチE��シナリオ用�E�念のため残してぁE��す！E
+        // 譌｢蟄倥・繝｢繝・け繧ｷ繝翫Μ繧ｪ逕ｨ・亥ｿｵ縺ｮ縺溘ａ谿九＠縺ｦ縺・∪縺呻ｼ・
         composable(
             route = "role_play_scenario/{scenarioId}",
             arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
@@ -532,7 +535,7 @@ fun AppNavGraph(
                     )
                 }
             } else {
-                // シナリオが見つからなぁE��合�E戻めE
+                // 繧ｷ繝翫Μ繧ｪ縺瑚ｦ九▽縺九ｉ縺ｪ縺・�ｴ蜷医・謌ｻ繧・
                 LaunchedEffect(Unit) {
                     navController.popBackStack()
                 }

@@ -7,13 +7,17 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,6 +83,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
 
 data class ChatMessage(
@@ -95,7 +101,7 @@ data class ChatMessage(
 fun RoleplayChatScreen(
     scenarioId: String,
     onBackClick: () -> Unit,
-    isPremium: Boolean = false,
+    isProVersion: Boolean = false,
     onCompleted: (RoleplayResultPayload) -> Unit,
     viewModel: RoleplayChatViewModel = viewModel()
 ) {
@@ -103,26 +109,83 @@ fun RoleplayChatScreen(
     val speakingMessageId by viewModel.speakingMessageId.collectAsState()
     val context = LocalContext.current
     val voiceService = remember { GeminiVoiceService(context) }
+    var initialLineSpoken by remember(scenarioId) { mutableStateOf(false) }
 
-    DisposableEffect(Unit) {
-        onDispose { voiceService.shutdown() }
+    val ttsLogTag = remember { "RoleplayTTS" }
+
+    LaunchedEffect(Unit) {
+        Log.d(ttsLogTag, "Screen entered -> stopping all previous GeminiVoiceService instances")
+        GeminiVoiceService.stopAllActive()
     }
 
-    LaunchedEffect(scenarioId) {
-        viewModel.loadScenario(scenarioId)
+    val speakAiLine = remember(voiceService) {
+        { text: String, cue: GeminiVoiceCue?, messageId: String? ->
+            if (text.isNotBlank()) {
+                Log.d(ttsLogTag, "AI speak request id=$messageId length=${text.length}")
+            }
+            voiceService.speak(
+                text = text,
+                cue = cue ?: GeminiVoiceCue.HIGH_PITCH,
+                onStart = {
+                    Log.d(ttsLogTag, "AI speak started id=$messageId")
+                    messageId?.let { viewModel.notifyVoicePlaybackStarted(it) }
+                },
+                onComplete = {
+                    Log.d(ttsLogTag, "AI speak completed id=$messageId")
+                    messageId?.let { viewModel.notifyVoicePlaybackFinished(it) }
+                },
+                onError = {
+                    Log.w(ttsLogTag, "AI speak error id=$messageId", it)
+                    messageId?.let { viewModel.notifyVoicePlaybackFinished(it) }
+                }
+            )
+        }
+    }
+
+    val speakUserPreview = remember(voiceService) {
+        { text: String ->
+            if (text.isNotBlank()) {
+                Log.d(ttsLogTag, "User preview request length=${text.length}")
+                voiceService.speak(
+                    text = text,
+                    cue = GeminiVoiceCue.DEFAULT,
+                    onStart = { Log.d(ttsLogTag, "User preview started length=${text.length}") },
+                    onComplete = { Log.d(ttsLogTag, "User preview completed length=${text.length}") },
+                    onError = { Log.w(ttsLogTag, "User preview error length=${text.length}", it) }
+                )
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            Log.d(ttsLogTag, "RoleplayChatScreen disposed - stopping TTS playback only")
+            voiceService.stop()
+        }
+    }
+
+    LaunchedEffect(isProVersion) {
+        viewModel.setProAccess(isProVersion)
+    }
+
+    LaunchedEffect(scenarioId, isProVersion) {
+        viewModel.loadScenario(scenarioId, isProVersion)
     }
 
     val latestAiLine: ChatMessage? = uiState.messages.lastOrNull { !it.isUser }
 
     LaunchedEffect(latestAiLine?.id) {
         latestAiLine?.let { message ->
-            voiceService.speak(
-                text = message.text,
-                cue = message.voiceCue ?: GeminiVoiceCue.DEFAULT,
-                onStart = { viewModel.notifyVoicePlaybackStarted(message.id) },
-                onComplete = { viewModel.notifyVoicePlaybackFinished(message.id) },
-                onError = { viewModel.notifyVoicePlaybackFinished(message.id) }
-            )
+            speakAiLine(message.text, message.voiceCue, message.id)
+            initialLineSpoken = true
+        }
+    }
+
+    LaunchedEffect(uiState.currentScenario?.initialMessage, initialLineSpoken) {
+        val initialLine = uiState.currentScenario?.initialMessage
+        if (!initialLineSpoken && !initialLine.isNullOrBlank()) {
+            speakAiLine(initialLine, GeminiVoiceCue.HIGH_PITCH, null)
+            initialLineSpoken = true
         }
     }
 
@@ -183,6 +246,14 @@ fun RoleplayChatScreen(
                 latestAiLine = latestAiLine,
                 speakingMessageId = speakingMessageId,
                 initialLine = uiState.currentScenario?.initialMessage,
+                isProUser = uiState.isProUser,
+                onReplayRequest = {
+                    latestAiLine?.let { message ->
+                        speakAiLine(message.text, message.voiceCue, message.id)
+                    } ?: uiState.currentScenario?.initialMessage?.let { intro ->
+                        speakAiLine(intro, GeminiVoiceCue.HIGH_PITCH, null)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
@@ -211,7 +282,8 @@ fun RoleplayChatScreen(
                 onSelect = { viewModel.selectOption(it) },
                 onHintPeek = { viewModel.markHintPeeked(it) },
                 trayBounds = { dropZoneBounds.value },
-                onDragActiveChange = { activeDragOptionId = it }
+                onDragActiveChange = { activeDragOptionId = it },
+                onPreview = { text -> speakUserPreview(text) }
             )
         }
     }
@@ -247,19 +319,30 @@ private fun Rect.expand(by: Float): Rect {
     )
 }
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun StageSection(
     latestAiLine: ChatMessage?,
     speakingMessageId: String?,
     initialLine: String?,
+    isProUser: Boolean,
+    onReplayRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val bubbleKey = latestAiLine?.id ?: "initial"
-    val translationText = latestAiLine?.translation.orEmpty()
+    val translationText = if (isProUser) latestAiLine?.translation.orEmpty() else ""
     var showTranslation by remember(bubbleKey) { mutableStateOf(false) }
     val displayText = latestAiLine?.text ?: initialLine ?: "Maayong buntag! はじめようかの？"
     val isSpeaking = latestAiLine?.id != null && speakingMessageId == latestAiLine.id
+    val interactionSource = remember(bubbleKey) { MutableInteractionSource() }
+
+    LaunchedEffect(interactionSource, bubbleKey) {
+        interactionSource.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Release || interaction is PressInteraction.Cancel) {
+                showTranslation = false
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -286,19 +369,16 @@ private fun StageSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .pointerInput(bubbleKey, translationText) {
-                    detectTapGestures(
-                        onPress = {
-                            if (translationText.isBlank()) {
-                                tryAwaitRelease()
-                                return@detectTapGestures
-                            }
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = { onReplayRequest() },
+                    onLongClick = {
+                        if (translationText.isNotBlank()) {
                             showTranslation = true
-                            tryAwaitRelease()
-                            showTranslation = false
                         }
-                    )
-                },
+                    }
+                ),
             color = Color(0xFFFFF4DB),
             shape = RoundedCornerShape(32.dp),
             tonalElevation = if (isSpeaking) 10.dp else 2.dp,
@@ -349,7 +429,8 @@ private fun ResponsePanel(
     onSelect: (String) -> Unit,
     onHintPeek: (String) -> Unit,
     trayBounds: () -> Rect?,
-    onDragActiveChange: (String?) -> Unit
+    onDragActiveChange: (String?) -> Unit,
+    onPreview: (String) -> Unit
 ) {
     Surface(
         modifier = modifier.clip(RoundedCornerShape(36.dp)),
@@ -403,7 +484,8 @@ private fun ResponsePanel(
                                 onPeekHint = onHintPeek,
                                 onDragActiveChange = { active ->
                                     onDragActiveChange(active)
-                                }
+                                },
+                                onPreview = onPreview
                             )
                         }
                     }
@@ -459,6 +541,7 @@ private fun DropConfirmationTray(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RoleplayOptionCard(
     option: RoleplayOption,
@@ -466,7 +549,8 @@ private fun RoleplayOptionCard(
     trayBounds: () -> Rect?,
     onSelect: (String) -> Unit,
     onPeekHint: (String) -> Unit,
-    onDragActiveChange: (String?) -> Unit
+    onDragActiveChange: (String?) -> Unit,
+    onPreview: (String) -> Unit
 ) {
     var showTranslation by remember(option.id) { mutableStateOf(false) }
     var hasPeeked by remember(option.id) { mutableStateOf(false) }
@@ -474,6 +558,15 @@ private fun RoleplayOptionCard(
     var optionBounds by remember(option.id) { mutableStateOf<Rect?>(null) }
     val translationAvailable = !option.hint.isNullOrBlank()
     val density = LocalDensity.current
+    val interactionSource = remember(option.id) { MutableInteractionSource() }
+
+    LaunchedEffect(option.id, interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Release || interaction is PressInteraction.Cancel) {
+                showTranslation = false
+            }
+        }
+    }
 
     Surface(
         modifier = Modifier
@@ -483,25 +576,25 @@ private fun RoleplayOptionCard(
             .onGloballyPositioned { coords ->
                 optionBounds = coords.windowRect()
             }
-            .pointerInput(option.id, translationAvailable) {
-                detectTapGestures(
-                    onPress = {
-                        if (translationAvailable) {
-                            showTranslation = true
-                            if (!hasPeeked) {
-                                onPeekHint(option.id)
-                                hasPeeked = true
-                            }
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = { onPreview(option.text) },
+                onLongClick = {
+                    if (translationAvailable) {
+                        showTranslation = true
+                        if (!hasPeeked) {
+                            onPeekHint(option.id)
+                            hasPeeked = true
                         }
-                        tryAwaitRelease()
-                        showTranslation = false
-                    },
-                    onDoubleTap = { onSelect(option.id) }
-                )
-            }
+                    }
+                },
+                onDoubleClick = { onSelect(option.id) }
+            )
             .pointerInput(option.id, trayBounds()) {
                 detectDragGestures(
                     onDragStart = {
+                        onPreview(option.text)
                         onDragActiveChange(option.id)
                     },
                     onDrag = { change, dragAmount ->
@@ -510,7 +603,7 @@ private fun RoleplayOptionCard(
                     },
                     onDragEnd = {
                         val currentRect = optionBounds?.translate(dragOffset.x, dragOffset.y)
-                        val expandedDropRect = trayBounds()?.expand(by = with(density) { 20.dp.toPx() })
+                        val expandedDropRect = trayBounds()?.expand(by = with(density) { 64.dp.toPx() })
                         val hit = currentRect != null && expandedDropRect != null && expandedDropRect.overlaps(currentRect)
                         if (hit) {
                             Log.d("RoleplayChat", "Drop success for option=${option.id}")
