@@ -1,19 +1,22 @@
 package com.bisayaspeak.ai.ui.roleplay
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.bisayaspeak.ai.LessonStatusManager
+import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
+import com.bisayaspeak.ai.data.repository.UserPreferencesRepository
 import com.bisayaspeak.ai.utils.MistakeManager
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
-import com.bisayaspeak.ai.LessonStatusManager
+import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -56,8 +59,11 @@ data class RoleplayUiState(
 )
 
 class RoleplayChatViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+
     private val repository: GeminiMissionRepository = GeminiMissionRepository()
-) : ViewModel() {
+    private val userPreferencesRepository = UserPreferencesRepository(application)
 
     private companion object {
         private const val START_TOKEN = "[START_CONVERSATION]"
@@ -77,11 +83,26 @@ class RoleplayChatViewModel(
     private var scriptedRuntime: ScriptedRuntime? = null
     private var isProVersion: Boolean = false
     private val branchFacts = mutableMapOf<String, String>()
+    private var currentUserGender: UserGender = UserGender.SECRET
+
+    init {
+        viewModelScope.launch {
+            userPreferencesRepository.userGender.collect { gender ->
+                currentUserGender = gender
+            }
+        }
+    }
 
     fun setProAccess(enabled: Boolean) {
         if (isProVersion == enabled) return
         isProVersion = enabled
         _uiState.update { it.copy(isProUser = enabled) }
+    }
+
+    fun saveUserGender(gender: UserGender) {
+        viewModelScope.launch {
+            userPreferencesRepository.saveUserGender(gender)
+        }
     }
 
     fun loadScenario(scenarioId: String, isProUser: Boolean = isProVersion) {
@@ -371,6 +392,12 @@ class RoleplayChatViewModel(
             "- ${it.nativeText} (${it.translation})"
         }.ifBlank { "- (none)" }
 
+        val genderInstruction = when (currentUserGender) {
+            UserGender.MALE -> "User is Male. Always address him as 'Sir'."
+            UserGender.FEMALE -> "User is Female. Always address her as 'Ma'am'."
+            UserGender.SECRET -> "User's gender is unknown. Address the user neutrally as 'Friend' or 'Boss'."
+        }
+
         val basePrompt = if (scenario.systemPrompt.isBlank()) {
             """
             You are ${scenario.aiRole}.
@@ -379,8 +406,14 @@ class RoleplayChatViewModel(
             """.trimIndent()
         } else scenario.systemPrompt
 
+        val systemPromptWithGender = buildString {
+            append(basePrompt)
+            append("\n\n")
+            append(genderInstruction)
+        }.trim()
+
         return """
-            $basePrompt
+            $systemPromptWithGender
 
             Helpful hint phrases:
             $hints
