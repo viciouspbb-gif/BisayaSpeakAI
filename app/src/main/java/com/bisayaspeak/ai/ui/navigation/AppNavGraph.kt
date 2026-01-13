@@ -45,8 +45,10 @@ import com.bisayaspeak.ai.ui.missions.MissionListScreen
 import com.bisayaspeak.ai.ui.missions.MissionScenarioSelectScreen
 import com.bisayaspeak.ai.ui.missions.MissionTalkScreen
 import com.bisayaspeak.ai.ui.roleplay.RoleplayChatScreen
+import com.bisayaspeak.ai.ui.roleplay.RoleplayChatViewModel
 import com.bisayaspeak.ai.ui.roleplay.RoleplayListScreen
 import com.bisayaspeak.ai.ui.screens.AiTranslatorScreen
+import com.bisayaspeak.ai.ui.screens.GenderSelectionScreen
 import com.bisayaspeak.ai.ui.screens.FeedbackScreen
 import com.bisayaspeak.ai.ui.screens.FlashcardScreen
 import com.bisayaspeak.ai.ui.screens.LessonResultScreen
@@ -60,6 +62,7 @@ import com.bisayaspeak.ai.ui.screens.PracticeWordListScreen
 import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.TranslateScreen
+import com.bisayaspeak.ai.ui.viewmodel.GenderSelectionViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 import com.bisayaspeak.ai.voice.GeminiVoiceService
@@ -67,6 +70,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 enum class AppRoute(val route: String) {
     Home("home"),
+    GenderSelection("gender_selection"),
     LevelSelection("level_selection"),
     Translation("translation"),
     Flashcards("flashcards"),
@@ -137,6 +141,14 @@ fun AppNavGraph(
         navController = navController,
         startDestination = AppRoute.Home.route
     ) {
+        composable(AppRoute.GenderSelection.route) {
+            val genderSelectionViewModel: GenderSelectionViewModel = viewModel()
+            GenderSelectionScreen(
+                navController = navController,
+                viewModel = genderSelectionViewModel
+            )
+        }
+
         composable(AppRoute.Home.route) {
             BannerScreenContainer(userPlan = userPlan) {
                 HomeScreen(
@@ -146,7 +158,7 @@ fun AppNavGraph(
                     isProUnlocked = isProUnlocked,
 
                     onStartLearning = {
-                        navController.navigate(AppRoute.LevelSelection.route)
+                        navController.navigate(AppRoute.GenderSelection.route)
                     },
                     onClickFeature = { feature ->
                         when (feature) {
@@ -173,7 +185,7 @@ fun AppNavGraph(
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
-                            FeatureId.ROLE_PLAY -> navController.navigate(AppRoute.RolePlayList.route)
+                            FeatureId.ROLE_PLAY -> navController.navigate(AppRoute.GenderSelection.route)
 
                             else -> { /* Legacy/unused features */ }
                         }
@@ -488,7 +500,9 @@ fun AppNavGraph(
             route = AppRoute.RolePlayChat.route,
             arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: ""
+            val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: "default"
+            val roleplayChatViewModel: RoleplayChatViewModel = viewModel()
+
             RoleplayChatScreen(
                 scenarioId = scenarioId,
                 isProVersion = isProUnlocked,
@@ -513,7 +527,8 @@ fun AppNavGraph(
                             Log.e("AppNavGraph", "Failed to navigate to LessonResultScreen", e)
                         }
                     }
-                }
+                },
+                viewModel = roleplayChatViewModel
             )
         }
 

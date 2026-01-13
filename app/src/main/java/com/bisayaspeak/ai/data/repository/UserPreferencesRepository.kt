@@ -22,7 +22,7 @@ class UserPreferencesRepository(private val context: Context) {
 
     val userGender: Flow<UserGender> = context.userPreferencesDataStore.data.map { preferences ->
         val stored = preferences[USER_GENDER_KEY].orEmpty()
-        runCatching { UserGender.valueOf(stored) }.getOrElse { UserGender.SECRET }
+        runCatching { UserGender.valueOf(stored) }.getOrElse { UserGender.OTHER }
     }
 
     suspend fun saveUserGender(gender: UserGender) {

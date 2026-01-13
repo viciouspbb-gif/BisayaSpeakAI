@@ -32,6 +32,8 @@ class GeminiVoiceService(private val context: Context) {
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                     tts.setLanguage(Locale.US)
                 }
+                tts.setPitch(1.4f)
+                tts.setSpeechRate(1.2f)
                 ready = true
                 Log.d("GeminiVoiceService", "TextToSpeech initialized successfully (locale=${tts.voice?.locale})")
                 flushPendingQueue()

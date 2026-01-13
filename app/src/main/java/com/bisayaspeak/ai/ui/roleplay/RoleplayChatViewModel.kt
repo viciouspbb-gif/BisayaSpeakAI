@@ -83,14 +83,11 @@ class RoleplayChatViewModel(
     private var scriptedRuntime: ScriptedRuntime? = null
     private var isProVersion: Boolean = false
     private val branchFacts = mutableMapOf<String, String>()
-    private var currentUserGender: UserGender = UserGender.SECRET
+    private var currentUserGender: UserGender = UserGender.OTHER
+    private var userCallSign: String = "パートナー（Friend）"
 
     init {
-        viewModelScope.launch {
-            userPreferencesRepository.userGender.collect { gender ->
-                currentUserGender = gender
-            }
-        }
+        observeUserGender()
     }
 
     fun setProAccess(enabled: Boolean) {
@@ -102,6 +99,19 @@ class RoleplayChatViewModel(
     fun saveUserGender(gender: UserGender) {
         viewModelScope.launch {
             userPreferencesRepository.saveUserGender(gender)
+        }
+    }
+
+    private fun observeUserGender() {
+        viewModelScope.launch {
+            userPreferencesRepository.userGender.collect { gender ->
+                currentUserGender = gender
+                userCallSign = when (gender) {
+                    UserGender.MALE -> "彼氏（Gwapo/Handsome）"
+                    UserGender.FEMALE -> "彼女（Gwapa/Beautiful）"
+                    UserGender.OTHER -> "パートナー（Friend）"
+                }
+            }
         }
     }
 
@@ -392,11 +402,12 @@ class RoleplayChatViewModel(
             "- ${it.nativeText} (${it.translation})"
         }.ifBlank { "- (none)" }
 
-        val genderInstruction = when (currentUserGender) {
-            UserGender.MALE -> "User is Male. Always address him as 'Sir'."
-            UserGender.FEMALE -> "User is Female. Always address her as 'Ma'am'."
-            UserGender.SECRET -> "User's gender is unknown. Address the user neutrally as 'Friend' or 'Boss'."
-        }
+        val genderInstruction = """
+            あなたはフィリピン・セブ島の「タリ」です。
+            向かい側にいるのは、あなたの$userCallSign です。
+            相手の性別・距離感に合わせて、甘える／励ます／親友のように話しかけてください。
+            丁寧さよりも、温かく寄り添う姿勢を常に優先してください。
+        """.trimIndent()
 
         val basePrompt = if (scenario.systemPrompt.isBlank()) {
             """
