@@ -120,11 +120,12 @@ fun RoleplayChatScreen(
 
     val speakAiLine = remember(voiceService) {
         { text: String, cue: GeminiVoiceCue?, messageId: String? ->
-            if (text.isNotBlank()) {
+            val speechText = primarySpeechText(text)
+            if (speechText.isNotBlank()) {
                 Log.d(ttsLogTag, "AI speak request id=$messageId length=${text.length}")
             }
             voiceService.speak(
-                text = text,
+                text = speechText,
                 cue = cue ?: GeminiVoiceCue.HIGH_PITCH,
                 onStart = {
                     Log.d(ttsLogTag, "AI speak started id=$messageId")
@@ -246,7 +247,6 @@ fun RoleplayChatScreen(
                 latestAiLine = latestAiLine,
                 speakingMessageId = speakingMessageId,
                 initialLine = uiState.currentScenario?.initialMessage,
-                isProUser = uiState.isProUser,
                 onReplayRequest = {
                     latestAiLine?.let { message ->
                         speakAiLine(message.text, message.voiceCue, message.id)
@@ -325,14 +325,21 @@ private fun StageSection(
     latestAiLine: ChatMessage?,
     speakingMessageId: String?,
     initialLine: String?,
-    isProUser: Boolean,
     onReplayRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val bubbleKey = latestAiLine?.id ?: "initial"
-    val translationText = if (isProUser) latestAiLine?.translation.orEmpty() else ""
+    val fullDisplayText = latestAiLine?.text ?: initialLine ?: "Maayong buntag! はじめようかの？"
+    val splitResult = remember(fullDisplayText) {
+        splitInlineTranslation(fullDisplayText)
+    }
+    val primaryLine = splitResult.first
+    val inlineTranslation = splitResult.second
+    val translationText = latestAiLine?.translation.orEmpty()
+    val translationToShow = inlineTranslation ?: translationText
+    val hasTranslation = translationToShow.isNotBlank()
     var showTranslation by remember(bubbleKey) { mutableStateOf(false) }
-    val displayText = latestAiLine?.text ?: initialLine ?: "Maayong buntag! はじめようかの？"
+    val displayText = primaryLine.ifBlank { fullDisplayText }
     val isSpeaking = latestAiLine?.id != null && speakingMessageId == latestAiLine.id
     val interactionSource = remember(bubbleKey) { MutableInteractionSource() }
 
@@ -374,7 +381,7 @@ private fun StageSection(
                     indication = null,
                     onClick = { onReplayRequest() },
                     onLongClick = {
-                        if (translationText.isNotBlank()) {
+                        if (hasTranslation) {
                             showTranslation = true
                         }
                     }
@@ -403,12 +410,12 @@ private fun StageSection(
                 }
 
                 AnimatedVisibility(
-                    visible = showTranslation && translationText.isNotBlank(),
+                    visible = showTranslation && hasTranslation,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
                     Text(
-                        text = translationText,
+                        text = translationToShow,
                         color = Color(0xCC5B3600),
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center,

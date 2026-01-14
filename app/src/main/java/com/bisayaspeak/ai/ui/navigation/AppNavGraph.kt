@@ -158,7 +158,7 @@ fun AppNavGraph(
                     isProUnlocked = isProUnlocked,
 
                     onStartLearning = {
-                        navController.navigate(AppRoute.GenderSelection.route)
+                        navController.navigate(AppRoute.LevelSelection.route)
                     },
                     onClickFeature = { feature ->
                         when (feature) {
