@@ -314,12 +314,13 @@ class RoleplayChatViewModel(
     }
 
     private fun applyAiPayload(payload: RoleplayAiResponsePayload) {
-        val aiText = payload.aiResponse.ifBlank { "..." }
-        history.add(MissionHistoryMessage(aiText, isUser = false))
+        val aiSpeech = payload.aiSpeech.ifBlank { "..." }
+        history.add(MissionHistoryMessage(aiSpeech, isUser = false))
         val aiMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
-            text = aiText,
+            text = aiSpeech,
             isUser = false,
+            translation = payload.aiTranslation.takeIf { it.isNotBlank() },
             voiceCue = GeminiVoiceCue.HIGH_PITCH
         )
         val options = payload.options
@@ -403,10 +404,12 @@ class RoleplayChatViewModel(
         }.ifBlank { "- (none)" }
 
         val genderInstruction = """
-            あなたはフィリピン・セブ島の「タリ」です。
-            向かい側にいるのは、あなたの$userCallSign です。
-            相手の性別・距離感に合わせて、甘える／励ます／親友のように話しかけてください。
-            丁寧さよりも、温かく寄り添う姿勢を常に優先してください。
+            SYSTEM DIRECTIVE:
+            - You are Tari, a real Cebuana woman living in Cebu.
+            - You must always speak Bisaya (Cebuano) in your dialogue. Never mix Japanese or English into your speech field.
+            - Provide a separate Japanese translation ONLY inside the dedicated translation field.
+            - The learner is $userCallSign. Remember and respect their gender and relationship tone every turn.
+            - Stay affectionate, supportive, and slightly mischievous, but never break character.
         """.trimIndent()
 
         val basePrompt = if (scenario.systemPrompt.isBlank()) {
@@ -434,25 +437,27 @@ class RoleplayChatViewModel(
 
             Latest learner message: $userMessage
 
-            Respond strictly in JSON:
+            Respond strictly in JSON with exactly these fields and no extras:
             {
-              "aiResponse": "assistant reply in Bisaya with light Japanese hints if needed",
+              "aiSpeech": "Assistant reply in Bisaya ONLY. Do not include Japanese or English.",
+              "aiTranslation": "Japanese translation of aiSpeech ONLY.",
               "options": [
                 {
-                  "text": "suggested learner reply in Bisaya",
-                  "translation": "Japanese translation or hint",
-                  "tone": "short tone description"
+                  "text": "Suggested learner reply in Bisaya ONLY.",
+                  "translation": "Japanese translation of that option ONLY.",
+                  "tone": "Short descriptor in Japanese (optional)."
                 }
               ]
             }
-            Provide 2-3 concise options. Do not include markdown.
+            Output 2-3 concise options. Never include markdown or explanations outside JSON.
         """.trimIndent()
     }
 
     private fun parseRoleplayPayload(raw: String): RoleplayAiResponsePayload {
         return try {
             val json = JSONObject(raw)
-            val aiResponse = json.optString("aiResponse", raw)
+            val aiSpeech = json.optString("aiSpeech", json.optString("aiResponse", raw))
+            val aiTranslation = json.optString("aiTranslation", "")
             val optionsArray = json.optJSONArray("options") ?: JSONArray()
             val options = mutableListOf<RoleplayAiOption>()
             for (i in 0 until optionsArray.length()) {
@@ -463,14 +468,23 @@ class RoleplayChatViewModel(
                     tone = item.optString("tone")
                 )
             }
-            RoleplayAiResponsePayload(aiResponse, options)
+            RoleplayAiResponsePayload(
+                aiSpeech = aiSpeech,
+                aiTranslation = aiTranslation,
+                options = options
+            )
         } catch (_: Exception) {
-            RoleplayAiResponsePayload(raw, emptyList())
+            RoleplayAiResponsePayload(
+                aiSpeech = raw,
+                aiTranslation = "",
+                options = emptyList()
+            )
         }
     }
 
     private data class RoleplayAiResponsePayload(
-        val aiResponse: String,
+        val aiSpeech: String,
+        val aiTranslation: String,
         val options: List<RoleplayAiOption>
     )
 
