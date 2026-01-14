@@ -1,6 +1,10 @@
 ﻿package com.bisayaspeak.ai.ui.roleplay
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -22,6 +26,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,16 +40,25 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -79,8 +93,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import kotlinx.coroutines.delay
@@ -102,7 +118,7 @@ fun RoleplayChatScreen(
     scenarioId: String,
     onBackClick: () -> Unit,
     isProVersion: Boolean = false,
-    onCompleted: (RoleplayResultPayload) -> Unit,
+    onSaveAndExit: (List<MissionHistoryMessage>) -> Unit,
     viewModel: RoleplayChatViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -110,6 +126,25 @@ fun RoleplayChatScreen(
     val context = LocalContext.current
     val voiceService = remember { GeminiVoiceService(context) }
     var initialLineSpoken by remember(scenarioId) { mutableStateOf(false) }
+
+    val audioPermissionGrantedState = remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    var pendingPermissionRequest by remember { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        audioPermissionGrantedState.value = granted
+        if (granted && pendingPermissionRequest) {
+            viewModel.startVoiceRecording()
+        }
+        pendingPermissionRequest = false
+    }
 
     val ttsLogTag = remember { "RoleplayTTS" }
 
@@ -190,19 +225,23 @@ fun RoleplayChatScreen(
         }
     }
 
-    val pendingResult = uiState.pendingResult
+    val pendingExitHistory = uiState.pendingExitHistory
 
-    LaunchedEffect(pendingResult) {
-        pendingResult?.let {
-            onCompleted(it)
-            viewModel.consumePendingResult()
+    LaunchedEffect(pendingExitHistory) {
+        pendingExitHistory?.let {
+            onSaveAndExit(it)
+            viewModel.consumePendingExitHistory()
         }
     }
 
     val scenarioTitle = uiState.currentScenario?.title ?: "タリとの散歩道"
+    val isSavingHistory = uiState.isSavingHistory
+    val saveHistoryError = uiState.saveHistoryError
 
     var activeDragOptionId by remember { mutableStateOf<String?>(null) }
     val dropZoneBounds = remember { mutableStateOf<Rect?>(null) }
+
+    val screenScrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
@@ -214,6 +253,28 @@ fun RoleplayChatScreen(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "戻る"
                         )
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = {
+                            viewModel.saveAndExit()
+                        },
+                        enabled = !isSavingHistory
+                    ) {
+                        if (isSavingHistory) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "散歩を保存してTOPへ",
+                                color = Color.White
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -240,7 +301,8 @@ fun RoleplayChatScreen(
                         )
                     )
                 )
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .verticalScroll(screenScrollState),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             StageSection(
@@ -274,8 +336,7 @@ fun RoleplayChatScreen(
 
             ResponsePanel(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                    .fillMaxWidth(),
                 isLoading = uiState.isLoading,
                 options = uiState.options,
                 peekedHintIds = uiState.peekedHintOptionIds,
@@ -285,6 +346,45 @@ fun RoleplayChatScreen(
                 onDragActiveChange = { activeDragOptionId = it },
                 onPreview = { text -> speakUserPreview(text) }
             )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            val audioPermissionGranted = audioPermissionGrantedState.value
+            val micButtonAction = {
+                when {
+                    uiState.isVoiceRecording -> viewModel.stopVoiceRecordingAndSend()
+                    uiState.isVoiceTranscribing -> Unit
+                    !uiState.isVoiceRecording -> {
+                        if (!audioPermissionGranted) {
+                            pendingPermissionRequest = true
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        } else {
+                            viewModel.startVoiceRecording()
+                        }
+                    }
+                }
+            }
+
+            VoiceInputPanel(
+                modifier = Modifier.fillMaxWidth(),
+                isRecording = uiState.isVoiceRecording,
+                isTranscribing = uiState.isVoiceTranscribing,
+                permissionGranted = audioPermissionGranted,
+                lastTranscribedText = uiState.lastTranscribedText,
+                errorMessage = uiState.voiceErrorMessage,
+                onMicClick = micButtonAction,
+                onCancelRecording = { viewModel.cancelVoiceRecording() }
+            )
+
+            if (!saveHistoryError.isNullOrEmpty()) {
+                Text(
+                    text = saveHistoryError,
+                    color = Color(0xFFFFB4AB),
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                )
+            }
         }
     }
 }
@@ -480,7 +580,10 @@ private fun ResponsePanel(
                             .weight(1f)
                             .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 12.dp)
+                        contentPadding = PaddingValues(
+                            top = 4.dp,
+                            bottom = 120.dp
+                        )
                     ) {
                         items(options, key = { it.id }) { option ->
                             RoleplayOptionCard(
@@ -543,6 +646,145 @@ private fun DropConfirmationTray(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 4.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun VoiceInputPanel(
+    modifier: Modifier = Modifier,
+    isRecording: Boolean,
+    isTranscribing: Boolean,
+    permissionGranted: Boolean,
+    lastTranscribedText: String?,
+    errorMessage: String?,
+    onMicClick: () -> Unit,
+    onCancelRecording: () -> Unit
+) {
+    val trimmedPreview = lastTranscribedText?.let { text ->
+        if (text.length > 80) text.take(80) + "…" else text
+    }
+    val statusText = when {
+        isRecording -> "録音中…タップで送信"
+        isTranscribing -> "音声テキスト化中…"
+        else -> "自由に話しかけてOK！"
+    }
+    val helperText = when {
+        isRecording -> "終わったらもう一度タップ。キャンセルも可能です。"
+        isTranscribing -> "タリがビサヤ語に変換しています。少し待ってね。"
+        else -> "選択肢以外のアドリブ台詞も大歓迎。"
+    }
+    val buttonColor = when {
+        !permissionGranted -> Color(0xFF475569)
+        isRecording -> Color(0xFFE11D48)
+        isTranscribing -> Color(0xFF2563EB)
+        else -> Color(0xFF22C55E)
+    }
+    val icon = if (isRecording) Icons.Filled.Stop else Icons.Filled.Mic
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(32.dp),
+        color = Color(0xFF0B1124),
+        tonalElevation = 6.dp,
+        shadowElevation = 6.dp
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                FilledIconButton(
+                    onClick = onMicClick,
+                    enabled = permissionGranted && !isTranscribing,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = buttonColor,
+                        disabledContainerColor = Color(0xFF1E293B)
+                    ),
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = if (isRecording) "録音停止" else "録音開始",
+                        tint = Color.White
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = statusText,
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = helperText,
+                        color = Color(0xFF9FB4D3),
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+                if (isRecording) {
+                    TextButton(onClick = onCancelRecording) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "録音を破棄",
+                            tint = Color.White
+                        )
+                        Text(
+                            text = "キャンセル",
+                            color = Color.White,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            AnimatedVisibility(visible = isTranscribing, modifier = Modifier.padding(top = 12.dp)) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFF38BDF8),
+                    trackColor = Color(0xFF1E3A5F)
+                )
+            }
+
+            AnimatedVisibility(visible = !permissionGranted, modifier = Modifier.padding(top = 12.dp)) {
+                Text(
+                    text = "マイク権限が必要です。ボタンを押して許可すると録音できます。",
+                    color = Color(0xFFFFB4AB),
+                    fontSize = 13.sp
+                )
+            }
+
+            AnimatedVisibility(
+                visible = !errorMessage.isNullOrBlank(),
+                modifier = Modifier.padding(top = 12.dp)
+            ) {
+                Text(
+                    text = errorMessage.orEmpty(),
+                    color = Color(0xFFFFB4AB),
+                    fontSize = 13.sp
+                )
+            }
+
+            AnimatedVisibility(
+                visible = !trimmedPreview.isNullOrBlank() && !isRecording && !isTranscribing,
+                modifier = Modifier.padding(top = 12.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "前回の音声メモ",
+                        color = Color(0xFF8FD3FF),
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = "「$trimmedPreview」",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
         }
     }
