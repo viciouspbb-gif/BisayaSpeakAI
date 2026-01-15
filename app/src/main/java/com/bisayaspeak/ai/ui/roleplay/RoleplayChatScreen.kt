@@ -1,7 +1,13 @@
 ﻿package com.bisayaspeak.ai.ui.roleplay
 
 import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,6 +21,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -24,6 +31,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -49,6 +57,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -90,10 +99,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
@@ -102,6 +113,7 @@ import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 data class ChatMessage(
@@ -137,12 +149,23 @@ fun RoleplayChatScreen(
         )
     }
     var pendingPermissionRequest by remember { mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         audioPermissionGrantedState.value = granted
         if (granted && pendingPermissionRequest) {
             viewModel.startVoiceRecording()
+        }
+        if (!granted) {
+            val activity = context.findActivity()
+            val rationale = ActivityCompat.shouldShowRequestPermissionRationale(
+                activity,
+                Manifest.permission.RECORD_AUDIO
+            )
+            if (!rationale) {
+                showPermissionDialog = true
+            }
         }
         pendingPermissionRequest = false
     }
@@ -244,8 +267,6 @@ fun RoleplayChatScreen(
 
     val screenScrollState = rememberScrollState()
 
-    val voicePanelBottomPadding = 120.dp
-
     val audioPermissionGranted = audioPermissionGrantedState.value
     val micButtonAction = {
         when {
@@ -306,7 +327,7 @@ fun RoleplayChatScreen(
         containerColor = Color(0xFF0F172A),
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -321,11 +342,20 @@ fun RoleplayChatScreen(
                     )
                 )
         ) {
+            val screenHeight = maxHeight
+            val screenWidth = maxWidth
+            val isCompactHeight = screenHeight < 640.dp
+            val scaleFactor = if (isCompactHeight || screenWidth < 360.dp) 0.88f else 1f
+            val columnTopPadding = if (isCompactHeight) 4.dp else 8.dp
+            val voicePanelBottomPadding = if (isCompactHeight) 96.dp else 120.dp
+            val optionSpacing = if (isCompactHeight) 10.dp else 12.dp
+            val optionContentPadding = if (isCompactHeight) 8.dp else 12.dp
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 24.dp)
-                    .padding(top = 8.dp, bottom = voicePanelBottomPadding)
+                    .padding(top = columnTopPadding, bottom = voicePanelBottomPadding)
                     .verticalScroll(screenScrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -342,26 +372,28 @@ fun RoleplayChatScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .wrapContentHeight()
+                        .wrapContentHeight(),
+                    scale = scaleFactor
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 DropConfirmationTray(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(96.dp)
+                        .height(if (isCompactHeight) 88.dp else 96.dp)
                         .onGloballyPositioned { dropZoneBounds.value = it.windowRect() },
                     isHighlighted = activeDragOptionId != null,
-                    lockedOption = uiState.lockedOption
+                    lockedOption = uiState.lockedOption,
+                    scale = scaleFactor
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 ResponsePanel(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 320.dp),
+                        .heightIn(min = if (isCompactHeight) 280.dp else 320.dp),
                     isLoading = uiState.isLoading,
                     options = uiState.options,
                     peekedHintIds = uiState.peekedHintOptionIds,
@@ -369,16 +401,19 @@ fun RoleplayChatScreen(
                     onHintPeek = { viewModel.markHintPeeked(it) },
                     trayBounds = { dropZoneBounds.value },
                     onDragActiveChange = { activeDragOptionId = it },
-                    onPreview = { text -> speakUserPreview(text) }
+                    onPreview = { text -> speakUserPreview(text) },
+                    optionSpacing = optionSpacing,
+                    optionBottomPadding = optionContentPadding,
+                    scale = scaleFactor
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 if (!saveHistoryError.isNullOrEmpty()) {
                     Text(
                         text = saveHistoryError,
                         color = Color(0xFFFFB4AB),
-                        fontSize = 13.sp,
+                        fontSize = 13.sp * scaleFactor.coerceAtLeast(0.85f),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
@@ -388,16 +423,39 @@ fun RoleplayChatScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                    .padding(horizontal = 24.dp, vertical = if (isCompactHeight) 10.dp else 16.dp),
                 isRecording = uiState.isVoiceRecording,
                 isTranscribing = uiState.isVoiceTranscribing,
                 permissionGranted = audioPermissionGranted,
                 lastTranscribedText = uiState.lastTranscribedText,
                 errorMessage = uiState.voiceErrorMessage,
                 onMicClick = micButtonAction,
-                onCancelRecording = { viewModel.cancelVoiceRecording() }
+                onCancelRecording = { viewModel.cancelVoiceRecording() },
+                scale = scaleFactor,
+                onPanelClick = { micButtonAction() }
             )
         }
+    }
+
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPermissionDialog = false
+                    openAppSettings(context)
+                }) {
+                    Text("設定を開く")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionDialog = false }) {
+                    Text("閉じる")
+                }
+            },
+            title = { Text("マイク権限が必要です") },
+            text = { Text("録音を利用するには、アプリ設定からマイク権限を付与してください。") }
+        )
     }
 }
 
@@ -431,6 +489,22 @@ private fun Rect.expand(by: Float): Rect {
     )
 }
 
+private tailrec fun Context.findActivity(): Activity {
+    return when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> throw IllegalStateException("Context is not an Activity")
+    }
+}
+
+private fun openAppSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    context.startActivity(intent)
+}
+
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun StageSection(
@@ -438,7 +512,8 @@ private fun StageSection(
     speakingMessageId: String?,
     initialLine: String?,
     onReplayRequest: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    scale: Float = 1f
 ) {
     val bubbleKey = latestAiLine?.id ?: "initial"
     val fullDisplayText = latestAiLine?.text ?: initialLine ?: "Maayong buntag! はじめようかの？"
@@ -471,7 +546,7 @@ private fun StageSection(
                     listOf(Color(0xFF0F172A), Color(0xFF1D2B55))
                 )
             )
-            .padding(horizontal = 20.dp, vertical = 18.dp),
+            .padding(horizontal = 20.dp * scale, vertical = 18.dp * scale),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -479,8 +554,8 @@ private fun StageSection(
             painter = painterResource(id = R.drawable.char_tarsier),
             contentDescription = "タルシエ先生",
             modifier = Modifier
-                .size(150.dp)
-                .padding(bottom = 4.dp),
+                .size(150.dp * scale)
+                .padding(bottom = 4.dp * scale),
             contentScale = ContentScale.Fit
         )
 
@@ -504,7 +579,7 @@ private fun StageSection(
             shadowElevation = if (isSpeaking) 14.dp else 2.dp
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+                modifier = Modifier.padding(horizontal = 20.dp * scale, vertical = 18.dp * scale),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AnimatedContent(
@@ -515,7 +590,7 @@ private fun StageSection(
                     Text(
                         text = animatedLine,
                         color = Color(0xFF5B3600),
-                        fontSize = 20.sp,
+                        fontSize = 20.sp * scale,
                         textAlign = TextAlign.Center,
                         fontWeight = if (isSpeaking) FontWeight.Black else FontWeight.SemiBold
                     )
@@ -529,9 +604,9 @@ private fun StageSection(
                     Text(
                         text = translationToShow,
                         color = Color(0xCC5B3600),
-                        fontSize = 14.sp,
+                        fontSize = 14.sp * scale,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 10.dp)
+                        modifier = Modifier.padding(top = 10.dp * scale)
                     )
                 }
             }
@@ -549,7 +624,10 @@ private fun ResponsePanel(
     onHintPeek: (String) -> Unit,
     trayBounds: () -> Rect?,
     onDragActiveChange: (String?) -> Unit,
-    onPreview: (String) -> Unit
+    onPreview: (String) -> Unit,
+    optionSpacing: Dp,
+    optionBottomPadding: Dp,
+    scale: Float
 ) {
     Surface(
         modifier = modifier.clip(RoundedCornerShape(36.dp)),
@@ -591,10 +669,10 @@ private fun ResponsePanel(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(optionSpacing),
                         contentPadding = PaddingValues(
                             top = 4.dp,
-                            bottom = 160.dp
+                            bottom = optionBottomPadding * 8
                         )
                     ) {
                         items(options, key = { it.id }) { option ->
@@ -607,7 +685,8 @@ private fun ResponsePanel(
                                 onDragActiveChange = { active ->
                                     onDragActiveChange(active)
                                 },
-                                onPreview = onPreview
+                                onPreview = onPreview,
+                                scale = scale
                             )
                         }
                     }
@@ -622,7 +701,8 @@ private fun ResponsePanel(
 private fun DropConfirmationTray(
     modifier: Modifier = Modifier,
     isHighlighted: Boolean,
-    lockedOption: RoleplayOption?
+    lockedOption: RoleplayOption?,
+    scale: Float
 ) {
     val borderColor = if (isHighlighted) Color(0xFF66F6D5) else Color(0xFF1F2A44)
     val backgroundColor = if (isHighlighted) Color(0xFF0F263D) else Color(0xFF091427)
@@ -638,7 +718,8 @@ private fun DropConfirmationTray(
             Text(
                 text = "回答ボックス",
                 color = Color.White,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp * scale
             )
         } else {
             Column(
@@ -672,7 +753,9 @@ private fun VoiceInputPanel(
     lastTranscribedText: String?,
     errorMessage: String?,
     onMicClick: () -> Unit,
-    onCancelRecording: () -> Unit
+    onCancelRecording: () -> Unit,
+    scale: Float = 1f,
+    onPanelClick: () -> Unit
 ) {
     val trimmedPreview = lastTranscribedText?.let { text ->
         if (text.length > 80) text.take(80) + "…" else text
@@ -696,7 +779,8 @@ private fun VoiceInputPanel(
     val icon = if (isRecording) Icons.Filled.Stop else Icons.Filled.Mic
 
     Surface(
-        modifier = modifier,
+        modifier = modifier
+            .clickable { onPanelClick() },
         shape = RoundedCornerShape(24.dp),
         color = Color(0xFF0B1124),
         tonalElevation = 4.dp,
@@ -715,7 +799,7 @@ private fun VoiceInputPanel(
                         containerColor = buttonColor,
                         disabledContainerColor = Color(0xFF1E293B)
                     ),
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(56.dp * scale)
                 ) {
                     Icon(
                         imageVector = icon,
@@ -727,13 +811,13 @@ private fun VoiceInputPanel(
                     Text(
                         text = statusText,
                         color = Color.White,
-                        fontSize = 16.sp,
+                        fontSize = 16.sp * scale,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = helperText,
                         color = Color(0xFF9FB4D3),
-                        fontSize = 13.sp,
+                        fontSize = 13.sp * scale,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
@@ -765,7 +849,7 @@ private fun VoiceInputPanel(
                 Text(
                     text = "マイク権限が必要です。ボタンを押して許可すると録音できます。",
                     color = Color(0xFFFFB4AB),
-                    fontSize = 13.sp
+                    fontSize = 13.sp * scale
                 )
             }
 
@@ -776,7 +860,7 @@ private fun VoiceInputPanel(
                 Text(
                     text = errorMessage.orEmpty(),
                     color = Color(0xFFFFB4AB),
-                    fontSize = 13.sp
+                    fontSize = 13.sp * scale
                 )
             }
 
@@ -788,12 +872,12 @@ private fun VoiceInputPanel(
                     Text(
                         text = "前回の音声メモ",
                         color = Color(0xFF8FD3FF),
-                        fontSize = 13.sp
+                        fontSize = 13.sp * scale
                     )
                     Text(
                         text = "「$trimmedPreview」",
                         color = Color.White,
-                        fontSize = 14.sp,
+                        fontSize = 14.sp * scale,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
@@ -811,7 +895,8 @@ private fun RoleplayOptionCard(
     onSelect: (String) -> Unit,
     onPeekHint: (String) -> Unit,
     onDragActiveChange: (String?) -> Unit,
-    onPreview: (String) -> Unit
+    onPreview: (String) -> Unit,
+    scale: Float = 1f
 ) {
     var showTranslation by remember(option.id) { mutableStateOf(false) }
     var hasPeeked by remember(option.id) { mutableStateOf(false) }
@@ -894,7 +979,7 @@ private fun RoleplayOptionCard(
             Text(
                 text = if (showTranslation && translationAvailable) option.hint!! else option.text,
                 color = Color(0xFFFFF176),
-                fontSize = 16.sp,
+                fontSize = 16.sp * scale,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
@@ -905,7 +990,7 @@ private fun RoleplayOptionCard(
                     else -> "ダブルタップまたはドラッグで決定"
                 },
                 color = Color.White,
-                fontSize = 12.sp,
+                fontSize = 12.sp * scale,
                 modifier = Modifier.padding(top = 6.dp),
                 textAlign = TextAlign.Center
             )
