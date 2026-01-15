@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -243,6 +244,24 @@ fun RoleplayChatScreen(
 
     val screenScrollState = rememberScrollState()
 
+    val voicePanelBottomPadding = 120.dp
+
+    val audioPermissionGranted = audioPermissionGrantedState.value
+    val micButtonAction = {
+        when {
+            uiState.isVoiceRecording -> viewModel.stopVoiceRecordingAndSend()
+            uiState.isVoiceTranscribing -> Unit
+            !uiState.isVoiceRecording -> {
+                if (!audioPermissionGranted) {
+                    pendingPermissionRequest = true
+                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                } else {
+                    viewModel.startVoiceRecording()
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -287,7 +306,7 @@ fun RoleplayChatScreen(
         containerColor = Color(0xFF0F172A),
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -301,72 +320,75 @@ fun RoleplayChatScreen(
                         )
                     )
                 )
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-                .verticalScroll(screenScrollState),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            StageSection(
-                latestAiLine = latestAiLine,
-                speakingMessageId = speakingMessageId,
-                initialLine = uiState.currentScenario?.initialMessage,
-                onReplayRequest = {
-                    latestAiLine?.let { message ->
-                        speakAiLine(message.text, message.voiceCue, message.id)
-                    } ?: uiState.currentScenario?.initialMessage?.let { intro ->
-                        speakAiLine(intro, GeminiVoiceCue.HIGH_PITCH, null)
-                    }
-                },
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            DropConfirmationTray(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(96.dp)
-                    .onGloballyPositioned { dropZoneBounds.value = it.windowRect() },
-                isHighlighted = activeDragOptionId != null,
-                lockedOption = uiState.lockedOption
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ResponsePanel(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                isLoading = uiState.isLoading,
-                options = uiState.options,
-                peekedHintIds = uiState.peekedHintOptionIds,
-                onSelect = { viewModel.selectOption(it) },
-                onHintPeek = { viewModel.markHintPeeked(it) },
-                trayBounds = { dropZoneBounds.value },
-                onDragActiveChange = { activeDragOptionId = it },
-                onPreview = { text -> speakUserPreview(text) }
-            )
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            val audioPermissionGranted = audioPermissionGrantedState.value
-            val micButtonAction = {
-                when {
-                    uiState.isVoiceRecording -> viewModel.stopVoiceRecordingAndSend()
-                    uiState.isVoiceTranscribing -> Unit
-                    !uiState.isVoiceRecording -> {
-                        if (!audioPermissionGranted) {
-                            pendingPermissionRequest = true
-                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        } else {
-                            viewModel.startVoiceRecording()
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 8.dp, bottom = voicePanelBottomPadding)
+                    .verticalScroll(screenScrollState),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                StageSection(
+                    latestAiLine = latestAiLine,
+                    speakingMessageId = speakingMessageId,
+                    initialLine = uiState.currentScenario?.initialMessage,
+                    onReplayRequest = {
+                        latestAiLine?.let { message ->
+                            speakAiLine(message.text, message.voiceCue, message.id)
+                        } ?: uiState.currentScenario?.initialMessage?.let { intro ->
+                            speakAiLine(intro, GeminiVoiceCue.HIGH_PITCH, null)
                         }
-                    }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                DropConfirmationTray(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(96.dp)
+                        .onGloballyPositioned { dropZoneBounds.value = it.windowRect() },
+                    isHighlighted = activeDragOptionId != null,
+                    lockedOption = uiState.lockedOption
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ResponsePanel(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 320.dp),
+                    isLoading = uiState.isLoading,
+                    options = uiState.options,
+                    peekedHintIds = uiState.peekedHintOptionIds,
+                    onSelect = { viewModel.selectOption(it) },
+                    onHintPeek = { viewModel.markHintPeeked(it) },
+                    trayBounds = { dropZoneBounds.value },
+                    onDragActiveChange = { activeDragOptionId = it },
+                    onPreview = { text -> speakUserPreview(text) }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                if (!saveHistoryError.isNullOrEmpty()) {
+                    Text(
+                        text = saveHistoryError,
+                        color = Color(0xFFFFB4AB),
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                 }
             }
 
             VoiceInputPanel(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
                 isRecording = uiState.isVoiceRecording,
                 isTranscribing = uiState.isVoiceTranscribing,
                 permissionGranted = audioPermissionGranted,
@@ -375,16 +397,6 @@ fun RoleplayChatScreen(
                 onMicClick = micButtonAction,
                 onCancelRecording = { viewModel.cancelVoiceRecording() }
             )
-
-            if (!saveHistoryError.isNullOrEmpty()) {
-                Text(
-                    text = saveHistoryError,
-                    color = Color(0xFFFFB4AB),
-                    fontSize = 13.sp,
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                )
-            }
         }
     }
 }
@@ -453,13 +465,13 @@ private fun StageSection(
 
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(40.dp))
+            .clip(RoundedCornerShape(32.dp))
             .background(
                 brush = Brush.verticalGradient(
                     listOf(Color(0xFF0F172A), Color(0xFF1D2B55))
                 )
             )
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+            .padding(horizontal = 20.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -467,8 +479,8 @@ private fun StageSection(
             painter = painterResource(id = R.drawable.char_tarsier),
             contentDescription = "タルシエ先生",
             modifier = Modifier
-                .size(170.dp)
-                .padding(bottom = 8.dp),
+                .size(150.dp)
+                .padding(bottom = 4.dp),
             contentScale = ContentScale.Fit
         )
 
@@ -492,7 +504,7 @@ private fun StageSection(
             shadowElevation = if (isSpeaking) 14.dp else 2.dp
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AnimatedContent(
@@ -685,15 +697,15 @@ private fun VoiceInputPanel(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(24.dp),
         color = Color(0xFF0B1124),
-        tonalElevation = 6.dp,
-        shadowElevation = 6.dp
+        tonalElevation = 4.dp,
+        shadowElevation = 4.dp
     ) {
-        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 FilledIconButton(
@@ -703,7 +715,7 @@ private fun VoiceInputPanel(
                         containerColor = buttonColor,
                         disabledContainerColor = Color(0xFF1E293B)
                     ),
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier.size(56.dp)
                 ) {
                     Icon(
                         imageVector = icon,
@@ -722,11 +734,11 @@ private fun VoiceInputPanel(
                         text = helperText,
                         color = Color(0xFF9FB4D3),
                         fontSize = 13.sp,
-                        modifier = Modifier.padding(top = 4.dp)
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
                 if (isRecording) {
-                    TextButton(onClick = onCancelRecording) {
+                    TextButton(onClick = onCancelRecording, contentPadding = PaddingValues(horizontal = 8.dp)) {
                         Icon(
                             imageVector = Icons.Filled.Close,
                             contentDescription = "録音を破棄",
@@ -741,7 +753,7 @@ private fun VoiceInputPanel(
                 }
             }
 
-            AnimatedVisibility(visible = isTranscribing, modifier = Modifier.padding(top = 12.dp)) {
+            AnimatedVisibility(visible = isTranscribing, modifier = Modifier.padding(top = 8.dp)) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
                     color = Color(0xFF38BDF8),
@@ -749,7 +761,7 @@ private fun VoiceInputPanel(
                 )
             }
 
-            AnimatedVisibility(visible = !permissionGranted, modifier = Modifier.padding(top = 12.dp)) {
+            AnimatedVisibility(visible = !permissionGranted, modifier = Modifier.padding(top = 8.dp)) {
                 Text(
                     text = "マイク権限が必要です。ボタンを押して許可すると録音できます。",
                     color = Color(0xFFFFB4AB),
@@ -759,7 +771,7 @@ private fun VoiceInputPanel(
 
             AnimatedVisibility(
                 visible = !errorMessage.isNullOrBlank(),
-                modifier = Modifier.padding(top = 12.dp)
+                modifier = Modifier.padding(top = 8.dp)
             ) {
                 Text(
                     text = errorMessage.orEmpty(),
@@ -770,7 +782,7 @@ private fun VoiceInputPanel(
 
             AnimatedVisibility(
                 visible = !trimmedPreview.isNullOrBlank() && !isRecording && !isTranscribing,
-                modifier = Modifier.padding(top = 12.dp)
+                modifier = Modifier.padding(top = 8.dp)
             ) {
                 Column {
                     Text(
