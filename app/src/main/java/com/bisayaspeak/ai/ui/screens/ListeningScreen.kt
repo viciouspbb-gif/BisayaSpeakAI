@@ -170,14 +170,14 @@ fun ListeningScreen(
         if (currentSession?.completed == true && result != null) {
             val levelCleared = clearedLevel
             val displayLevel = levelCleared ?: level
-            val leveledUpFlag = if (result.leveledUp) 1 else 0
+            val leveledUpFlag = result.leveledUp.toString()
             // AppRoute.LessonResult.route を使用して正しいルートを生成
             val destinationRoute = AppRoute.LessonResult.route
                 .replace("{correctCount}", result.correctCount.toString())
                 .replace("{totalQuestions}", result.totalQuestions.toString())
                 .replace("{earnedXP}", result.xpEarned.toString())
                 .replace("{clearedLevel}", displayLevel.toString())
-                .replace("{leveledUp}", leveledUpFlag.toString())
+                .replace("{leveledUp}", leveledUpFlag)
             val navigateToResult = {
                 if (!navigationTriggered) {
                     navigationTriggered = true

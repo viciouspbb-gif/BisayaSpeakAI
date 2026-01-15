@@ -1,51 +1,30 @@
 package com.bisayaspeak.ai.ui.home
 
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.ViewList
-import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material.icons.outlined.Translate
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -54,782 +33,367 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import kotlinx.coroutines.launch
 import com.bisayaspeak.ai.R
-import com.bisayaspeak.ai.ads.AdManager
-import com.bisayaspeak.ai.ui.ads.AdsPolicy
-import com.bisayaspeak.ai.ui.ads.AdMobBanner
-import com.bisayaspeak.ai.ui.ads.AdUnitIds
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 
-enum class FeatureTier {
-    PRO,
-    PREMIUM
+// --- 必須定義 ---
+enum class FeatureId {
+    AI_CHAT,
+    ROLE_PLAY,
+    LISTENING,
+    PRONUNCIATION,
+    AI_TRANSLATOR,
+    TRANSLATE,
+    ADVANCED_ROLE_PLAY,
+    FLASHCARDS,
+    ACCOUNT,
+    UPGRADE
 }
 
-@Immutable
 data class FeatureItem(
     val id: FeatureId,
     val title: String,
     val subtitle: String,
     val icon: ImageVector,
-    val tier: FeatureTier,
     val isLocked: Boolean = false
 )
 
-enum class FeatureId {
-    TRANSLATE,
-    PRONUNCIATION,
-    LISTENING,
-    FLASHCARDS,
-    ROLE_PLAY,
-    AI_CHAT,
-    AI_TRANSLATOR,
-    ADVANCED_ROLE_PLAY,
-    ACCOUNT,
-    UPGRADE
-}
-
+// --- メイン画面 ---
 @Composable
 fun HomeScreen(
-    homeStatus: HomeStatus,
-    isLiteBuild: Boolean,
-    isPremiumPlan: Boolean,
-    isProUnlocked: Boolean,
+    homeStatus: Any? = null,
+    isLiteBuild: Boolean = false,
+    isPremiumPlan: Boolean = false,
+    isProUnlocked: Boolean = false,
     onStartLearning: () -> Unit,
     onClickFeature: (FeatureId) -> Unit,
-    onClickProfile: () -> Unit,
-    modifier: Modifier = Modifier
+    onClickProfile: () -> Unit
 ) {
-    var showProDialog by remember { mutableStateOf(false) }
-    var showOwlAdviceDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    // バナー再ロード（onResume 相当）
-    LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            AdManager.loadInterstitial(context)
-            AdManager.loadReward(context)
-        }
-    }
-
-    val proFeatures = listOf(
-        FeatureItem(
-            id = FeatureId.AI_TRANSLATOR,
-            title = "AI 翻訳機",
-            subtitle = "ネイティブ翻訳",
-            icon = Icons.Outlined.Translate,
-            tier = FeatureTier.PREMIUM,
-            isLocked = !isPremiumPlan
-        ),
-        FeatureItem(
-            id = FeatureId.AI_CHAT,
-            title = "AI ミッション",
-            subtitle = "実践ボイス会話",
-            icon = Icons.Filled.Psychology,
-            tier = FeatureTier.PREMIUM,
-            isLocked = !isPremiumPlan
-        ),
-        FeatureItem(
-            id = FeatureId.ROLE_PLAY,
-            title = "基礎ロールプレイ",
-            subtitle = "パネル選択形式",
-            icon = Icons.Filled.ViewList,
-            tier = FeatureTier.PRO,
-            isLocked = !isProUnlocked && !isPremiumPlan
-        )
-    )
+    var showProDialog by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF0F172A),
-                        Color(0xFF111827),
-                        Color(0xFF0B1120)
-                    )
-                )
-            )
+            .background(Color(0xFF0F172A))
             .statusBarsPadding()
-            .navigationBarsPadding()
             .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 24.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "今日もビサヤ語を磨こう",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color(0xFF9CA3AF)
-                )
-                Text(
-                    text = "Learn Bisaya AI",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White
-                    )
-                )
-            }
-            Icon(
-                imageVector = Icons.Filled.AccountCircle,
-                contentDescription = "Profile",
-                modifier = Modifier
-                    .size(40.dp)
-                    .clickable { onClickProfile() },
-                tint = Color.White
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        val handleProFeatureClick: (FeatureItem) -> Unit = { feature ->
-            if (feature.isLocked) {
-                showProDialog = true
-            } else {
-                onClickFeature(feature.id)
-            }
-        }
+        // ヘッダー
+        HomeHeader(onClickProfile)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        HomeStatusCard(
-            homeStatus = homeStatus,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(130.dp)
-                .padding(bottom = 12.dp),
-            onClick = { showOwlAdviceDialog = true }
+        // 学習セクション（画像あり）
+        LearningSection(onStartLearning)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // PRO機能セクション
+        Text(
+            text = "PRO機能",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        StartLearningCard(
-            onStartLearning = onStartLearning,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(130.dp)
-                .padding(bottom = 16.dp)
-        )
-
+        // PRO機能リスト
         ProFeaturesSection(
-            proFeatures = proFeatures,
-            onFeatureClick = handleProFeatureClick,
-            modifier = Modifier.padding(bottom = 20.dp)
+            context = context,
+            onClickFeature = onClickFeature,
+            onShowProDialog = { showProDialog = true }
         )
 
-        // 
-        if (AdsPolicy.areAdsEnabled) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                AdMobBanner(adUnitId = AdUnitIds.BANNER_MAIN)
-            }
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 広告バナー
+        if (AdsPolicy.shouldShowAds(context)) {
+            AdMobBanner(adUnitId = AdUnitIds.HOME_BANNER)
         }
 
-        if (showProDialog) {
-            AlertDialog(
-                onDismissRequest = { showProDialog = false },
-                confirmButton = {
-                    TextButton(onClick = { showProDialog = false }) {
-                        Text("OK")
-                    }
-                },
-                title = { Text("PRO版限定機能") },
-                text = { Text(stringResource(R.string.pro_feature_dialog_message)) }
-            )
-        }
+        Spacer(modifier = Modifier.height(80.dp))
+    }
 
-        if (showOwlAdviceDialog) {
-            AlertDialog(
-                onDismissRequest = { showOwlAdviceDialog = false },
-                confirmButton = {
-                    TextButton(onClick = { showOwlAdviceDialog = false }) {
-                        Text("OK")
-                    }
-                },
-                title = { Text("フクロウ先生の分析") },
-                text = {
-                    Text(getOwlAdvice(homeStatus))
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(60.dp))
-        Spacer(modifier = Modifier.navigationBarsPadding())
+    if (showProDialog) {
+        ProDialog(onDismiss = { showProDialog = false })
     }
 }
 
 @Composable
-private fun MissionFeatureCard(
+fun HomeHeader(onClickProfile: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = "今日もビサヤ語を磨こう",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "Learn Bisaya AI",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+        IconButton(onClick = onClickProfile) {
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = "Profile",
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+fun LearningSection(onStartLearning: () -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.padding(horizontal = 16.dp)
+    ) {
+        // 1. 青いカード（フクロウ画像）
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF5856D6))
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "称号レベル Lv 25",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "ジンベエザメと泳ぐ（セブの達人！）",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                    Text(
+                        text = "累計XP 3000",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                // フクロウの画像表示 (正しいリソースID: char_owl)
+                Image(
+                    painter = painterResource(id = R.drawable.char_owl),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                )
+            }
+        }
+
+        // 2. 緑のカード（タルシエ画像）
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .clickable { onStartLearning() },
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF2ECC71))
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "学習開始",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "今日のおすすめレッスンからスタートしよう",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "今すぐ学ぶ",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                // タルシエの画像表示 (正しいリソースID: char_tarsier)
+                Image(
+                    painter = painterResource(id = R.drawable.char_tarsier),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ProFeaturesSection(
+    context: android.content.Context,
+    onClickFeature: (FeatureId) -> Unit,
+    onShowProDialog: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // AI翻訳機
+        ProFeatureItem(
+            title = "AI 翻訳機",
+            subtitle = "ネイティブ翻訳",
+            icon = Icons.Default.Translate,
+            color = Color(0xFFD4A017),
+            onClick = { onClickFeature(FeatureId.AI_TRANSLATOR) },
+            modifier = Modifier.weight(1f)
+        )
+
+        // タリ道場
+        ProFeatureItem(
+            title = "タリ道場",
+            subtitle = "実践ボイス会話",
+            icon = Icons.Default.Psychology,
+            color = Color(0xFFCD7F32),
+            onClick = {
+                Toast.makeText(context, "修行中だよ！1月リリースを待っててね", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier.weight(1f)
+        )
+
+        // タリと散歩道
+        ProFeatureItem(
+            title = "タリと散歩道",
+            subtitle = "自由な会話の旅",
+            icon = Icons.Default.ViewList,
+            color = MaterialTheme.colorScheme.primary,
+            onClick = { onClickFeature(FeatureId.ROLE_PLAY) },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun ProFeatureItem(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    isPremiumPlan: Boolean,
+    color: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val gradient = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF071C32),
-            Color(0xFF0D324D),
-            Color(0xFF0F3D63)
-        )
-    )
-
     Card(
         modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
+            .height(120.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = color)
     ) {
-        Box(
-            modifier = Modifier
-                .background(gradient)
-                .padding(20.dp)
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Bolt,
-                        contentDescription = null,
-                        tint = Color(0xFFFFC857)
-                    )
-                    Text(
-                        text = "PREMIUM FEATURE",
-                        color = Color(0xFFFFC857),
-                        fontWeight = FontWeight.Black
-                    )
-                }
-
+                Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            }
+            Column {
                 Text(
                     text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold
+                    maxLines = 1
                 )
                 Text(
                     text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
                     color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 15.sp
+                    lineHeight = 10.sp,
+                    maxLines = 2
                 )
-
-                Surface(
-                    color = Color.White.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text(
-                        text = if (isPremiumPlan) "プレミアム開放中" else "アップグレードで解放",
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            if (!isPremiumPlan) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.35f))
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Lock,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(12.dp)
-                    )
-                }
             }
         }
     }
 }
 
 @Composable
-private fun HomeStatusCard(
-    homeStatus: HomeStatus,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
-) {
-    val cardGradient = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF1D4ED8),
-            Color(0xFF9333EA)
-        )
-    )
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .clickable(enabled = onClick != null) { onClick?.invoke() },
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .background(cardGradient)
-                .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(0.65f)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = "称号レベル",
-                            color = Color.White.copy(alpha = 0.8f),
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                        AutoSizeText(
-                            text = "Lv ${homeStatus.currentLevel}",
-                            color = Color.White,
-                            maxFontSize = 32.sp,
-                            minFontSize = 20.sp,
-                            fontWeight = FontWeight.Black
-                        )
-                    }
-                    Surface(
-                        color = Color.White.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(50),
-                        modifier = Modifier.align(Alignment.Start)
-                    ) {
-                        AutoSizeText(
-                            text = getTitleByXp(homeStatus.totalXp),
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            maxFontSize = 14.sp,
-                            minFontSize = 10.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Surface(
-                        color = Color.White.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(50),
-                        modifier = Modifier.align(Alignment.Start)
-                    ) {
-                        AutoSizeText(
-                            text = "累計XP ${homeStatus.totalXp}",
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            maxFontSize = 14.sp,
-                            minFontSize = 8.sp,
-                            maxLines = 1,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .padding(start = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    MascotImageBox(
-                        painter = painterResource(id = R.drawable.char_owl),
-                        contentDescription = "Level mascot"
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AutoSizeText(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified,
-    maxFontSize: TextUnit = 20.sp,
-    minFontSize: TextUnit = 12.sp,
-    maxLines: Int = 1,
-    fontWeight: FontWeight? = null,
-    softWrap: Boolean = false
-) {
-    var scaledTextStyle by remember {
-        mutableStateOf(
-            TextStyle(
-                fontSize = maxFontSize,
-                fontWeight = fontWeight,
-                color = color
-            )
-        )
-    }
-    var readyToDraw by remember { mutableStateOf(false) }
-
-    Text(
-        text = text,
-        modifier = modifier.drawWithContent {
-            if (readyToDraw) drawContent()
-        },
-        style = scaledTextStyle,
-        maxLines = maxLines,
-        softWrap = softWrap,
-        onTextLayout = { textLayoutResult ->
-            if ((textLayoutResult.didOverflowWidth || textLayoutResult.didOverflowHeight) &&
-                scaledTextStyle.fontSize > minFontSize
-            ) {
-                scaledTextStyle = scaledTextStyle.copy(fontSize = scaledTextStyle.fontSize * 0.9f)
-            } else {
-                readyToDraw = true
-            }
+fun ProDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("PRO版にアップグレード") },
+        text = { Text("この機能はPRO版限定です。") },
+        confirmButton = {
+            Button(onClick = onDismiss) { Text("OK") }
         }
     )
 }
 
+// ==========================================
+// エラー回避用のスタブ
+// ==========================================
+
+object AdUnitIds {
+    const val HOME_BANNER = "ca-app-pub-3940256099942544/6300978111"
+}
+
+object AdsPolicy {
+    fun shouldShowAds(context: android.content.Context): Boolean = true
+}
+
 @Composable
-private fun MascotImageBox(
-    painter: androidx.compose.ui.graphics.painter.Painter,
-    contentDescription: String?,
-    modifier: Modifier = Modifier
-) {
+fun AdMobBanner(adUnitId: String) {
     Box(
-        modifier = modifier
-            .padding(4.dp)
-            .requiredSize(100.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp)
+            .background(Color.Gray.copy(alpha = 0.1f)),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painter,
-            contentDescription = contentDescription,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit
-        )
-    }
-}
-
-private fun getOwlAdvice(homeStatus: HomeStatus): String {
-    return when {
-        homeStatus.currentLevel <= 1 -> "まずは「挨拶」からじゃ！毎日コツコツやれば必ず話せるようになるぞ。"
-        homeStatus.currentLevel in 2..3 -> "おっ、少し慣れてきたようじゃな！次は単語量を増やしてみようか。"
-        homeStatus.totalXp >= 500 -> "経験値が貯まってきたのう。今こそリスニングで耳を鍛えて会話力を一段上げるのじゃ。"
-        else -> "調子はどうじゃ？焦らず楽しむことが継続の秘訣じゃぞ！"
-    }
-}
-
-/**
- * 累計XPに基づいて称号を取得
- */
-private fun getTitleByXp(totalXp: Int): String {
-    // レベルベースの称号システムに変更
-    val userLevel = (totalXp / 100).coerceAtLeast(1)
-    return when (userLevel) {
-        1 -> "はじめてのビサヤ（空港・挨拶）"
-        2 -> "はじめてのビサヤ（空港・挨拶）"
-        3 -> "はじめてのビサヤ（空港・挨拶）"
-        4 -> "はじめてのビサヤ（空港・挨拶）"
-        5 -> "マクタン島に上陸（海・リゾート）"
-        6 -> "マクタン島に上陸（海・リゾート）"
-        7 -> "マクタン島に上陸（海・リゾート）"
-        8 -> "マクタン島に上陸（海・リゾート）"
-        9 -> "マクタン島に上陸（海・リゾート）"
-        10 -> "サントニーニョ参拝（歴史・祈り）"
-        11 -> "サントニーニョ参拝（歴史・祈り）"
-        12 -> "サントニーニョ参拝（歴史・祈り）"
-        13 -> "サントニーニョ参拝（歴史・祈り）"
-        14 -> "サントニーニョ参拝（歴史・祈り）"
-        15 -> "ジプニーでお出かけ（移動・冒険）"
-        16 -> "ジプニーでお出かけ（移動・冒険）"
-        17 -> "ジプニーでお出かけ（移動・冒険）"
-        18 -> "ジプニーでお出かけ（移動・冒険）"
-        19 -> "ジプニーでお出かけ（移動・冒険）"
-        20 -> "コロン通りの買い物上手（市場・交渉）"
-        21 -> "コロン通りの買い物上手（市場・交渉）"
-        22 -> "コロン通りの買い物上手（市場・交渉）"
-        23 -> "コロン通りの買い物上手（市場・交渉）"
-        24 -> "コロン通りの買い物上手（市場・交渉）"
-        25 -> "アイランドホッピング（未開の島々）"
-        26 -> "アイランドホッピング（未開の島々）"
-        27 -> "アイランドホッピング（未開の島々）"
-        28 -> "アイランドホッピング（未開の島々）"
-        29 -> "アイランドホッピング（未開の島々）"
-        30 -> "ジンベエザメと泳ぐ（セブの達人！）"
-        else -> when {
-            userLevel <= 4 -> "はじめてのビサヤ（空港・挨拶）"
-            userLevel <= 9 -> "マクタン島に上陸（海・リゾート）"
-            userLevel <= 14 -> "サントニーニョ参拝（歴史・祈り）"
-            userLevel <= 19 -> "ジプニーでお出かけ（移動・冒険）"
-            userLevel <= 24 -> "コロン通りの買い物上手（市場・交渉）"
-            userLevel <= 29 -> "アイランドホッピング（未開の島々）"
-            else -> "ジンベエザメと泳ぐ（セブの達人！）"
-        }
-    }
-}
-
-// BannerPlaceholder は削除しました
-
-@Composable
-private fun StartLearningCard(
-    onStartLearning: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val ctaGradient = Brush.horizontalGradient(
-        colors = listOf(
-            Color(0xFF34D399),
-            Color(0xFF10B981)
-        )
-    )
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .clickable { onStartLearning() },
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .background(ctaGradient)
-                .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        AutoSizeText(
-                            text = "学習開始",
-                            color = Color.White,
-                            maxFontSize = 22.sp,
-                            minFontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        AutoSizeText(
-                            text = "今日のおすすめレッスンからスタートしよう",
-                            color = Color.White.copy(alpha = 0.85f),
-                            maxFontSize = 14.sp,
-                            minFontSize = 10.sp
-                        )
-                    }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.25f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.PlayArrow,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-                        AutoSizeText(
-                            text = "今すぐ学ぶ",
-                            color = Color.White,
-                            maxFontSize = 16.sp,
-                            minFontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                MascotImageBox(
-                    painter = painterResource(id = R.drawable.char_tarsier),
-                    contentDescription = "Start learning mascot"
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProFeaturesSection(
-    proFeatures: List<FeatureItem>,
-    onFeatureClick: (FeatureItem) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.pro_feature_section_title),
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
-            )
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            proFeatures.forEach { feature ->
-                QuickActionButton(
-                    item = feature,
-                    onClick = { onFeatureClick(feature) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickActionButton(
-    item: FeatureItem,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val (accent, gradient) = when (item.tier) {
-        FeatureTier.PREMIUM -> Color(0xFFFFC857) to Brush.linearGradient(
-            listOf(
-                Color(0xFF35270F),
-                Color(0xFF5C3B0F),
-                Color(0xFF7B4D11)
-            )
-        )
-
-        FeatureTier.PRO -> Color(0xFF60A5FA) to Brush.linearGradient(
-            listOf(
-                Color(0xFF0F2E65),
-                Color(0xFF133E79),
-                Color(0xFF1F4E93)
-            )
-        )
-    }
-
-    val badgeLabel = when (item.tier) {
-        FeatureTier.PREMIUM -> "PREMIUM"
-        FeatureTier.PRO -> "PRO"
-    }
-
-    val borderColor = if (item.isLocked) accent.copy(alpha = 0.4f) else accent
-
-    Card(
-        modifier = modifier
-            .height(110.dp)
-            .alpha(if (item.isLocked) 0.6f else 1f)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.8.dp, borderColor),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
-        elevation = CardDefaults.cardElevation(0.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(gradient)
-                .border(
-                    width = 1.dp,
-                    color = Color.White.copy(alpha = 0.08f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.Top),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Surface(
-                        color = Color.Black.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(50),
-                        border = BorderStroke(1.dp, accent)
-                    ) {
-                        Text(
-                            text = badgeLabel,
-                            color = accent,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                        )
-                    }
-                    if (item.isLocked) {
-                        Icon(
-                            imageVector = Icons.Filled.Lock,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = item.title,
-                    tint = accent,
-                    modifier = Modifier.size(32.dp)
-                )
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Text(
-                        text = item.title,
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        ),
-                        maxLines = 1
-                    )
-                    if (item.subtitle.isNotBlank()) {
-                        Text(
-                            text = item.subtitle,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White.copy(alpha = 0.85f),
-                                fontSize = 11.sp
-                            ),
-                            maxLines = 1
-                        )
-                    }
-                }
-            }
-        }
+        Text("Ad Banner", style = MaterialTheme.typography.labelSmall)
     }
 }

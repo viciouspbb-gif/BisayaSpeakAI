@@ -62,6 +62,7 @@ import com.bisayaspeak.ai.ui.screens.PracticeWordListScreen
 import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.TranslateScreen
+import com.bisayaspeak.ai.ui.screens.TariDojoComingSoonScreen
 import com.bisayaspeak.ai.ui.viewmodel.GenderSelectionViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
@@ -89,7 +90,8 @@ enum class AppRoute(val route: String) {
     LessonResult("result_screen/{correctCount}/{totalQuestions}/{earnedXP}/{clearedLevel}/{leveledUp}"),
     MissionScenarioSelect("mission/scenario"),
     MissionTalk("mission/talk/{missionId}"),
-    AiTranslator("ai/translator")
+    AiTranslator("ai/translator"),
+    TariDojoComingSoon("tari_dojo")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -164,7 +166,7 @@ fun AppNavGraph(
                         when (feature) {
                             FeatureId.AI_CHAT -> {
                                 if (isPremiumPlan) {
-                                    navController.navigate(AppRoute.MissionScenarioSelect.route)
+                                    navController.navigate(AppRoute.TariDojoComingSoon.route)
                                 } else {
                                     navController.navigate(AppRoute.Upgrade.route)
                                 }
@@ -507,24 +509,14 @@ fun AppNavGraph(
                 scenarioId = scenarioId,
                 isProVersion = isProUnlocked,
                 onBackClick = { navController.popBackStack() },
-                onCompleted = { result ->
-                    Log.d("AppNavigation", "Roleplay completion -> navigating to LessonResult. Stopping all TTS.")
+                onSaveAndExit = {
                     GeminiVoiceService.stopAllActive()
-                    val destinationRoute = AppRoute.LessonResult.route
-                        .replace("{correctCount}", result.correctCount.toString())
-                        .replace("{totalQuestions}", result.totalQuestions.toString())
-                        .replace("{earnedXP}", result.earnedXp.toString())
-                        .replace("{clearedLevel}", result.clearedLevel.toString())
-                        .replace("{leveledUp}", result.leveledUp.toString())
-                    val alreadyOnResult = navController.currentDestination?.route
-                        ?.startsWith("result_screen") == true
-                    if (!alreadyOnResult) {
-                        try {
-                            navController.navigate(destinationRoute) {
-                                popUpTo(AppRoute.RolePlayChat.route) { inclusive = true }
-                            }
-                        } catch (e: IllegalArgumentException) {
-                            Log.e("AppNavGraph", "Failed to navigate to LessonResultScreen", e)
+                    Log.d("AppNavigation", "Roleplay completion -> returning home after save")
+                    val popped = navController.popBackStack(AppRoute.Home.route, inclusive = false)
+                    if (!popped) {
+                        navController.navigate(AppRoute.Home.route) {
+                            launchSingleTop = true
+                            popUpTo(AppRoute.Home.route) { inclusive = true }
                         }
                     }
                 },

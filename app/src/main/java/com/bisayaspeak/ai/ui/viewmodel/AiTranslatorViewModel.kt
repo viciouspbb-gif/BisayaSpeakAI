@@ -3,7 +3,7 @@ package com.bisayaspeak.ai.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.data.model.TranslationDirection
-import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
+import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +17,7 @@ sealed interface TranslatorUiState {
 }
 
 class AiTranslatorViewModel(
-    private val repository: GeminiMissionRepository = GeminiMissionRepository()
+    private val repository: OpenAiChatRepository = OpenAiChatRepository()
 ) : ViewModel() {
 
     private val _inputText = MutableStateFlow("")
@@ -61,7 +61,7 @@ class AiTranslatorViewModel(
         viewModelScope.launch {
             _uiState.value = TranslatorUiState.Loading
             try {
-                val result = repository.translateText(text)
+                val result = translateWithOpenAi(text, _direction.value)
                 _translatedText.value = result
                 _uiState.value = TranslatorUiState.Success
             } catch (e: Exception) {
@@ -69,5 +69,24 @@ class AiTranslatorViewModel(
                     TranslatorUiState.Error(e.message ?: "翻訳に失敗しました")
             }
         }
+    }
+
+    private suspend fun translateWithOpenAi(
+        text: String,
+        direction: TranslationDirection
+    ): String {
+        val (systemPrompt, temperature) = when (direction) {
+            TranslationDirection.JA_TO_CEB -> {
+                "You are a professional Bisaya (Cebuano) translator. Convert the user's Japanese message into natural Bisaya suitable for friendly conversation. Respond with Bisaya only." to 0.2
+            }
+            TranslationDirection.CEB_TO_JA -> {
+                "You are a professional Japanese translator. Convert the user's Bisaya (Cebuano) message into natural Japanese. Respond with Japanese only." to 0.2
+            }
+        }
+        return repository.sendPrompt(
+            systemPrompt = systemPrompt,
+            userPrompt = text,
+            temperature = temperature
+        )
     }
 }

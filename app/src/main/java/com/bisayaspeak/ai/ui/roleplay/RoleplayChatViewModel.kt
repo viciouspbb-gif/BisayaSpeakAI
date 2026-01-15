@@ -6,10 +6,14 @@ import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
-import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
+import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
+import com.bisayaspeak.ai.data.repository.RoleplayHistoryRepository
 import com.bisayaspeak.ai.data.repository.UserPreferencesRepository
+import com.bisayaspeak.ai.data.repository.WhisperRepository
 import com.bisayaspeak.ai.utils.MistakeManager
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
+import com.bisayaspeak.ai.voice.VoiceInputRecorder
+import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,14 +59,24 @@ data class RoleplayUiState(
     val pendingUnlockLevel: Int? = null,
     val pendingResult: RoleplayResultPayload? = null,
     val lockedOption: RoleplayOption? = null,
-    val isProUser: Boolean = false
+    val isProUser: Boolean = false,
+    val isVoiceRecording: Boolean = false,
+    val isVoiceTranscribing: Boolean = false,
+    val voiceErrorMessage: String? = null,
+    val lastTranscribedText: String? = null,
+    val isSavingHistory: Boolean = false,
+    val saveHistoryError: String? = null,
+    val pendingExitHistory: List<MissionHistoryMessage>? = null
 )
 
 class RoleplayChatViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val repository: GeminiMissionRepository = GeminiMissionRepository()
+    private val chatRepository: OpenAiChatRepository = OpenAiChatRepository()
+    private val whisperRepository: WhisperRepository = WhisperRepository()
+    private val historyRepository: RoleplayHistoryRepository = RoleplayHistoryRepository(application)
+    private val voiceRecorder: VoiceInputRecorder = VoiceInputRecorder(application.applicationContext)
     private val userPreferencesRepository = UserPreferencesRepository(application)
 
     private companion object {
@@ -85,6 +99,9 @@ class RoleplayChatViewModel(
     private val branchFacts = mutableMapOf<String, String>()
     private var currentUserGender: UserGender = UserGender.OTHER
     private var userCallSign: String = "パートナー（Friend）"
+    private var calloutBisaya: String = "Friend"
+    private var calloutEnglish: String = "Friend"
+    private var currentRecordingFile: File? = null
 
     init {
         observeUserGender()
@@ -106,10 +123,22 @@ class RoleplayChatViewModel(
         viewModelScope.launch {
             userPreferencesRepository.userGender.collect { gender ->
                 currentUserGender = gender
-                userCallSign = when (gender) {
-                    UserGender.MALE -> "彼氏（Gwapo/Handsome）"
-                    UserGender.FEMALE -> "彼女（Gwapa/Beautiful）"
-                    UserGender.OTHER -> "パートナー（Friend）"
+                when (gender) {
+                    UserGender.MALE -> {
+                        userCallSign = "彼氏（Gwapo/Handsome）"
+                        calloutBisaya = "Gwapo"
+                        calloutEnglish = "Handsome"
+                    }
+                    UserGender.FEMALE -> {
+                        userCallSign = "彼女（Gwapa/Beautiful）"
+                        calloutBisaya = "Gwapa"
+                        calloutEnglish = "Beautiful"
+                    }
+                    UserGender.OTHER -> {
+                        userCallSign = "パートナー（Friend）"
+                        calloutBisaya = "Bestie"
+                        calloutEnglish = "My friend"
+                    }
                 }
             }
         }
@@ -181,6 +210,148 @@ class RoleplayChatViewModel(
         }
     }
 
+    fun submitFreeFormMessage(inputText: String) {
+        val scenario = _uiState.value.currentScenario ?: return
+        val trimmed = inputText.trim()
+        if (trimmed.isEmpty()) return
+        if (_uiState.value.isLoading) return
+
+        val userMsg = ChatMessage(
+            id = UUID.randomUUID().toString(),
+            text = trimmed,
+            isUser = true
+        )
+        history.add(MissionHistoryMessage(trimmed, isUser = true))
+        scriptedRuntime = null
+
+        _uiState.update {
+            it.copy(
+                messages = it.messages + userMsg,
+                isLoading = true,
+                options = emptyList(),
+                peekedHintOptionIds = emptySet(),
+                completedTurns = it.completedTurns + 1,
+                successfulTurns = it.successfulTurns + 1,
+                lockedOption = null
+            )
+        }
+
+        viewModelScope.launch {
+            requestAiTurn(scenario, trimmed)
+        }
+    }
+
+    fun startVoiceRecording() {
+        if (_uiState.value.isVoiceRecording || _uiState.value.isVoiceTranscribing || _uiState.value.isLoading) return
+        try {
+            val file = voiceRecorder.startRecording()
+            currentRecordingFile = file
+            _uiState.update {
+                it.copy(
+                    isVoiceRecording = true,
+                    voiceErrorMessage = null,
+                    lastTranscribedText = null
+                )
+            }
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    isVoiceRecording = false,
+                    voiceErrorMessage = "録音開始に失敗しました: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun cancelVoiceRecording() {
+        voiceRecorder.cancelRecording()
+        currentRecordingFile?.delete()
+        currentRecordingFile = null
+        _uiState.update {
+            it.copy(
+                isVoiceRecording = false,
+                isVoiceTranscribing = false,
+                voiceErrorMessage = null
+            )
+        }
+    }
+
+    fun stopVoiceRecordingAndSend() {
+        if (!_uiState.value.isVoiceRecording) return
+        val recordedFile = try {
+            voiceRecorder.stopRecording()
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    isVoiceRecording = false,
+                    voiceErrorMessage = "録音停止に失敗しました: ${e.message}"
+                )
+            }
+            null
+        }
+
+        _uiState.update { it.copy(isVoiceRecording = false) }
+
+        if (recordedFile == null || !recordedFile.exists() || recordedFile.length() == 0L) {
+            recordedFile?.delete()
+            currentRecordingFile = null
+            _uiState.update {
+                it.copy(
+                    voiceErrorMessage = "音声が記録されませんでした。もう一度お試しください。"
+                )
+            }
+            return
+        }
+
+        currentRecordingFile = recordedFile
+        transcribeAndSend(recordedFile)
+    }
+
+    private fun transcribeAndSend(file: File) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isVoiceTranscribing = true,
+                    voiceErrorMessage = null
+                )
+            }
+            val result = whisperRepository.transcribe(file)
+            file.delete()
+            if (currentRecordingFile == file) {
+                currentRecordingFile = null
+            }
+            result.fold(
+                onSuccess = { text ->
+                    val trimmed = text.trim()
+                    if (trimmed.isBlank()) {
+                        _uiState.update {
+                            it.copy(
+                                isVoiceTranscribing = false,
+                                voiceErrorMessage = "音声の内容を聞き取れませんでした。"
+                            )
+                        }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isVoiceTranscribing = false,
+                                lastTranscribedText = trimmed
+                            )
+                        }
+                        submitFreeFormMessage(trimmed)
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isVoiceTranscribing = false,
+                            voiceErrorMessage = "音声解析に失敗しました: ${error.message ?: "Unknown error"}"
+                        )
+                    }
+                }
+            )
+        }
+    }
+
     private suspend fun proceedToNextTurn(option: RoleplayOption) {
         scriptedRuntime?.let {
             val nextTurnId = resolveNextTurnId(option, it)
@@ -215,6 +386,10 @@ class RoleplayChatViewModel(
 
     fun markUnlockHandled() {
         _uiState.update { it.copy(pendingUnlockLevel = null) }
+    }
+
+    fun consumePendingExitHistory() {
+        _uiState.update { it.copy(pendingExitHistory = null) }
     }
 
     fun notifyVoicePlaybackStarted(messageId: String) {
@@ -290,7 +465,7 @@ class RoleplayChatViewModel(
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val prompt = buildRoleplayPrompt(scenario, userMessage)
-                val rawResponse = repository.generateRoleplayReply(prompt)
+                val rawResponse = chatRepository.generateJsonResponse(prompt)
                 val payload = parseRoleplayPayload(rawResponse)
                 applyAiPayload(payload)
             } catch (e: Exception) {
@@ -390,6 +565,41 @@ class RoleplayChatViewModel(
         }
     }
 
+    fun saveAndExit() {
+        if (_uiState.value.isSavingHistory) return
+        val snapshot = history.map { MissionHistoryMessage(it.text, it.isUser) }
+        if (snapshot.isEmpty()) {
+            _uiState.update {
+                it.copy(saveHistoryError = "会話履歴がありません。", isSavingHistory = false)
+            }
+            return
+        }
+        val scenarioId = _uiState.value.currentScenario?.id
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSavingHistory = true, saveHistoryError = null) }
+            val result = historyRepository.saveSession(scenarioId, snapshot)
+            result.fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(
+                            isSavingHistory = false,
+                            pendingExitHistory = snapshot,
+                            saveHistoryError = null
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isSavingHistory = false,
+                            saveHistoryError = error.message ?: "保存に失敗しました。"
+                        )
+                    }
+                }
+            )
+        }
+    }
+
     private fun buildRoleplayPrompt(
         scenario: RoleplayScenarioDefinition,
         userMessage: String
@@ -403,13 +613,23 @@ class RoleplayChatViewModel(
             "- ${it.nativeText} (${it.translation})"
         }.ifBlank { "- (none)" }
 
+        val learnerGenderLabel = when (currentUserGender) {
+            UserGender.MALE -> "male (男性)"
+            UserGender.FEMALE -> "female (女性)"
+            UserGender.OTHER -> "non-binary / undisclosed"
+        }
         val genderInstruction = """
             SYSTEM DIRECTIVE:
             - You are Tari, a real Cebuana woman living in Cebu.
             - You must always speak Bisaya (Cebuano) in your dialogue. Never mix Japanese or English into your speech field.
             - Provide a separate Japanese translation ONLY inside the dedicated translation field.
-            - The learner is $userCallSign. Remember and respect their gender and relationship tone every turn.
+            - The learner is $learnerGenderLabel. Address them affectionately as "$calloutBisaya" (Bisaya) or "$calloutEnglish" (English) and never use other titles.
+            - Open every greeting or turn by referring to the learner with one of those approved names.
+            - Throughout the entire conversation, keep using only those approved callouts whenever you refer to the learner.
             - Stay affectionate, supportive, and slightly mischievous, but never break character.
+            - The learner can submit free-form voice transcriptions or typed input beyond the suggested options. Interpret any Japanese/English phrases they use, convert their intent into Bisaya context, and continue the mission naturally.
+            - Never reject or scold the learner for ad-lib input. Absorb it into the story, react with empathy, and keep the pacing lively.
+            - If the learner introduces new plot ideas or feelings, weave them into the narrative and adjust your guidance accordingly while staying aligned with the scenario goal.
         """.trimIndent()
 
         val basePrompt = if (scenario.systemPrompt.isBlank()) {
@@ -449,13 +669,18 @@ class RoleplayChatViewModel(
                 }
               ]
             }
-            Output 2-3 concise options. Never include markdown or explanations outside JSON.
+            Output 2-3 concise options that build upon the learner's most recent intent. Never include markdown or explanations outside JSON.
         """.trimIndent()
     }
 
     private fun parseRoleplayPayload(raw: String): RoleplayAiResponsePayload {
         return try {
-            val json = JSONObject(raw)
+            val cleaned = raw
+                .replace("```json", "", ignoreCase = true)
+                .replace("```", "")
+                .trim()
+            val normalized = extractJsonObject(cleaned)
+            val json = JSONObject(normalized)
             val aiSpeech = json.optString("aiSpeech", json.optString("aiResponse", raw))
             val aiTranslation = json.optString("aiTranslation", "")
             val optionsArray = json.optJSONArray("options") ?: JSONArray()
@@ -482,6 +707,16 @@ class RoleplayChatViewModel(
         }
     }
 
+    private fun extractJsonObject(raw: String): String {
+        val trimmed = raw.trim()
+        val firstBrace = trimmed.indexOf('{')
+        val lastBrace = trimmed.lastIndexOf('}')
+        if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace) {
+            return trimmed.substring(firstBrace, lastBrace + 1)
+        }
+        return trimmed
+    }
+
     private data class RoleplayAiResponsePayload(
         val aiSpeech: String,
         val aiTranslation: String,
@@ -504,6 +739,11 @@ class RoleplayChatViewModel(
         val lastTurnId = runtime.awaitingTurnId ?: return null
         val turn = runtime.scenario.turns[lastTurnId] ?: return null
         return turn.defaultNextId
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        cancelVoiceRecording()
     }
 }
 

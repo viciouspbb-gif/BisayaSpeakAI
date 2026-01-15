@@ -569,7 +569,7 @@ private fun ResponsePanel(
                     ) {
                         Text(
                             text = "先生の返答を待っています…",
-                            color = Color(0xFF9FB4D3)
+                            color = Color(0xFFFFF176)
                         )
                     }
                 }
@@ -582,7 +582,7 @@ private fun ResponsePanel(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(
                             top = 4.dp,
-                            bottom = 120.dp
+                            bottom = 160.dp
                         )
                     ) {
                         items(options, key = { it.id }) { option ->
@@ -881,7 +881,7 @@ private fun RoleplayOptionCard(
         ) {
             Text(
                 text = if (showTranslation && translationAvailable) option.hint!! else option.text,
-                color = Color.White,
+                color = Color(0xFFFFF176),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
@@ -892,7 +892,7 @@ private fun RoleplayOptionCard(
                     translationAvailable -> "長押しで日本語訳 / ダブルタップで決定"
                     else -> "ダブルタップまたはドラッグで決定"
                 },
-                color = Color(0xFF9FB4D3),
+                color = Color.White,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 6.dp),
                 textAlign = TextAlign.Center

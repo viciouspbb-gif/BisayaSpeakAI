@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.data.UserGender
-import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
+import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.UserPreferencesRepository
 import com.bisayaspeak.ai.data.repository.WhisperRepository
 import com.bisayaspeak.ai.utils.VoiceRecorder
@@ -20,7 +20,9 @@ data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isRecording: Boolean = false
+    val isRecording: Boolean = false,
+    val currentTurn: Int = 0,
+    val isFinished: Boolean = false
 )
 
 data class ChatMessage(
@@ -35,7 +37,7 @@ data class OptionItem(val text: String, val translation: String, val tone: Strin
 class ListeningViewModel(
     application: Application,
     private val whisperRepository: WhisperRepository = WhisperRepository(),
-    private val missionRepository: GeminiMissionRepository = GeminiMissionRepository(),
+    private val chatRepository: OpenAiChatRepository = OpenAiChatRepository(),
     private val userPreferencesRepository: UserPreferencesRepository = UserPreferencesRepository(application)
 ) : AndroidViewModel(application) {
 
@@ -44,6 +46,11 @@ class ListeningViewModel(
 
     private val voiceRecorder = VoiceRecorder(application)
     private var isUserFemale: Boolean = true
+
+    companion object {
+        private const val MAX_TURNS = 8
+        private const val CLIMAX_TURN = 6
+    }
 
     init {
         observeUserGender()
@@ -54,6 +61,10 @@ class ListeningViewModel(
     }
 
     fun startRecording() {
+        if (_uiState.value.isFinished) {
+            _uiState.value = _uiState.value.copy(error = "この会話は完結しました。TOPへ戻って新しいレッスンを開始してください。")
+            return
+        }
         try {
             voiceRecorder.startRecording()
             _uiState.value = _uiState.value.copy(isRecording = true, error = null)
@@ -63,6 +74,13 @@ class ListeningViewModel(
     }
 
     fun stopRecordingAndSend() {
+        if (_uiState.value.isFinished) {
+            _uiState.value = _uiState.value.copy(
+                isRecording = false,
+                error = "ストーリーは完結しました。レッスン完了ボタンからTOPへ戻ってください。"
+            )
+            return
+        }
         _uiState.value = _uiState.value.copy(isRecording = false, isLoading = true)
         val file = voiceRecorder.stopRecording()
         if (file != null && file.exists()) {
@@ -122,32 +140,20 @@ class ListeningViewModel(
     }
 
     private suspend fun generateAiResponse(userText: String): String {
+        Log.d("GenderCheck", "Sending request. User isFemale: $isUserFemale")
         val addressTerm = if (isUserFemale) {
             "Gwapa (Beautiful Female)"
         } else {
             "Gwapo (Handsome Male)"
         }
-
-        val systemPrompt = """
-            You are Tari, a friendly Bisaya teacher.
-            User is ${if (isUserFemale) "FEMALE" else "MALE"}.
-            ALWAYS address the user as '$addressTerm'.
-            Output response in strictly valid JSON format ONLY.
-            Format:
-            {
-              "aiSpeech": "Bisaya text",
-              "aiTranslation": "Japanese text",
-              "options": [{"text": "...", "translation": "...", "tone": "..."}]
-            }
-        """.trimIndent()
-
-        val prompt = buildString {
-            append(systemPrompt)
-            append("\n\nUser message:\n")
-            append(userText)
-        }
-
-        return missionRepository.generateRoleplayReply(prompt)
+        val shouldConclude = _uiState.value.currentTurn >= CLIMAX_TURN
+        return chatRepository.generateListeningReply(
+            userMessage = userText,
+            isUserFemale = isUserFemale,
+            addressTerm = addressTerm,
+            shouldConclude = shouldConclude,
+            farewellExamples = listOf("Sige, amping!", "Kita-kita ra ta puhon!")
+        )
     }
 
     private fun parseAndAddAiResponse(jsonString: String) {
@@ -201,7 +207,13 @@ class ListeningViewModel(
     private fun addMessage(role: String, text: String, translation: String? = null, options: List<OptionItem> = emptyList()) {
         val current = _uiState.value.messages.toMutableList()
         current.add(ChatMessage(role = role, text = text, translation = translation, options = options))
-        _uiState.value = _uiState.value.copy(messages = current)
+        val nextTurn = (_uiState.value.currentTurn + 1).coerceAtMost(MAX_TURNS)
+        val reachedLimit = role == "assistant" && nextTurn >= MAX_TURNS
+        _uiState.value = _uiState.value.copy(
+            messages = current,
+            currentTurn = nextTurn,
+            isFinished = _uiState.value.isFinished || reachedLimit
+        )
     }
 
     private fun observeUserGender() {

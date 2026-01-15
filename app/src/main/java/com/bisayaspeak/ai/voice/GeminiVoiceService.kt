@@ -1,14 +1,20 @@
 package com.bisayaspeak.ai.voice
 
 import android.content.Context
-import android.os.Bundle
+import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import android.util.Log
-import java.util.Locale
-import java.util.concurrent.ConcurrentLinkedQueue
+import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.data.remote.OpenAiSpeechService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 enum class GeminiVoiceCue {
     DEFAULT,
@@ -16,56 +22,21 @@ enum class GeminiVoiceCue {
     HIGH_PITCH
 }
 
-class GeminiVoiceService(private val context: Context) {
+class GeminiVoiceService(
+    private val context: Context,
+    private val speechService: OpenAiSpeechService = OpenAiSpeechService.create(BuildConfig.OPENAI_API_KEY)
+) {
+    private val supervisorJob = SupervisorJob()
+    private val scope = CoroutineScope(supervisorJob + Dispatchers.IO)
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    private var mediaPlayer: MediaPlayer? = null
+    private var tempFile: File? = null
+    private var currentJob: Job? = null
+
     init {
         GeminiVoiceSupervisor.register(this)
-        initializeTts()
     }
-
-    private lateinit var tts: TextToSpeech
-
-    private fun initializeTts() {
-        if (::tts.isInitialized) return
-        tts = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                val result = tts.setLanguage(Locale("ceb", "PH"))
-                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    tts.setLanguage(Locale.US)
-                }
-                tts.setPitch(1.4f)
-                tts.setSpeechRate(1.2f)
-                ready = true
-                Log.d("GeminiVoiceService", "TextToSpeech initialized successfully (locale=${tts.voice?.locale})")
-                flushPendingQueue()
-            } else {
-                Log.e("GeminiVoiceService", "Failed to initialize TextToSpeech: status=$status")
-            }
-        }
-        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {
-                mainHandler.post { currentOnStart?.invoke() }
-            }
-
-            override fun onDone(utteranceId: String?) {
-                mainHandler.post { currentOnComplete?.invoke() }
-            }
-
-            override fun onError(utteranceId: String?) {
-                mainHandler.post {
-                    currentOnError?.invoke(IllegalStateException("Gemini TTS playback error"))
-                }
-            }
-        })
-    }
-
-    @Volatile
-    private var ready: Boolean = false
-    private val pendingQueue = ConcurrentLinkedQueue<QueuedSpeech>()
-
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private var currentOnStart: (() -> Unit)? = null
-    private var currentOnComplete: (() -> Unit)? = null
-    private var currentOnError: ((Throwable) -> Unit)? = null
 
     fun speak(
         text: String,
@@ -74,89 +45,102 @@ class GeminiVoiceService(private val context: Context) {
         onComplete: (() -> Unit)? = null,
         onError: ((Throwable) -> Unit)? = null
     ) {
-        val speechRequest = QueuedSpeech(text, cue, onStart, onComplete, onError)
-        if (!ready) {
-            pendingQueue.offer(speechRequest)
-            Log.d("GeminiVoiceService", "TTS not ready. Queued text length=${text.length}")
-            return
-        }
-
-        playSpeech(speechRequest)
-    }
-
-    private fun playSpeech(request: QueuedSpeech) {
-        currentOnComplete = request.onComplete
-        currentOnError = request.onError
-        currentOnStart = request.onStart
-
-        val params = request.cue.voiceParams()
-        tts.setPitch(params.pitch)
-        tts.setSpeechRate(params.rate)
-
-        val bundle = Bundle().apply {
-            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, params.volume)
-        }
-
-        val utteranceId = "gemini-${System.currentTimeMillis()}"
-        val result = tts.speak(request.text, TextToSpeech.QUEUE_FLUSH, bundle, utteranceId)
-        if (result != TextToSpeech.SUCCESS) {
-            request.onError?.invoke(IllegalStateException("Failed to start Gemini voice playback ($result)"))
+        if (text.isBlank()) return
+        currentJob?.cancel()
+        currentJob = scope.launch {
+            try {
+                val audioBytes = speechService.synthesizeSpeech(
+                    OpenAiSpeechService.SpeechRequest(
+                        input = text,
+                        voice = "nova",
+                        model = "tts-1",
+                        format = "mp3",
+                        speed = 0.9f
+                    )
+                ).use { it.bytes() }
+                playAudio(audioBytes, onStart, onComplete, onError)
+            } catch (e: Exception) {
+                Log.e("GeminiVoiceService", "Failed to synthesize speech", e)
+                withContext(Dispatchers.Main) {
+                    onError?.invoke(e)
+                }
+            }
         }
     }
 
-    private fun flushPendingQueue() {
-        while (pendingQueue.isNotEmpty()) {
-            val request = pendingQueue.poll() ?: continue
-            Log.d("GeminiVoiceService", "Flushing queued text length=${request.text.length}")
-            playSpeech(request)
+    private suspend fun playAudio(
+        audioBytes: ByteArray,
+        onStart: (() -> Unit)?,
+        onComplete: (() -> Unit)?,
+        onError: ((Throwable) -> Unit)?
+    ) {
+        withContext(Dispatchers.Main) {
+            stopPlayer()
+            if (audioBytes.isEmpty()) {
+                onError?.invoke(IllegalStateException("Empty audio response"))
+                return@withContext
+            }
+
+            val audioFile = File.createTempFile("nova_voice_", ".mp3", context.cacheDir).apply {
+                outputStream().use { it.write(audioBytes) }
+            }
+            tempFile = audioFile
+
+            val player = MediaPlayer().apply {
+                setDataSource(audioFile.absolutePath)
+                setOnPreparedListener {
+                    onStart?.invoke()
+                    it.start()
+                }
+                setOnCompletionListener {
+                    onComplete?.invoke()
+                }
+                setOnErrorListener { _, what, extra ->
+                    val error = IllegalStateException("MediaPlayer error what=$what extra=$extra")
+                    onError?.invoke(error)
+                    true
+                }
+                prepareAsync()
+            }
+
+            mediaPlayer = player
         }
     }
 
     fun stop() {
-        Log.d("GeminiVoiceService", "Stopping current TTS playback")
-        tts.stop()
-        currentOnStart = null
-        currentOnComplete = null
-        currentOnError = null
+        currentJob?.cancel()
+        mainHandler.post { stopPlayer() }
+    }
+
+    private fun stopPlayer() {
+        mediaPlayer?.let { player ->
+            try {
+                player.setOnCompletionListener(null)
+                player.setOnErrorListener(null)
+                player.stop()
+            } catch (_: Exception) {
+            } finally {
+                try {
+                    player.reset()
+                } catch (_: Exception) {
+                }
+                player.release()
+            }
+        }
+        mediaPlayer = null
+        tempFile?.let {
+            if (it.exists()) {
+                it.delete()
+            }
+        }
+        tempFile = null
     }
 
     fun shutdown() {
-        Log.d("GeminiVoiceService", "Shutting down TextToSpeech engine")
         stop()
-        tts.shutdown()
+        scope.cancel()
         GeminiVoiceSupervisor.unregister(this)
     }
-
-    fun clearQueue() {
-        pendingQueue.clear()
-    }
-
-    fun stopAndClearQueue() {
-        clearQueue()
-        stop()
-    }
-
-    private fun GeminiVoiceCue.voiceParams(): VoiceParams {
-        return when (this) {
-            GeminiVoiceCue.DEFAULT -> VoiceParams(pitch = 1.0f, rate = 1.0f, volume = 1.0f)
-            GeminiVoiceCue.WHISPER -> VoiceParams(pitch = 0.85f, rate = 0.9f, volume = 0.6f)
-            GeminiVoiceCue.HIGH_PITCH -> VoiceParams(pitch = 1.25f, rate = 1.05f, volume = 1.0f)
-        }
-    }
-
-    private data class VoiceParams(
-        val pitch: Float,
-        val rate: Float,
-        val volume: Float
-    )
-
-    private data class QueuedSpeech(
-        val text: String,
-        val cue: GeminiVoiceCue,
-        val onStart: (() -> Unit)?,
-        val onComplete: (() -> Unit)?,
-        val onError: ((Throwable) -> Unit)?
-    )
 
     companion object {
         fun stopAllActive() {
@@ -180,6 +164,6 @@ private object GeminiVoiceSupervisor {
 
     @Synchronized
     fun stopAndClearAll() {
-        services.forEach { it.stopAndClearQueue() }
+        services.forEach { it.stop() }
     }
 }
