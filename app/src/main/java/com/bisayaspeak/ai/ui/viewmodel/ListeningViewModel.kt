@@ -120,6 +120,11 @@ class ListeningViewModel(
     private var _forceUpdatePending = false
     private var retryCount = 0
     private var rewardTimeoutJob: Job? = null
+    private var isRoleplaySession: Boolean = false
+
+    fun setRoleplaySession(isRoleplay: Boolean) {
+        isRoleplaySession = isRoleplay
+    }
 
     companion object {
         private const val QUESTIONS_PER_SESSION = 10 // 1セッションあたりの問題数
@@ -754,6 +759,7 @@ class ListeningViewModel(
     }
 
     private fun finalizeLesson(currentSession: ListeningSession) {
+        if (isRoleplaySession) return
         val totalQuestions = currentSession.questions.size
         if (totalQuestions == 0) return
         val correct = currentSession.score

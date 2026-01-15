@@ -39,6 +39,9 @@ android {
         val geminiApiKey = properties.getProperty("GEMINI_API_KEY") ?: ""
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
 
+        val openAiApiKey = properties.getProperty("OPENAI_API_KEY") ?: ""
+        buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
+
         val serverBaseUrl = properties.getProperty("SERVER_BASE_URL")
             ?: "https://bisaya-speak-ai-server-1.onrender.com"
         buildConfigField("String", "SERVER_BASE_URL", "\"$serverBaseUrl\"")

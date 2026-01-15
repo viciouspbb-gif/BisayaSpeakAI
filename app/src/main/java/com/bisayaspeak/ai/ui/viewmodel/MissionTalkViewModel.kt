@@ -7,7 +7,7 @@ import com.bisayaspeak.ai.data.model.MissionChatMessage
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.data.model.MissionScenario
 import com.bisayaspeak.ai.data.model.getMissionScenario
-import com.bisayaspeak.ai.data.repository.GeminiMissionRepository
+import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,7 +37,7 @@ data class MissionTalkUiState(
 
 class MissionTalkViewModel(
     private val scenarioId: String,
-    private val repository: GeminiMissionRepository = GeminiMissionRepository()
+    private val chatRepository: OpenAiChatRepository = OpenAiChatRepository()
 ) : ViewModel() {
 
     private val missionScenario: MissionScenario? = getMissionScenario(scenarioId)
@@ -111,7 +111,7 @@ class MissionTalkViewModel(
         viewModelScope.launch {
             try {
                 val prompt = buildMissionPrompt(scenario, trimmed, newRemaining)
-                val rawResponse = repository.generateRoleplayReply(prompt)
+                val rawResponse = chatRepository.generateJsonResponse(prompt)
                 val payload = parseMissionReply(rawResponse)
                 val aiText = payload.aiResponse.ifBlank { "..." }
                 history.add(MissionHistoryMessage(aiText, isUser = false))
