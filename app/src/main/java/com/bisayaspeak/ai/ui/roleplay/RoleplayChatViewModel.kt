@@ -9,6 +9,7 @@ import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.RoleplayHistoryRepository
 import com.bisayaspeak.ai.data.repository.UserPreferencesRepository
+import com.bisayaspeak.ai.data.repository.UsageRepository
 import com.bisayaspeak.ai.data.repository.WhisperRepository
 import com.bisayaspeak.ai.utils.MistakeManager
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
@@ -23,6 +24,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.random.Random
+import kotlin.text.RegexOption
 
 data class RoleplayOption(
     val id: String = UUID.randomUUID().toString(),
@@ -42,7 +45,6 @@ data class RoleplayResultPayload(
     val clearedLevel: Int,
     val leveledUp: Boolean
 )
-
 data class RoleplayUiState(
     val currentScenario: RoleplayScenarioDefinition? = null,
     val missionGoal: String = "",
@@ -66,7 +68,19 @@ data class RoleplayUiState(
     val lastTranscribedText: String? = null,
     val isSavingHistory: Boolean = false,
     val saveHistoryError: String? = null,
-    val pendingExitHistory: List<MissionHistoryMessage>? = null
+    val pendingExitHistory: List<MissionHistoryMessage>? = null,
+    val userGender: UserGender = UserGender.OTHER,
+    val activeThemeTitle: String = "",
+    val activeThemeDescription: String = "",
+    val turnsTarget: Int = 0,
+    val activeThemePersona: String = "",
+    val activeThemeGoal: String = "",
+    val activeThemeFlavor: RoleplayThemeFlavor = RoleplayThemeFlavor.CASUAL,
+    val activeThemeIntroLine: String = "",
+    val activeThemeFarewellBisaya: String = "",
+    val activeThemeFarewellTranslation: String = "",
+    val userLevel: Int = 1,
+    val totalXp: Int = 0
 )
 
 class RoleplayChatViewModel(
@@ -78,6 +92,9 @@ class RoleplayChatViewModel(
     private val historyRepository: RoleplayHistoryRepository = RoleplayHistoryRepository(application)
     private val voiceRecorder: VoiceInputRecorder = VoiceInputRecorder(application.applicationContext)
     private val userPreferencesRepository = UserPreferencesRepository(application)
+    private val usageRepository = UsageRepository(application)
+    private val random = Random(System.currentTimeMillis())
+    private val themeManager = RoleplayThemeManager(random)
 
     private companion object {
         private const val START_TOKEN = "[START_CONVERSATION]"
@@ -85,6 +102,10 @@ class RoleplayChatViewModel(
         private const val COMPLETION_THRESHOLD = 80
         private const val LOCKED_OPTION_HOLD_MS = 500L
         private const val POST_CLEAR_SILENCE_MS = 1000L
+        private const val CASUAL_MIN_TURN = 8
+        private const val CASUAL_MAX_TURN = 10
+        private const val SCENARIO_MAX_TURN = 12
+        private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*:\\s*", RegexOption.IGNORE_CASE)
     }
 
     private val _uiState = MutableStateFlow(RoleplayUiState())
@@ -102,9 +123,32 @@ class RoleplayChatViewModel(
     private var calloutBisaya: String = "Friend"
     private var calloutEnglish: String = "Friend"
     private var currentRecordingFile: File? = null
+    private var activeTheme: RoleplayThemeDefinition = themeManager.drawTheme(1, RoleplayThemeFlavor.CASUAL)
+    private var activeFlavor: RoleplayThemeFlavor = RoleplayThemeFlavor.CASUAL
+    private var currentUserLevel: Int = 1
+    private var lastRandomThemeId: String? = null
+    private var endingTurnTarget: Int = SCENARIO_MAX_TURN
+    private var isCasualTheme: Boolean = true
+    private var endingTriggered: Boolean = false
+    private var scriptedTurnsRemaining: Int = SCENARIO_MAX_TURN
 
     init {
         observeUserGender()
+        observeUserProgress()
+    }
+
+    private fun observeUserProgress() {
+        viewModelScope.launch {
+            usageRepository.getCurrentLevel().collect { level ->
+                currentUserLevel = level
+                _uiState.update { it.copy(userLevel = level) }
+            }
+        }
+        viewModelScope.launch {
+            usageRepository.getTotalXP().collect { xp ->
+                _uiState.update { it.copy(totalXp = xp) }
+            }
+        }
     }
 
     fun setProAccess(enabled: Boolean) {
@@ -123,6 +167,7 @@ class RoleplayChatViewModel(
         viewModelScope.launch {
             userPreferencesRepository.userGender.collect { gender ->
                 currentUserGender = gender
+                _uiState.update { it.copy(userGender = gender) }
                 when (gender) {
                     UserGender.MALE -> {
                         userCallSign = "彼氏（Gwapo/Handsome）"
@@ -150,6 +195,10 @@ class RoleplayChatViewModel(
         branchFacts.clear()
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
         isProVersion = isProUser
+        selectActiveTheme(definition)
+
+        val cleanThemeTitle = levelPrefixRegex.replace(activeTheme.title, "").trim().ifBlank { activeTheme.title }
+        val closingCue = activeTheme.closingCue
 
         _uiState.value = RoleplayUiState(
             currentScenario = definition,
@@ -158,8 +207,22 @@ class RoleplayChatViewModel(
             systemPrompt = definition.systemPrompt,
             messages = emptyList(),
             isLoading = scriptedRuntime == null,
-            isProUser = isProVersion
+            isProUser = isProVersion,
+            userGender = currentUserGender,
+            activeThemeTitle = cleanThemeTitle,
+            activeThemeDescription = activeTheme.description,
+            activeThemePersona = activeTheme.persona,
+            activeThemeGoal = activeTheme.goalStatement,
+            activeThemeFlavor = activeTheme.flavor,
+            activeThemeIntroLine = activeTheme.introLine,
+            activeThemeFarewellBisaya = closingCue.bisaya,
+            activeThemeFarewellTranslation = closingCue.translation,
+            turnsTarget = endingTurnTarget
         )
+
+        if (scriptedRuntime == null) {
+            injectThemeIntroLine()
+        }
 
         scriptedRuntime?.let {
             deliverScriptedTurn()
@@ -167,6 +230,23 @@ class RoleplayChatViewModel(
             scenario = definition,
             userMessage = START_TOKEN
         )
+    }
+
+    private fun injectThemeIntroLine() {
+        val introLine = activeTheme.introLine.takeIf { it.isNotBlank() } ?: return
+        val introMessage = ChatMessage(
+            id = UUID.randomUUID().toString(),
+            text = introLine,
+            isUser = false,
+            translation = null,
+            voiceCue = GeminiVoiceCue.HIGH_PITCH
+        )
+        history.add(MissionHistoryMessage(introLine, isUser = false))
+        _uiState.update {
+            it.copy(
+                messages = it.messages + introMessage
+            )
+        }
     }
 
     fun selectOption(optionId: String) {
@@ -508,96 +588,43 @@ class RoleplayChatViewModel(
                 )
             }.filterForAccess()
 
+        if (maybeTriggerEnding(aiMsg)) {
+            return
+        }
+
+        scriptedTurnsRemaining -= 1
         _uiState.update {
             it.copy(
                 messages = it.messages + aiMsg,
                 isLoading = false,
                 options = options,
                 peekedHintOptionIds = emptySet(),
-                lockedOption = null
+                lockedOption = null,
+                turnsTarget = scriptedTurnsRemaining.coerceAtLeast(0)
             )
         }
 
-        if (options.isEmpty()) {
+        if (options.isEmpty() || scriptedTurnsRemaining <= 0) {
             queueCompletion(calculateScore())
         }
     }
 
-    private fun buildResultPayload(score: Int): RoleplayResultPayload {
-        val totalTurns = _uiState.value.completedTurns.coerceAtLeast(1)
-        val successful = _uiState.value.successfulTurns.coerceAtMost(totalTurns)
-        val xp = (successful * 20).coerceAtLeast(10)
-        val clearedLevel = _uiState.value.currentScenario?.level ?: 1
-        val leveledUp = score >= COMPLETION_THRESHOLD
-        return RoleplayResultPayload(
-            correctCount = successful,
-            totalQuestions = totalTurns,
-            earnedXp = xp,
-            clearedLevel = clearedLevel,
-            leveledUp = leveledUp
-        )
-    }
-
     private fun queueCompletion(score: Int) {
-        if (_uiState.value.pendingResult != null) return
-        val scenarioLevel = _uiState.value.currentScenario?.level ?: 1
-        val payload = buildResultPayload(score)
         _uiState.update {
             it.copy(
-                isLoading = false,
+                showCompletionDialog = true,
+                completionScore = score.coerceIn(0, 100),
                 options = emptyList(),
-                peekedHintOptionIds = emptySet(),
-                showCompletionDialog = false,
-                completionScore = score,
-                pendingUnlockLevel = if (score >= COMPLETION_THRESHOLD) scenarioLevel + 1 else null,
-                pendingResult = payload,
-                lockedOption = null
+                peekedHintOptionIds = emptySet()
             )
         }
     }
 
     private fun calculateScore(): Int {
-        val turns = _uiState.value.completedTurns
-        return if (turns > 0) {
-            ((_uiState.value.successfulTurns.toFloat() / turns.toFloat()) * 100).toInt().coerceIn(0, 100)
-        } else {
-            COMPLETION_SCORE
-        }
-    }
-
-    fun saveAndExit() {
-        if (_uiState.value.isSavingHistory) return
-        val snapshot = history.map { MissionHistoryMessage(it.text, it.isUser) }
-        if (snapshot.isEmpty()) {
-            _uiState.update {
-                it.copy(saveHistoryError = "会話履歴がありません。", isSavingHistory = false)
-            }
-            return
-        }
-        val scenarioId = _uiState.value.currentScenario?.id
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSavingHistory = true, saveHistoryError = null) }
-            val result = historyRepository.saveSession(scenarioId, snapshot)
-            result.fold(
-                onSuccess = {
-                    _uiState.update {
-                        it.copy(
-                            isSavingHistory = false,
-                            pendingExitHistory = snapshot,
-                            saveHistoryError = null
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    _uiState.update {
-                        it.copy(
-                            isSavingHistory = false,
-                            saveHistoryError = error.message ?: "保存に失敗しました。"
-                        )
-                    }
-                }
-            )
-        }
+        val state = _uiState.value
+        if (state.completedTurns == 0) return 100
+        val ratio = state.successfulTurns.toFloat() / state.completedTurns.toFloat()
+        return (ratio * 100).toInt().coerceIn(0, 100)
     }
 
     private fun buildRoleplayPrompt(
@@ -642,6 +669,16 @@ class RoleplayChatViewModel(
 
         val systemPromptWithGender = buildString {
             append(basePrompt)
+            append("\n\n現在のテーマ: ${activeTheme.title} — ${activeTheme.description}。")
+            append("\nタリの役柄: ${activeTheme.persona}")
+            append("\n今回の目的: ${activeTheme.goalStatement}")
+            append("\nテーマ演技ノート: ${activeTheme.instruction}")
+            append("\n属性パネル例:")
+            activeTheme.attributePanels.forEach { panel ->
+                append("\n- $panel")
+            }
+            append("\n\nあなたは${calloutBisaya}と呼ぶ相手に優しく寄り添いながら会話するタリです。")
+            append("\n相手の呼び方: ${calloutBisaya} / ${calloutEnglish}。ユーザー性別: ${currentUserGender.name}。")
             append("\n\n")
             append(genderInstruction)
         }.trim()
@@ -671,6 +708,82 @@ class RoleplayChatViewModel(
             }
             Output 2-3 concise options that build upon the learner's most recent intent. Never include markdown or explanations outside JSON.
         """.trimIndent()
+    }
+
+    private fun selectActiveTheme(definition: RoleplayScenarioDefinition) {
+        val isScriptedScenario = scriptedRuntime != null
+        val level = currentUserLevel
+        val selectedFlavor = when {
+            isScriptedScenario -> RoleplayThemeFlavor.SCENARIO
+            random.nextBoolean() -> RoleplayThemeFlavor.CASUAL
+            else -> RoleplayThemeFlavor.SCENARIO
+        }
+        activeFlavor = selectedFlavor
+        isCasualTheme = selectedFlavor == RoleplayThemeFlavor.CASUAL
+        endingTriggered = false
+        scriptedTurnsRemaining = SCENARIO_MAX_TURN
+
+        activeTheme = if (isScriptedScenario) {
+            scriptedTheme(definition)
+        } else {
+            themeManager.drawTheme(level, selectedFlavor)
+        }
+
+        endingTurnTarget = if (isCasualTheme) {
+            random.nextInt(CASUAL_MIN_TURN, CASUAL_MAX_TURN + 1)
+        } else {
+            SCENARIO_MAX_TURN
+        }
+    }
+
+    private fun scriptedTheme(definition: RoleplayScenarioDefinition): RoleplayThemeDefinition {
+        val displayTitle = levelPrefixRegex.replace(definition.title, "").ifBlank { definition.title }
+        return RoleplayThemeDefinition(
+            id = definition.id,
+            title = displayTitle.trim(),
+            description = definition.description,
+            instruction = "シナリオのゴール(${definition.goal})を12ターン以内に達成するよう導いて。",
+            attributePanels = listOf("Deep dive: ${definition.goal}", "Scenery: ${definition.situation}", "Joke: タリの茶目っ気"),
+            flavor = RoleplayThemeFlavor.SCENARIO,
+            persona = definition.aiRole,
+            goalStatement = definition.goal,
+            introLine = definition.initialMessage ?: "さぁ、ミッション始めよう",
+            closingCue = EndingCue("Balik ta para sa sunod nga mission!", "また次のミッションで会おうね！")
+        )
+    }
+
+    private fun maybeTriggerEnding(aiMessage: ChatMessage): Boolean {
+        if (endingTriggered) return false
+        val turns = _uiState.value.completedTurns
+        val shouldEnd = when {
+            scriptedRuntime != null -> false
+            isCasualTheme -> turns >= endingTurnTarget
+            else -> turns >= endingTurnTarget
+        }
+
+        if (!shouldEnd) return false
+        endingTriggered = true
+        val cue = activeTheme.closingCue ?: EndingCue("Balik ta sunod, ha?", "また遊ぼうね！")
+        val endingMessage = ChatMessage(
+            id = UUID.randomUUID().toString(),
+            text = cue.bisaya,
+            isUser = false,
+            translation = cue.translation,
+            voiceCue = GeminiVoiceCue.HIGH_PITCH
+        )
+        history.add(MissionHistoryMessage(cue.bisaya, isUser = false))
+        _uiState.update {
+            it.copy(
+                messages = it.messages + aiMessage + endingMessage,
+                isLoading = false,
+                options = emptyList(),
+                peekedHintOptionIds = emptySet(),
+                lockedOption = null,
+                turnsTarget = 0
+            )
+        }
+        queueCompletion(calculateScore())
+        return true
     }
 
     private fun parseRoleplayPayload(raw: String): RoleplayAiResponsePayload {
@@ -775,131 +888,4 @@ private class ScriptedRuntime(val scenario: ScriptedScenario) {
     var awaitingTurnId: String? = null
 }
 
-private val scriptedScenarioDefinitions: Map<String, ScriptedScenario> = mapOf(
-    "rp_tarsier_morning" to ScriptedScenario(
-        startTurnId = "intro",
-        turns = mapOf(
-            "intro" to ScriptedTurn(
-                id = "intro",
-                aiText = "Maayong buntag! Ako si Tarsier Master Tali. Handom ko nga ma-init imong adlaw.",
-                translation = "おはよう！タルシエ先生タリだよ。今日も良い朝にしよう。",
-                voiceCue = GeminiVoiceCue.HIGH_PITCH,
-                options = listOf(
-                    ScriptedOption(
-                        text = "Maayong buntag, Tali! Andam ko sa leksyon.",
-                        translation = "おはようタリ！レッスンの準備できてるよ。",
-                        nextTurnId = "mood_check",
-                        branchKey = "greeting",
-                        branchValue = "energetic"
-                    ),
-                    ScriptedOption(
-                        text = "Maayong buntag! Nalipay ko makakita nimo.",
-                        translation = "おはよう！会えてうれしいよ。",
-                        nextTurnId = "mood_check",
-                        branchKey = "greeting",
-                        branchValue = "tender"
-                    )
-                ),
-                defaultNextId = "mood_check"
-            ),
-            "mood_check" to ScriptedTurn(
-                id = "mood_check",
-                aiText = "Kumusta ka karon? Murag daghan ka'g enerhiya ron!",
-                translation = "調子はどう？すごく元気そうだね！",
-                voiceCue = GeminiVoiceCue.HIGH_PITCH,
-                options = listOf(
-                    ScriptedOption(
-                        text = "Maayo ra ko, salamat! Motivated ko kaayo.",
-                        translation = "元気だよ、ありがとう！やる気満々。",
-                        nextTurnId = "react_positive",
-                        branchKey = "mood",
-                        branchValue = "positive"
-                    ),
-                    ScriptedOption(
-                        text = "Gikapoy gamay pero padayon gihapon.",
-                        translation = "ちょっと疲れてるけど頑張るよ。",
-                        nextTurnId = "react_tired",
-                        branchKey = "mood",
-                        branchValue = "tired"
-                    )
-                ),
-                defaultNextId = "react_positive"
-            ),
-            "react_positive" to ScriptedTurn(
-                id = "react_positive",
-                aiText = "Nice kaayo! Ang imong energy makahawa. Sugdan nato ang papel-play adventure!",
-                translation = "いいね！そのエネルギーが伝わってくるよ。さあ紙芝居アドベンチャーを始めよう！",
-                voiceCue = GeminiVoiceCue.HIGH_PITCH,
-                options = listOf(
-                    ScriptedOption(
-                        text = "Ready ko! Asa ta maglakaw?",
-                        translation = "準備完了！どこに行こうか？",
-                        nextTurnId = "wrap_confident"
-                    ),
-                    ScriptedOption(
-                        text = "Game! Dad-a ko sa imong secret shortcut.",
-                        translation = "ゲーム開始！秘密の近道を見せて。",
-                        nextTurnId = "wrap_confident",
-                        requiresPro = true
-                    )
-                ),
-                defaultNextId = "wrap_confident"
-            ),
-            "react_tired" to ScriptedTurn(
-                id = "react_tired",
-                aiText = "Sige lang, naa ra ko diri motabang nimo. Dali ra ni, promise!",
-                translation = "大丈夫、私がそばで支えるから。あっという間だよ！",
-                voiceCue = GeminiVoiceCue.HIGH_PITCH,
-                options = listOf(
-                    ScriptedOption(
-                        text = "Salamat, Tali! Hinay-hinay lang ta.",
-                        translation = "ありがとうタリ！ゆっくり進もう。",
-                        nextTurnId = "wrap_encourage"
-                    ),
-                    ScriptedOption(
-                        text = "Okay ra, kay kung naa ka diha kusgan ko.",
-                        translation = "君がいるなら頑張れるよ。",
-                        nextTurnId = "wrap_encourage"
-                    )
-                ),
-                defaultNextId = "wrap_encourage"
-            ),
-            "wrap_confident" to ScriptedTurn(
-                id = "wrap_confident",
-                aiText = "Tan-awa! Sa imong pagpili, mas ni-bright ang kagabhion. Balik ta unya para sa sunod nga page!",
-                translation = "ほら！君の選択で夜道も明るくなったよ。また次のページで会おうね！",
-                voiceCue = GeminiVoiceCue.HIGH_PITCH,
-                options = listOf(
-                    ScriptedOption(
-                        text = "Magkita ta unya! Dal-i ko sunod nga lakaw.",
-                        translation = "またね！次の散歩も早くしたい。",
-                        nextTurnId = null
-                    ),
-                    ScriptedOption(
-                        text = "Mo-report ko kay Sensei sunod ha!",
-                        translation = "次は先生に報告するね！",
-                        nextTurnId = null
-                    )
-                )
-            ),
-            "wrap_encourage" to ScriptedTurn(
-                id = "wrap_encourage",
-                aiText = "Nakaya ra nimo bisan kapoy! Proud kaayo ko nimo. Pahuway gamay, unya balik para sa chapter 2.",
-                translation = "疲れててもやり遂げたね！とっても誇らしいよ。少し休んでから第2章で会おう！",
-                voiceCue = GeminiVoiceCue.HIGH_PITCH,
-                options = listOf(
-                    ScriptedOption(
-                        text = "Sige, pahulay sa ko. Kita ta usab!",
-                        translation = "うん、ちょっと休むね。また会おう！",
-                        nextTurnId = null
-                    ),
-                    ScriptedOption(
-                        text = "Thanks sa encouragement! Mag practice ko.",
-                        translation = "励ましありがとう！練習しておくね。",
-                        nextTurnId = null
-                    )
-                )
-            )
-        )
-    )
-)
+private val scriptedScenarioDefinitions: Map<String, ScriptedScenario> = emptyMap()

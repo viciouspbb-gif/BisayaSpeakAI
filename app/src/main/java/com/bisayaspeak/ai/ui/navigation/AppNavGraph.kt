@@ -46,11 +46,10 @@ import com.bisayaspeak.ai.ui.missions.MissionScenarioSelectScreen
 import com.bisayaspeak.ai.ui.missions.MissionTalkScreen
 import com.bisayaspeak.ai.ui.roleplay.RoleplayChatScreen
 import com.bisayaspeak.ai.ui.roleplay.RoleplayChatViewModel
-import com.bisayaspeak.ai.ui.roleplay.RoleplayListScreen
 import com.bisayaspeak.ai.ui.screens.AiTranslatorScreen
-import com.bisayaspeak.ai.ui.screens.GenderSelectionScreen
 import com.bisayaspeak.ai.ui.screens.FeedbackScreen
 import com.bisayaspeak.ai.ui.screens.FlashcardScreen
+import com.bisayaspeak.ai.ui.screens.DictionaryScreen
 import com.bisayaspeak.ai.ui.screens.LessonResultScreen
 import com.bisayaspeak.ai.ui.screens.LevelSelectionScreen
 import com.bisayaspeak.ai.ui.screens.ListeningScreen
@@ -63,7 +62,6 @@ import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.TranslateScreen
 import com.bisayaspeak.ai.ui.screens.TariDojoComingSoonScreen
-import com.bisayaspeak.ai.ui.viewmodel.GenderSelectionViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 import com.bisayaspeak.ai.voice.GeminiVoiceService
@@ -71,7 +69,6 @@ import com.google.firebase.auth.FirebaseAuth
 
 enum class AppRoute(val route: String) {
     Home("home"),
-    GenderSelection("gender_selection"),
     LevelSelection("level_selection"),
     Translation("translation"),
     Flashcards("flashcards"),
@@ -79,7 +76,6 @@ enum class AppRoute(val route: String) {
     PracticeCategory("practice/category/{category}"),
     PracticeWord("practice/word/{id}"),
     Listening("listening/{level}"),
-    RolePlayList("roleplay_list"),
     RolePlayChat("roleplay_chat/{scenarioId}"),
     RolePlayScenario("role_play_scenario/{scenarioId}"),
     Account("account"),
@@ -91,6 +87,7 @@ enum class AppRoute(val route: String) {
     MissionScenarioSelect("mission/scenario"),
     MissionTalk("mission/talk/{missionId}"),
     AiTranslator("ai/translator"),
+    Dictionary("dictionary"),
     TariDojoComingSoon("tari_dojo")
 }
 
@@ -143,14 +140,6 @@ fun AppNavGraph(
         navController = navController,
         startDestination = AppRoute.Home.route
     ) {
-        composable(AppRoute.GenderSelection.route) {
-            val genderSelectionViewModel: GenderSelectionViewModel = viewModel()
-            GenderSelectionScreen(
-                navController = navController,
-                viewModel = genderSelectionViewModel
-            )
-        }
-
         composable(AppRoute.Home.route) {
             BannerScreenContainer(userPlan = userPlan) {
                 HomeScreen(
@@ -173,7 +162,7 @@ fun AppNavGraph(
                             }
                             FeatureId.AI_TRANSLATOR -> {
                                 if (isPremiumPlan) {
-                                    navController.navigate(AppRoute.AiTranslator.route)
+                                    navController.navigate(AppRoute.Dictionary.route)
                                 } else {
                                     navController.navigate(AppRoute.Upgrade.route)
                                 }
@@ -187,7 +176,16 @@ fun AppNavGraph(
                             FeatureId.FLASHCARDS -> navController.navigate(AppRoute.Flashcards.route)
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
-                            FeatureId.ROLE_PLAY -> navController.navigate(AppRoute.GenderSelection.route)
+                            FeatureId.ROLE_PLAY -> {
+                                if (isProUnlocked) {
+                                    val defaultScenario = "rp_tarsier_morning"
+                                    navController.navigate(
+                                        AppRoute.RolePlayChat.route.replace("{scenarioId}", defaultScenario)
+                                    )
+                                } else {
+                                    navController.navigate(AppRoute.Upgrade.route)
+                                }
+                            }
 
                             else -> { /* Legacy/unused features */ }
                         }
@@ -284,6 +282,12 @@ fun AppNavGraph(
 
         composable(AppRoute.AiTranslator.route) {
             AiTranslatorScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppRoute.Dictionary.route) {
+            DictionaryScreen(
                 onBack = { navController.popBackStack() }
             )
         }
@@ -484,44 +488,36 @@ fun AppNavGraph(
             )
         }
 
-        composable(AppRoute.RolePlayList.route) {
-            BannerScreenContainer(userPlan = userPlan) {
-                RoleplayListScreen(
-                    userCurrentLevel = homeStatus.currentLevel,
-                    onScenarioClick = { scenario ->
-                        navController.navigate(
-                            AppRoute.RolePlayChat.route.replace("{scenarioId}", scenario.id)
-                        )
-                    }
-                )
-            }
-        }
-
-        // 繝√Ε繝・ヨ逕ｻ髱｢・育┌譚｡莉ｶ縺ｧ霑ｽ蜉�・・
         composable(
             route = AppRoute.RolePlayChat.route,
             arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: "default"
-            val roleplayChatViewModel: RoleplayChatViewModel = viewModel()
+            if (!isProUnlocked) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(AppRoute.Upgrade.route)
+                }
+            } else {
+                val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: "default"
+                val roleplayChatViewModel: RoleplayChatViewModel = viewModel()
 
-            RoleplayChatScreen(
-                scenarioId = scenarioId,
-                isProVersion = isProUnlocked,
-                onBackClick = { navController.popBackStack() },
-                onSaveAndExit = {
-                    GeminiVoiceService.stopAllActive()
-                    Log.d("AppNavigation", "Roleplay completion -> returning home after save")
-                    val popped = navController.popBackStack(AppRoute.Home.route, inclusive = false)
-                    if (!popped) {
-                        navController.navigate(AppRoute.Home.route) {
-                            launchSingleTop = true
-                            popUpTo(AppRoute.Home.route) { inclusive = true }
+                RoleplayChatScreen(
+                    scenarioId = scenarioId,
+                    isProVersion = true,
+                    onBackClick = { navController.popBackStack() },
+                    onSaveAndExit = {
+                        GeminiVoiceService.stopAllActive()
+                        Log.d("AppNavigation", "Roleplay completion -> returning home after save")
+                        val popped = navController.popBackStack(AppRoute.Home.route, inclusive = false)
+                        if (!popped) {
+                            navController.navigate(AppRoute.Home.route) {
+                                launchSingleTop = true
+                                popUpTo(AppRoute.Home.route) { inclusive = true }
+                            }
                         }
-                    }
-                },
-                viewModel = roleplayChatViewModel
-            )
+                    },
+                    viewModel = roleplayChatViewModel
+                )
+            }
         }
 
         // 譌｢蟄倥・繝｢繝・け繧ｷ繝翫Μ繧ｪ逕ｨ・亥ｿｵ縺ｮ縺溘ａ谿九＠縺ｦ縺・∪縺呻ｼ・
