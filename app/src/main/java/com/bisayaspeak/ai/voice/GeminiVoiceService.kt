@@ -15,6 +15,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.ArrayDeque
 
 enum class GeminiVoiceCue {
     DEFAULT,
@@ -33,6 +34,8 @@ class GeminiVoiceService(
     private var mediaPlayer: MediaPlayer? = null
     private var tempFile: File? = null
     private var currentJob: Job? = null
+    private var isSpeaking: Boolean = false
+    private val pendingRequests = ArrayDeque<VoiceRequest>()
 
     init {
         GeminiVoiceSupervisor.register(this)
@@ -46,38 +49,48 @@ class GeminiVoiceService(
         onError: ((Throwable) -> Unit)? = null
     ) {
         if (text.isBlank()) return
+        val request = VoiceRequest(text, cue, onStart, onComplete, onError)
+        if (isSpeaking) {
+            pendingRequests.addLast(request)
+        } else {
+            playRequest(request)
+        }
+    }
+
+    private fun playRequest(request: VoiceRequest) {
+        isSpeaking = true
         currentJob?.cancel()
         currentJob = scope.launch {
             try {
                 val audioBytes = speechService.synthesizeSpeech(
                     OpenAiSpeechService.SpeechRequest(
-                        input = text,
+                        input = request.text,
                         voice = "nova",
                         model = "tts-1",
                         format = "mp3",
                         speed = 0.9f
                     )
                 ).use { it.bytes() }
-                playAudio(audioBytes, onStart, onComplete, onError)
+                playAudio(audioBytes, request)
             } catch (e: Exception) {
                 Log.e("GeminiVoiceService", "Failed to synthesize speech", e)
                 withContext(Dispatchers.Main) {
-                    onError?.invoke(e)
+                    request.onError?.invoke(e)
                 }
+                dispatchNext()
             }
         }
     }
 
     private suspend fun playAudio(
         audioBytes: ByteArray,
-        onStart: (() -> Unit)?,
-        onComplete: (() -> Unit)?,
-        onError: ((Throwable) -> Unit)?
+        request: VoiceRequest
     ) {
         withContext(Dispatchers.Main) {
             stopPlayer()
             if (audioBytes.isEmpty()) {
-                onError?.invoke(IllegalStateException("Empty audio response"))
+                request.onError?.invoke(IllegalStateException("Empty audio response"))
+                dispatchNext()
                 return@withContext
             }
 
@@ -88,16 +101,18 @@ class GeminiVoiceService(
 
             val player = MediaPlayer().apply {
                 setDataSource(audioFile.absolutePath)
-                setOnPreparedListener {
-                    onStart?.invoke()
-                    it.start()
+                setOnPreparedListener { player ->
+                    mainHandler.post { request.onStart?.invoke() }
+                    player.start()
                 }
                 setOnCompletionListener {
-                    onComplete?.invoke()
+                    mainHandler.post { request.onComplete?.invoke() }
+                    dispatchNext()
                 }
                 setOnErrorListener { _, what, extra ->
                     val error = IllegalStateException("MediaPlayer error what=$what extra=$extra")
-                    onError?.invoke(error)
+                    mainHandler.post { request.onError?.invoke(error) }
+                    dispatchNext()
                     true
                 }
                 prepareAsync()
@@ -110,6 +125,8 @@ class GeminiVoiceService(
     fun stop() {
         currentJob?.cancel()
         mainHandler.post { stopPlayer() }
+        pendingRequests.clear()
+        isSpeaking = false
     }
 
     private fun stopPlayer() {
@@ -141,6 +158,23 @@ class GeminiVoiceService(
         scope.cancel()
         GeminiVoiceSupervisor.unregister(this)
     }
+
+    private fun dispatchNext() {
+        val next = if (pendingRequests.isEmpty()) null else pendingRequests.removeFirst()
+        if (next != null) {
+            playRequest(next)
+        } else {
+            isSpeaking = false
+        }
+    }
+
+    private data class VoiceRequest(
+        val text: String,
+        val cue: GeminiVoiceCue,
+        val onStart: (() -> Unit)?,
+        val onComplete: (() -> Unit)?,
+        val onError: ((Throwable) -> Unit)?
+    )
 
     companion object {
         fun stopAllActive() {

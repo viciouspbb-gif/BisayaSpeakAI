@@ -23,10 +23,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -41,14 +37,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -79,44 +72,33 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.consumePositionChange
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
+import com.bisayaspeak.ai.ui.roleplay.RoleplayThemeFlavor
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
+import com.bisayaspeak.ai.ui.roleplay.CompletionDialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.max
-import kotlin.math.roundToInt
 
 data class ChatMessage(
     val id: String,
@@ -141,7 +123,7 @@ fun RoleplayChatScreen(
     val context = LocalContext.current
     val voiceService = remember { GeminiVoiceService(context) }
     var initialLineSpoken by remember(scenarioId) { mutableStateOf(false) }
-    var showOptionTutorial by rememberSaveable { mutableStateOf(true) }
+    var showOptionTutorial by remember { mutableStateOf(true) }
 
     val audioPermissionGrantedState = remember {
         mutableStateOf(
@@ -261,13 +243,6 @@ fun RoleplayChatScreen(
         }
     }
 
-    val scenarioTitle = uiState.currentScenario?.title ?: "タリとの散歩道"
-    val isSavingHistory = uiState.isSavingHistory
-    val saveHistoryError = uiState.saveHistoryError
-
-    var activeDragOptionId by remember { mutableStateOf<String?>(null) }
-    val dropZoneBounds = remember { mutableStateOf<Rect?>(null) }
-
     val screenScrollState = rememberScrollState()
 
     val audioPermissionGranted = audioPermissionGrantedState.value
@@ -286,10 +261,24 @@ fun RoleplayChatScreen(
         }
     }
 
+    if (uiState.showCompletionDialog) {
+        CompletionDialog(
+            themeTitle = uiState.activeThemeTitle,
+            flavor = uiState.activeThemeFlavor,
+            goal = uiState.activeThemeGoal,
+            farewellLine = uiState.activeThemeFarewellBisaya,
+            farewellTranslation = uiState.activeThemeFarewellTranslation,
+            onGoHome = {
+                viewModel.dismissCompletionDialog()
+                onBackClick()
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(scenarioTitle) },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -298,31 +287,8 @@ fun RoleplayChatScreen(
                         )
                     }
                 },
-                actions = {
-                    TextButton(
-                        onClick = {
-                            viewModel.saveAndExit()
-                        },
-                        enabled = !isSavingHistory
-                    ) {
-                        if (isSavingHistory) {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = Color.White
-                            )
-                        } else {
-                            Text(
-                                text = "散歩を保存してTOPへ",
-                                color = Color.White
-                            )
-                        }
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1E1E1E),
-                    titleContentColor = Color.White,
+                    containerColor = Color.Transparent,
                     navigationIconContentColor = Color.White
                 )
             )
@@ -346,52 +312,22 @@ fun RoleplayChatScreen(
                 )
         ) {
             val screenHeight = maxHeight
-            val screenWidth = maxWidth
             val condensedLayout = screenHeight < 700.dp
             val isCompactHeight = screenHeight < 640.dp
-            val scaleFactor = if (isCompactHeight || screenWidth < 360.dp) 0.88f else 1f
-            val textScaleFactor = if (condensedLayout) 0.8f else 1f
-            val stageScale = when {
-                condensedLayout -> 0.66f
-                isCompactHeight -> 0.8f
-                else -> 1f
-            }
-            val columnTopPadding = if (condensedLayout) 2.dp else if (isCompactHeight) 4.dp else 8.dp
-            val voicePanelBottomPadding = when {
-                condensedLayout -> 72.dp
-                isCompactHeight -> 96.dp
-                else -> 120.dp
-            }
-            val sectionSpacing = if (condensedLayout) 8.dp else if (isCompactHeight) 12.dp else 16.dp
-            val optionSpacing = if (condensedLayout) 8.dp else if (isCompactHeight) 10.dp else 12.dp
-            val optionContentPadding = if (condensedLayout) 6.dp else if (isCompactHeight) 8.dp else 12.dp
-            val responseMinHeight = when {
-                condensedLayout -> 240.dp
-                isCompactHeight -> 280.dp
-                else -> 320.dp
-            }
-            val cardHorizontalPadding = if (condensedLayout) 14.dp else 20.dp
-            val cardVerticalPadding = if (condensedLayout) 10.dp else 18.dp
-            val voicePanelScale = when {
-                condensedLayout -> 0.8f
-                isCompactHeight -> 0.9f
-                else -> 1f
-            }
-            val voicePanelVerticalPadding = when {
-                condensedLayout -> 8.dp
-                isCompactHeight -> 10.dp
-                else -> 16.dp
-            }
-
-            val columnBaseModifier = Modifier
+            val scaleFactor = if (isCompactHeight) 0.9f else 1f
+            val textScaleFactor = if (condensedLayout) 0.9f else 1f
+            val stageScale = if (condensedLayout) 0.85f else 1f
+            val columnModifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp)
-                .padding(top = columnTopPadding, bottom = voicePanelBottomPadding)
-            val columnModifier = if (condensedLayout) {
-                columnBaseModifier
-            } else {
-                columnBaseModifier.verticalScroll(screenScrollState)
-            }
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .padding(bottom = 96.dp)
+                .verticalScroll(screenScrollState)
+            val sectionSpacing = if (condensedLayout) 10.dp else 16.dp
+            val optionSpacing = if (condensedLayout) 8.dp else 12.dp
+            val cardHorizontalPadding = if (condensedLayout) 14.dp else 20.dp
+            val cardVerticalPadding = if (condensedLayout) 12.dp else 18.dp
+            val voicePanelScale = if (condensedLayout) 0.9f else 1f
+            val voicePanelVerticalPadding = if (condensedLayout) 8.dp else 16.dp
 
             Column(
                 modifier = columnModifier,
@@ -415,25 +351,15 @@ fun RoleplayChatScreen(
                     textScale = textScaleFactor
                 )
 
-                Spacer(modifier = Modifier.height(sectionSpacing))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                DropConfirmationTray(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(
-                            when {
-                                condensedLayout -> 80.dp
-                                isCompactHeight -> 88.dp
-                                else -> 96.dp
-                            }
-                        )
-                        .onGloballyPositioned { dropZoneBounds.value = it.windowRect() },
-                    isHighlighted = activeDragOptionId != null,
-                    lockedOption = uiState.lockedOption,
-                    scale = scaleFactor
+                ThemeBriefCard(
+                    title = uiState.activeThemeTitle,
+                    persona = uiState.activeThemePersona,
+                    goal = uiState.activeThemeGoal,
+                    flavor = uiState.activeThemeFlavor,
+                    modifier = Modifier.fillMaxWidth()
                 )
-
-                Spacer(modifier = Modifier.height(sectionSpacing))
 
                 AnimatedVisibility(visible = showOptionTutorial) {
                     Surface(
@@ -457,7 +383,7 @@ fun RoleplayChatScreen(
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "長押しで訳を表示、ダブルタップまたはドラッグで決定できます。",
+                                    text = "長押しで訳を表示、ダブルタップで決定できます。",
                                     color = Color.White,
                                     fontSize = 13.sp * textScaleFactor
                                 )
@@ -475,22 +401,18 @@ fun RoleplayChatScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(sectionSpacing / 2))
+                Spacer(modifier = Modifier.height(sectionSpacing))
 
                 ResponsePanel(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = responseMinHeight),
+                        .fillMaxWidth(),
                     isLoading = uiState.isLoading,
                     options = uiState.options,
                     peekedHintIds = uiState.peekedHintOptionIds,
                     onSelect = { viewModel.selectOption(it) },
                     onHintPeek = { viewModel.markHintPeeked(it) },
-                    trayBounds = { dropZoneBounds.value },
-                    onDragActiveChange = { activeDragOptionId = it },
                     onPreview = { text -> speakUserPreview(text) },
                     optionSpacing = optionSpacing,
-                    optionBottomPadding = optionContentPadding,
                     scale = textScaleFactor,
                     cardHorizontalPadding = cardHorizontalPadding,
                     cardVerticalPadding = cardVerticalPadding,
@@ -498,15 +420,6 @@ fun RoleplayChatScreen(
                 )
 
                 Spacer(modifier = Modifier.height(sectionSpacing))
-
-                if (!saveHistoryError.isNullOrEmpty()) {
-                    Text(
-                        text = saveHistoryError,
-                        color = Color(0xFFFFB4AB),
-                        fontSize = 13.sp * scaleFactor.coerceAtLeast(0.85f),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
             }
 
             VoiceInputPanel(
@@ -549,36 +462,6 @@ fun RoleplayChatScreen(
     }
 }
 
-private fun LayoutCoordinates.windowRect(): Rect {
-    val position = positionInWindow()
-    val width = size.width.toFloat()
-    val height = size.height.toFloat()
-    return Rect(
-        position.x,
-        position.y,
-        position.x + width,
-        position.y + height
-    )
-}
-
-private fun Rect.translate(dx: Float, dy: Float): Rect {
-    return Rect(
-        left + dx,
-        top + dy,
-        right + dx,
-        bottom + dy
-    )
-}
-
-private fun Rect.expand(by: Float): Rect {
-    return Rect(
-        left - by,
-        top - by,
-        right + by,
-        bottom + by
-    )
-}
-
 private tailrec fun Context.findActivity(): Activity {
     return when (this) {
         is Activity -> this
@@ -593,6 +476,70 @@ private fun openAppSettings(context: Context) {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     context.startActivity(intent)
+}
+
+@Composable
+private fun ThemeBriefCard(
+    title: String,
+    persona: String,
+    goal: String,
+    flavor: RoleplayThemeFlavor,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        tonalElevation = 6.dp,
+        color = Color(0x3314B8A6),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF38BDF8))
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(if (flavor == RoleplayThemeFlavor.CASUAL) Color(0xFF22C55E) else Color(0xFF3B82F6))
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = flavorLabel(flavor),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+                Text(
+                    text = title.ifBlank { "テーマ準備中" },
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "役柄: ${persona.ifBlank { "タリ" }}",
+                color = Color(0xFFB6C5E0),
+                fontSize = 13.sp
+            )
+            Text(
+                text = "目的: ${goal.ifBlank { "会話を楽しむ" }}",
+                color = Color(0xFFE0E7FF),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+private fun flavorLabel(flavor: RoleplayThemeFlavor): String = when (flavor) {
+    RoleplayThemeFlavor.CASUAL -> "CASUAL"
+    RoleplayThemeFlavor.SCENARIO -> "SCENARIO"
 }
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
@@ -712,11 +659,8 @@ private fun ResponsePanel(
     peekedHintIds: Set<String>,
     onSelect: (String) -> Unit,
     onHintPeek: (String) -> Unit,
-    trayBounds: () -> Rect?,
-    onDragActiveChange: (String?) -> Unit,
     onPreview: (String) -> Unit,
     optionSpacing: Dp,
-    optionBottomPadding: Dp,
     scale: Float,
     cardHorizontalPadding: Dp,
     cardVerticalPadding: Dp,
@@ -735,8 +679,8 @@ private fun ResponsePanel(
                 isLoading -> {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
@@ -746,8 +690,8 @@ private fun ResponsePanel(
                 options.isEmpty() -> {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -758,26 +702,17 @@ private fun ResponsePanel(
                 }
 
                 else -> {
-                    LazyColumn(
+                    Column(
                         modifier = Modifier
-                            .weight(1f)
                             .fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(optionSpacing),
-                        contentPadding = PaddingValues(
-                            top = 4.dp,
-                            bottom = optionBottomPadding * 8
-                        )
+                        verticalArrangement = Arrangement.spacedBy(optionSpacing)
                     ) {
-                        items(options, key = { it.id }) { option ->
+                        options.forEach { option ->
                             RoleplayOptionCard(
                                 option = option,
                                 hintRevealed = option.id in peekedHintIds,
-                                trayBounds = trayBounds,
                                 onSelect = onSelect,
                                 onPeekHint = onHintPeek,
-                                onDragActiveChange = { active ->
-                                    onDragActiveChange(active)
-                                },
                                 onPreview = onPreview,
                                 scale = scale,
                                 horizontalPadding = cardHorizontalPadding,
@@ -788,54 +723,6 @@ private fun ResponsePanel(
                     }
                 }
             }
-
-        }
-    }
-}
-
-@Composable
-private fun DropConfirmationTray(
-    modifier: Modifier = Modifier,
-    isHighlighted: Boolean,
-    lockedOption: RoleplayOption?,
-    scale: Float
-) {
-    val borderColor = if (isHighlighted) Color(0xFF66F6D5) else Color(0xFF1F2A44)
-    val backgroundColor = if (isHighlighted) Color(0xFF0F263D) else Color(0xFF091427)
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(28.dp))
-            .background(backgroundColor)
-            .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(28.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        if (lockedOption == null) {
-            Text(
-                text = "回答ボックス",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp * scale
-            )
-        } else {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = "あなたの回答",
-                    color = Color(0xFF8FD3FF),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = lockedOption.text,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
         }
     }
 }
@@ -845,10 +732,8 @@ private fun DropConfirmationTray(
 private fun RoleplayOptionCard(
     option: RoleplayOption,
     hintRevealed: Boolean,
-    trayBounds: () -> Rect?,
     onSelect: (String) -> Unit,
     onPeekHint: (String) -> Unit,
-    onDragActiveChange: (String?) -> Unit,
     onPreview: (String) -> Unit,
     scale: Float = 1f,
     horizontalPadding: Dp = 20.dp,
@@ -857,10 +742,7 @@ private fun RoleplayOptionCard(
 ) {
     var showTranslation by remember(option.id) { mutableStateOf(false) }
     var hasPeeked by remember(option.id) { mutableStateOf(false) }
-    var dragOffset by remember(option.id) { mutableStateOf(Offset.Zero) }
-    var optionBounds by remember(option.id) { mutableStateOf<Rect?>(null) }
     val translationAvailable = !option.hint.isNullOrBlank()
-    val density = LocalDensity.current
     val interactionSource = remember(option.id) { MutableInteractionSource() }
 
     LaunchedEffect(option.id, interactionSource) {
@@ -874,12 +756,7 @@ private fun RoleplayOptionCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 96.dp * scale.coerceAtLeast(0.75f))
-            .offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) }
-            .zIndex(if (dragOffset != Offset.Zero) 1f else 0f)
-            .onGloballyPositioned { coords ->
-                optionBounds = coords.windowRect()
-            }
+            .heightIn(min = 96.dp * scale.coerceAtLeast(0.85f))
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -894,34 +771,7 @@ private fun RoleplayOptionCard(
                     }
                 },
                 onDoubleClick = { onSelect(option.id) }
-            )
-            .pointerInput(option.id, trayBounds()) {
-                detectDragGestures(
-                    onDragStart = {
-                        onPreview(option.text)
-                        onDragActiveChange(option.id)
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consumePositionChange()
-                        dragOffset += dragAmount
-                    },
-                    onDragEnd = {
-                        val currentRect = optionBounds?.translate(dragOffset.x, dragOffset.y)
-                        val expandedDropRect = trayBounds()?.expand(by = with(density) { 64.dp.toPx() })
-                        val hit = currentRect != null && expandedDropRect != null && expandedDropRect.overlaps(currentRect)
-                        if (hit) {
-                            Log.d("RoleplayChat", "Drop success for option=${option.id}")
-                            onSelect(option.id)
-                        }
-                        dragOffset = Offset.Zero
-                        onDragActiveChange(null)
-                    },
-                    onDragCancel = {
-                        dragOffset = Offset.Zero
-                        onDragActiveChange(null)
-                    }
-                )
-            },
+            ),
         color = if (hintRevealed) Color(0xFF273251) else Color(0xFF16223B),
         shape = RoundedCornerShape(26.dp * scale.coerceAtLeast(0.85f)),
         tonalElevation = if (showTranslation) 6.dp else 2.dp,
