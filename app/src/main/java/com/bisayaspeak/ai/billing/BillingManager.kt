@@ -3,7 +3,16 @@ package com.bisayaspeak.ai.billing
 import android.app.Activity
 import android.content.Context
 import android.util.Log
-import com.android.billingclient.api.*
+import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
+import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import com.bisayaspeak.ai.data.model.UserPlan
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +42,21 @@ class BillingManager(private val context: Context) {
     }
     
     private var billingClient: BillingClient? = null
+    private var isClientReady = false
+
+    private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
+        when (billingResult.responseCode) {
+            BillingClient.BillingResponseCode.OK -> {
+                purchases?.let { handlePurchases(it) }
+            }
+            BillingClient.BillingResponseCode.USER_CANCELED -> {
+                Log.d(TAG, "Purchase canceled by user")
+            }
+            else -> {
+                Log.e(TAG, "Purchase failed: ${billingResult.debugMessage}")
+            }
+        }
+    }
     
     private val _isPremium = MutableStateFlow(false)
     val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
@@ -96,24 +120,41 @@ class BillingManager(private val context: Context) {
      * Billing Clientを初期化
      */
     fun initialize(onReady: () -> Unit = {}) {
-        // 【強制解除】テスト用に無条件で全フラグをONにする
-        _isPremium.value = true
-        _isProUnlocked.value = true
-        _hasPremiumAI.value = true
+        if (billingClient?.isReady == true && isClientReady) {
+            onReady()
+            return
+        }
 
-        // UIに反映させる
-        refreshUserPlan()
+        billingClient = BillingClient.newBuilder(context)
+            .setListener(purchasesUpdatedListener)
+            .enablePendingPurchases()
+            .build()
 
-        Log.d(TAG, "🔓 FORCE UNLOCKED: All features enabled for testing")
+        billingClient?.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    Log.d(TAG, "BillingClient is ready")
+                    isClientReady = true
+                    queryProducts()
+                    checkPremiumStatus()
+                    onReady()
+                } else {
+                    Log.e(TAG, "Failed to set up BillingClient: ${billingResult.debugMessage}")
+                }
+            }
 
-        // 準備完了を通知して終了（課金サーバーへの接続はスキップ）
-        onReady()
+            override fun onBillingServiceDisconnected() {
+                Log.w(TAG, "Billing service disconnected")
+                isClientReady = false
+            }
+        })
     }
     
     /**
      * 商品情報を取得
      */
     private fun queryProducts() {
+        val client = billingClient ?: return
         val productList = listOf(
             // Pro Unlock (買い切り)
             QueryProductDetailsParams.Product.newBuilder()
@@ -144,7 +185,7 @@ class BillingManager(private val context: Context) {
             .setProductList(productList)
             .build()
         
-        billingClient?.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        client.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 _products.value = productDetailsList
                 Log.d(TAG, "Products loaded: ${productDetailsList.size}")
@@ -158,12 +199,14 @@ class BillingManager(private val context: Context) {
      * プレミアムステータスを確認
      */
     fun checkPremiumStatus() {
+        val client = billingClient ?: return
+
         // サブスクリプションを確認
         val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
         
-        billingClient?.queryPurchasesAsync(subsParams) { billingResult, purchases ->
+        client.queryPurchasesAsync(subsParams) { billingResult, purchases ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 val hasPremiumAI = purchases.any { purchase ->
                     (purchase.products.contains(PREMIUM_AI_MONTHLY_SKU) || 
@@ -185,7 +228,7 @@ class BillingManager(private val context: Context) {
             .setProductType(BillingClient.ProductType.INAPP)
             .build()
         
-        billingClient?.queryPurchasesAsync(inAppParams) { billingResult, purchases ->
+        client.queryPurchasesAsync(inAppParams) { billingResult, purchases ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 val hasProUnlock = purchases.any { purchase ->
                     purchase.products.contains(PRO_UNLOCK_SKU) &&
@@ -206,6 +249,12 @@ class BillingManager(private val context: Context) {
      * 購入フローを開始
      */
     fun launchPurchaseFlow(activity: Activity, productDetails: ProductDetails) {
+        val client = billingClient ?: return
+        if (!isClientReady) {
+            Log.w(TAG, "BillingClient not ready. Ignoring purchase flow launch")
+            return
+        }
+
         val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(productDetails)
         
@@ -221,7 +270,7 @@ class BillingManager(private val context: Context) {
             .setProductDetailsParamsList(productDetailsParamsList)
             .build()
         
-        val result = billingClient?.launchBillingFlow(activity, billingFlowParams)
+        val result = client.launchBillingFlow(activity, billingFlowParams)
         Log.d(TAG, "Launch billing flow result: ${result?.responseCode}")
     }
     
@@ -234,6 +283,8 @@ class BillingManager(private val context: Context) {
             launchPurchaseFlow(activity, product)
         } else {
             Log.e(TAG, "Product not found: $productId")
+            // まだ商品情報が取得できていない場合は再取得を試みる
+            queryProducts()
         }
     }
     
@@ -306,5 +357,7 @@ class BillingManager(private val context: Context) {
      */
     fun destroy() {
         billingClient?.endConnection()
+        billingClient = null
+        isClientReady = false
     }
 }
