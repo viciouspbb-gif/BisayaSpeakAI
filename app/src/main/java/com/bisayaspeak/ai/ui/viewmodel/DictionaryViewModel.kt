@@ -152,7 +152,7 @@ class DictionaryViewModel(
             currentRecording = file
             _uiState.update { it.copy(isManualRecording = true, talkStatus = TalkStatus.Listening, errorMessage = null) }
         } catch (e: Exception) {
-            val message = e.message?.ifBlank { null } ?: "録音の準備中です。もう一度長押ししてください。"
+            val message = e.message?.ifBlank { null } ?: "録音の準備中です。もう一度タップしてください。"
             _uiState.update {
                 it.copy(
                     isManualRecording = false,
@@ -167,7 +167,7 @@ class DictionaryViewModel(
         val recorded = try {
             voiceRecorder.stopRecording()
         } catch (e: Exception) {
-            val message = e.message?.ifBlank { null } ?: "録音が中断されました。もう一度長押ししてください。"
+            val message = e.message?.ifBlank { null } ?: "録音が中断されました。もう一度タップしてください。"
             _uiState.update { it.copy(isManualRecording = false, talkStatus = TalkStatus.Error(message)) }
             null
         }
@@ -182,7 +182,7 @@ class DictionaryViewModel(
             currentRecording = null
             _uiState.update {
                 it.copy(
-                    talkStatus = TalkStatus.Error("音声が検出できませんでした。もう一度長押ししてください。")
+                    talkStatus = TalkStatus.Error("音声が検出できませんでした。もう一度タップしてください。")
                 )
             }
             return
@@ -213,14 +213,14 @@ class DictionaryViewModel(
             file.delete()
             currentRecording = null
             if (transcript.isBlank()) {
-                _uiState.update { it.copy(talkStatus = TalkStatus.Error("音声が検出できませんでした。もう一度長押ししてください。")) }
+                _uiState.update { it.copy(talkStatus = TalkStatus.Error("音声が検出できませんでした。もう一度タップしてください。")) }
             } else {
                 val language = detectLanguage(transcript)
                 val talkResponse = requestTalkTranslation(transcript, language)
                 deliverTalkResponse(talkResponse, transcript, language)
             }
         } catch (e: Exception) {
-            val message = e.message?.ifBlank { null } ?: "音声解析に失敗しました。もう一度長押ししてください。"
+            val message = e.message?.ifBlank { null } ?: "音声解析に失敗しました。もう一度タップしてください。"
             _uiState.update { it.copy(talkStatus = TalkStatus.Error(message)) }
         }
     }

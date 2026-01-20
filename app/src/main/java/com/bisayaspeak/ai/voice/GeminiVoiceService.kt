@@ -17,10 +17,12 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.ArrayDeque
 
-enum class GeminiVoiceCue {
-    DEFAULT,
-    WHISPER,
-    HIGH_PITCH
+enum class GeminiVoiceCue(val voiceName: String, val speed: Float) {
+    DEFAULT("nova", 0.95f),
+    WHISPER("alloy", 0.9f),
+    HIGH_PITCH("verse", 1.12f),
+    LOW_PITCH("alloy", 0.75f),
+    ALIEN("shimmer", 1.25f)
 }
 
 class GeminiVoiceService(
@@ -65,10 +67,10 @@ class GeminiVoiceService(
                 val audioBytes = speechService.synthesizeSpeech(
                     OpenAiSpeechService.SpeechRequest(
                         input = request.text,
-                        voice = "nova",
+                        voice = request.cue.voiceName,
                         model = "tts-1",
                         format = "mp3",
-                        speed = 0.9f
+                        speed = request.cue.speed
                     )
                 ).use { it.bytes() }
                 playAudio(audioBytes, request)

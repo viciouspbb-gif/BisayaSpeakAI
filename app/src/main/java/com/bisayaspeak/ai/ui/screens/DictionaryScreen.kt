@@ -7,9 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,7 +59,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -165,14 +161,14 @@ fun DictionaryScreen(
                     state = uiState,
                     hasMicPermission = hasMicPermission,
                     onModeToggle = viewModel::setMode,
-                    onManualPressStart = {
+                    onMicTapStart = {
                         if (hasMicPermission) {
                             viewModel.startPushToTalk()
                         } else {
                             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
                     },
-                    onManualPressEnd = viewModel::stopPushToTalk,
+                    onMicTapStop = { viewModel.stopPushToTalk(true) },
                     onRequestPermission = {
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     },
@@ -355,8 +351,8 @@ private fun TalkSection(
     state: DictionaryUiState,
     hasMicPermission: Boolean,
     onModeToggle: (DictionaryMode) -> Unit,
-    onManualPressStart: () -> Unit,
-    onManualPressEnd: (Boolean) -> Unit,
+    onMicTapStart: () -> Unit,
+    onMicTapStop: () -> Unit,
     onRequestPermission: () -> Unit,
     onReplayLast: () -> Unit
 ) {
@@ -392,11 +388,20 @@ private fun TalkSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val isBusy = state.talkStatus is TalkStatus.Processing || state.talkStatus is TalkStatus.Speaking
+        val isMicEnabled = hasMicPermission && !isBusy
         ManualMicButton(
             isRecording = state.isManualRecording,
-            enabled = hasMicPermission,
-            onPressStart = onManualPressStart,
-            onPressEnd = onManualPressEnd
+            enabled = isMicEnabled || state.isManualRecording,
+            isBusy = isBusy,
+            onClick = {
+                when {
+                    !hasMicPermission -> onRequestPermission()
+                    state.isManualRecording -> onMicTapStop()
+                    isBusy -> Unit
+                    else -> onMicTapStart()
+                }
+            }
         )
 
         if (!hasMicPermission) {
@@ -416,11 +421,11 @@ private fun TalkStatusCard(status: TalkStatus, isManualRecording: Boolean) {
             statusColor = Color(0xFFF87171)
         }
         TalkStatus.Idle -> {
-            label = if (isManualRecording) "録音待機" else "停止中"
+            label = if (isManualRecording) "録音待機" else "待機中 (タップで録音)"
             statusColor = Color(0xFF94A3B8)
         }
         TalkStatus.Listening -> {
-            label = if (isManualRecording) "録音中 (手動)" else "リスニング中"
+            label = if (isManualRecording) "録音中 (タップで翻訳)" else "リスニング中"
             statusColor = if (isManualRecording) Color(0xFFFB923C) else Color(0xFF34D399)
         }
         TalkStatus.Processing -> {
@@ -530,31 +535,27 @@ private fun languageLabel(language: DictionaryLanguage): String = when (language
 private fun ManualMicButton(
     isRecording: Boolean,
     enabled: Boolean,
-    onPressStart: () -> Unit,
-    onPressEnd: (Boolean) -> Unit
+    isBusy: Boolean,
+    onClick: () -> Unit
 ) {
     val baseColor = if (isRecording) Color(0xFF7C3AED) else Color(0xFF1E293B)
-    val gestureModifier = if (enabled) {
-        Modifier.pointerInput(isRecording) {
-            awaitEachGesture {
-                val down = awaitFirstDown(requireUnconsumed = false)
-                down.consume()
-                onPressStart()
-                val up = waitForUpOrCancellation()
-                val shouldTranslate = up != null
-                up?.consume()
-                onPressEnd(shouldTranslate)
-            }
-        }
-    } else Modifier
-
+    val label = when {
+        isRecording -> "録音中…タップで翻訳する"
+        isBusy -> "翻訳処理中"
+        else -> "タップで録音開始"
+    }
+    val subLabel = when {
+        isRecording -> "話し終えたらもう一度タップ"
+        isBusy -> "タリが処理しています"
+        else -> "タップ → 録音 / もう一度タップ → 訳＆読み上げ"
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(140.dp)
             .clip(RoundedCornerShape(28.dp))
             .background(baseColor.copy(alpha = if (enabled) 1f else 0.35f))
-            .then(gestureModifier),
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -566,15 +567,17 @@ private fun ManualMicButton(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (isRecording) "録音中… 離すと翻訳" else "ボタンを長押しして話す",
+                text = label,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "指を離すと翻訳＆読み上げ",
+                text = subLabel,
                 color = Color(0xFFCBD5F5),
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
         }
     }

@@ -80,7 +80,12 @@ class MainActivity : ComponentActivity() {
                     userPlan = effectivePlan,
                     showPremiumTestToggle = BuildConfig.DEBUG,
                     onTogglePremiumTest = { premiumTestEnabled = !premiumTestEnabled },
-                    listeningViewModelFactory = listeningViewModelFactory
+                    listeningViewModelFactory = listeningViewModelFactory,
+                    onRestorePurchase = {
+                        billingManager.restorePurchases {
+                            lifecycleScope.launch { syncPurchaseStatus() }
+                        }
+                    }
                 )
             }
         }
