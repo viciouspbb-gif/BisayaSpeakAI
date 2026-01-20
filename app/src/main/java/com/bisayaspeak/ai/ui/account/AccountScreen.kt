@@ -1,38 +1,69 @@
 package com.bisayaspeak.ai.ui.account
 
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.bisayaspeak.ai.data.UserGender
+import com.bisayaspeak.ai.data.repository.UserProfilePreferences
 
 enum class LoginType(val label: String) {
     Guest("ゲスト"),
@@ -114,12 +145,34 @@ fun AccountScreen(
     onLogout: () -> Unit,
     onOpenPremiumInfo: () -> Unit,
     onOpenFeedback: () -> Unit,
+    profileState: AccountProfileUiState,
+    onNicknameChange: (String) -> Unit,
+    onGenderChange: (UserGender) -> Unit,
+    onSaveProfile: () -> Unit,
+    onRestorePurchase: () -> Unit,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onDeleteAccount: () -> Unit,
     showPremiumTestToggle: Boolean = false,
     premiumTestEnabled: Boolean = uiState.isPremium,
     onTogglePremiumTest: ((Boolean) -> Unit)? = null,
     authEnabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(profileState.lastSavedAt) {
+        profileState.lastSavedAt?.let {
+            Toast.makeText(context, "プロフィールを保存しました", Toast.LENGTH_SHORT).show()
+        }
+    }
+    LaunchedEffect(profileState.errorMessage) {
+        profileState.errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -158,7 +211,29 @@ fun AccountScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
 
-            StatusCard(uiState = uiState, onOpenPremiumInfo = onOpenPremiumInfo)
+            StatusCard(
+                uiState = uiState,
+                onOpenPremiumInfo = onOpenPremiumInfo,
+                nickname = profileState.savedNickname,
+                gender = profileState.savedGender
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ProfileEditorCard(
+                profileState = profileState,
+                onNicknameChange = onNicknameChange,
+                onGenderChange = onGenderChange,
+                onSaveProfile = onSaveProfile
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            UpgradeCtaSection(
+                isPremium = uiState.isPremium,
+                onUpgrade = onOpenPremiumInfo,
+                onRestorePurchase = onRestorePurchase
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -276,8 +351,43 @@ fun AccountScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            LegalSupportCard(
+                onOpenTerms = onOpenTerms,
+                onOpenPrivacy = onOpenPrivacy
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (authEnabled) {
+                DangerZoneCard(onDeleteAccount = { showDeleteDialog = true })
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             FeedbackCard(onOpenFeedback = onOpenFeedback)
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("アカウントの削除") },
+            text = {
+                Text("この操作は取り消せません。サーバー上の学習履歴とサブスクリプション情報が完全に削除されます。本当に削除しますか？")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    onDeleteAccount()
+                }) {
+                    Text("削除する", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("キャンセル")
+                }
+            }
+        )
     }
 }
 
@@ -285,6 +395,8 @@ fun AccountScreen(
 private fun StatusCard(
     uiState: AccountUiState,
     onOpenPremiumInfo: () -> Unit,
+    nickname: String,
+    gender: UserGender,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -335,6 +447,22 @@ private fun StatusCard(
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White
                     )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "ニックネーム：${nickname.ifBlank { "未設定" }} / 性別：${gender.displayLabel()}",
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
                 )
             }
 
@@ -417,6 +545,202 @@ private fun StatusCard(
             }
         }
     }
+}
+
+@Composable
+private fun ProfileEditorCard(
+    profileState: AccountProfileUiState,
+    onNicknameChange: (String) -> Unit,
+    onGenderChange: (UserGender) -> Unit,
+    onSaveProfile: () -> Unit
+) {
+    var isEditing by remember { mutableStateOf(false) }
+    LaunchedEffect(profileState.lastSavedAt) {
+        profileState.lastSavedAt?.let { isEditing = false }
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF111928))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "プロフィール",
+                        style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = if (isEditing) "タリに呼んでほしい名前と性別を設定" else "タップしてプロフィールを編集できます",
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f))
+                    )
+                }
+                TextButton(onClick = { isEditing = !isEditing }) {
+                    Icon(imageVector = Icons.Outlined.Edit, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isEditing) "完了" else "編集")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (!isEditing) {
+                Text(
+                    text = "ニックネーム：${profileState.savedNickname.ifBlank { "未設定" }}",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "性別：${profileState.savedGender.displayLabel()}",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                OutlinedTextField(
+                    value = profileState.nickname,
+                    onValueChange = onNicknameChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("ニックネーム") },
+                    placeholder = { Text("例：タリ先輩") },
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text("性別", color = Color.White.copy(alpha = 0.8f), fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GenderChip(label = "男性", selected = profileState.gender == UserGender.MALE) {
+                        onGenderChange(UserGender.MALE)
+                    }
+                    GenderChip(label = "女性", selected = profileState.gender == UserGender.FEMALE) {
+                        onGenderChange(UserGender.FEMALE)
+                    }
+                    GenderChip(label = "回答しない", selected = profileState.gender == UserGender.OTHER) {
+                        onGenderChange(UserGender.OTHER)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = onSaveProfile,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = profileState.isDirty && profileState.isValid && !profileState.isSaving
+                ) {
+                    Text(if (profileState.isSaving) "保存中..." else "プロフィールを保存")
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GenderChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) }
+    )
+}
+
+@Composable
+private fun UpgradeCtaSection(
+    isPremium: Boolean,
+    onUpgrade: () -> Unit,
+    onRestorePurchase: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2A44))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = if (isPremium) "プレミアム会員としてサポートありがとうございます" else "タリ道場をフル開放するならプロ版へ",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onUpgrade,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isPremium
+            ) {
+                Text(if (isPremium) "プランを確認" else "プロ版へアップグレード")
+            }
+            TextButton(onClick = onRestorePurchase, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("購入済みの方はこちら（復元）", textDecoration = TextDecoration.Underline)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegalSupportCard(
+    onOpenTerms: () -> Unit,
+    onOpenPrivacy: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF101828))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("リーガル・サポート", color = Color.White, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TextButton(onClick = onOpenTerms) {
+                    Icon(imageVector = Icons.Filled.ChevronRight, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("利用規約")
+                }
+                TextButton(onClick = onOpenPrivacy) {
+                    Icon(imageVector = Icons.Filled.ChevronRight, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("プライバシーポリシー")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DangerZoneCard(onDeleteAccount: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D0F0F))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("アカウントの削除", color = Color.White, fontWeight = FontWeight.Bold)
+            Text(
+                text = "アカウントを削除すると、購入履歴・学習データが完全に消去されます。",
+                color = Color.White.copy(alpha = 0.8f)
+            )
+            OutlinedButton(
+                onClick = onDeleteAccount,
+                border = BorderStroke(1.dp, Color.Red),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(imageVector = Icons.Filled.Delete, contentDescription = null, tint = Color.Red)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("アカウントを削除", color = Color.Red)
+            }
+        }
+    }
+}
+
+private fun UserGender.displayLabel(): String = when (this) {
+    UserGender.MALE -> "男性"
+    UserGender.FEMALE -> "女性"
+    UserGender.OTHER -> "回答しない"
 }
 
 @Composable

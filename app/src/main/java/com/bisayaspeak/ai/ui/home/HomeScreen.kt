@@ -295,9 +295,7 @@ fun ProFeaturesSection(
             subtitle = "実践ボイス会話",
             icon = Icons.Default.Psychology,
             color = Color(0xFFCD7F32),
-            onClick = {
-                Toast.makeText(context, "修行中だよ！1月リリースを待っててね", Toast.LENGTH_SHORT).show()
-            },
+            onClick = { onClickFeature(FeatureId.AI_CHAT) },
             modifier = Modifier.weight(1f)
         )
 

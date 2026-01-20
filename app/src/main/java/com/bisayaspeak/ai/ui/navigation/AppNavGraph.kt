@@ -3,7 +3,10 @@
 package com.bisayaspeak.ai.ui.navigation
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +38,7 @@ import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.model.UserPlan
 import com.bisayaspeak.ai.ui.account.AccountScreen
 import com.bisayaspeak.ai.ui.account.AccountUiState
+import com.bisayaspeak.ai.ui.account.AccountViewModel
 import com.bisayaspeak.ai.ui.account.LoginType
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
@@ -61,11 +66,12 @@ import com.bisayaspeak.ai.ui.screens.PracticeWordListScreen
 import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.TranslateScreen
-import com.bisayaspeak.ai.ui.screens.TariDojoComingSoonScreen
+import com.bisayaspeak.ai.ui.screens.TariDojoScreen
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 enum class AppRoute(val route: String) {
     Home("home"),
@@ -88,7 +94,7 @@ enum class AppRoute(val route: String) {
     MissionTalk("mission/talk/{missionId}"),
     AiTranslator("ai/translator"),
     Dictionary("dictionary"),
-    TariDojoComingSoon("tari_dojo")
+    TariDojo("tari_dojo")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,7 +104,8 @@ fun AppNavGraph(
     userPlan: UserPlan,
     showPremiumTestToggle: Boolean,
     onTogglePremiumTest: () -> Unit,
-    listeningViewModelFactory: ListeningViewModelFactory
+    listeningViewModelFactory: ListeningViewModelFactory,
+    onRestorePurchase: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as? Activity ?: return
@@ -106,6 +113,7 @@ fun AppNavGraph(
     val authManager = remember(context, isLiteBuild) {
         if (isLiteBuild) null else AuthManager(context)
     }
+    val scope = rememberCoroutineScope()
 
     var currentUser by remember { mutableStateOf(if (isLiteBuild) null else FirebaseAuth.getInstance().currentUser) }
 
@@ -155,7 +163,7 @@ fun AppNavGraph(
                         when (feature) {
                             FeatureId.AI_CHAT -> {
                                 if (isPremiumPlan) {
-                                    navController.navigate(AppRoute.TariDojoComingSoon.route)
+                                    navController.navigate(AppRoute.TariDojo.route)
                                 } else {
                                     navController.navigate(AppRoute.Upgrade.route)
                                 }
@@ -195,7 +203,23 @@ fun AppNavGraph(
             }
         }
 
-        composable(AppRoute.Account.route) {
+        composable(AppRoute.Account.route) { backStackEntry ->
+            val accountViewModel: AccountViewModel = viewModel(
+                viewModelStoreOwner = backStackEntry,
+                factory = AccountViewModel.Factory
+            )
+            val profileState by accountViewModel.profileState.collectAsState()
+            val openUrl: (String) -> Unit = { url ->
+                runCatching {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    context.startActivity(intent)
+                }.onFailure {
+                    Toast.makeText(context, "ブラウザを開けませんでした", Toast.LENGTH_SHORT).show()
+                }
+            }
+            val termsUrl = "https://www.bisayaspeak.ai/terms"
+            val privacyUrl = "https://www.bisayaspeak.ai/privacy"
+
             if (isLiteBuild) {
                 BannerScreenContainer(userPlan = userPlan) {
                     AccountScreen(
@@ -206,7 +230,15 @@ fun AppNavGraph(
                         onCreateAccount = {},
                         onLogout = {},
                         onOpenPremiumInfo = { /* Premium info not implemented */ },
-                        onOpenFeedback = { /* Lite迚医〒縺ｯ繝輔ぅ繝ｼ繝峨ヰ繝・け逕ｻ髱｢繧貞茜逕ｨ縺励↑縺・*/ },
+                        onOpenFeedback = { /* Lite版では未対応 */ },
+                        profileState = profileState,
+                        onNicknameChange = accountViewModel::onNicknameChange,
+                        onGenderChange = accountViewModel::onGenderChange,
+                        onSaveProfile = accountViewModel::saveProfile,
+                        onRestorePurchase = onRestorePurchase,
+                        onOpenTerms = { openUrl(termsUrl) },
+                        onOpenPrivacy = { openUrl(privacyUrl) },
+                        onDeleteAccount = {},
                         showPremiumTestToggle = false,
                         premiumTestEnabled = isPremiumPlan,
                         onTogglePremiumTest = null,
@@ -229,10 +261,33 @@ fun AppNavGraph(
                         },
                         onOpenPremiumInfo = { /* Premium info not implemented */ },
                         onOpenFeedback = { navController.navigate(AppRoute.Feedback.route) },
+                        profileState = profileState,
+                        onNicknameChange = accountViewModel::onNicknameChange,
+                        onGenderChange = accountViewModel::onGenderChange,
+                        onSaveProfile = accountViewModel::saveProfile,
+                        onRestorePurchase = onRestorePurchase,
+                        onOpenTerms = { openUrl(termsUrl) },
+                        onOpenPrivacy = { openUrl(privacyUrl) },
+                        onDeleteAccount = {
+                            scope.launch {
+                                val result = authManager?.deleteAccount()
+                                if (result == null) {
+                                    Toast.makeText(context, "アカウント削除は利用できません", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    result.onSuccess {
+                                        Toast.makeText(context, "アカウントを削除しました", Toast.LENGTH_SHORT).show()
+                                        navController.navigate(AppRoute.Home.route) {
+                                            popUpTo(AppRoute.Home.route) { inclusive = true }
+                                        }
+                                    }.onFailure {
+                                        Toast.makeText(context, it.message ?: "削除に失敗しました", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        },
                         showPremiumTestToggle = showPremiumTestToggle,
                         premiumTestEnabled = isPremiumPlan,
                         onTogglePremiumTest = { onTogglePremiumTest() },
-
                         authEnabled = true
                     )
                 }
@@ -283,6 +338,12 @@ fun AppNavGraph(
         composable(AppRoute.AiTranslator.route) {
             AiTranslatorScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppRoute.TariDojo.route) {
+            TariDojoScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

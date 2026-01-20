@@ -14,15 +14,37 @@ private val Context.userPreferencesDataStore: DataStore<Preferences> by preferen
     name = "user_preferences"
 )
 
+data class UserProfilePreferences(
+    val nickname: String = "",
+    val gender: UserGender = UserGender.OTHER
+)
+
 class UserPreferencesRepository(private val context: Context) {
 
     companion object {
         private val USER_GENDER_KEY = stringPreferencesKey("user_gender")
+        private val USER_NICKNAME_KEY = stringPreferencesKey("user_nickname")
     }
 
-    val userGender: Flow<UserGender> = context.userPreferencesDataStore.data.map { preferences ->
-        val stored = preferences[USER_GENDER_KEY].orEmpty()
-        runCatching { UserGender.valueOf(stored) }.getOrElse { UserGender.OTHER }
+    val userProfile: Flow<UserProfilePreferences> = context.userPreferencesDataStore.data.map { preferences ->
+        val gender = runCatching {
+            val stored = preferences[USER_GENDER_KEY].orEmpty()
+            UserGender.valueOf(stored)
+        }.getOrElse { UserGender.OTHER }
+        val nickname = preferences[USER_NICKNAME_KEY]
+            ?.takeIf { it.isNotBlank() }
+            ?: "ゲストユーザー"
+        UserProfilePreferences(nickname = nickname, gender = gender)
+    }
+
+    val userGender: Flow<UserGender> = userProfile.map { it.gender }
+
+    suspend fun saveUserProfile(nickname: String, gender: UserGender) {
+        val sanitized = nickname.trim().ifBlank { "ゲストユーザー" }
+        context.userPreferencesDataStore.edit { prefs ->
+            prefs[USER_NICKNAME_KEY] = sanitized
+            prefs[USER_GENDER_KEY] = gender.name
+        }
     }
 
     suspend fun saveUserGender(gender: UserGender) {
