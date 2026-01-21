@@ -265,17 +265,18 @@ Main updates: Bug fixes and UI improvements</string>
     
     <!-- Upgrade Screen -->
     <string name="upgrade_title">Upgrade</string>
-    <string name="upgrade_subtitle">Choose the plan that fits your learning needs</string>
-    <string name="upgrade_footer_note">All plans include a free trial period. Cancel anytime.</string>
+    <string name="upgrade_subtitle">タルシエ先生とAIが導く、物語のような語学レッスンを体験しよう</string>
+    <string name="upgrade_footer_note">いつでもキャンセルできます。無料トライアル期間中も安心してお試しください。</string>
     
     <!-- Plans -->
     <string name="plan_pro_title">Pro Unlock</string>
     <string name="plan_pro_description">Unlock all practice modes and features</string>
     <string name="plan_pro_price">$4.99/month</string>
     
-    <string name="plan_premium_ai_title">Premium AI</string>
-    <string name="plan_premium_ai_description">Advanced AI features for accelerated learning</string>
-    <string name="plan_premium_ai_price">$9.99/month</string>
+    <string name="plan_premium_ai_title">プレミアムAIプラン</string>
+    <string name="plan_premium_ai_description">広告なし・AI機能ぜんぶ入り。タルシエ先生があなた専用の修行を提案します。</string>
+    <string name="plan_premium_ai_price">月額 ¥4,980</string>
+    <string name="plan_premium_trial_tagline">まずは7日間、無料でタルシエ先生の特別授業を体験！</string>
     
     <!-- Features -->
     <string name="feature_pro_1">Unlimited practice sessions</string>
@@ -283,11 +284,11 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="feature_pro_3">No ads</string>
     <string name="feature_pro_4">Offline mode support</string>
     
-    <string name="feature_premium_ai_1">All Pro features included</string>
-    <string name="feature_premium_ai_2">AI conversation practice</string>
-    <string name="feature_premium_ai_3">Personalized feedback</string>
-    <string name="feature_premium_ai_4">Advanced pronunciation analysis</string>
-    <string name="feature_premium_ai_5">Priority support</string>
+    <string name="feature_premium_ai_1">タルシエ先生と無限ロールプレイ</string>
+    <string name="feature_premium_ai_2">教科書にはない、AIによるマルチエンディングな会話体験</string>
+    <string name="feature_premium_ai_3">あなたの返答次第で物語が変わる、生きたビサヤ語学習</string>
+    <string name="feature_premium_ai_4">高度な発音解析と個別フィードバック</string>
+    <string name="feature_premium_ai_5">広告なし＋単語・発音モードも無制限</string>
     
     <!-- Buttons -->
     <string name="purchase_now">Purchase Now</string>

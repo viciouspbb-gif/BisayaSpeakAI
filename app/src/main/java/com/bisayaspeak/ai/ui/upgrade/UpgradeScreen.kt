@@ -137,7 +137,8 @@ fun UpgradeScreen(
                     Color(0xFFF59E0B),
                     Color(0xFFEF4444)
                 ),
-                isRecommended = true
+                isRecommended = true,
+                tagline = stringResource(R.string.plan_premium_trial_tagline)
             )
 
             // Footer Note
@@ -168,7 +169,8 @@ private fun PlanCard(
     isPurchased: Boolean,
     onPurchase: () -> Unit,
     gradientColors: List<Color>,
-    isRecommended: Boolean = false
+    isRecommended: Boolean = false,
+    tagline: String? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -233,6 +235,17 @@ private fun PlanCard(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
+
+            tagline?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    letterSpacing = 0.5.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
