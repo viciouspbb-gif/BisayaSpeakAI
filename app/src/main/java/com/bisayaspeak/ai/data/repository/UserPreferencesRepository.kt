@@ -3,6 +3,7 @@ package com.bisayaspeak.ai.data.repository
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -24,6 +25,7 @@ class UserPreferencesRepository(private val context: Context) {
     companion object {
         private val USER_GENDER_KEY = stringPreferencesKey("user_gender")
         private val USER_NICKNAME_KEY = stringPreferencesKey("user_nickname")
+        private val ROLEPLAY_TUTORIAL_SEEN_KEY = booleanPreferencesKey("roleplay_tutorial_seen")
     }
 
     val userProfile: Flow<UserProfilePreferences> = context.userPreferencesDataStore.data.map { preferences ->
@@ -39,6 +41,10 @@ class UserPreferencesRepository(private val context: Context) {
 
     val userGender: Flow<UserGender> = userProfile.map { it.gender }
 
+    val roleplayTutorialSeen: Flow<Boolean> = context.userPreferencesDataStore.data.map { preferences ->
+        preferences[ROLEPLAY_TUTORIAL_SEEN_KEY] ?: false
+    }
+
     suspend fun saveUserProfile(nickname: String, gender: UserGender) {
         val sanitized = nickname.trim().ifBlank { "ゲストユーザー" }
         context.userPreferencesDataStore.edit { prefs ->
@@ -50,6 +56,12 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun saveUserGender(gender: UserGender) {
         context.userPreferencesDataStore.edit { prefs ->
             prefs[USER_GENDER_KEY] = gender.name
+        }
+    }
+
+    suspend fun setRoleplayTutorialSeen(seen: Boolean) {
+        context.userPreferencesDataStore.edit { prefs ->
+            prefs[ROLEPLAY_TUTORIAL_SEEN_KEY] = seen
         }
     }
 }

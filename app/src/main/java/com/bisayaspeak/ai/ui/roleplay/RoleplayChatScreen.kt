@@ -65,6 +65,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -81,7 +82,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -93,6 +96,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.ui.roleplay.RoleplayThemeFlavor
+import com.bisayaspeak.ai.ui.roleplay.primarySpeechText
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.ui.roleplay.CompletionDialog
@@ -121,9 +125,10 @@ fun RoleplayChatScreen(
     val uiState by viewModel.uiState.collectAsState()
     val speakingMessageId by viewModel.speakingMessageId.collectAsState()
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val voiceService = remember { GeminiVoiceService(context) }
     var initialLineSpoken by remember(scenarioId) { mutableStateOf(false) }
-    var showOptionTutorial by remember { mutableStateOf(true) }
+    val completionSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val audioPermissionGrantedState = remember {
         mutableStateOf(
@@ -163,27 +168,44 @@ fun RoleplayChatScreen(
     }
 
     val speakAiLine = remember(voiceService) {
-        { text: String, cue: GeminiVoiceCue?, messageId: String? ->
+        line@ { text: String, cue: GeminiVoiceCue?, messageId: String? ->
             val speechText = primarySpeechText(text)
             if (speechText.isNotBlank()) {
                 Log.d(ttsLogTag, "AI speak request id=$messageId length=${text.length}")
             }
-            voiceService.speak(
-                text = speechText,
-                cue = cue ?: GeminiVoiceCue.HIGH_PITCH,
-                onStart = {
-                    Log.d(ttsLogTag, "AI speak started id=$messageId")
-                    messageId?.let { viewModel.notifyVoicePlaybackStarted(it) }
-                },
-                onComplete = {
-                    Log.d(ttsLogTag, "AI speak completed id=$messageId")
-                    messageId?.let { viewModel.notifyVoicePlaybackFinished(it) }
-                },
-                onError = {
-                    Log.w(ttsLogTag, "AI speak error id=$messageId", it)
-                    messageId?.let { viewModel.notifyVoicePlaybackFinished(it) }
-                }
-            )
+            if (speechText.isBlank()) {
+                Log.w(ttsLogTag, "Skipping empty Tari line (id=$messageId)")
+                return@line
+            }
+            val requestedCue = cue ?: GeminiVoiceCue.TALK_HIGH
+            fun speakWithCue(currentCue: GeminiVoiceCue, canRetry: Boolean) {
+                voiceService.speak(
+                    text = speechText,
+                    cue = currentCue,
+                    onStart = {
+                        Log.d(ttsLogTag, "AI speak started id=$messageId cue=${currentCue.name}")
+                        messageId?.let { viewModel.notifyVoicePlaybackStarted(it) }
+                    },
+                    onComplete = {
+                        Log.d(ttsLogTag, "AI speak completed id=$messageId cue=${currentCue.name}")
+                        messageId?.let { viewModel.notifyVoicePlaybackFinished(it) }
+                    },
+                    onError = { error ->
+                        if (canRetry && currentCue != GeminiVoiceCue.DEFAULT) {
+                            Log.w(
+                                ttsLogTag,
+                                "AI speak error id=$messageId cue=${currentCue.name} -> retry DEFAULT",
+                                error
+                            )
+                            speakWithCue(GeminiVoiceCue.DEFAULT, false)
+                        } else {
+                            Log.e(ttsLogTag, "AI speak error id=$messageId cue=${currentCue.name}", error)
+                            messageId?.let { viewModel.notifyVoicePlaybackFinished(it) }
+                        }
+                    }
+                )
+            }
+            speakWithCue(requestedCue, true)
         }
     }
 
@@ -218,6 +240,10 @@ fun RoleplayChatScreen(
     }
 
     val latestAiLine: ChatMessage? = uiState.messages.lastOrNull { !it.isUser }
+    val introLine = remember(uiState.activeThemeIntroLine, uiState.currentScenario?.initialMessage) {
+        uiState.activeThemeIntroLine.takeIf { it.isNotBlank() }
+            ?: uiState.currentScenario?.initialMessage?.takeIf { !it.isNullOrBlank() }?.trim()
+    }
 
     LaunchedEffect(latestAiLine?.id) {
         latestAiLine?.let { message ->
@@ -226,10 +252,9 @@ fun RoleplayChatScreen(
         }
     }
 
-    LaunchedEffect(uiState.currentScenario?.initialMessage, initialLineSpoken) {
-        val initialLine = uiState.currentScenario?.initialMessage
-        if (!initialLineSpoken && !initialLine.isNullOrBlank()) {
-            speakAiLine(initialLine, GeminiVoiceCue.HIGH_PITCH, null)
+    LaunchedEffect(introLine, initialLineSpoken) {
+        if (!initialLineSpoken && !introLine.isNullOrBlank()) {
+            speakAiLine(introLine, GeminiVoiceCue.TALK_HIGH, null)
             initialLineSpoken = true
         }
     }
@@ -261,17 +286,46 @@ fun RoleplayChatScreen(
         }
     }
 
+    LaunchedEffect(uiState.showCompletionDialog) {
+        if (uiState.showCompletionDialog) {
+            completionSheetState.show()
+        } else {
+            completionSheetState.hide()
+        }
+    }
+
     if (uiState.showCompletionDialog) {
+        val onPlayFarewell = {
+            val text = uiState.activeThemeFarewellBisaya
+            if (text.isNotBlank()) {
+                speakAiLine(text, GeminiVoiceCue.TALK_HIGH, null)
+            }
+        }
+        val onCopyFarewell = {
+            val combined = listOf(
+                uiState.activeThemeFarewellBisaya,
+                uiState.activeThemeFarewellTranslation.takeIf { it.isNotBlank() }
+            ).filterNotNull().filter { it.isNotBlank() }
+                .joinToString(separator = "\n")
+            if (combined.isNotBlank()) {
+                clipboardManager.setText(AnnotatedString(combined))
+            }
+        }
+        val onClose = {
+            viewModel.dismissCompletionDialog()
+            onBackClick()
+        }
         CompletionDialog(
             themeTitle = uiState.activeThemeTitle,
             flavor = uiState.activeThemeFlavor,
             goal = uiState.activeThemeGoal,
             farewellLine = uiState.activeThemeFarewellBisaya,
             farewellTranslation = uiState.activeThemeFarewellTranslation,
-            onGoHome = {
-                viewModel.dismissCompletionDialog()
-                onBackClick()
-            }
+            farewellExplanation = uiState.activeThemeFarewellExplanation,
+            sheetState = completionSheetState,
+            onPlayFarewell = onPlayFarewell,
+            onCopyFarewell = onCopyFarewell,
+            onGoHome = onClose
         )
     }
 
@@ -336,12 +390,12 @@ fun RoleplayChatScreen(
                 StageSection(
                     latestAiLine = latestAiLine,
                     speakingMessageId = speakingMessageId,
-                    initialLine = uiState.currentScenario?.initialMessage,
+                    initialLine = introLine,
                     onReplayRequest = {
                         latestAiLine?.let { message ->
                             speakAiLine(message.text, message.voiceCue, message.id)
-                        } ?: uiState.currentScenario?.initialMessage?.let { intro ->
-                            speakAiLine(intro, GeminiVoiceCue.HIGH_PITCH, null)
+                        } ?: introLine?.let { intro ->
+                            speakAiLine(intro, GeminiVoiceCue.TALK_HIGH, null)
                         }
                     },
                     modifier = Modifier
@@ -361,7 +415,7 @@ fun RoleplayChatScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                AnimatedVisibility(visible = showOptionTutorial) {
+                AnimatedVisibility(visible = uiState.showOptionTutorial) {
                     Surface(
                         shape = RoundedCornerShape(20.dp),
                         color = Color(0x3322C55E),
@@ -394,7 +448,7 @@ fun RoleplayChatScreen(
                                     modifier = Modifier.padding(top = 2.dp)
                                 )
                             }
-                            TextButton(onClick = { showOptionTutorial = false }) {
+                            TextButton(onClick = { viewModel.dismissOptionTutorial() }) {
                                 Text("OK", color = Color(0xFF22C55E))
                             }
                         }
@@ -416,7 +470,7 @@ fun RoleplayChatScreen(
                     scale = textScaleFactor,
                     cardHorizontalPadding = cardHorizontalPadding,
                     cardVerticalPadding = cardVerticalPadding,
-                    showHint = showOptionTutorial
+                    showHint = uiState.showOptionTutorial
                 )
 
                 Spacer(modifier = Modifier.height(sectionSpacing))

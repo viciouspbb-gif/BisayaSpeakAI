@@ -10,6 +10,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
@@ -72,6 +73,19 @@ class EnvironmentSoundPlayer(private val context: Context) {
         player?.clearMediaItems()
         currentSoundscape = null
         currentMedia = null
+    }
+
+    suspend fun fadeOutAndStop(durationMillis: Long = 800) {
+        val targetPlayer = player ?: return
+        val steps = 8
+        val stepDuration = (durationMillis / steps).coerceAtLeast(20L)
+        val initialVolume = targetPlayer.volume
+        for (i in steps downTo 1) {
+            val progress = (i - 1).toFloat() / steps
+            targetPlayer.volume = initialVolume * progress
+            delay(stepDuration)
+        }
+        stop()
     }
 
     fun release() {
@@ -160,13 +174,13 @@ class EnvironmentSoundPlayer(private val context: Context) {
 }
 
 enum class Soundscape(val displayName: String, val durationSeconds: Int, val seed: Int) {
-    JEEPNEY("ジプニーの車内", 14, 42),
-    TROPICAL_STORM("スコール", 16, 77),
-    NIGHT_MARKET("夜市のざわめき", 12, 19)
+    JEEPNEY("市街", 14, 42),
+    TROPICAL_STORM("豪雨", 16, 77),
+    NIGHT_MARKET("夜市", 12, 19)
 }
 
 enum class EnvironmentVolumePreset(val label: String, val volume: Float) {
-    STANDARD("標準", 0.65f),
-    LOUD("戦場", 0.9f),
-    TRAINING("集中", 0.5f)
+    STANDARD("修行", 0.65f),
+    TRAINING("静寂", 0.5f),
+    LOUD("修羅場", 0.9f)
 }

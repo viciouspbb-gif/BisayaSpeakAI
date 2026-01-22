@@ -16,14 +16,26 @@ class WhisperRepository(
     private val service: OpenAiWhisperService = OpenAiWhisperService.create(BuildConfig.OPENAI_API_KEY)
 ) {
 
+    enum class RecognitionHint(val languageCode: String? = null, val prompt: String? = null) {
+        AUTO(),
+        BISAYA_AND_JAPANESE(
+            languageCode = null, // Cebuano lacks ISO-639-1 code. Let Whisper auto-detect.
+            prompt = """
+                The speaker is switching between Cebuano (Bisaya) and Japanese.
+                Transcribe faithfully in those languages only without translating to English.
+                Prefer Cebuano spellings for Bisaya segments and standard kana/kanji for Japanese.
+            """.trimIndent()
+        )
+    }
+
     companion object {
         private const val MODEL = "whisper-1"
-        private const val LANGUAGE = "ceb" // Cebuano has no ISO-639-1 code, so we may omit this param
+        private const val FALLBACK_LANGUAGE = "ceb" // Cebuano has no ISO-639-1 code, so we may omit this param
         private const val TAG = "WhisperRepository"
         private const val ERROR_TAG = "WhisperError"
     }
 
-    suspend fun transcribe(file: File): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun transcribe(file: File, hint: RecognitionHint = RecognitionHint.AUTO): Result<String> = withContext(Dispatchers.IO) {
         try {
             if (!file.exists() || file.length() == 0L) {
                 val message = "Audio file is empty or missing: ${file.absolutePath}"
@@ -46,14 +58,18 @@ class WhisperRepository(
             )
 
             val modelPart = RequestBody.create("text/plain".toMediaTypeOrNull(), MODEL)
-            val languagePart = LANGUAGE
+            val languagePart = (hint.languageCode ?: FALLBACK_LANGUAGE)
                 .takeIf { it.length == 2 } // Whisper only accepts ISO-639-1 (2-letter) codes
+                ?.let { RequestBody.create("text/plain".toMediaTypeOrNull(), it) }
+            val promptPart = hint.prompt
+                ?.takeIf { it.isNotBlank() }
                 ?.let { RequestBody.create("text/plain".toMediaTypeOrNull(), it) }
 
             val response = service.transcribeAudio(
                 file = filePart,
                 model = modelPart,
-                language = languagePart
+                language = languagePart,
+                prompt = promptPart
             )
 
             val text = response.text?.trim().orEmpty()

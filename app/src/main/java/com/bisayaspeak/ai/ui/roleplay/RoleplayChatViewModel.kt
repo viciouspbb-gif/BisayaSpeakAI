@@ -38,6 +38,12 @@ data class RoleplayOption(
     val requiresPro: Boolean = false
 )
 
+data class FarewellLine(
+    val bisaya: String,
+    val translation: String,
+    val explanation: String
+)
+
 data class RoleplayResultPayload(
     val correctCount: Int,
     val totalQuestions: Int,
@@ -57,6 +63,7 @@ data class RoleplayUiState(
     val completedTurns: Int = 0,
     val successfulTurns: Int = 0,
     val showCompletionDialog: Boolean = false,
+    val showOptionTutorial: Boolean = true,
     val completionScore: Int = 0,
     val pendingUnlockLevel: Int? = null,
     val pendingResult: RoleplayResultPayload? = null,
@@ -69,16 +76,20 @@ data class RoleplayUiState(
     val isSavingHistory: Boolean = false,
     val saveHistoryError: String? = null,
     val pendingExitHistory: List<MissionHistoryMessage>? = null,
+    val speakingRequestId: String? = null,
     val userGender: UserGender = UserGender.OTHER,
     val activeThemeTitle: String = "",
     val activeThemeDescription: String = "",
-    val turnsTarget: Int = 0,
     val activeThemePersona: String = "",
     val activeThemeGoal: String = "",
     val activeThemeFlavor: RoleplayThemeFlavor = RoleplayThemeFlavor.CASUAL,
     val activeThemeIntroLine: String = "",
     val activeThemeFarewellBisaya: String = "",
     val activeThemeFarewellTranslation: String = "",
+    val activeThemeFarewellExplanation: String = "",
+    val turnsTarget: Int = 0,
+    val isClosingPhase: Boolean = false,
+    val scenarioClosingGuidance: ScenarioClosingGuidance? = null,
     val userLevel: Int = 1,
     val totalXp: Int = 0
 )
@@ -104,8 +115,21 @@ class RoleplayChatViewModel(
         private const val POST_CLEAR_SILENCE_MS = 1000L
         private const val CASUAL_MIN_TURN = 8
         private const val CASUAL_MAX_TURN = 10
+        private const val SCENARIO_MIN_TURN = 10
         private const val SCENARIO_MAX_TURN = 12
         private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*:\\s*", RegexOption.IGNORE_CASE)
+        private val DEFAULT_FAREWELL_KEYWORDS = setOf(
+            "babay",
+            "sige, una",
+            "sige una",
+            "sige una ko",
+            "sige una sa ko",
+            "una sa ko",
+            "una na ko",
+            "kita ta napud",
+            "kita ta puhon",
+            "ampingi"
+        ).map { it.lowercase() }.toSet()
     }
 
     private val _uiState = MutableStateFlow(RoleplayUiState())
@@ -129,12 +153,42 @@ class RoleplayChatViewModel(
     private var lastRandomThemeId: String? = null
     private var endingTurnTarget: Int = SCENARIO_MAX_TURN
     private var isCasualTheme: Boolean = true
-    private var endingTriggered: Boolean = false
     private var scriptedTurnsRemaining: Int = SCENARIO_MAX_TURN
+    private var scenarioClosingGuidance: ScenarioClosingGuidance? = null
+    private var inClosingPhase: Boolean = false
+    private var farewellSignals: Set<String> = DEFAULT_FAREWELL_KEYWORDS
 
     init {
         observeUserGender()
         observeUserProgress()
+        observeOptionTutorialState()
+    }
+
+    private fun observeOptionTutorialState() {
+        viewModelScope.launch {
+            userPreferencesRepository.roleplayTutorialSeen.collect { seen ->
+                _uiState.update { it.copy(showOptionTutorial = !seen) }
+            }
+        }
+    }
+
+    private fun selectActiveTheme(scenario: RoleplayScenarioDefinition) {
+        val flavor = if (scenario.level <= 3) {
+            RoleplayThemeFlavor.CASUAL
+        } else {
+            if (random.nextBoolean()) RoleplayThemeFlavor.CASUAL else RoleplayThemeFlavor.SCENARIO
+        }
+        val theme = themeManager.drawTheme(currentUserLevel, flavor)
+        activeTheme = theme
+        activeFlavor = flavor
+        isCasualTheme = flavor == RoleplayThemeFlavor.CASUAL
+        endingTurnTarget = if (isCasualTheme) {
+            random.nextInt(CASUAL_MIN_TURN, CASUAL_MAX_TURN + 1)
+        } else {
+            random.nextInt(SCENARIO_MIN_TURN, SCENARIO_MAX_TURN + 1)
+        }
+        scriptedTurnsRemaining = endingTurnTarget
+        inClosingPhase = false
     }
 
     private fun observeUserProgress() {
@@ -160,6 +214,14 @@ class RoleplayChatViewModel(
     fun saveUserGender(gender: UserGender) {
         viewModelScope.launch {
             userPreferencesRepository.saveUserGender(gender)
+        }
+    }
+
+    fun dismissOptionTutorial() {
+        if (!_uiState.value.showOptionTutorial) return
+        _uiState.update { it.copy(showOptionTutorial = false) }
+        viewModelScope.launch {
+            userPreferencesRepository.setRoleplayTutorialSeen(true)
         }
     }
 
@@ -196,6 +258,9 @@ class RoleplayChatViewModel(
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
         isProVersion = isProUser
         selectActiveTheme(definition)
+        scenarioClosingGuidance = definition.closingGuidance
+        inClosingPhase = false
+        refreshFarewellSignals(definition)
 
         val cleanThemeTitle = levelPrefixRegex.replace(activeTheme.title, "").trim().ifBlank { activeTheme.title }
         val closingCue = activeTheme.closingCue
@@ -217,7 +282,10 @@ class RoleplayChatViewModel(
             activeThemeIntroLine = activeTheme.introLine,
             activeThemeFarewellBisaya = closingCue.bisaya,
             activeThemeFarewellTranslation = closingCue.translation,
-            turnsTarget = endingTurnTarget
+            activeThemeFarewellExplanation = closingCue.explanation,
+            turnsTarget = endingTurnTarget,
+            isClosingPhase = inClosingPhase,
+            scenarioClosingGuidance = scenarioClosingGuidance
         )
 
         if (scriptedRuntime == null) {
@@ -239,7 +307,7 @@ class RoleplayChatViewModel(
             text = introLine,
             isUser = false,
             translation = null,
-            voiceCue = GeminiVoiceCue.HIGH_PITCH
+            voiceCue = GeminiVoiceCue.TALK_HIGH
         )
         history.add(MissionHistoryMessage(introLine, isUser = false))
         _uiState.update {
@@ -310,8 +378,6 @@ class RoleplayChatViewModel(
                 isLoading = true,
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
-                completedTurns = it.completedTurns + 1,
-                successfulTurns = it.successfulTurns + 1,
                 lockedOption = null
             )
         }
@@ -395,7 +461,10 @@ class RoleplayChatViewModel(
                     voiceErrorMessage = null
                 )
             }
-            val result = whisperRepository.transcribe(file)
+            val result = whisperRepository.transcribe(
+                file,
+                WhisperRepository.RecognitionHint.BISAYA_AND_JAPANESE
+            )
             file.delete()
             if (currentRecordingFile == file) {
                 currentRecordingFile = null
@@ -576,7 +645,7 @@ class RoleplayChatViewModel(
             text = aiSpeech,
             isUser = false,
             translation = payload.aiTranslation.takeIf { it.isNotBlank() },
-            voiceCue = GeminiVoiceCue.HIGH_PITCH
+            voiceCue = GeminiVoiceCue.TALK_HIGH
         )
         val options = payload.options
             .filter { it.text.isNotBlank() }
@@ -587,35 +656,63 @@ class RoleplayChatViewModel(
                     tone = it.tone
                 )
             }.filterForAccess()
+        val farewellDetected = containsFarewellCue(aiSpeech) || containsFarewellCue(payload.aiTranslation)
+        val sanitizedOptions = if (farewellDetected) emptyList() else options
 
-        if (maybeTriggerEnding(aiMsg)) {
-            return
+        scriptedTurnsRemaining = (scriptedTurnsRemaining - 1).coerceAtLeast(0)
+        if (!inClosingPhase && scriptedTurnsRemaining <= 2) {
+            inClosingPhase = true
         }
-
-        scriptedTurnsRemaining -= 1
         _uiState.update {
             it.copy(
                 messages = it.messages + aiMsg,
                 isLoading = false,
-                options = options,
+                options = sanitizedOptions,
                 peekedHintOptionIds = emptySet(),
                 lockedOption = null,
-                turnsTarget = scriptedTurnsRemaining.coerceAtLeast(0)
+                turnsTarget = scriptedTurnsRemaining.coerceAtLeast(0),
+                isClosingPhase = inClosingPhase
             )
         }
 
-        if (options.isEmpty() || scriptedTurnsRemaining <= 0) {
+        val aiClosedConversation = sanitizedOptions.isEmpty() || farewellDetected
+        val shouldComplete = inClosingPhase && aiClosedConversation
+        if (shouldComplete) {
             queueCompletion(calculateScore())
         }
     }
 
+    private fun refreshFarewellSignals(definition: RoleplayScenarioDefinition) {
+        val signals = mutableSetOf<String>()
+        signals += DEFAULT_FAREWELL_KEYWORDS
+        definition.closingGuidance?.farewellExamples?.forEach { example ->
+            example.bisaya.takeIf { it.isNotBlank() }?.let { signals += it.lowercase() }
+        }
+        activeTheme.closingCue.bisaya.takeIf { it.isNotBlank() }?.let { signals += it.lowercase() }
+        farewellSignals = signals
+    }
+
+    private fun containsFarewellCue(text: String?): Boolean {
+        if (text.isNullOrBlank()) return false
+        val normalized = text.lowercase()
+        return farewellSignals.any { signal ->
+            signal.isNotBlank() && normalized.contains(signal)
+        }
+    }
+
     private fun queueCompletion(score: Int) {
+        val farewell = selectCompletionFarewell()
+        inClosingPhase = false
         _uiState.update {
             it.copy(
                 showCompletionDialog = true,
                 completionScore = score.coerceIn(0, 100),
                 options = emptyList(),
-                peekedHintOptionIds = emptySet()
+                peekedHintOptionIds = emptySet(),
+                activeThemeFarewellBisaya = farewell.bisaya,
+                activeThemeFarewellTranslation = farewell.translation,
+                activeThemeFarewellExplanation = farewell.explanation,
+                isClosingPhase = false
             )
         }
     }
@@ -667,6 +764,8 @@ class RoleplayChatViewModel(
             """.trimIndent()
         } else scenario.systemPrompt
 
+        val closingDirective = buildClosingDirective()
+
         val systemPromptWithGender = buildString {
             append(basePrompt)
             append("\n\n現在のテーマ: ${activeTheme.title} — ${activeTheme.description}。")
@@ -681,6 +780,10 @@ class RoleplayChatViewModel(
             append("\n相手の呼び方: ${calloutBisaya} / ${calloutEnglish}。ユーザー性別: ${currentUserGender.name}。")
             append("\n\n")
             append(genderInstruction)
+            if (closingDirective.isNotBlank()) {
+                append("\n\n")
+                append(closingDirective)
+            }
         }.trim()
 
         return """
@@ -708,82 +811,6 @@ class RoleplayChatViewModel(
             }
             Output 2-3 concise options that build upon the learner's most recent intent. Never include markdown or explanations outside JSON.
         """.trimIndent()
-    }
-
-    private fun selectActiveTheme(definition: RoleplayScenarioDefinition) {
-        val isScriptedScenario = scriptedRuntime != null
-        val level = currentUserLevel
-        val selectedFlavor = when {
-            isScriptedScenario -> RoleplayThemeFlavor.SCENARIO
-            random.nextBoolean() -> RoleplayThemeFlavor.CASUAL
-            else -> RoleplayThemeFlavor.SCENARIO
-        }
-        activeFlavor = selectedFlavor
-        isCasualTheme = selectedFlavor == RoleplayThemeFlavor.CASUAL
-        endingTriggered = false
-        scriptedTurnsRemaining = SCENARIO_MAX_TURN
-
-        activeTheme = if (isScriptedScenario) {
-            scriptedTheme(definition)
-        } else {
-            themeManager.drawTheme(level, selectedFlavor)
-        }
-
-        endingTurnTarget = if (isCasualTheme) {
-            random.nextInt(CASUAL_MIN_TURN, CASUAL_MAX_TURN + 1)
-        } else {
-            SCENARIO_MAX_TURN
-        }
-    }
-
-    private fun scriptedTheme(definition: RoleplayScenarioDefinition): RoleplayThemeDefinition {
-        val displayTitle = levelPrefixRegex.replace(definition.title, "").ifBlank { definition.title }
-        return RoleplayThemeDefinition(
-            id = definition.id,
-            title = displayTitle.trim(),
-            description = definition.description,
-            instruction = "シナリオのゴール(${definition.goal})を12ターン以内に達成するよう導いて。",
-            attributePanels = listOf("Deep dive: ${definition.goal}", "Scenery: ${definition.situation}", "Joke: タリの茶目っ気"),
-            flavor = RoleplayThemeFlavor.SCENARIO,
-            persona = definition.aiRole,
-            goalStatement = definition.goal,
-            introLine = definition.initialMessage ?: "さぁ、ミッション始めよう",
-            closingCue = EndingCue("Balik ta para sa sunod nga mission!", "また次のミッションで会おうね！")
-        )
-    }
-
-    private fun maybeTriggerEnding(aiMessage: ChatMessage): Boolean {
-        if (endingTriggered) return false
-        val turns = _uiState.value.completedTurns
-        val shouldEnd = when {
-            scriptedRuntime != null -> false
-            isCasualTheme -> turns >= endingTurnTarget
-            else -> turns >= endingTurnTarget
-        }
-
-        if (!shouldEnd) return false
-        endingTriggered = true
-        val cue = activeTheme.closingCue ?: EndingCue("Balik ta sunod, ha?", "また遊ぼうね！")
-        val endingMessage = ChatMessage(
-            id = UUID.randomUUID().toString(),
-            text = cue.bisaya,
-            isUser = false,
-            translation = cue.translation,
-            voiceCue = GeminiVoiceCue.HIGH_PITCH
-        )
-        history.add(MissionHistoryMessage(cue.bisaya, isUser = false))
-        _uiState.update {
-            it.copy(
-                messages = it.messages + aiMessage + endingMessage,
-                isLoading = false,
-                options = emptyList(),
-                peekedHintOptionIds = emptySet(),
-                lockedOption = null,
-                turnsTarget = 0
-            )
-        }
-        queueCompletion(calculateScore())
-        return true
     }
 
     private fun parseRoleplayPayload(raw: String): RoleplayAiResponsePayload {
@@ -847,6 +874,58 @@ class RoleplayChatViewModel(
         return this.filterNot { it.requiresPro }
     }
 
+    private fun buildClosingDirective(): String {
+        if (!inClosingPhase) return ""
+        val scenario = _uiState.value.currentScenario
+        val guidance = scenarioClosingGuidance
+        val builder = StringBuilder()
+        builder.append("CLOSING PHASE DIRECTIVES:\n")
+        builder.append("- ABSOLUTE RULE: Do NOT introduce brand-new questions or tasks.\n")
+        builder.append("- 絶対に新しい質問をしないで、これまでの会話をまとめてください。\n")
+        builder.append("- Deliver one clear farewell sentence in Bisaya (e.g., \"Sige, una sa ko\", \"Babay\", \"Kita ta napud\") that explicitly ends the chat.\n")
+        builder.append("- 別れのビサヤ語フレーズ（Sige, una na ko / Babay / Kita ta napud 等）を必ず述べ、会話の終わりを明確にしてください。\n")
+        builder.append("- After the farewell, do not ask or imply any follow-up question. Keep learner options empty or limited to a single acknowledgement if absolutely necessary.\n")
+        builder.append("- フェアウェル後は新規の問いかけをせず、必要なら『Salamat kaayo, mag-uban ta napud.』のような余韻のみ提示してください。\n")
+        scenario?.let {
+            builder.append("- Reference the current situation (e.g., ${it.description}) and tie loose ends before ending.\n")
+            builder.append("- Make the learner feel the mission \"${it.goal}\" was accomplished.\n")
+        }
+        builder.append("- Guide the conversation to a natural goodbye within the next ${scriptedTurnsRemaining.coerceAtLeast(1)} AI turns while allowing the learner to reply.\n")
+        builder.append("- Mention that Tari enjoyed the interaction and appreciates the learner's effort before the farewell.\n")
+        guidance?.resolutionReminders?.forEach { reminder ->
+            builder.append("- Resolve: $reminder\n")
+        }
+        guidance?.appreciationPhrases?.takeIf { it.isNotEmpty() }?.let {
+            builder.append("- Consider lines like ${it.joinToString()} when praising the learner.\n")
+        }
+        guidance?.followUpSuggestions?.forEach { suggestion ->
+            builder.append("- Prompt: $suggestion\n")
+        }
+        guidance?.farewellExamples?.takeIf { it.isNotEmpty() }?.let {
+            builder.append("- Sample farewells: ${it.joinToString { sample -> sample.bisaya }}\n")
+        }
+        builder.append("- Offer 1-2 gentle follow-up options (e.g., a reflective reply or a final thank-you) rather than new mission tasks.\n")
+        builder.append("- Keep tone warm and scenario-appropriate (hospital, hotel, taxi, etc.).\n")
+        return builder.toString()
+    }
+
+    private fun selectCompletionFarewell(): FarewellLine {
+        scenarioClosingGuidance?.farewellExamples?.takeIf { it.isNotEmpty() }?.let { examples ->
+            val pick = examples[random.nextInt(examples.size)]
+            return FarewellLine(
+                bisaya = pick.bisaya,
+                translation = pick.translation,
+                explanation = pick.explanation
+            )
+        }
+        val cue = activeTheme.closingCue
+        return FarewellLine(
+            bisaya = cue.bisaya,
+            translation = cue.translation,
+            explanation = cue.explanation
+        )
+    }
+
     private fun resolveNextTurnId(option: RoleplayOption, runtime: ScriptedRuntime): String? {
         option.nextTurnId?.let { return it }
         val lastTurnId = runtime.awaitingTurnId ?: return null
@@ -869,7 +948,7 @@ private data class ScriptedTurn(
     val id: String,
     val aiText: String,
     val translation: String,
-    val voiceCue: GeminiVoiceCue = GeminiVoiceCue.HIGH_PITCH,
+    val voiceCue: GeminiVoiceCue = GeminiVoiceCue.TALK_HIGH,
     val options: List<ScriptedOption> = emptyList(),
     val defaultNextId: String? = null
 )

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.StopCircle
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -106,7 +107,7 @@ fun DictionaryScreen(
                     Column {
                         Text("AI翻訳機", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "探索モード / トークモード",
+                            text = "辞書・翻訳 / トークモード",
                             color = Color.White.copy(alpha = 0.7f),
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -150,7 +151,8 @@ fun DictionaryScreen(
                     ExploreSection(
                         state = uiState,
                         onQueryChange = viewModel::updateQuery,
-                        onSubmit = viewModel::submitExploration
+                        onSubmit = viewModel::submitExploration,
+                        onPlayBisaya = viewModel::speakBisaya
                     )
                 }
             }
@@ -191,7 +193,7 @@ private fun ModeToggle(current: DictionaryMode, onModeChange: (DictionaryMode) -
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ModeChip(
-                text = "探索モード",
+                text = "辞書・翻訳",
                 selected = current == DictionaryMode.EXPLORE,
                 onClick = { onModeChange(DictionaryMode.EXPLORE) }
             )
@@ -236,7 +238,8 @@ private fun RowScope.ModeChip(text: String, selected: Boolean, onClick: () -> Un
 private fun ExploreSection(
     state: DictionaryUiState,
     onQueryChange: (String) -> Unit,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    onPlayBisaya: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         OutlinedTextField(
@@ -275,7 +278,7 @@ private fun ExploreSection(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(state.candidates) { candidate ->
-                    CandidateCard(candidate)
+                    CandidateCard(candidate, onPlayBisaya)
                 }
             }
         }
@@ -287,14 +290,35 @@ private fun ExploreSection(
 }
 
 @Composable
-private fun CandidateCard(candidate: TranslationCandidate) {
+private fun CandidateCard(
+    candidate: TranslationCandidate,
+    onPlayBisaya: (String) -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1A2E))
     ) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(candidate.bisaya, color = Color(0xFF38BDF8), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    candidate.bisaya,
+                    color = Color(0xFF38BDF8),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = { onPlayBisaya(candidate.bisaya) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.VolumeUp,
+                        contentDescription = "ビサヤ語を再生",
+                        tint = Color(0xFF38BDF8)
+                    )
+                }
+            }
             Text(candidate.japanese, color = Color.White, fontWeight = FontWeight.SemiBold)
             Text(candidate.english, color = Color(0xFF94A3B8), fontSize = 13.sp)
             Spacer(modifier = Modifier.height(6.dp))
@@ -329,7 +353,7 @@ private fun ExplanationCard(explanation: AiExplanation) {
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0B1220))
     ) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Tari's memo", color = Color(0xFFFB7185), fontWeight = FontWeight.Bold)
+            Text("タリのメモ", color = Color(0xFFFB7185), fontWeight = FontWeight.Bold)
             Text(explanation.summary, color = Color.White)
             Text("使い方ヒント", color = Color(0xFF38BDF8), fontSize = 13.sp)
             Text(explanation.usage, color = Color(0xFFD7E0F5))
@@ -371,7 +395,10 @@ private fun TalkSection(
             TalkStatusCard(state.talkStatus, state.isManualRecording)
 
             state.talkResponse?.let { response ->
-                TalkResultCard(response, onReplayLast)
+                TalkResultCard(
+                    response = response,
+                    onReplay = onReplayLast
+                )
             }
 
             state.errorMessage?.let { ErrorCard(it) }
@@ -477,7 +504,11 @@ private fun TalkResultCard(
             Text("入力", color = Color(0xFF9CA3AF), fontSize = 12.sp)
             Text(response.sourceText, color = Color.White, fontWeight = FontWeight.SemiBold)
             Text("翻訳", color = Color(0xFF9CA3AF), fontSize = 12.sp)
-            Text(response.translatedText, color = Color(0xFFBAE6FD), fontWeight = FontWeight.Bold)
+            Text(
+                response.translatedText,
+                color = Color(0xFFBAE6FD),
+                fontWeight = FontWeight.Bold
+            )
             if (response.romanized.isNotBlank()) {
                 Text(response.romanized, color = Color(0xFFFB923C), fontSize = 12.sp)
             }

@@ -1,60 +1,57 @@
 package com.bisayaspeak.ai.ui.screens
 
-import androidx.compose.animation.AnimatedContent
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.PsychologyAlt
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ui.viewmodel.DojoListeningViewModel
-import com.bisayaspeak.ai.voice.EnvironmentVolumePreset
-import com.bisayaspeak.ai.voice.Soundscape
-import kotlinx.coroutines.delay
-import androidx.compose.foundation.gestures.detectTapGestures
+import com.bisayaspeak.ai.ui.viewmodel.DojoRoundState
+import com.bisayaspeak.ai.ui.viewmodel.ListeningQuestion
 
 @Composable
 fun TariDojoScreen(
@@ -62,18 +59,41 @@ fun TariDojoScreen(
     viewModel: DojoListeningViewModel = viewModel(factory = DojoListeningViewModel.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
-    val scrollState = rememberScrollState()
+    BackHandler { onNavigateBack() }
 
-    LaunchedEffect(Unit) {
-        delay(200)
-        viewModel.startTraining()
+    val progress = if (!state.hasStarted || state.totalQuestions == 0) {
+        0f
+    } else {
+        val current = (state.currentQuestionIndex + 1).coerceAtLeast(1).coerceAtMost(state.totalQuestions)
+        current / state.totalQuestions.toFloat()
+    }
+
+    val answers = when {
+        state.currentOptions.size >= 3 -> state.currentOptions.take(3)
+        else -> state.currentOptions + List(3 - state.currentOptions.size) { "" }
+    }
+
+    val overlayAlpha = remember { Animatable(0f) }
+    LaunchedEffect(state.roundState) {
+        overlayAlpha.snapTo(0.22f)
+        overlayAlpha.animateTo(0f, animationSpec = tween(durationMillis = 180))
+    }
+
+    val currentQuestionNumber = (state.currentQuestionIndex + 1).coerceAtLeast(1)
+    val kataNames = listOf("一ノ型", "二ノ型", "三ノ型", "四ノ型", "五ノ型")
+    val kata = kataNames.getOrElse(currentQuestionNumber - 1) { "一ノ型" }
+    val statusLabel = when (state.roundState) {
+        DojoRoundState.LISTENING -> "耳を澄ませ"
+        DojoRoundState.ANSWERING -> "修行中"
+        DojoRoundState.ANSWERED -> "修行中"
+        else -> if (state.hasStarted) "修行中" else "待機"
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                brush = Brush.verticalGradient(
+                Brush.verticalGradient(
                     colors = listOf(
                         Color(0xFF0F172A),
                         Color(0xFF111827),
@@ -85,244 +105,115 @@ fun TariDojoScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = 24.dp, vertical = 32.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            DojoHeader(onNavigateBack)
-            Spacer(modifier = Modifier.height(16.dp))
-            ProgressSection(state.currentQuestionIndex, state.totalQuestions, state.correctCount)
-            Spacer(modifier = Modifier.height(18.dp))
-            ReactionPanel(state.feedbackMessage, state.expression, state.isTtsPlaying)
-            Spacer(modifier = Modifier.height(18.dp))
-            QuestionDeckSection(state.currentQuestionIndex + 1, state.currentQuestion?.meaning)
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(10.dp)
+                    .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                trackColor = Color.Transparent,
+                color = Color(0xFFF97316)
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            EnvironmentSelectors(
-                selectedSoundscape = state.selectedSoundscape,
-                onSoundscapeSelected = viewModel::selectSoundscape,
-                preset = state.volumePreset,
-                onPresetSelected = viewModel::setVolumePreset
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            OptionBoard(
-                options = state.currentOptions,
-                selected = state.selectedAnswer,
-                isEnabled = state.isAnswerEnabled,
-                onPreview = viewModel::previewOption,
-                onAnswer = viewModel::submitAnswer
+            StatusHeader(statusLabel = statusLabel, kata = kata, current = currentQuestionNumber, total = state.totalQuestions, streak = state.streakCount)
+
+            val canReplay = state.roundState != DojoRoundState.IDLE && state.currentQuestion != null
+            Image(
+                painter = painterResource(id = R.drawable.taridoujo),
+                contentDescription = "タリ",
+                modifier = Modifier
+                    .fillMaxWidth(0.65f)
+                    .aspectRatio(1f)
+                    .clickable(
+                        enabled = canReplay,
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { viewModel.replayCurrentQuestion() },
+                contentScale = ContentScale.Fit
             )
             Spacer(modifier = Modifier.height(16.dp))
-            InstructionBanner(isAnswerEnabled = state.isAnswerEnabled)
-            Spacer(modifier = Modifier.height(24.dp))
-            if (state.finished) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = viewModel::retry
-                ) {
-                    Text("もう一度修行する")
-                }
-            } else {
-                AssistChip(
-                    onClick = {},
-                    enabled = false,
-                    label = { Text(state.feedbackMessage ?: "タリの指示を待とう", color = Color.White) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.PsychologyAlt,
-                            contentDescription = null,
-                            tint = Color.White
-                        )
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = Color.White.copy(alpha = 0.08f)
-                    )
-                )
+            when {
+                !state.hasStarted -> StartButton(label = "修行開始", onClick = viewModel::startTraining)
+                state.finished -> StartButton(label = "もう一度", onClick = viewModel::retry)
             }
-            Spacer(modifier = Modifier.height(48.dp))
-        }
-    }
-}
+            Spacer(modifier = Modifier.height(24.dp))
 
-@Composable
-private fun DojoHeader(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(imageVector = Icons.Default.ChevronLeft, contentDescription = "戻る", tint = Color.White)
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
-            Text(
-                text = "タリ道場",
-                style = MaterialTheme.typography.headlineSmall.copy(color = Color.White, fontWeight = FontWeight.Bold)
-            )
-            Text(
-                text = "修行2：空手チョップ・リスニング",
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFFBFDBFE))
-            )
-        }
-    }
-}
+            val memoQuestion = state.currentQuestion
 
-@Composable
-private fun ProgressSection(currentIndex: Int, total: Int, correctCount: Int) {
-    val questionNumber = (currentIndex + 1).coerceAtLeast(1).coerceAtMost(total)
-    val progress = if (total == 0) 0f else questionNumber / total.toFloat()
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(2.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "第 $questionNumber / $total 問", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Text(text = "正解 $correctCount", color = Color(0xFF34D399))
+            if (state.roundState == DojoRoundState.FINISHED || state.finished) {
+                ResultPanel(
+                    correct = state.correctCount,
+                    total = state.totalQuestions,
+                    weaknesses = emptyList(),
+                    onRetry = viewModel::retry,
+                    onNext = { /* 次の修行導線：後続実装予定 */ },
+                    onBackToTop = onNavigateBack
+                )
+            } else {
+                AnswerPad(
+                    answers = answers,
+                    enabled = state.isAnswerEnabled && state.currentOptions.isNotEmpty(),
+                    previewing = state.previewingOption,
+                    answered = state.answeredOption,
+                    answeredCorrect = state.answeredCorrect,
+                    onPreview = viewModel::previewOption,
+                    onAnswer = viewModel::submitAnswer
+                )
+
+                if (state.roundState == DojoRoundState.ANSWERED && memoQuestion != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TrainingMemo(question = memoQuestion)
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        LinearProgressIndicator(
-            progress = progress,
+
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
-                .clip(RoundedCornerShape(10.dp)),
-            color = Color(0xFFEB6F4A),
-            trackColor = Color.White.copy(alpha = 0.2f)
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = overlayAlpha.value))
         )
     }
 }
 
 @Composable
-private fun ReactionPanel(message: String?, expression: com.bisayaspeak.ai.ui.viewmodel.TariExpression, isSpeaking: Boolean) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(containerColor = Color(0xFF1F2937).copy(alpha = 0.9f))
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.08f))
-                    .border(2.dp, Color.White.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = expression.emoji, fontSize = 32.sp)
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(expression.caption, color = Color(0xFFFEF08A), fontWeight = FontWeight.SemiBold)
-                AnimatedContent(targetState = message ?: "耳を澄ませ…") { target ->
-                    Text(target, color = Color.White, fontSize = 14.sp, lineHeight = 18.sp)
-                }
-            }
-            if (isSpeaking) {
-                Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFFFCD34D))
-            }
-        }
+private fun StartButton(label: String, onClick: () -> Unit) {
+    Button(onClick = onClick) {
+        Text(text = label, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
     }
 }
 
 @Composable
-private fun QuestionDeckSection(questionNumber: Int, meaning: String?) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = Color(0xFF111827),
-        shadowElevation = 6.dp,
-        tonalElevation = 4.dp,
-        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF433422))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "修行メモ", color = Color(0xFFF1E3C2), fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = meaning ?: "意味ヒントはタリの声を聞いてから…",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "問題 #$questionNumber", color = Color.White.copy(alpha = 0.6f))
-        }
-    }
-}
-
-@Composable
-private fun EnvironmentSelectors(
-    selectedSoundscape: Soundscape,
-    onSoundscapeSelected: (Soundscape) -> Unit,
-    preset: EnvironmentVolumePreset,
-    onPresetSelected: (EnvironmentVolumePreset) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(2.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(18.dp))
-            .padding(16.dp)
-    ) {
-        Text("環境音", color = Color.White, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Soundscape.values().forEach { soundscape ->
-                val selected = soundscape == selectedSoundscape
-                AssistChip(
-                    onClick = { onSoundscapeSelected(soundscape) },
-                    label = { Text(soundscape.displayName) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = if (selected) Color(0xFF433422) else Color.White.copy(alpha = 0.08f),
-                        labelColor = if (selected) Color(0xFFF1E3C2) else Color(0xFFE5E7EB)
-                    )
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        Text("雑音レベル", color = Color.White, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            EnvironmentVolumePreset.values().forEach { presetOption ->
-                val selected = presetOption == preset
-                AssistChip(
-                    onClick = { onPresetSelected(presetOption) },
-                    label = { Text(presetOption.label) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = if (selected) Color(0xFF8B5CF6).copy(alpha = 0.35f) else Color.White.copy(alpha = 0.08f),
-                        labelColor = Color.White
-                    )
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun OptionBoard(
-    options: List<String>,
-    selected: String?,
-    isEnabled: Boolean,
+private fun AnswerPad(
+    answers: List<String>,
+    enabled: Boolean,
+    previewing: String?,
+    answered: String?,
+    answeredCorrect: Boolean?,
     onPreview: (String) -> Unit,
     onAnswer: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        options.forEachIndexed { index, option ->
-            val isChosen = selected == option
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        answers.forEachIndexed { index, label ->
+            val isPreviewing = previewing == label && label.isNotBlank()
+            val isAnsweredCard = answered == label && label.isNotBlank()
             OptionCard(
+                label = label,
                 index = index,
-                text = option,
-                selected = isChosen,
-                enabled = isEnabled || isChosen,
-                onPreview = { onPreview(option) },
-                onAnswer = { onAnswer(option) }
+                enabled = enabled,
+                isPreviewing = isPreviewing,
+                isAnsweredCard = isAnsweredCard,
+                answeredCorrect = answeredCorrect,
+                onPreview = { onPreview(label) },
+                onAnswer = { onAnswer(label) }
             )
         }
     }
@@ -330,69 +221,177 @@ private fun OptionBoard(
 
 @Composable
 private fun OptionCard(
+    label: String,
     index: Int,
-    text: String,
-    selected: Boolean,
     enabled: Boolean,
+    isPreviewing: Boolean,
+    isAnsweredCard: Boolean,
+    answeredCorrect: Boolean?,
     onPreview: () -> Unit,
     onAnswer: () -> Unit
 ) {
-    val background = when {
-        selected && enabled -> Brush.horizontalGradient(listOf(Color(0xFF2563EB), Color(0xFF0EA5E9)))
-        selected && !enabled -> Brush.horizontalGradient(listOf(Color(0xFF22C55E), Color(0xFF4ADE80)))
-        else -> Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f)))
+    val interactionEnabled = enabled && label.isNotBlank() && !isAnsweredCard
+    val sink by animateDpAsState(targetValue = if (isAnsweredCard) 8.dp else 0.dp, label = "sink-$index")
+
+    val pulseScale: Float = if (isPreviewing) {
+        val transition = rememberInfiniteTransition(label = "pulse-$index")
+        transition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.05f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 550),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "pulseScale-$index"
+        ).value
+    } else {
+        1f
     }
+
+    val baseScale = if (isAnsweredCard) 0.97f else 1f
+    val scale = baseScale * pulseScale
+
+    val backgroundColor = when {
+        isAnsweredCard && answeredCorrect == true -> Color(0xFF0F172A).copy(alpha = 0.85f)
+        isAnsweredCard && answeredCorrect == false -> Color(0xFF1E0F10).copy(alpha = 0.9f)
+        else -> Color(0xFF111827)
+    }
+
+    val borderColor = when {
+        isPreviewing -> Color(0xFFF97316)
+        isAnsweredCard && answeredCorrect == true -> Color(0xFF34D399)
+        isAnsweredCard && answeredCorrect == false -> Color(0xFFF87171)
+        else -> Color.White.copy(alpha = 0.2f)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .pointerInput(enabled) {
+            .offset(y = sink)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .pointerInput(interactionEnabled) {
                 detectTapGestures(
-                    onTap = { if (enabled) onPreview() },
-                    onDoubleTap = { if (enabled) onAnswer() }
+                    onTap = { if (interactionEnabled) onPreview() },
+                    onDoubleTap = { if (interactionEnabled) onAnswer() }
                 )
             },
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        border = CardDefaults.outlinedCardBorder().copy(width = 2.dp, brush = Brush.linearGradient(listOf(borderColor, borderColor)))
     ) {
         Box(
             modifier = Modifier
-                .background(background)
-                .border(2.dp, Color.White.copy(alpha = if (selected) 0.8f else 0.2f), RoundedCornerShape(18.dp))
-                .padding(16.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
-            Column {
-                Text("選択肢 ${index + 1}", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(text, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text("単タップで試聴 / ダブルタップで回答", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "問${index + 1}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.5f)
+                )
+                Text(
+                    text = if (label.isBlank()) "…" else label,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White
+                )
+                val statusText = when {
+                    !isAnsweredCard -> null
+                    answeredCorrect == true -> "見事"
+                    answeredCorrect == false -> "まだ甘い"
+                    else -> null
+                }
+                if (statusText != null) {
+                    Text(
+                        text = statusText,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                        color = if (answeredCorrect == true) Color(0xFF34D399) else Color(0xFFF97316)
+                    )
+                } else {
+                    Text(
+                        text = "単タップ：試聴 / ダブルタップ：回答",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.4f)
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun InstructionBanner(isAnswerEnabled: Boolean) {
-    val text = if (isAnswerEnabled) {
-        "タリの声と環境音を真似して、正しいフレーズを聞き分けよう！"
-    } else {
-        "タリの号令待ち…環境音に集中して耳を澄ませるべし"
-    }
+private fun ResultPanel(
+    correct: Int,
+    total: Int,
+    weaknesses: List<ListeningQuestion>,
+    onRetry: () -> Unit,
+    onNext: () -> Unit,
+    onBackToTop: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFAC29A).copy(alpha = 0.9f))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF101520)),
+        shape = RoundedCornerShape(18.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(
-                imageVector = if (isAnswerEnabled) Icons.Default.AutoAwesome else Icons.Default.Bolt,
-                contentDescription = null,
-                tint = Color(0xFF8B4513)
-            )
-            Text(text = text, color = Color(0xFF4B2E16), fontWeight = FontWeight.Bold)
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(text = "修行結果", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = Color.White)
+            Text(text = "正解：$correct / $total", color = Color.White.copy(alpha = 0.9f))
+            if (weaknesses.isNotEmpty()) {
+                Text(text = "弱点", color = Color.White.copy(alpha = 0.7f))
+                weaknesses.take(2).forEach { question ->
+                    Text(text = "・${question.phrase} (${question.meaning})", color = Color.White.copy(alpha = 0.8f))
+                }
+            } else {
+                Text(text = "弱点なし。次の修行へ進め。", color = Color.White.copy(alpha = 0.8f))
+            }
+            Button(onClick = onRetry, modifier = Modifier.fillMaxWidth()) {
+                Text("再修行")
+            }
+            OutlinedButton(onClick = onNext, modifier = Modifier.fillMaxWidth()) {
+                Text("次の修行")
+            }
+            TextButton(onClick = onBackToTop, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("道場トップへ戻る", color = Color(0xFF93C5FD))
+            }
         }
+    }
+}
+
+@Composable
+private fun TrainingMemo(question: ListeningQuestion) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF101520)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("修行メモ", color = Color(0xFF9CA3AF), style = MaterialTheme.typography.labelLarge)
+            Text(question.phrase, color = Color.White, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+            Text("解説：${question.meaning}", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
+private fun StatusHeader(statusLabel: String, kata: String, current: Int, total: Int, streak: Int) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = "修行 $kata (${current.coerceAtMost(total)}/$total)",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = Color.White
+        )
+        Text(
+            text = "連続正解：$streak",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.8f)
+        )
+        Text(
+            text = statusLabel,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            color = Color.White
+        )
     }
 }

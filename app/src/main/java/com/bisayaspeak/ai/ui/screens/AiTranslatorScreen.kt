@@ -7,6 +7,7 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +49,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +71,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.data.model.TranslationDirection
 import com.bisayaspeak.ai.ui.viewmodel.AiTranslatorViewModel
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorUiState
+import com.bisayaspeak.ai.voice.GeminiVoiceCue
+import com.bisayaspeak.ai.voice.GeminiVoiceService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,6 +86,13 @@ fun AiTranslatorScreen(
     val uiState by viewModel.uiState.collectAsState()
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+    val voiceService = remember { GeminiVoiceService(context) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceService.stop()
+        }
+    }
 
     var hasMicPermission by remember {
         mutableStateOf(
@@ -173,12 +184,23 @@ fun AiTranslatorScreen(
                 onTranslate = viewModel::translate
             )
 
+            val canPlayBisaya = direction == TranslationDirection.JA_TO_CEB && translatedText.isNotBlank()
             ResultCard(
                 text = translatedText,
                 direction = direction,
                 onCopy = {
                     if (translatedText.isNotBlank()) {
                         clipboardManager.setText(AnnotatedString(translatedText))
+                    }
+                },
+                isSpeakEnabled = canPlayBisaya,
+                onSpeak = {
+                    if (canPlayBisaya) {
+                        voiceService.stop()
+                        voiceService.speak(
+                            text = translatedText,
+                            cue = GeminiVoiceCue.TRANSLATOR_SWIFT
+                        )
                     }
                 }
             )
@@ -372,7 +394,9 @@ private fun ActionButtons(
 private fun ResultCard(
     text: String,
     direction: TranslationDirection,
-    onCopy: () -> Unit
+    onCopy: () -> Unit,
+    isSpeakEnabled: Boolean,
+    onSpeak: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -423,7 +447,9 @@ private fun ResultCard(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 140.dp),
+                    .heightIn(min = 140.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable(enabled = isSpeakEnabled) { onSpeak() },
                 color = Color(0xFF16253C),
                 shape = RoundedCornerShape(20.dp)
             ) {
@@ -435,6 +461,13 @@ private fun ResultCard(
                         lineHeight = 26.sp
                     )
                 }
+            }
+            if (isSpeakEnabled) {
+                Text(
+                    text = "タップするとビサヤ語音声を再生",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 12.sp
+                )
             }
         }
     }

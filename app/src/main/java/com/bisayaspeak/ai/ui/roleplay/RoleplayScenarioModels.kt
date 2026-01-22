@@ -34,7 +34,21 @@ data class RoleplayScenarioDefinition(
     val iconEmoji: String,
     val initialMessage: String,
     val systemPrompt: String,
-    val hintPhrases: List<HintPhrase> = emptyList()
+    val hintPhrases: List<HintPhrase> = emptyList(),
+    val closingGuidance: ScenarioClosingGuidance? = null
+)
+
+data class ScenarioClosingGuidance(
+    val resolutionReminders: List<String>,
+    val appreciationPhrases: List<String>,
+    val followUpSuggestions: List<String>,
+    val farewellExamples: List<ScenarioFarewellLine> = emptyList()
+)
+
+data class ScenarioFarewellLine(
+    val bisaya: String,
+    val translation: String,
+    val explanation: String
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,6 +75,31 @@ val roleplayScenarioDefinitions: List<RoleplayScenarioDefinition> = listOf(
             HintPhrase("Maayong buntag!", "おはよう！"),
             HintPhrase("Kumusta ka?", "元気？"),
             HintPhrase("Sige, babay!", "じゃあね、バイバイ！")
+        ),
+        closingGuidance = ScenarioClosingGuidance(
+            resolutionReminders = listOf(
+                "Acknowledge that the relaxed morning catch-up is wrapping up.",
+                "Encourage the learner to carry the warm mood into their day."
+            ),
+            appreciationPhrases = listOf(
+                "Lingaw kaayo ko nimo karon.",
+                "Nalipay ko nga naka-chika ta."),
+            followUpSuggestions = listOf(
+                "Invite the learner to share updates later.",
+                "Remind them to stretch or grab breakfast before heading out."
+            ),
+            farewellExamples = listOf(
+                ScenarioFarewellLine(
+                    bisaya = "Lingaw kaayo ko nimo. Kita ta napud unya ha!",
+                    translation = "すごく楽しかったよ。またあとで会おうね！",
+                    explanation = "カジュアルな会話を締めて次の再会を誘う言い回し"
+                ),
+                ScenarioFarewellLine(
+                    bisaya = "Sige, pahulay gamay ug ayaw kalimot sa atong gipanulti ha?",
+                    translation = "じゃあ、ちょっと休んでさっきのフレーズ忘れないでね",
+                    explanation = "練習した内容を振り返らせる優しい締め方"
+                )
+            )
         )
     ),
     RoleplayScenarioDefinition(
@@ -86,6 +125,31 @@ val roleplayScenarioDefinitions: List<RoleplayScenarioDefinition> = listOf(
             HintPhrase(
                 nativeText = "Magpuyo ko og tulo ka adlaw.",
                 translation = "3日間滞在します。"
+            )
+        ),
+        closingGuidance = ScenarioClosingGuidance(
+            resolutionReminders = listOf(
+                "Confirm all immigration requirements are satisfied.",
+                "Wish the learner a smooth entry and stay in Cebu."
+            ),
+            appreciationPhrases = listOf(
+                "Salamat sa imong pasensya.",
+                "Nalipay ko makatabang nimo."),
+            followUpSuggestions = listOf(
+                "Encourage them to enjoy Cebu and stay safe.",
+                "Remind them that officers are around if they need help later."
+            ),
+            farewellExamples = listOf(
+                ScenarioFarewellLine(
+                    bisaya = "Kompleto na tanan. Enjoy sa Cebu ug ayo-ayo sa imong bakasyon!",
+                    translation = "手続きは全部完了です。セブを楽しんで、安全に過ごしてね！",
+                    explanation = "入国手続き完了と旅行の成功を祈る締めの一言"
+                ),
+                ScenarioFarewellLine(
+                    bisaya = "Silyado na ang imong pasaporte. Kung kinahanglan kag tabang, tawga lang mi ha.",
+                    translation = "パスポートにスタンプ押したよ。困ったらいつでも声かけてね",
+                    explanation = "手続きを無事終えてサポート継続を伝える言い方"
+                )
             )
         )
     ),
@@ -113,6 +177,31 @@ val roleplayScenarioDefinitions: List<RoleplayScenarioDefinition> = listOf(
                 nativeText = "Tagpila ang plete?",
                 translation = "運賃はいくらですか？"
             )
+        ),
+        closingGuidance = ScenarioClosingGuidance(
+            resolutionReminders = listOf(
+                "Mention that the ride is complete and payment is settled fairly.",
+                "Cheerfully wish them luck at their destination."
+            ),
+            appreciationPhrases = listOf(
+                "Lingaw kaayo ko sa imong kuyog.",
+                "Salamat sa pagsalig nako."),
+            followUpSuggestions = listOf(
+                "Offer quick tips about traffic or nearby spots.",
+                "Invite them to call again if they need another ride."
+            ),
+            farewellExamples = listOf(
+                ScenarioFarewellLine(
+                    bisaya = "Nakaabot na ta. Ayo-ayo ug enjoy sa imong lakaw ha!",
+                    translation = "着いたよ。気をつけて、目的地でも楽しんでね！",
+                    explanation = "送迎完了と安全・楽しさを願うタクシーらしい締め"
+                ),
+                ScenarioFarewellLine(
+                    bisaya = "Salamat sa imong pagsalig. Tawgi lang ko balik kung kinahanglan kag sakay.",
+                    translation = "任せてくれてありがとう。また乗りたいときは呼んでね",
+                    explanation = "またの利用を促すフレンドリーな別れ際"
+                )
+            )
         )
     ),
     RoleplayScenarioDefinition(
@@ -138,6 +227,31 @@ val roleplayScenarioDefinitions: List<RoleplayScenarioDefinition> = listOf(
             HintPhrase(
                 nativeText = "Unsa ang oras sa check-out?",
                 translation = "チェックアウトの時間は何時ですか？"
+            )
+        ),
+        closingGuidance = ScenarioClosingGuidance(
+            resolutionReminders = listOf(
+                "Confirm the reservation is settled and keys or instructions are handed over.",
+                "Celebrate that any issues were resolved at the counter."
+            ),
+            appreciationPhrases = listOf(
+                "Nalipay ko makatabang sa imong check-in.",
+                "Salamat sa pagpili sa among hotel."),
+            followUpSuggestions = listOf(
+                "Invite them to contact the front desk if they need anything.",
+                "Wish them a relaxing stay and mention available amenities."
+            ),
+            farewellExamples = listOf(
+                ScenarioFarewellLine(
+                    bisaya = "Kompleto na imong check-in. Enjoy sa imong pagpuyo ug tawga lang mi kung nay kinahanglan ha!",
+                    translation = "チェックイン完了です。ゆっくり過ごして、何かあったらすぐ呼んでね！",
+                    explanation = "手続き完了とサポート継続を丁寧に伝えるフロントらしい締め"
+                ),
+                ScenarioFarewellLine(
+                    bisaya = "Nalipay ko nga na-ayos nato ang tanan. Ayo-ayo ug pahulay karon gabii!",
+                    translation = "全部整ってよかったです。今夜はゆっくり休んでくださいね",
+                    explanation = "トラブル解決と休息を促す優しい締め台詞"
+                )
             )
         )
     )

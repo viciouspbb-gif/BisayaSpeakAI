@@ -18,7 +18,8 @@ interface OpenAiWhisperService {
     suspend fun transcribeAudio(
         @Part file: MultipartBody.Part,
         @Part("model") model: RequestBody,
-        @Part("language") language: RequestBody? = null
+        @Part("language") language: RequestBody? = null,
+        @Part("prompt") prompt: RequestBody? = null
     ): WhisperTranscriptionResponse
 
     companion object {

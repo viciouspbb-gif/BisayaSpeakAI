@@ -6,8 +6,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.WhisperRepository
+import android.util.Log
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.voice.VoiceInputRecorder
@@ -73,8 +75,15 @@ data class DictionaryUiState(
     val talkHistory: List<TalkResponse> = emptyList(),
     val isManualRecording: Boolean = false,
     val lastTranscript: String = "",
-    val detectedLanguage: DictionaryLanguage = DictionaryLanguage.UNKNOWN
+    val detectedLanguage: DictionaryLanguage = DictionaryLanguage.UNKNOWN,
+    val dictionaryTtsState: DictionaryTtsState = DictionaryTtsState.Idle
 )
+
+sealed interface DictionaryTtsState {
+    object Idle : DictionaryTtsState
+    object Playing : DictionaryTtsState
+    data class Error(val message: String) : DictionaryTtsState
+}
 
 class DictionaryViewModel(
     application: Application,
@@ -90,6 +99,8 @@ class DictionaryViewModel(
     private var currentRecording: File? = null
 
     private val voiceService by lazy { GeminiVoiceService(application.applicationContext) }
+    private val dictionaryVoiceService by lazy { GeminiVoiceService(application.applicationContext) }
+    private val hasOpenAiKey = BuildConfig.OPENAI_API_KEY.isNotBlank()
 
     fun updateQuery(query: String) {
         _uiState.update { it.copy(query = query, errorMessage = null) }
@@ -108,6 +119,7 @@ class DictionaryViewModel(
         }
         stopCurrentRecording(clearStatus = true)
         voiceService.stop()
+        dictionaryVoiceService.stop()
     }
 
     fun submitExploration() {
@@ -257,9 +269,14 @@ class DictionaryViewModel(
             )
         }
         val speechText = talkResponse.translatedText.ifBlank { talkResponse.spokenOutput }
+        val cue = if (language == DictionaryLanguage.JAPANESE) {
+            GeminiVoiceCue.TALK_HIGH
+        } else {
+            GeminiVoiceCue.TALK_HIGH
+        }
         voiceService.speak(
             text = speechText,
-            cue = if (language == DictionaryLanguage.JAPANESE) GeminiVoiceCue.DEFAULT else GeminiVoiceCue.HIGH_PITCH,
+            cue = cue,
             onStart = {
                 _uiState.update { it.copy(talkStatus = TalkStatus.Speaking) }
             },
@@ -269,6 +286,38 @@ class DictionaryViewModel(
             onError = { error ->
                 voiceService.stop()
                 _uiState.update { it.copy(talkStatus = TalkStatus.Error(error.message ?: "音声出力に失敗しました")) }
+            }
+        )
+    }
+
+    fun speakBisaya(text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return
+        if (!hasOpenAiKey) {
+            Log.w("DictionaryViewModel", "OPENAI_API_KEY is blank; skipping TTS in dictionary mode.")
+            _uiState.update { it.copy(dictionaryTtsState = DictionaryTtsState.Error("OPENAIキーが設定されていません。")) }
+            return
+        }
+        _uiState.update { it.copy(dictionaryTtsState = DictionaryTtsState.Playing) }
+        dictionaryVoiceService.speak(
+            text = trimmed,
+            cue = GeminiVoiceCue.TALK_LOW,
+            onStart = {
+                _uiState.update { it.copy(dictionaryTtsState = DictionaryTtsState.Playing) }
+            },
+            onComplete = {
+                _uiState.update { it.copy(dictionaryTtsState = DictionaryTtsState.Idle) }
+            },
+            onError = { error ->
+                Log.e("DictionaryViewModel", "Gemini TTS failed", error)
+                dictionaryVoiceService.stop()
+                _uiState.update {
+                    it.copy(
+                        dictionaryTtsState = DictionaryTtsState.Error(
+                            error.message ?: "Gemini音声の取得に失敗しました"
+                        )
+                    )
+                }
             }
         )
     }
@@ -299,6 +348,7 @@ class DictionaryViewModel(
             appendLine("  }")
             appendLine("}")
             appendLine("Keep answers concise, 2-4 candidates maximum. Use plain text (no markdown).")
+            appendLine("IMPORTANT: explanation.summary・explanation.usage・explanation.related must be in natural Japanese with concise sentences.")
             appendLine("User query: \"$query\"")
         }
         val raw = repository.generateJsonResponse(prompt, temperature = 0.35)
@@ -423,6 +473,7 @@ class DictionaryViewModel(
         super.onCleared()
         stopCurrentRecording(clearStatus = true)
         voiceService.stop()
+        dictionaryVoiceService.stop()
     }
 
     companion object {
