@@ -6,7 +6,8 @@ enum class RoleplayThemeFlavor { CASUAL, SCENARIO }
 
 data class EndingCue(
     val bisaya: String,
-    val translation: String
+    val translation: String,
+    val explanation: String
 )
 
 data class RoleplayThemeDefinition(
@@ -46,7 +47,11 @@ class RoleplayThemeManager(
                 persona = "散歩中の幼なじみ",
                 goalStatement = "近況を楽しく共有してウォームアップする",
                 introLine = "今日は散歩しながら色々おしゃべりしようね",
-                closingCue = EndingCue("Nakalimot ko sa akong gibuhi!", "あっ、やること思い出した！"),
+                closingCue = EndingCue(
+                    "Nakalimot ko sa akong gibuhi!",
+                    "あっ、やること思い出した！",
+                    "雑談の途中で用事を思い出して離れるときの軽い一言"
+                ),
                 minLevel = 1,
                 maxLevel = 8
             ),
@@ -64,7 +69,11 @@ class RoleplayThemeManager(
                 persona = "お気に入りカフェの常連",
                 goalStatement = "好きな飲み物を語り合って仲を深める",
                 introLine = "カフェでゆっくりしながら話そっか",
-                closingCue = EndingCue("Tulog nako kay gabii na.", "もう夜だから寝なきゃ。"),
+                closingCue = EndingCue(
+                    "Tulog nako kay gabii na.",
+                    "もう夜だから寝なきゃ。",
+                    "夜更かしをやめて一緒に切り上げるときの優しい別れ方"
+                ),
                 minLevel = 4,
                 maxLevel = 14
             ),
@@ -82,7 +91,11 @@ class RoleplayThemeManager(
                 persona = "おしゃべり好きな友達",
                 goalStatement = "お互いの近況アップデートで親密さを保つ",
                 introLine = "ちょっと噂話タイムにしよ？",
-                closingCue = EndingCue("Oh, naa na ang akong amiga!", "あ、友達が来ちゃった！"),
+                closingCue = EndingCue(
+                    "Oh, naa na ang akong amiga!",
+                    "あ、友達が来ちゃった！",
+                    "別の友達が現れて席を立つときに使う砕けた言い回し"
+                ),
                 minLevel = 6,
                 maxLevel = 20
             )
@@ -102,7 +115,11 @@ class RoleplayThemeManager(
                 persona = "市場の元気な売り子",
                 goalStatement = "欲しい商品を決めて気持ちよく買い物を終える",
                 introLine = "今日は私が市場案内するね！",
-                closingCue = EndingCue("Balik ta sunod para sa promo!", "また次のセールで会おうね！"),
+                closingCue = EndingCue(
+                    "Balik ta sunod para sa promo!",
+                    "また次のセールで会おうね！",
+                    "楽しい買い物を締めて次のチャンスを約束するときのフレーズ"
+                ),
                 minLevel = 5,
                 maxLevel = 18
             ),
@@ -120,7 +137,11 @@ class RoleplayThemeManager(
                 persona = "恋の先輩",
                 goalStatement = "相談を整理して次の一歩を後押しする",
                 introLine = "恋バナモードに切り替えるよ",
-                closingCue = EndingCue("Ay, mag-report pa ko sa love committee!", "ラブ委員会に報告あるの！"),
+                closingCue = EndingCue(
+                    "Ay, mag-report pa ko sa love committee!",
+                    "ラブ委員会に報告あるの！",
+                    "恋愛相談を切り上げるときの冗談めいた別れのあいさつ"
+                ),
                 minLevel = 8,
                 maxLevel = 24
             ),
@@ -138,7 +159,11 @@ class RoleplayThemeManager(
                 persona = "ホテルのフロント係",
                 goalStatement = "宿泊客の困りごとを解決し安心させる",
                 introLine = "私はフロント担当タリだよ。何があったか教えて",
-                closingCue = EndingCue("Mission complete, balik ta sunod!", "任務完了！また来てね！"),
+                closingCue = EndingCue(
+                    "Mission complete, balik ta sunod!",
+                    "任務完了！また来てね！",
+                    "問題を解決できた時に達成感を共有しながら別れる表現"
+                ),
                 minLevel = 10,
                 maxLevel = 30
             ),
@@ -156,7 +181,11 @@ class RoleplayThemeManager(
                 persona = "交渉上手な旅の相棒",
                 goalStatement = "正規料金でタクシーを利用する",
                 introLine = "タクシー運転手さん、メーター使ってもらおうね。私が交渉するから任せて",
-                closingCue = EndingCue("Nakuha ra nato ang sakto nga presyo!", "ちゃんと正規料金で乗れたね！"),
+                closingCue = EndingCue(
+                    "Nakuha ra nato ang sakto nga presyo!",
+                    "ちゃんと正規料金で乗れたね！",
+                    "交渉成功を称えて別れるときの誇らしげな言い回し"
+                ),
                 minLevel = 5,
                 maxLevel = 30
             ),
@@ -174,7 +203,11 @@ class RoleplayThemeManager(
                 persona = "値切りに強い地元案内人",
                 goalStatement = "適正価格まで値下げさせる",
                 introLine = "観光客価格って言われた？私が上手に値切ってあげる",
-                closingCue = EndingCue("Kugi kaayo ta! Nakuha nato ang best deal!", "粘った甲斐あっていい値段で買えたよ！"),
+                closingCue = EndingCue(
+                    "Kugi kaayo ta! Nakuha nato ang best deal!",
+                    "粘った甲斐あっていい値段で買えたよ！",
+                    "一緒に粘り勝ちした達成感を共有する別れの締め"
+                ),
                 minLevel = 5,
                 maxLevel = 30
             ),
@@ -192,7 +225,11 @@ class RoleplayThemeManager(
                 persona = "頼れるビジネスパートナー",
                 goalStatement = "初対面の相手に好印象で自己紹介する",
                 introLine = "今日はフォーマルな挨拶を練習しよう。私が先に見本を見せるね",
-                closingCue = EndingCue("Great impression! Kita kits sa next meeting!", "ばっちり印象残せたね。次の会議で会おう！"),
+                closingCue = EndingCue(
+                    "Great impression! Kita kits sa next meeting!",
+                    "ばっちり印象残せたね。次の会議で会おう！",
+                    "ビジネスシーンで良い印象を残したあとに再会を約束するあいさつ"
+                ),
                 minLevel = 7,
                 maxLevel = 30
             ),
@@ -210,7 +247,11 @@ class RoleplayThemeManager(
                 persona = "頼れる同僚",
                 goalStatement = "同僚を励ましながら解決策を決める",
                 introLine = "落ち込んでる同僚を支えてあげよう。私が話の切り出し方をリードするね",
-                closingCue = EndingCue("Teamwork solved it! Pahuway ta gamay.", "チームワークで解決！少し休憩しよ。"),
+                closingCue = EndingCue(
+                    "Teamwork solved it! Pahuway ta gamay.",
+                    "チームワークで解決！少し休憩しよ。",
+                    "チームで頑張った後に労い合う優しい締め言葉"
+                ),
                 minLevel = 8,
                 maxLevel = 30
             ),
@@ -228,7 +269,11 @@ class RoleplayThemeManager(
                 persona = "丁寧な同行サポーター",
                 goalStatement = "受付に必要情報を伝え診察へ繋ぐ",
                 introLine = "落ち着いて。受付で症状を順番に説明しよう。私が順序をサポートする",
-                closingCue = EndingCue("Narespondehan dayon! Salamat sa imong kusog nga Bisaya.", "すぐ診てもらえたよ！落ち着いて伝えられてえらい！"),
+                closingCue = EndingCue(
+                    "Narespondehan dayon! Salamat sa imong kusog nga Bisaya.",
+                    "すぐ診てもらえたよ！落ち着いて伝えられてえらい！",
+                    "緊急対応がうまくいった相手を称える安心の一言"
+                ),
                 minLevel = 9,
                 maxLevel = 30
             )

@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.bisayaspeak.ai.voice.DojoSePlayer
 import com.bisayaspeak.ai.voice.EnvironmentSoundPlayer
-import com.bisayaspeak.ai.voice.EnvironmentVolumePreset
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.voice.Soundscape
@@ -59,29 +59,32 @@ class DojoListeningViewModel(
     val uiState: StateFlow<ListeningQuizUiState> = _uiState.asStateFlow()
 
     private var advanceJob: Job? = null
-    private var soundJob: Job? = null
-
-    fun selectSoundscape(soundscape: Soundscape) {
-        _uiState.update { it.copy(selectedSoundscape = soundscape) }
-        ensureEnvironmentLoop()
-    }
+    private var ambienceJob: Job? = null
+    private var fadeJob: Job? = null
+    private val sePlayer = DojoSePlayer()
 
     fun startTraining() {
         advanceJob?.cancel()
         _uiState.update {
             it.copy(
+                hasStarted = true,
                 currentQuestionIndex = 0,
                 currentQuestion = LISTENING_DECK.first(),
                 currentOptions = emptyList(),
                 correctCount = 0,
                 finished = false,
+                previewingOption = null,
+                answeredOption = null,
+                answeredCorrect = null,
                 selectedAnswer = null,
                 isAnswerEnabled = false,
-                expression = TariExpression.Neutral,
-                feedbackMessage = "環境音を聞いてタリの号令を待とう"
+                streakCount = 0,
+                roundState = DojoRoundState.LISTENING,
+                currentCue = GeminiVoiceCue.DEFAULT
             )
         }
         launchQuestion(0)
+        playIntroAmbience()
     }
 
     fun retry() {
@@ -91,21 +94,28 @@ class DojoListeningViewModel(
     fun submitAnswer(option: String) {
         val state = _uiState.value
         val question = state.currentQuestion ?: return
+        if (state.roundState != DojoRoundState.ANSWERING) return
         if (!state.isAnswerEnabled) return
+        if (state.answeredOption != null) return
         val isCorrect = option == question.phrase
         val updatedCorrect = if (isCorrect) state.correctCount + 1 else state.correctCount
+        val newStreak = if (isCorrect) state.streakCount + 1 else 0
         _uiState.update {
             it.copy(
                 correctCount = updatedCorrect,
                 selectedAnswer = option,
                 isAnswerEnabled = false,
-                feedbackMessage = if (isCorrect) {
-                    "✨ 正解！耳が冴えてる！"
-                } else {
-                    "修行が足りん！正解は \"${question.phrase}\""
-                },
-                expression = if (isCorrect) TariExpression.Happy else TariExpression.Frustrated
+                previewingOption = null,
+                answeredOption = option,
+                answeredCorrect = isCorrect,
+                streakCount = newStreak,
+                roundState = DojoRoundState.ANSWERED
             )
+        }
+        if (isCorrect) {
+            sePlayer.playCorrect()
+        } else {
+            sePlayer.playIncorrect()
         }
         advanceJob?.cancel()
         advanceJob = viewModelScope.launch {
@@ -122,67 +132,86 @@ class DojoListeningViewModel(
     fun previewOption(option: String) {
         val state = _uiState.value
         if (state.finished) return
+        if (state.roundState != DojoRoundState.ANSWERING) return
         if (!state.isAnswerEnabled) return
+        if (state.answeredOption != null) return
         voiceService.stop()
         voiceService.speak(
             text = option,
             cue = GeminiVoiceCue.DEFAULT,
             onStart = {
-                _uiState.update { it.copy(isTtsPlaying = true) }
+                _uiState.update { it.copy(previewingOption = option) }
             },
             onComplete = {
-                _uiState.update { it.copy(isTtsPlaying = false) }
+                _uiState.update { current ->
+                    if (current.previewingOption == option) current.copy(previewingOption = null) else current
+                }
             },
-            onError = { error ->
-                _uiState.update {
-                    it.copy(
-                        isTtsPlaying = false,
-                        feedbackMessage = error.message ?: "音声再生に失敗しました"
-                    )
+            onError = {
+                _uiState.update { current ->
+                    if (current.previewingOption == option) current.copy(previewingOption = null) else current
                 }
             }
         )
     }
 
+    fun replayCurrentQuestion() {
+        val state = _uiState.value
+        val question = state.currentQuestion ?: return
+        if (!state.hasStarted || state.finished) return
+        startQuestionAmbience()
+        voiceService.stop()
+        voiceService.speak(
+            text = question.phrase,
+            cue = state.currentCue,
+            onStart = {},
+            onComplete = { stopQuestionAmbience() },
+            onError = { stopQuestionAmbience() }
+        )
+    }
+
     private fun launchQuestion(index: Int) {
-        ensureEnvironmentLoop()
         val question = LISTENING_DECK[index]
-        _uiState.update {
-            it.copy(
+        _uiState.update { current ->
+            current.copy(
                 currentQuestionIndex = index,
                 currentQuestion = question,
                 currentOptions = emptyList(),
                 isAnswerEnabled = false,
                 selectedAnswer = null,
-                feedbackMessage = "タリが読み上げ中…",
-                expression = TariExpression.Neutral
+                previewingOption = null,
+                answeredOption = null,
+                answeredCorrect = null,
+                streakCount = current.streakCount,
+                roundState = DojoRoundState.LISTENING
             )
         }
+        startQuestionAmbience()
         voiceService.stop()
         val cue = randomCue()
         voiceService.speak(
             text = question.phrase,
             cue = cue,
             onStart = {
-                _uiState.update { it.copy(isTtsPlaying = true) }
+                _uiState.update { current -> current.copy(currentCue = cue) }
             },
             onComplete = {
+                stopQuestionAmbience()
                 _uiState.update {
                     it.copy(
-                        isTtsPlaying = false,
                         currentOptions = question.combinedOptions(),
                         isAnswerEnabled = true,
-                        feedbackMessage = "聞こえたフレーズを選んで！"
+                        roundState = DojoRoundState.ANSWERING
                     )
                 }
             },
-            onError = { error ->
+            onError = {
+                stopQuestionAmbience()
                 _uiState.update {
                     it.copy(
-                        isTtsPlaying = false,
                         currentOptions = question.combinedOptions(),
                         isAnswerEnabled = true,
-                        feedbackMessage = error.message ?: "TTS再生に失敗しました。選択肢で回答してください。"
+                        roundState = DojoRoundState.ANSWERING
                     )
                 }
             }
@@ -191,47 +220,72 @@ class DojoListeningViewModel(
 
     private fun finishSession() {
         voiceService.stop()
-        _uiState.update {
-            it.copy(
+        _uiState.update { current ->
+            current.copy(
                 finished = true,
                 currentQuestion = null,
                 currentOptions = emptyList(),
-                feedbackMessage = "修行完了！もう一度挑戦する？",
-                expression = TariExpression.Happy
+                isAnswerEnabled = false,
+                selectedAnswer = null,
+                previewingOption = null,
+                answeredOption = null,
+                answeredCorrect = null,
+                roundState = DojoRoundState.FINISHED
             )
         }
-        environmentSoundPlayer.pause()
+        stopQuestionAmbience(force = true)
     }
 
-    private fun ensureEnvironmentLoop() {
-        val state = _uiState.value
-        if (state.finished || state.currentQuestionIndex < 0) return
-        soundJob?.cancel()
-        soundJob = viewModelScope.launch {
-            environmentSoundPlayer.play(state.selectedSoundscape, state.volumePreset)
+    private fun playIntroAmbience() {
+        val soundscape = Soundscape.values().random()
+        ambienceJob?.cancel()
+        fadeJob?.cancel()
+        ambienceJob = viewModelScope.launch {
+            environmentSoundPlayer.play(soundscape)
+            environmentSoundPlayer.setVolume(0.6f)
+            delay(2500)
+            environmentSoundPlayer.fadeOutAndStop(900)
         }
     }
 
-    fun setVolumePreset(preset: EnvironmentVolumePreset) {
-        _uiState.update { it.copy(volumePreset = preset) }
-        environmentSoundPlayer.setVolume(preset.volume)
+    private fun startQuestionAmbience() {
+        ambienceJob?.cancel()
+        fadeJob?.cancel()
+        ambienceJob = viewModelScope.launch {
+            val soundscape = Soundscape.values().random()
+            environmentSoundPlayer.play(soundscape)
+            environmentSoundPlayer.setVolume(0.5f)
+        }
+    }
+
+    private fun stopQuestionAmbience(force: Boolean = false) {
+        if (force) {
+            ambienceJob?.cancel()
+            fadeJob?.cancel()
+            environmentSoundPlayer.stop()
+            return
+        }
+        fadeJob?.cancel()
+        fadeJob = viewModelScope.launch {
+            environmentSoundPlayer.fadeOutAndStop(800)
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
         advanceJob?.cancel()
-        soundJob?.cancel()
+        ambienceJob?.cancel()
+        fadeJob?.cancel()
         voiceService.stop()
         environmentSoundPlayer.release()
+        sePlayer.shutdown()
     }
 
     private fun randomCue(): GeminiVoiceCue {
         val candidates = listOf(
             GeminiVoiceCue.DEFAULT,
-            GeminiVoiceCue.WHISPER,
-            GeminiVoiceCue.HIGH_PITCH,
-            GeminiVoiceCue.LOW_PITCH,
-            GeminiVoiceCue.ALIEN
+            GeminiVoiceCue.TALK_LOW,
+            GeminiVoiceCue.TALK_HIGH
         )
         return candidates.random()
     }
@@ -255,23 +309,27 @@ data class ListeningQuestion(
 }
 
 data class ListeningQuizUiState(
-    val selectedSoundscape: Soundscape = Soundscape.JEEPNEY,
-    val volumePreset: EnvironmentVolumePreset = EnvironmentVolumePreset.STANDARD,
     val currentQuestionIndex: Int = -1,
     val currentQuestion: ListeningQuestion? = null,
     val currentOptions: List<String> = emptyList(),
-    val isTtsPlaying: Boolean = false,
     val isAnswerEnabled: Boolean = false,
     val selectedAnswer: String? = null,
+    val previewingOption: String? = null,
+    val answeredOption: String? = null,
+    val answeredCorrect: Boolean? = null,
     val correctCount: Int = 0,
     val totalQuestions: Int = LISTENING_DECK.size,
     val finished: Boolean = false,
-    val feedbackMessage: String? = null,
-    val expression: TariExpression = TariExpression.Neutral
+    val hasStarted: Boolean = false,
+    val streakCount: Int = 0,
+    val roundState: DojoRoundState = DojoRoundState.IDLE,
+    val currentCue: GeminiVoiceCue = GeminiVoiceCue.DEFAULT
 )
 
-enum class TariExpression(val emoji: String, val caption: String) {
-    Neutral("😐", "集中中"),
-    Happy("😄", "ご機嫌タリ"),
-    Frustrated("😖", "ビンタ寸前")
+enum class DojoRoundState {
+    IDLE,
+    LISTENING,
+    ANSWERING,
+    ANSWERED,
+    FINISHED
 }

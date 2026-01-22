@@ -18,11 +18,10 @@ import java.io.File
 import java.util.ArrayDeque
 
 enum class GeminiVoiceCue(val voiceName: String, val speed: Float) {
-    DEFAULT("nova", 0.95f),
-    WHISPER("alloy", 0.9f),
-    HIGH_PITCH("verse", 1.12f),
-    LOW_PITCH("alloy", 0.75f),
-    ALIEN("shimmer", 1.25f)
+    DEFAULT("verse", 0.9f),
+    TALK_LOW("verse", 0.82f),
+    TALK_HIGH("verse", 0.96f),
+    TRANSLATOR_SWIFT("verse", 1.04f)
 }
 
 class GeminiVoiceService(
@@ -68,7 +67,7 @@ class GeminiVoiceService(
                     OpenAiSpeechService.SpeechRequest(
                         input = request.text,
                         voice = request.cue.voiceName,
-                        model = "tts-1",
+                        model = "gpt-4o-mini-tts",
                         format = "mp3",
                         speed = request.cue.speed
                     )

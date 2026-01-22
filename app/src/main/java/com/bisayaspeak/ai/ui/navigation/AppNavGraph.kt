@@ -67,6 +67,7 @@ import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.TranslateScreen
 import com.bisayaspeak.ai.ui.screens.TariDojoScreen
+import com.bisayaspeak.ai.ui.screens.ComingSoonScreen
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 import com.bisayaspeak.ai.voice.GeminiVoiceService
@@ -132,9 +133,11 @@ fun AppNavGraph(
     // 邁｡譏鍋噪縺ｪ UI State
     val homeViewModel: HomeViewModel = viewModel()
     val homeStatus by homeViewModel.homeStatus.collectAsState()
-    val isPaidPlan = userPlan != UserPlan.LITE
-    val isPremiumPlan = userPlan == UserPlan.PREMIUM
-    val isProUnlocked = userPlan == UserPlan.STANDARD || userPlan == UserPlan.PREMIUM
+    val isDebugBuild = BuildConfig.DEBUG
+    val effectivePlan = if (isDebugBuild) UserPlan.PREMIUM else userPlan
+    val isPaidPlan = effectivePlan != UserPlan.LITE
+    val isPremiumPlan = effectivePlan == UserPlan.PREMIUM
+    val isProUnlocked = isPremiumPlan
 
     val accountUiState = remember(isPremiumPlan, currentUser, isLiteBuild) {
         AccountUiState(
@@ -149,7 +152,7 @@ fun AppNavGraph(
         startDestination = AppRoute.Home.route
     ) {
         composable(AppRoute.Home.route) {
-            BannerScreenContainer(userPlan = userPlan) {
+            BannerScreenContainer(userPlan = effectivePlan) {
                 HomeScreen(
                     homeStatus = homeStatus,
                     isLiteBuild = isLiteBuild,
@@ -162,7 +165,9 @@ fun AppNavGraph(
                     onClickFeature = { feature ->
                         when (feature) {
                             FeatureId.AI_CHAT -> {
-                                if (isPremiumPlan) {
+                                if (!BuildConfig.DEBUG) {
+                                    Toast.makeText(context, "タリ先生は修行中…近日公開！", Toast.LENGTH_SHORT).show()
+                                } else if (isPremiumPlan) {
                                     navController.navigate(AppRoute.TariDojo.route)
                                 } else {
                                     navController.navigate(AppRoute.Upgrade.route)
@@ -221,7 +226,7 @@ fun AppNavGraph(
             val privacyUrl = "https://www.bisayaspeak.ai/privacy"
 
             if (isLiteBuild) {
-                BannerScreenContainer(userPlan = userPlan) {
+                BannerScreenContainer(userPlan = effectivePlan) {
                     AccountScreen(
                         uiState = accountUiState,
 
@@ -246,7 +251,7 @@ fun AppNavGraph(
                     )
                 }
             } else {
-                BannerScreenContainer(userPlan = userPlan) {
+                BannerScreenContainer(userPlan = effectivePlan) {
                     AccountScreen(
                         uiState = accountUiState,
 
@@ -342,9 +347,16 @@ fun AppNavGraph(
         }
 
         composable(AppRoute.TariDojo.route) {
-            TariDojoScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
+            if (BuildConfig.DEBUG) {
+                TariDojoScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            } else {
+                ComingSoonScreen(
+                    message = "タリ先生は修行中…近日公開！",
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(AppRoute.Dictionary.route) {

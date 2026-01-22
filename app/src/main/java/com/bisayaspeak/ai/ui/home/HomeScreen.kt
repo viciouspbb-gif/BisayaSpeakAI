@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
 
 // --- 必須定義 ---
@@ -73,6 +74,8 @@ fun HomeScreen(
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val isTariComingSoon = !BuildConfig.DEBUG
+
     var showProDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -104,7 +107,11 @@ fun HomeScreen(
         ProFeaturesSection(
             context = context,
             onClickFeature = onClickFeature,
-            onShowProDialog = { showProDialog = true }
+            onShowProDialog = { showProDialog = true },
+            isTariComingSoon = isTariComingSoon,
+            onComingSoon = {
+                Toast.makeText(context, "新機能を準備中です。もう少しお待ちください！", Toast.LENGTH_SHORT).show()
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -271,7 +278,9 @@ fun LearningSection(onStartLearning: () -> Unit) {
 fun ProFeaturesSection(
     context: android.content.Context,
     onClickFeature: (FeatureId) -> Unit,
-    onShowProDialog: () -> Unit
+    onShowProDialog: () -> Unit,
+    isTariComingSoon: Boolean,
+    onComingSoon: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -289,16 +298,6 @@ fun ProFeaturesSection(
             modifier = Modifier.weight(1f)
         )
 
-        // タリ道場
-        ProFeatureItem(
-            title = "タリ道場",
-            subtitle = "実践ボイス会話",
-            icon = Icons.Default.Psychology,
-            color = Color(0xFFCD7F32),
-            onClick = { onClickFeature(FeatureId.AI_CHAT) },
-            modifier = Modifier.weight(1f)
-        )
-
         // タリと散歩道
         ProFeatureItem(
             title = "タリと散歩道",
@@ -306,6 +305,29 @@ fun ProFeaturesSection(
             icon = Icons.Default.ViewList,
             color = MaterialTheme.colorScheme.primary,
             onClick = { onClickFeature(FeatureId.ROLE_PLAY) },
+            modifier = Modifier.weight(1f)
+        )
+
+        // カミングスーン（リリース） / タリ道場（デバッグ）
+        val dojoTitle = if (isTariComingSoon) "カミングスーン" else "タリ道場"
+        val dojoSubtitle = if (isTariComingSoon) "特別トレーニング準備中" else "実践ボイス会話"
+        val dojoBadge = if (isTariComingSoon) "修行中" else null
+        val dojoIllustration = if (isTariComingSoon) R.drawable.taridoujo else null
+
+        ProFeatureItem(
+            title = dojoTitle,
+            subtitle = dojoSubtitle,
+            icon = Icons.Default.Psychology,
+            color = Color(0xFFCD7F32),
+            badgeText = dojoBadge,
+            illustration = dojoIllustration,
+            onClick = {
+                if (isTariComingSoon) {
+                    onComingSoon()
+                } else {
+                    onClickFeature(FeatureId.AI_CHAT)
+                }
+            },
             modifier = Modifier.weight(1f)
         )
     }
@@ -318,7 +340,9 @@ fun ProFeatureItem(
     icon: ImageVector,
     color: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    badgeText: String? = null,
+    illustration: Int? = null
 ) {
     Card(
         modifier = modifier
@@ -331,13 +355,29 @@ fun ProFeatureItem(
             modifier = Modifier.padding(10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+                if (badgeText != null) {
+                    Text(
+                        text = badgeText,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
             }
             Column {
                 Text(
@@ -354,6 +394,17 @@ fun ProFeatureItem(
                     lineHeight = 10.sp,
                     maxLines = 2
                 )
+                if (illustration != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Image(
+                        painter = painterResource(id = illustration),
+                        contentDescription = "タリ先生",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                    )
+                }
             }
         }
     }

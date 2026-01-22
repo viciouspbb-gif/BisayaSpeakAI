@@ -56,7 +56,7 @@ fun GenderSelectionScreen(
             voiceService.stop()
             voiceService.speak(
                 text = tariSpeech,
-                cue = GeminiVoiceCue.HIGH_PITCH
+                cue = GeminiVoiceCue.TALK_HIGH
             )
         }
     }
