@@ -36,9 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bisayaspeak.ai.util.FeedbackManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,9 +49,11 @@ fun FeedbackScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     var feedbackText by remember { mutableStateOf("") }
-    var isSubmitting by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val appContext = context.applicationContext ?: context
+    val feedbackManager = remember(appContext) { FeedbackManager(appContext) }
 
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
@@ -127,24 +131,15 @@ fun FeedbackScreen(
                 Button(
                     onClick = {
                         if (feedbackText.isNotBlank()) {
-                            isSubmitting = true
+                            feedbackManager.openFeedbackForm()
+                            feedbackText = ""
                             scope.launch {
-                                try {
-                                    // TODO: Firebase/API送信処理
-                                    // 仮の成功処理
-                                    kotlinx.coroutines.delay(1000)
-                                    snackbarHostState.showSnackbar("送信が完了しました")
-                                    feedbackText = ""
-                                } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar("送信に失敗しました")
-                                } finally {
-                                    isSubmitting = false
-                                }
+                                snackbarHostState.showSnackbar("ブラウザでフォームを開きました")
                             }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = feedbackText.isNotBlank() && !isSubmitting,
+                    enabled = feedbackText.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFD2691E),
                         contentColor = Color.White
@@ -157,7 +152,7 @@ fun FeedbackScreen(
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text(
-                        text = if (isSubmitting) "送信中..." else "送信",
+                        text = "フォームを開く",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )

@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -52,6 +53,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -94,6 +96,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.ui.roleplay.RoleplayThemeFlavor
 import com.bisayaspeak.ai.ui.roleplay.primarySpeechText
@@ -127,6 +130,7 @@ fun RoleplayChatScreen(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val voiceService = remember { GeminiVoiceService(context) }
+
     var initialLineSpoken by remember(scenarioId) { mutableStateOf(false) }
     val completionSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -159,7 +163,6 @@ fun RoleplayChatScreen(
         }
         pendingPermissionRequest = false
     }
-
     val ttsLogTag = remember { "RoleplayTTS" }
 
     LaunchedEffect(Unit) {
@@ -177,7 +180,7 @@ fun RoleplayChatScreen(
                 Log.w(ttsLogTag, "Skipping empty Tari line (id=$messageId)")
                 return@line
             }
-            val requestedCue = cue ?: GeminiVoiceCue.TALK_HIGH
+            val requestedCue = cue ?: GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
             fun speakWithCue(currentCue: GeminiVoiceCue, canRetry: Boolean) {
                 voiceService.speak(
                     text = speechText,
@@ -209,13 +212,21 @@ fun RoleplayChatScreen(
         }
     }
 
-    val speakUserPreview = remember(voiceService) {
+    val userPreviewCue = remember(uiState.userGender) {
+        when (uiState.userGender) {
+            UserGender.MALE -> GeminiVoiceCue.TALK_LOW
+            UserGender.FEMALE -> GeminiVoiceCue.TALK_HIGH
+            UserGender.OTHER -> GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
+        }
+    }
+
+    val speakUserPreview = remember(voiceService, userPreviewCue) {
         { text: String ->
             if (text.isNotBlank()) {
-                Log.d(ttsLogTag, "User preview request length=${text.length}")
+                Log.d(ttsLogTag, "User preview request length=${text.length} cue=${userPreviewCue.name}")
                 voiceService.speak(
                     text = text,
-                    cue = GeminiVoiceCue.DEFAULT,
+                    cue = userPreviewCue,
                     onStart = { Log.d(ttsLogTag, "User preview started length=${text.length}") },
                     onComplete = { Log.d(ttsLogTag, "User preview completed length=${text.length}") },
                     onError = { Log.w(ttsLogTag, "User preview error length=${text.length}", it) }
@@ -254,18 +265,23 @@ fun RoleplayChatScreen(
 
     LaunchedEffect(introLine, initialLineSpoken) {
         if (!initialLineSpoken && !introLine.isNullOrBlank()) {
-            speakAiLine(introLine, GeminiVoiceCue.TALK_HIGH, null)
+            speakAiLine(introLine, GeminiVoiceCue.ROLEPLAY_NOVA_CUTE, null)
             initialLineSpoken = true
         }
     }
 
     val pendingExitHistory = uiState.pendingExitHistory
-
-    LaunchedEffect(pendingExitHistory) {
+    val exitEnabled = pendingExitHistory != null
+    val handleExitClick: () -> Unit = {
         pendingExitHistory?.let {
             onSaveAndExit(it)
             viewModel.consumePendingExitHistory()
         }
+    }
+    val handleImmediateExit: () -> Unit = {
+        val snapshot = viewModel.prepareImmediateExit()
+        onSaveAndExit(snapshot)
+        viewModel.consumePendingExitHistory()
     }
 
     val screenScrollState = rememberScrollState()
@@ -298,7 +314,7 @@ fun RoleplayChatScreen(
         val onPlayFarewell = {
             val text = uiState.activeThemeFarewellBisaya
             if (text.isNotBlank()) {
-                speakAiLine(text, GeminiVoiceCue.TALK_HIGH, null)
+                speakAiLine(text, GeminiVoiceCue.ROLEPLAY_NOVA_CUTE, null)
             }
         }
         val onCopyFarewell = {
@@ -329,15 +345,33 @@ fun RoleplayChatScreen(
         )
     }
 
+    val themeTitle = uiState.activeThemeTitle.ifBlank { "Tari" }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {},
+                title = {
+                    Text(
+                        text = themeTitle,
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "戻る"
+                        )
+                    }
+                },
+                actions = {
+                    TextButton(onClick = handleImmediateExit) {
+                        Text(
+                            text = "終了してTOP",
+                            color = Color.White,
+                            fontSize = 12.sp
                         )
                     }
                 },
@@ -373,8 +407,8 @@ fun RoleplayChatScreen(
             val stageScale = if (condensedLayout) 0.85f else 1f
             val columnModifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 12.dp)
-                .padding(bottom = 96.dp)
+                .padding(horizontal = 20.dp, vertical = 4.dp)
+                .padding(bottom = 24.dp)
                 .verticalScroll(screenScrollState)
             val sectionSpacing = if (condensedLayout) 10.dp else 16.dp
             val optionSpacing = if (condensedLayout) 8.dp else 12.dp
@@ -382,6 +416,8 @@ fun RoleplayChatScreen(
             val cardVerticalPadding = if (condensedLayout) 12.dp else 18.dp
             val voicePanelScale = if (condensedLayout) 0.9f else 1f
             val voicePanelVerticalPadding = if (condensedLayout) 8.dp else 16.dp
+            val voicePanelBottomSpace = if (condensedLayout) 32.dp else 48.dp
+            val bottomContentSpacer = voicePanelBottomSpace + if (condensedLayout) 96.dp else 140.dp
 
             Column(
                 modifier = columnModifier,
@@ -395,7 +431,7 @@ fun RoleplayChatScreen(
                         latestAiLine?.let { message ->
                             speakAiLine(message.text, message.voiceCue, message.id)
                         } ?: introLine?.let { intro ->
-                            speakAiLine(intro, GeminiVoiceCue.TALK_HIGH, null)
+                            speakAiLine(intro, GeminiVoiceCue.ROLEPLAY_NOVA_CUTE, null)
                         }
                     },
                     modifier = Modifier
@@ -405,15 +441,7 @@ fun RoleplayChatScreen(
                     textScale = textScaleFactor
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ThemeBriefCard(
-                    title = uiState.activeThemeTitle,
-                    persona = uiState.activeThemePersona,
-                    goal = uiState.activeThemeGoal,
-                    flavor = uiState.activeThemeFlavor,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Spacer(modifier = Modifier.height(sectionSpacing / 2))
 
                 AnimatedVisibility(visible = uiState.showOptionTutorial) {
                     Surface(
@@ -457,40 +485,56 @@ fun RoleplayChatScreen(
 
                 Spacer(modifier = Modifier.height(sectionSpacing))
 
-                ResponsePanel(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    isLoading = uiState.isLoading,
-                    options = uiState.options,
-                    peekedHintIds = uiState.peekedHintOptionIds,
-                    onSelect = { viewModel.selectOption(it) },
-                    onHintPeek = { viewModel.markHintPeeked(it) },
-                    onPreview = { text -> speakUserPreview(text) },
-                    optionSpacing = optionSpacing,
-                    scale = textScaleFactor,
-                    cardHorizontalPadding = cardHorizontalPadding,
-                    cardVerticalPadding = cardVerticalPadding,
-                    showHint = uiState.showOptionTutorial
-                )
+                if (!uiState.isEndingSession) {
+                    ResponsePanel(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        isLoading = uiState.isLoading,
+                        options = uiState.options,
+                        peekedHintIds = uiState.peekedHintOptionIds,
+                        onSelect = { viewModel.selectOption(it) },
+                        onHintPeek = { viewModel.markHintPeeked(it) },
+                        onPreview = { text -> speakUserPreview(text) },
+                        optionSpacing = optionSpacing,
+                        scale = textScaleFactor,
+                        cardHorizontalPadding = cardHorizontalPadding,
+                        cardVerticalPadding = cardVerticalPadding,
+                        showHint = uiState.showOptionTutorial
+                    )
 
-                Spacer(modifier = Modifier.height(sectionSpacing))
+                    Spacer(modifier = Modifier.height(sectionSpacing))
+                } else {
+                    ExitReminderCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = exitEnabled,
+                        onNavigateTop = handleExitClick
+                    )
+
+                    Spacer(modifier = Modifier.height(sectionSpacing))
+                }
+
+                Spacer(modifier = Modifier.height(bottomContentSpacer))
             }
 
-            VoiceInputPanel(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 24.dp, vertical = voicePanelVerticalPadding),
-                isRecording = uiState.isVoiceRecording,
-                isTranscribing = uiState.isVoiceTranscribing,
-                permissionGranted = audioPermissionGranted,
-                lastTranscribedText = uiState.lastTranscribedText,
-                errorMessage = uiState.voiceErrorMessage,
-                onMicClick = micButtonAction,
-                onCancelRecording = { viewModel.cancelVoiceRecording() },
-                scale = voicePanelScale,
-                onPanelClick = { micButtonAction() }
-            )
+            if (!uiState.isEndingSession) {
+                VoiceInputPanel(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 20.dp, vertical = voicePanelVerticalPadding)
+                        .padding(bottom = voicePanelBottomSpace)
+                        .navigationBarsPadding(),
+                    isRecording = uiState.isVoiceRecording,
+                    isTranscribing = uiState.isVoiceTranscribing,
+                    permissionGranted = audioPermissionGranted,
+                    lastTranscribedText = uiState.lastTranscribedText,
+                    errorMessage = uiState.voiceErrorMessage,
+                    onMicClick = micButtonAction,
+                    onCancelRecording = { viewModel.cancelVoiceRecording() },
+                    scale = voicePanelScale,
+                    onPanelClick = { micButtonAction() }
+                )
+            }
         }
     }
 
@@ -516,6 +560,41 @@ fun RoleplayChatScreen(
     }
 }
 
+@Composable
+private fun ExitReminderCard(
+    modifier: Modifier = Modifier,
+    enabled: Boolean,
+    onNavigateTop: () -> Unit
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(32.dp),
+        color = Color(0xFF111B33),
+        tonalElevation = 4.dp,
+        shadowElevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "今日のレッスンは終了しました",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+            Button(
+                onClick = onNavigateTop,
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("TOPへ戻る")
+            }
+        }
+    }
+}
+
 private tailrec fun Context.findActivity(): Activity {
     return when (this) {
         is Activity -> this
@@ -530,70 +609,6 @@ private fun openAppSettings(context: Context) {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     context.startActivity(intent)
-}
-
-@Composable
-private fun ThemeBriefCard(
-    title: String,
-    persona: String,
-    goal: String,
-    flavor: RoleplayThemeFlavor,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        tonalElevation = 6.dp,
-        color = Color(0x3314B8A6),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF38BDF8))
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(if (flavor == RoleplayThemeFlavor.CASUAL) Color(0xFF22C55E) else Color(0xFF3B82F6))
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = flavorLabel(flavor),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
-                Text(
-                    text = title.ifBlank { "テーマ準備中" },
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = "役柄: ${persona.ifBlank { "タリ" }}",
-                color = Color(0xFFB6C5E0),
-                fontSize = 13.sp
-            )
-            Text(
-                text = "目的: ${goal.ifBlank { "会話を楽しむ" }}",
-                color = Color(0xFFE0E7FF),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-    }
-}
-
-private fun flavorLabel(flavor: RoleplayThemeFlavor): String = when (flavor) {
-    RoleplayThemeFlavor.CASUAL -> "CASUAL"
-    RoleplayThemeFlavor.SCENARIO -> "SCENARIO"
 }
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
@@ -622,7 +637,7 @@ private fun StageSection(
     val isSpeaking = latestAiLine?.id != null && speakingMessageId == latestAiLine.id
     val interactionSource = remember(bubbleKey) { MutableInteractionSource() }
 
-    LaunchedEffect(interactionSource, bubbleKey) {
+    LaunchedEffect(bubbleKey, interactionSource) {
         interactionSource.interactions.collect { interaction ->
             if (interaction is PressInteraction.Release || interaction is PressInteraction.Cancel) {
                 showTranslation = false
@@ -674,35 +689,72 @@ private fun StageSection(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AnimatedContent(
-                    targetState = displayText,
+                    targetState = showTranslation && hasTranslation,
                     transitionSpec = { fadeIn() with fadeOut() },
                     label = "ai-line"
-                ) { animatedLine ->
+                ) { isTranslation ->
+                    val textToShow = if (isTranslation) translationToShow else displayText
+                    val fontSize = if (isTranslation) 16.sp else 20.sp
+                    val color = if (isTranslation) Color(0xCC5B3600) else Color(0xFF5B3600)
                     Text(
-                        text = animatedLine,
-                        color = Color(0xFF5B3600),
-                        fontSize = 20.sp * scale * textScale,
+                        text = textToShow,
+                        color = color,
+                        fontSize = fontSize * scale * textScale,
                         textAlign = TextAlign.Center,
-                        fontWeight = if (isSpeaking) FontWeight.Black else FontWeight.SemiBold
-                    )
-                }
-
-                AnimatedVisibility(
-                    visible = showTranslation && hasTranslation,
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
-                    Text(
-                        text = translationToShow,
-                        color = Color(0xCC5B3600),
-                        fontSize = 14.sp * scale * textScale,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 10.dp * scale)
+                        fontWeight = if (!isTranslation && isSpeaking) FontWeight.Black else FontWeight.SemiBold
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun ThemeMetaRow(
+    flavor: RoleplayThemeFlavor,
+    persona: String,
+    goal: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        MetaChip(
+            text = flavorLabel(flavor),
+            color = if (flavor == RoleplayThemeFlavor.CASUAL) Color(0xFF22C55E) else Color(0xFF3B82F6)
+        )
+        if (persona.isNotBlank()) {
+            MetaChip(text = persona, color = Color(0xFF38BDF8))
+        }
+        if (goal.isNotBlank()) {
+            MetaChip(text = goal, color = Color(0xFFFACC15))
+        }
+    }
+}
+
+@Composable
+private fun MetaChip(text: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = color.copy(alpha = 0.18f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.4f))
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+        )
+    }
+}
+
+private fun flavorLabel(flavor: RoleplayThemeFlavor): String = when (flavor) {
+    RoleplayThemeFlavor.CASUAL -> "CASUAL"
+    RoleplayThemeFlavor.SCENARIO -> "SCENARIO"
 }
 
 @Composable

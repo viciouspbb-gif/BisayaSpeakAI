@@ -460,7 +460,7 @@ private fun TalkStatusCard(status: TalkStatus, isManualRecording: Boolean) {
             statusColor = Color(0xFFFCD34D)
         }
         TalkStatus.Speaking -> {
-            label = "タリが話しています"
+            label = "翻訳テキストを再生中"
             statusColor = Color(0xFF6366F1)
         }
     }

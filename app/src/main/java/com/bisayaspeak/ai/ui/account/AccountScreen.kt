@@ -42,9 +42,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +58,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -150,8 +151,7 @@ fun AccountScreen(
     onGenderChange: (UserGender) -> Unit,
     onSaveProfile: () -> Unit,
     onRestorePurchase: () -> Unit,
-    onOpenTerms: () -> Unit,
-    onOpenPrivacy: () -> Unit,
+    onOpenLegalSupport: () -> Unit,
     onDeleteAccount: () -> Unit,
     showPremiumTestToggle: Boolean = false,
     premiumTestEnabled: Boolean = uiState.isPremium,
@@ -351,10 +351,7 @@ fun AccountScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LegalSupportCard(
-                onOpenTerms = onOpenTerms,
-                onOpenPrivacy = onOpenPrivacy
-            )
+            LegalSupportCard(onOpenLegalSupport = onOpenLegalSupport)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -488,36 +485,7 @@ private fun StatusCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // プレミアム案内または特典表示
-            if (uiState.isPremium) {
-                // Premium会員の場合：特典を表示
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFFFFF9C4))
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = "✨ プレミアム特典",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFF57F17)
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "・厳密な発音判定で上達をサポート\n" +
-                                "・高品質なビサヤ語音声ロールプレイ\n" +
-                                "・AIフリートークの高度会話モード\n" +
-                                "・広告非表示で快適学習",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0xFF5D4037)
-                        )
-                    )
-                }
-            } else {
-                // 無料プランの場合：プレミアム案内
+            if (!uiState.isPremium) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -531,15 +499,9 @@ private fun StatusCard(
                             fontWeight = FontWeight.SemiBold
                         )
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "・厳密な発音判定で上達をサポート\n" +
-                                "・高品質なビサヤ語音声ロールプレイ\n" +
-                                "・AIフリートークの高度会話モード\n" +
-                                "・広告非表示で快適学習",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    PremiumBenefitList(
+                        textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                     )
                 }
             }
@@ -575,7 +537,7 @@ private fun ProfileEditorCard(
                         style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = if (isEditing) "タリに呼んでほしい名前と性別を設定" else "タップしてプロフィールを編集できます",
+                        text = if (isEditing) "タリに呼んでほしい名前を設定" else "タップしてニックネームと性別を編集",
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f))
                     )
                 }
@@ -605,9 +567,19 @@ private fun ProfileEditorCard(
                     value = profileState.nickname,
                     onValueChange = onNicknameChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("ニックネーム") },
-                    placeholder = { Text("例：タリ先輩") },
-                    singleLine = true
+                    label = { Text("ニックネーム", color = Color.White.copy(alpha = 0.8f)) },
+                    placeholder = { Text("例：タリ先輩", color = Color.White.copy(alpha = 0.4f)) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF0B1220),
+                        unfocusedContainerColor = Color(0xFF0B1220),
+                        cursorColor = Color.White,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color(0xFF60A5FA),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.4f)
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -661,23 +633,69 @@ private fun UpgradeCtaSection(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2A44))
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = if (isPremium) "プレミアム会員としてサポートありがとうございます" else "タリ道場をフル開放するならプロ版へ",
+                text = if (isPremium) "いつもタリを応援してくれてありがとうございます" else "タリ道場をフル開放するならプロ版へ",
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = onUpgrade,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isPremium
-            ) {
-                Text(if (isPremium) "プランを確認" else "プロ版へアップグレード")
+            if (isPremium) {
+                Text(
+                    text = "現在のプラン：プレミアム",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                PremiumBenefitList()
+            } else {
+                Button(
+                    onClick = onUpgrade,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("プロ版へアップグレード")
+                }
+                TextButton(
+                    onClick = onRestorePurchase,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text("購入済みの方はこちら（復元）", textDecoration = TextDecoration.Underline)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                PremiumBenefitList(
+                    textColor = Color.White.copy(alpha = 0.85f)
+                )
             }
-            TextButton(onClick = onRestorePurchase, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("購入済みの方はこちら（復元）", textDecoration = TextDecoration.Underline)
+        }
+    }
+}
+
+@Composable
+private fun PremiumBenefitList(
+    modifier: Modifier = Modifier,
+    textColor: Color = Color.White
+) {
+    val benefits = listOf(
+        "広告の非表示",
+        "AI翻訳機の無制限利用",
+        "タリとの終わりのないマルチ散歩道モード"
+    )
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        benefits.forEach { benefit ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "•",
+                    color = textColor,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.width(12.dp)
+                )
+                Text(
+                    text = benefit,
+                    color = textColor,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
@@ -685,28 +703,47 @@ private fun UpgradeCtaSection(
 
 @Composable
 private fun LegalSupportCard(
-    onOpenTerms: () -> Unit,
-    onOpenPrivacy: () -> Unit
+    onOpenLegalSupport: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF101828))
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Text("リーガル・サポート", color = Color.White, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TextButton(onClick = onOpenTerms) {
-                    Icon(imageVector = Icons.Filled.ChevronRight, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("利用規約")
-                }
-                TextButton(onClick = onOpenPrivacy) {
-                    Icon(imageVector = Icons.Filled.ChevronRight, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("プライバシーポリシー")
-                }
-            }
+            Text(
+                text = "利用規約・プライバシーポリシー・サポートガイドは外部ブラウザで確認できます。",
+                color = Color.White.copy(alpha = 0.75f),
+                style = MaterialTheme.typography.bodySmall
+            )
+            LegalSupportButton(
+                label = "リーガル＆サポートを開く",
+                onClick = onOpenLegalSupport
+            )
+        }
+    }
+}
+
+@Composable
+private fun LegalSupportButton(label: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        color = Color.White.copy(alpha = 0.05f)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(label, color = Color.White, modifier = Modifier.weight(1f))
+            Icon(imageVector = Icons.Filled.ChevronRight, contentDescription = null, tint = Color.White)
         }
     }
 }

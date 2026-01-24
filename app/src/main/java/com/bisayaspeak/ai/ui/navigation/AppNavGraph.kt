@@ -84,7 +84,6 @@ enum class AppRoute(val route: String) {
     PracticeWord("practice/word/{id}"),
     Listening("listening/{level}"),
     RolePlayChat("roleplay_chat/{scenarioId}"),
-    RolePlayScenario("role_play_scenario/{scenarioId}"),
     Account("account"),
     SignIn("signin"),
     SignUp("signup"),
@@ -222,8 +221,7 @@ fun AppNavGraph(
                     Toast.makeText(context, "ブラウザを開けませんでした", Toast.LENGTH_SHORT).show()
                 }
             }
-            val termsUrl = "https://www.bisayaspeak.ai/terms"
-            val privacyUrl = "https://www.bisayaspeak.ai/privacy"
+            val legalSupportUrl = "https://gist.github.com/viciouspbb-gif/e63ebfe03645c3281a7ae847f280f9a7"
 
             if (isLiteBuild) {
                 BannerScreenContainer(userPlan = effectivePlan) {
@@ -235,14 +233,13 @@ fun AppNavGraph(
                         onCreateAccount = {},
                         onLogout = {},
                         onOpenPremiumInfo = { /* Premium info not implemented */ },
-                        onOpenFeedback = { /* Lite版では未対応 */ },
+                        onOpenFeedback = { navController.navigate(AppRoute.Feedback.route) },
                         profileState = profileState,
                         onNicknameChange = accountViewModel::onNicknameChange,
                         onGenderChange = accountViewModel::onGenderChange,
                         onSaveProfile = accountViewModel::saveProfile,
                         onRestorePurchase = onRestorePurchase,
-                        onOpenTerms = { openUrl(termsUrl) },
-                        onOpenPrivacy = { openUrl(privacyUrl) },
+                        onOpenLegalSupport = { openUrl(legalSupportUrl) },
                         onDeleteAccount = {},
                         showPremiumTestToggle = false,
                         premiumTestEnabled = isPremiumPlan,
@@ -271,8 +268,7 @@ fun AppNavGraph(
                         onGenderChange = accountViewModel::onGenderChange,
                         onSaveProfile = accountViewModel::saveProfile,
                         onRestorePurchase = onRestorePurchase,
-                        onOpenTerms = { openUrl(termsUrl) },
-                        onOpenPrivacy = { openUrl(privacyUrl) },
+                        onOpenLegalSupport = { openUrl(legalSupportUrl) },
                         onDeleteAccount = {
                             scope.launch {
                                 val result = authManager?.deleteAccount()
@@ -324,13 +320,13 @@ fun AppNavGraph(
                     }
                 )
             }
+        }
 
-            // Feedback
-            composable(AppRoute.Feedback.route) {
-                FeedbackScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+        // Feedback（Liteビルドでも利用可能にするためガード外へ移動）
+        composable(AppRoute.Feedback.route) {
+            FeedbackScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         // Upgrade
@@ -360,9 +356,15 @@ fun AppNavGraph(
         }
 
         composable(AppRoute.Dictionary.route) {
-            DictionaryScreen(
-                onBack = { navController.popBackStack() }
-            )
+            if (!isPremiumPlan) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(AppRoute.Upgrade.route)
+                }
+            } else {
+                DictionaryScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(AppRoute.MissionScenarioSelect.route) {
@@ -510,6 +512,7 @@ fun AppNavGraph(
                     PracticeQuizScreen(
                         category = category,
                         onNavigateBack = { navController.popBackStack() },
+                        onNavigateToUpgrade = { navController.navigate(AppRoute.Upgrade.route) },
                         isPremium = isPremiumPlan
                     )
                 }
@@ -593,30 +596,7 @@ fun AppNavGraph(
             }
         }
 
-        // 譌｢蟄倥・繝｢繝・け繧ｷ繝翫Μ繧ｪ逕ｨ・亥ｿｵ縺ｮ縺溘ａ谿九＠縺ｦ縺・∪縺呻ｼ・
-        composable(
-            route = "role_play_scenario/{scenarioId}",
-            arguments = listOf(navArgument("scenarioId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val scenarioId = backStackEntry.arguments?.getString("scenarioId") ?: ""
-            val repository = remember { com.bisayaspeak.ai.data.repository.mock.MockRolePlayRepository() }
-            val scenario = remember(scenarioId) { repository.getScenarios().find { it.id == scenarioId } }
 
-            if (scenario != null) {
-                BannerScreenContainer(userPlan = userPlan) {
-                    MockRolePlayScreen(
-                        scenario = scenario,
-                        onNavigateBack = { navController.popBackStack() },
-                        isPremium = isPremiumPlan
-                    )
-                }
-            } else {
-                // 繧ｷ繝翫Μ繧ｪ縺瑚ｦ九▽縺九ｉ縺ｪ縺・�ｴ蜷医・謌ｻ繧・
-                LaunchedEffect(Unit) {
-                    navController.popBackStack()
-                }
-            }
-        }
     }
 }
 

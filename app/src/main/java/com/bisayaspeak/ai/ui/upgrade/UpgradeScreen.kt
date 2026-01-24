@@ -1,15 +1,37 @@
 package com.bisayaspeak.ai.ui.upgrade
 
+import android.app.Activity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,8 +48,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.billingclient.api.ProductDetails
 import com.bisayaspeak.ai.R
-import android.app.Activity
+import com.bisayaspeak.ai.billing.BillingManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,9 +60,16 @@ fun UpgradeScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
-    val uiState by viewModel.uiState.collectAsState()
     val showPurchaseSuccess by viewModel.showPurchaseSuccess.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val products by viewModel.products.collectAsState()
+
+    val monthlyPlan = remember(products) {
+        products.find { it.productId == BillingManager.PREMIUM_AI_MONTHLY_SKU }
+    }
+    val yearlyPlan = remember(products) {
+        products.find { it.productId == BillingManager.PREMIUM_AI_YEARLY_SKU }
+    }
     
     // 購入成功メッセージ表示
     LaunchedEffect(showPurchaseSuccess) {
@@ -82,78 +112,173 @@ fun UpgradeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            PaywallHeader()
+
+            if (monthlyPlan != null && activity != null) {
+                HeroCtaButton(onClick = { viewModel.purchasePremiumAIMonthly(activity) })
+            }
+
+            SubscriptionPlanSection(
+                monthlyPlan = monthlyPlan,
+                yearlyPlan = yearlyPlan,
+                activity = activity,
+                onMonthly = { viewModel.purchasePremiumAIMonthly(it) },
+                onYearly = { viewModel.purchasePremiumAIYearly(it) }
+            )
+
+            RestoreNote(
+                onRestore = { viewModel.restorePurchases() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun PaywallHeader() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Premium AI",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "AIレッスンを無制限で楽しもう",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "初回7日間は無料トライアル付き。いつでもキャンセルできます。",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun HeroCtaButton(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0EA5E9)),
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Text(
+            text = "まずは7日間無料で試す",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+    }
+}
+
+@Composable
+private fun SubscriptionPlanSection(
+    monthlyPlan: ProductDetails?,
+    yearlyPlan: ProductDetails?,
+    activity: Activity?,
+    onMonthly: (Activity) -> Unit,
+    onYearly: (Activity) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = "2つのプレミアムプラン",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        if (monthlyPlan == null && yearlyPlan == null) {
+            LoadingCard()
+            return
+        }
+
+        monthlyPlan?.let { plan ->
+            SubscriptionPlanCard(
+                title = "月間プラン",
+                priceLabel = plan.priceLabel(BillingManager.MONTHLY_TRIAL_TAG),
+                trialLabel = plan.trialLabel(BillingManager.MONTHLY_TRIAL_TAG) ?: "最初の7日間は無料",
+                badge = "定番",
+                highlight = true,
+                onClick = { activity?.let(onMonthly) }
+            )
+        }
+
+        yearlyPlan?.let { plan ->
+            SubscriptionPlanCard(
+                title = "年間プラン",
+                priceLabel = plan.priceLabel(BillingManager.YEARLY_TRIAL_TAG),
+                trialLabel = plan.trialLabel(BillingManager.YEARLY_TRIAL_TAG) ?: "最初の7日間は無料",
+                badge = "2ヶ月分お得",
+                highlight = false,
+                onClick = { activity?.let(onYearly) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SubscriptionPlanCard(
+    title: String,
+    priceLabel: String?,
+    trialLabel: String,
+    badge: String,
+    highlight: Boolean,
+    onClick: () -> Unit
+) {
+    val bgColors = if (highlight) listOf(Color(0xFF1E40AF), Color(0xFF3B82F6)) else listOf(Color(0xFF78350F), Color(0xFFDC2626))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .background(Brush.linearGradient(bgColors))
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
-            Text(
-                text = stringResource(R.string.upgrade_subtitle),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Pro Plan Card
-            PlanCard(
-                title = stringResource(R.string.plan_pro_title),
-                description = stringResource(R.string.plan_pro_description),
-                price = stringResource(R.string.plan_pro_price),
-                features = listOf(
-                    stringResource(R.string.feature_pro_1),
-                    stringResource(R.string.feature_pro_2),
-                    stringResource(R.string.feature_pro_3),
-                    stringResource(R.string.feature_pro_4)
-                ),
-                isPurchased = uiState.isProUnlocked,
-                onPurchase = {
-                    activity?.let { viewModel.purchaseProUnlock(it) }
-                },
-                gradientColors = listOf(
-                    Color(0xFF6366F1),
-                    Color(0xFF8B5CF6)
-                )
-            )
-
-            // Premium AI Plan Card
-            PlanCard(
-                title = stringResource(R.string.plan_premium_ai_title),
-                description = stringResource(R.string.plan_premium_ai_description),
-                price = stringResource(R.string.plan_premium_ai_price),
-                features = listOf(
-                    stringResource(R.string.feature_premium_ai_1),
-                    stringResource(R.string.feature_premium_ai_2),
-                    stringResource(R.string.feature_premium_ai_3),
-                    stringResource(R.string.feature_premium_ai_4),
-                    stringResource(R.string.feature_premium_ai_5)
-                ),
-                isPurchased = uiState.hasPremiumAI,
-                onPurchase = {
-                    activity?.let { viewModel.purchasePremiumAIMonthly(it) }
-                },
-                gradientColors = listOf(
-                    Color(0xFFF59E0B),
-                    Color(0xFFEF4444)
-                ),
-                isRecommended = true,
-                tagline = stringResource(R.string.plan_premium_trial_tagline)
-            )
-
-            // Footer Note
-            Card(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(text = title, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    priceLabel?.let {
+                        Text(text = it, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                    }
+                }
+                Text(
+                    text = badge,
+                    color = Color(0xFF0F172A),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .background(Color.White, RoundedCornerShape(50))
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
                 )
+            }
+
+            Text(text = trialLabel, color = Color.White.copy(alpha = 0.9f))
+
+            Button(
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
                 Text(
-                    text = stringResource(R.string.upgrade_footer_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
+                    text = "7日間無料で試す",
+                    color = if (highlight) Color(0xFF1E40AF) else Color(0xFFB45309),
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -161,157 +286,73 @@ fun UpgradeScreen(
 }
 
 @Composable
-private fun PlanCard(
-    title: String,
-    description: String,
-    price: String,
-    features: List<String>,
-    isPurchased: Boolean,
-    onPurchase: () -> Unit,
-    gradientColors: List<Color>,
-    isRecommended: Boolean = false,
-    tagline: String? = null
-) {
+private fun LoadingCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2937))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(gradientColors)
-                )
-                .padding(20.dp)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Recommended Badge
-            if (isRecommended) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = stringResource(R.string.recommended),
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+            CircularProgressIndicator(color = Color.White)
+            Text("プラン情報を読み込み中…", color = Color.White)
+        }
+    }
+}
 
-            // Title
+@Composable
+private fun RestoreNote(onRestore: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
-                text = title,
-                fontSize = 24.sp,
+                text = "すでに登録済みですか？",
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onSurface
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Description
             Text(
-                text = description,
-                fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.9f)
+                text = "過去に購入したサブスクは「購入を復元」からすぐに回復できます。",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Price
-            Text(
-                text = price,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-
-            tagline?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = it,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    letterSpacing = 0.5.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Features
-            features.forEach { feature ->
-                Row(
-                    verticalAlignment = Alignment.Top,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = feature,
-                        fontSize = 14.sp,
-                        color = Color.White,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Purchase Button
-            if (isPurchased) {
-                Button(
-                    onClick = { },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.3f),
-                        contentColor = Color.White
-                    ),
-                    enabled = false
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.plan_active),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            } else {
-                Button(
-                    onClick = onPurchase,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = gradientColors.first()
-                    )
-                ) {
-                    Text(
-                        text = stringResource(R.string.purchase_now),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+            TextButton(onClick = onRestore) {
+                Text("購入を復元")
             }
         }
+    }
+}
+
+private fun ProductDetails.priceLabel(offerTag: String): String? {
+    val offer = subscriptionOfferDetails?.firstOrNull { it.offerTags.contains(offerTag) }
+        ?: subscriptionOfferDetails?.firstOrNull()
+    val recurringPhase = offer?.pricingPhases?.pricingPhaseList?.lastOrNull { it.priceAmountMicros > 0 }
+    return recurringPhase?.formattedPrice
+}
+
+private fun ProductDetails.trialLabel(offerTag: String): String? {
+    val offer = subscriptionOfferDetails?.firstOrNull { it.offerTags.contains(offerTag) }
+        ?: subscriptionOfferDetails?.firstOrNull()
+    val trialPhase = offer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros == 0L }
+    return trialPhase?.let { phase ->
+        val duration = formatPeriod(phase.billingPeriod)
+        "最初の${duration}は無料"
+    }
+}
+
+private fun formatPeriod(period: String): String {
+    return when {
+        period.contains("P7D") -> "7日間"
+        period.contains("P1M") -> "1か月"
+        period.contains("P1Y") -> "1年間"
+        period.contains("P1W") -> "1週間"
+        else -> period
     }
 }

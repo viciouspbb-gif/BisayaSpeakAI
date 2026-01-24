@@ -1,10 +1,12 @@
 package com.bisayaspeak.ai.data.repository
 
+import android.os.SystemClock
 import android.util.Log
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.remote.ChatCompletionRequest
 import com.bisayaspeak.ai.data.remote.ChatCompletionResponse
 import com.bisayaspeak.ai.data.remote.OpenAiApi
+import java.net.SocketTimeoutException
 
 class OpenAiChatRepository(
     private val api: OpenAiApi = OpenAiApi.create(BuildConfig.OPENAI_API_KEY)
@@ -14,6 +16,7 @@ class OpenAiChatRepository(
         private const val MODEL = "gpt-4o-mini"
         private const val TEMPERATURE = 0.7
         private const val TAG = "OpenAiChatRepository"
+        private const val MAX_RETRY_ATTEMPTS = 3
     }
 
     suspend fun generateListeningReply(
@@ -76,18 +79,43 @@ class OpenAiChatRepository(
             temperature = temperature,
             responseFormat = responseFormat
         )
-        return try {
-            val response = api.createChatCompletion(request)
-            extractContent(response)
-        } catch (e: Exception) {
-            Log.e(TAG, "OpenAI chat completion failed", e)
-            throw e
+        var lastTimeout: SocketTimeoutException? = null
+        repeat(MAX_RETRY_ATTEMPTS) { attemptIndex ->
+            val attemptNumber = attemptIndex + 1
+            val start = SystemClock.elapsedRealtime()
+            try {
+                val response = api.createChatCompletion(request)
+                return extractContent(response)
+            } catch (e: SocketTimeoutException) {
+                val elapsedMs = SystemClock.elapsedRealtime() - start
+                lastTimeout = e
+                Log.w(
+                    TAG,
+                    "OpenAI chat timeout (attempt $attemptNumber/$MAX_RETRY_ATTEMPTS, " +
+                        "elapsed=${elapsedMs}ms, userPromptLength=${userPrompt.length}, " +
+                        "preview=\"${userPrompt.safePreview()}\"",
+                    e
+                )
+                if (attemptNumber == MAX_RETRY_ATTEMPTS) {
+                    throw e
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "OpenAI chat completion failed", e)
+                throw e
+            }
         }
+
+        throw lastTimeout ?: IllegalStateException("OpenAI chat failed without exception")
     }
 
     private fun extractContent(response: ChatCompletionResponse): String {
         val content = response.choices.firstOrNull()?.message?.content
         require(!content.isNullOrBlank()) { "Empty response from OpenAI" }
         return content.trim()
+    }
+
+    private fun String.safePreview(maxLength: Int = 160): String {
+        val sanitized = replace('\n', ' ').replace('\r', ' ')
+        return if (sanitized.length <= maxLength) sanitized else sanitized.take(maxLength) + "…"
     }
 }

@@ -20,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -78,6 +79,8 @@ data class RoleplayUiState(
     val pendingExitHistory: List<MissionHistoryMessage>? = null,
     val speakingRequestId: String? = null,
     val userGender: UserGender = UserGender.OTHER,
+    val isEndingSession: Boolean = false,
+    val finalFarewellMessageId: String? = null,
     val activeThemeTitle: String = "",
     val activeThemeDescription: String = "",
     val activeThemePersona: String = "",
@@ -113,11 +116,12 @@ class RoleplayChatViewModel(
         private const val COMPLETION_THRESHOLD = 80
         private const val LOCKED_OPTION_HOLD_MS = 500L
         private const val POST_CLEAR_SILENCE_MS = 1000L
-        private const val CASUAL_MIN_TURN = 8
-        private const val CASUAL_MAX_TURN = 10
-        private const val SCENARIO_MIN_TURN = 10
-        private const val SCENARIO_MAX_TURN = 12
+        private const val CASUAL_MIN_TURN = 9
+        private const val CASUAL_MAX_TURN = 11
+        private const val SCENARIO_MIN_TURN = 11
+        private const val SCENARIO_MAX_TURN = 13
         private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*:\\s*", RegexOption.IGNORE_CASE)
+        private const val OPTION_TUTORIAL_VERSION = 2
         private val DEFAULT_FAREWELL_KEYWORDS = setOf(
             "babay",
             "sige, una",
@@ -128,8 +132,56 @@ class RoleplayChatViewModel(
             "una na ko",
             "kita ta napud",
             "kita ta puhon",
-            "ampingi"
+            "ampingi",
+            "bye",
+            "bai",
+            "babay na",
+            "adto sa ko",
+            "balik ko unya",
+            "ばいばい",
+            "バイバイ",
+            "またね",
+            "じゃあね",
+            "もう行くね",
+            "またあとで",
+            "おやすみ"
         ).map { it.lowercase() }.toSet()
+        private val SCENE_LOCATIONS = listOf(
+            "オスメニャ・サークル周辺",
+            "ITパーク屋台通り",
+            "カーボン市場の路地",
+            "マクタン島のビーチ",
+            "アヤラセンター屋上庭園",
+            "サントニーニョ教会付近",
+            "山の上の夜景スポット",
+            "港の跳ね橋のそば"
+        )
+        private val SCENE_TIMES = listOf(
+            "夜明け前の薄暗い時間",
+            "午前9時の爽やかな風が吹く時間",
+            "正午の蒸し暑い時間",
+            "スコール直後の涼しい夕方",
+            "ネオンが点き始める黄昏",
+            "真夜中に近い静かな時間"
+        )
+        private val SCENE_EVENTS = listOf(
+            "突然のスコール",
+            "タクシー運転手との料金交渉",
+            "屋台のくじ引き当選",
+            "友人との偶然の再会",
+            "忘れ物を取りに戻る騒動",
+            "即席ライブ演奏が始まる",
+            "停電で街灯が一瞬消える",
+            "お祭りの打ち上げ花火"
+        )
+        private val SCENE_SENSORY_DETAILS = listOf(
+            "潮の匂いと冷たい風",
+            "カフェから漂う甘い香り",
+            "ジプニーのクラクション",
+            "遠くで流れるアコースティックギター",
+            "焼きバナナの香り",
+            "濡れた石畳の反射光"
+        )
     }
 
     private val _uiState = MutableStateFlow(RoleplayUiState())
@@ -143,9 +195,11 @@ class RoleplayChatViewModel(
     private var isProVersion: Boolean = false
     private val branchFacts = mutableMapOf<String, String>()
     private var currentUserGender: UserGender = UserGender.OTHER
-    private var userCallSign: String = "パートナー（Friend）"
+    private var userNickname: String? = null
+    private var userCallSign: String = "パートナー（Tari）"
     private var calloutBisaya: String = "Friend"
     private var calloutEnglish: String = "Friend"
+    private var pendingAutoExitHistory: List<MissionHistoryMessage>? = null
     private var currentRecordingFile: File? = null
     private var activeTheme: RoleplayThemeDefinition = themeManager.drawTheme(1, RoleplayThemeFlavor.CASUAL)
     private var activeFlavor: RoleplayThemeFlavor = RoleplayThemeFlavor.CASUAL
@@ -157,17 +211,31 @@ class RoleplayChatViewModel(
     private var scenarioClosingGuidance: ScenarioClosingGuidance? = null
     private var inClosingPhase: Boolean = false
     private var farewellSignals: Set<String> = DEFAULT_FAREWELL_KEYWORDS
+    private var lastSceneSeed: String? = null
+    private var optionTutorialVisible: Boolean = true
 
     init {
-        observeUserGender()
+        observeUserProfile()
         observeUserProgress()
         observeOptionTutorialState()
     }
 
     private fun observeOptionTutorialState() {
         viewModelScope.launch {
-            userPreferencesRepository.roleplayTutorialSeen.collect { seen ->
-                _uiState.update { it.copy(showOptionTutorial = !seen) }
+            combine(
+                userPreferencesRepository.roleplayTutorialSeen,
+                userPreferencesRepository.roleplayTutorialVersion
+            ) { seen, version ->
+                seen to version
+            }.collect { (seen, version) ->
+                if (version < OPTION_TUTORIAL_VERSION) {
+                    userPreferencesRepository.setRoleplayTutorialVersion(OPTION_TUTORIAL_VERSION)
+                    userPreferencesRepository.setRoleplayTutorialSeen(false)
+                    optionTutorialVisible = true
+                } else {
+                    optionTutorialVisible = !seen
+                }
+                _uiState.update { it.copy(showOptionTutorial = optionTutorialVisible) }
             }
         }
     }
@@ -219,34 +287,33 @@ class RoleplayChatViewModel(
 
     fun dismissOptionTutorial() {
         if (!_uiState.value.showOptionTutorial) return
+        optionTutorialVisible = false
         _uiState.update { it.copy(showOptionTutorial = false) }
         viewModelScope.launch {
             userPreferencesRepository.setRoleplayTutorialSeen(true)
+            userPreferencesRepository.setRoleplayTutorialVersion(OPTION_TUTORIAL_VERSION)
         }
     }
 
-    private fun observeUserGender() {
+    private fun observeUserProfile() {
         viewModelScope.launch {
-            userPreferencesRepository.userGender.collect { gender ->
-                currentUserGender = gender
-                _uiState.update { it.copy(userGender = gender) }
-                when (gender) {
-                    UserGender.MALE -> {
-                        userCallSign = "彼氏（Gwapo/Handsome）"
-                        calloutBisaya = "Gwapo"
-                        calloutEnglish = "Handsome"
-                    }
-                    UserGender.FEMALE -> {
-                        userCallSign = "彼女（Gwapa/Beautiful）"
-                        calloutBisaya = "Gwapa"
-                        calloutEnglish = "Beautiful"
-                    }
-                    UserGender.OTHER -> {
-                        userCallSign = "パートナー（Friend）"
-                        calloutBisaya = "Bestie"
-                        calloutEnglish = "My friend"
-                    }
+            userPreferencesRepository.userProfile.collect { profile ->
+                currentUserGender = profile.gender
+                _uiState.update { it.copy(userGender = profile.gender) }
+
+                val normalizedNickname = profile.nickname.trim()
+                    .takeUnless { it.isBlank() || it.equals("ゲストユーザー", ignoreCase = true) }
+                userNickname = normalizedNickname
+
+                val (baseBisaya, baseEnglish, callSignLabel) = when (profile.gender) {
+                    UserGender.MALE -> Triple("Guapo", "Guapo", "タリ")
+                    UserGender.FEMALE -> Triple("Gwapa", "Gwapa", "タリ")
+                    UserGender.OTHER -> Triple("Bestie", "Bestie", "タリ")
                 }
+
+                userCallSign = callSignLabel
+                calloutBisaya = normalizedNickname ?: baseBisaya
+                calloutEnglish = normalizedNickname ?: baseEnglish
             }
         }
     }
@@ -255,6 +322,7 @@ class RoleplayChatViewModel(
         val definition = getRoleplayScenarioDefinition(scenarioId)
         history.clear()
         branchFacts.clear()
+        pendingAutoExitHistory = null
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
         isProVersion = isProUser
         selectActiveTheme(definition)
@@ -285,7 +353,8 @@ class RoleplayChatViewModel(
             activeThemeFarewellExplanation = closingCue.explanation,
             turnsTarget = endingTurnTarget,
             isClosingPhase = inClosingPhase,
-            scenarioClosingGuidance = scenarioClosingGuidance
+            scenarioClosingGuidance = scenarioClosingGuidance,
+            showOptionTutorial = optionTutorialVisible
         )
 
         if (scriptedRuntime == null) {
@@ -307,7 +376,7 @@ class RoleplayChatViewModel(
             text = introLine,
             isUser = false,
             translation = null,
-            voiceCue = GeminiVoiceCue.TALK_HIGH
+            voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
         )
         history.add(MissionHistoryMessage(introLine, isUser = false))
         _uiState.update {
@@ -340,7 +409,10 @@ class RoleplayChatViewModel(
                 peekedHintOptionIds = emptySet(),
                 completedTurns = it.completedTurns + 1,
                 successfulTurns = it.successfulTurns + 1,
-                lockedOption = option
+                lockedOption = option,
+                isEndingSession = false,
+                finalFarewellMessageId = null,
+                pendingExitHistory = null
             )
         }
 
@@ -364,6 +436,8 @@ class RoleplayChatViewModel(
         if (trimmed.isEmpty()) return
         if (_uiState.value.isLoading) return
 
+        val farewellDetected = containsFarewellCue(trimmed)
+
         val userMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
             text = trimmed,
@@ -378,7 +452,11 @@ class RoleplayChatViewModel(
                 isLoading = true,
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
-                lockedOption = null
+                lockedOption = null,
+                isClosingPhase = it.isClosingPhase || farewellDetected,
+                pendingExitHistory = null,
+                isEndingSession = false,
+                finalFarewellMessageId = null
             )
         }
 
@@ -541,6 +619,23 @@ class RoleplayChatViewModel(
         _uiState.update { it.copy(pendingExitHistory = null) }
     }
 
+    fun prepareImmediateExit(): List<MissionHistoryMessage> {
+        val snapshot = history.toList()
+        pendingAutoExitHistory = null
+        _uiState.update {
+            it.copy(
+                pendingExitHistory = snapshot,
+                options = emptyList(),
+                isLoading = false,
+                lockedOption = null,
+                showCompletionDialog = false,
+                isEndingSession = true,
+                finalFarewellMessageId = null
+            )
+        }
+        return snapshot
+    }
+
     fun notifyVoicePlaybackStarted(messageId: String) {
         _speakingMessageId.value = messageId
     }
@@ -548,6 +643,12 @@ class RoleplayChatViewModel(
     fun notifyVoicePlaybackFinished(messageId: String) {
         if (_speakingMessageId.value == messageId) {
             _speakingMessageId.value = null
+        }
+        val state = _uiState.value
+        val autoExitHistory = pendingAutoExitHistory
+        if (state.finalFarewellMessageId == messageId && autoExitHistory != null) {
+            triggerAutoExit(autoExitHistory)
+            pendingAutoExitHistory = null
         }
     }
 
@@ -572,7 +673,7 @@ class RoleplayChatViewModel(
             text = turn.aiText,
             isUser = false,
             translation = turn.translation,
-            voiceCue = turn.voiceCue
+            voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
         )
         val options = turn.options.map {
             RoleplayOption(
@@ -604,6 +705,18 @@ class RoleplayChatViewModel(
     private fun finalizeScriptedScenario() {
         scriptedRuntime = null
         queueCompletion(calculateScore())
+    }
+
+    private fun triggerAutoExit(historySnapshot: List<MissionHistoryMessage>) {
+        _uiState.update {
+            it.copy(
+                pendingExitHistory = historySnapshot,
+                options = emptyList(),
+                isLoading = false,
+                lockedOption = null,
+                finalFarewellMessageId = null
+            )
+        }
     }
 
     private fun requestAiTurn(
@@ -645,7 +758,7 @@ class RoleplayChatViewModel(
             text = aiSpeech,
             isUser = false,
             translation = payload.aiTranslation.takeIf { it.isNotBlank() },
-            voiceCue = GeminiVoiceCue.TALK_HIGH
+            voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
         )
         val options = payload.options
             .filter { it.text.isNotBlank() }
@@ -657,12 +770,18 @@ class RoleplayChatViewModel(
                 )
             }.filterForAccess()
         val farewellDetected = containsFarewellCue(aiSpeech) || containsFarewellCue(payload.aiTranslation)
-        val sanitizedOptions = if (farewellDetected) emptyList() else options
+        val sanitizedOptions = when {
+            farewellDetected -> emptyList()
+            inClosingPhase && scriptedTurnsRemaining <= 0 -> emptyList()
+            else -> options
+        }
 
         scriptedTurnsRemaining = (scriptedTurnsRemaining - 1).coerceAtLeast(0)
         if (!inClosingPhase && scriptedTurnsRemaining <= 2) {
             inClosingPhase = true
         }
+        val aiClosedConversation = sanitizedOptions.isEmpty() || farewellDetected
+
         _uiState.update {
             it.copy(
                 messages = it.messages + aiMsg,
@@ -671,12 +790,14 @@ class RoleplayChatViewModel(
                 peekedHintOptionIds = emptySet(),
                 lockedOption = null,
                 turnsTarget = scriptedTurnsRemaining.coerceAtLeast(0),
-                isClosingPhase = inClosingPhase
+                isClosingPhase = inClosingPhase,
+                isEndingSession = aiClosedConversation && sanitizedOptions.isEmpty(),
+                finalFarewellMessageId = if (aiClosedConversation && sanitizedOptions.isEmpty()) aiMsg.id else null,
+                pendingExitHistory = if (aiClosedConversation && sanitizedOptions.isEmpty()) it.pendingExitHistory else null
             )
         }
 
-        val aiClosedConversation = sanitizedOptions.isEmpty() || farewellDetected
-        val shouldComplete = inClosingPhase && aiClosedConversation
+        val shouldComplete = (inClosingPhase && aiClosedConversation) || (scriptedTurnsRemaining <= 0 && aiClosedConversation)
         if (shouldComplete) {
             queueCompletion(calculateScore())
         }
@@ -700,19 +821,47 @@ class RoleplayChatViewModel(
         }
     }
 
+    private fun drawSceneSeed(): String {
+        val candidate = buildString {
+            append("場所: ${SCENE_LOCATIONS.random(random)} / ")
+            append("時間帯: ${SCENE_TIMES.random(random)} / ")
+            append("出来事: ${SCENE_EVENTS.random(random)} / ")
+            append("ディテール: ${SCENE_SENSORY_DETAILS.random(random)}")
+        }
+        if (candidate == lastSceneSeed && SCENE_LOCATIONS.size > 1) {
+            return drawSceneSeed()
+        }
+        lastSceneSeed = candidate
+        return candidate
+    }
+
     private fun queueCompletion(score: Int) {
         val farewell = selectCompletionFarewell()
         inClosingPhase = false
+        val farewellMessage = ChatMessage(
+            id = UUID.randomUUID().toString(),
+            text = farewell.bisaya,
+            isUser = false,
+            translation = farewell.translation,
+            voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
+        )
+        history.add(MissionHistoryMessage(farewell.bisaya, isUser = false))
+        val historySnapshot = history.toList()
+        pendingAutoExitHistory = historySnapshot
         _uiState.update {
             it.copy(
-                showCompletionDialog = true,
+                showCompletionDialog = false,
                 completionScore = score.coerceIn(0, 100),
+                messages = it.messages + farewellMessage,
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
                 activeThemeFarewellBisaya = farewell.bisaya,
                 activeThemeFarewellTranslation = farewell.translation,
                 activeThemeFarewellExplanation = farewell.explanation,
-                isClosingPhase = false
+                isClosingPhase = false,
+                isEndingSession = true,
+                finalFarewellMessageId = farewellMessage.id,
+                pendingExitHistory = historySnapshot
             )
         }
     }
@@ -742,18 +891,27 @@ class RoleplayChatViewModel(
             UserGender.FEMALE -> "female (女性)"
             UserGender.OTHER -> "non-binary / undisclosed"
         }
+        val nicknameLine = userNickname?.let {
+            "- The learner’s preferred nickname is \"$it\". Blend it with the affectionate titles when you call out to them."
+        } ?: "- The learner has not set a nickname. Use the affectionate titles as-is."
         val genderInstruction = """
             SYSTEM DIRECTIVE:
             - You are Tari, a real Cebuana woman living in Cebu.
             - You must always speak Bisaya (Cebuano) in your dialogue. Never mix Japanese or English into your speech field.
             - Provide a separate Japanese translation ONLY inside the dedicated translation field.
+            - Tagalog / Filipino words (e.g., "masarap", "mahal", "po", "opo") are strictly forbidden. Use pure Cebuano alternatives such as "lami" (おいしい), "mahal kaayo" (高い), "salamat" (ありがとう) with NO "po" suffix.
+            - ABSOLUTE RULE: 100% Cebuano vocabulary in every aiSpeech line and suggested option. If the learner uses Tagalog, interpret it but respond with Bisaya expressions only.
+            - If you notice a Tagalog syllable sneaking into your output, immediately restate that sentence in Cebuano within the same response and continue in Bisaya only.
             - The learner is $learnerGenderLabel. Address them affectionately as "$calloutBisaya" (Bisaya) or "$calloutEnglish" (English) and never use other titles.
-            - Open every greeting or turn by referring to the learner with one of those approved names.
-            - Throughout the entire conversation, keep using only those approved callouts whenever you refer to the learner.
+            $nicknameLine
+            - Mention these affectionate titles only during greetings, farewells, when praising the learner, or when double-checking their understanding/feelings. Avoid repeating the name on every line so the flow feels natural.
+            - These affectionate callouts are for Tari's speech bubbles only. Never include them inside the suggested learner reply options or translations.
             - Stay affectionate, supportive, and slightly mischievous, but never break character.
             - The learner can submit free-form voice transcriptions or typed input beyond the suggested options. Interpret any Japanese/English phrases they use, convert their intent into Bisaya context, and continue the mission naturally.
             - Never reject or scold the learner for ad-lib input. Absorb it into the story, react with empathy, and keep the pacing lively.
             - If the learner introduces new plot ideas or feelings, weave them into the narrative and adjust your guidance accordingly while staying aligned with the scenario goal.
+            - Double-check every word you output to ensure it is Cebuano only. If you accidentally think of a Tagalog term, immediately replace it with its Cebuano equivalent.
+            - Before finalizing each JSON payload, run an internal "LANGUAGE CHECK" and confirm there are zero Tagalog terms. If any are detected, regenerate the line entirely in Cebuano.
         """.trimIndent()
 
         val basePrompt = if (scenario.systemPrompt.isBlank()) {
@@ -765,6 +923,7 @@ class RoleplayChatViewModel(
         } else scenario.systemPrompt
 
         val closingDirective = buildClosingDirective()
+        val sceneSeed = drawSceneSeed()
 
         val systemPromptWithGender = buildString {
             append(basePrompt)
@@ -776,6 +935,11 @@ class RoleplayChatViewModel(
             activeTheme.attributePanels.forEach { panel ->
                 append("\n- $panel")
             }
+            append("\nランダム設定: $sceneSeed")
+            append("\n\n毎回シチュエーションが少しずつ変化するように、場所・時間帯・突発的な出来事（天気変化、サプライズ、ちょっとしたトラブル）を即興で1-2個追加。")
+            append("\n例: ビーチ沿い、通学路、ナイトマーケット、突然のスコール、タクシーの料金交渉、忘れ物、友人とのバッタリ遭遇など。")
+            append("\n同じテーマでもディテールを必ず変え、季節感や混み具合、音・匂いなど感覚情報を織り込みなさい。描写文にもタガログ語を入れないこと。")
+            append("\nLANGUAGE FILTER: 設定描写・状況説明・メタ情報も必ずビサヤ語で書き、日本語訳以外にタガログ語を含めないこと。")
             append("\n\nあなたは${calloutBisaya}と呼ぶ相手に優しく寄り添いながら会話するタリです。")
             append("\n相手の呼び方: ${calloutBisaya} / ${calloutEnglish}。ユーザー性別: ${currentUserGender.name}。")
             append("\n\n")
@@ -799,11 +963,11 @@ class RoleplayChatViewModel(
 
             Respond strictly in JSON with exactly these fields and no extras:
             {
-              "aiSpeech": "Assistant reply in Bisaya ONLY. Do not include Japanese or English.",
+              "aiSpeech": "Assistant reply in Bisaya ONLY. Do not include Japanese, English, or Tagalog.",
               "aiTranslation": "Japanese translation of aiSpeech ONLY.",
               "options": [
                 {
-                  "text": "Suggested learner reply in Bisaya ONLY.",
+                  "text": "Suggested learner reply in Bisaya ONLY (no Tagalog words).",
                   "translation": "Japanese translation of that option ONLY.",
                   "tone": "Short descriptor in Japanese (optional)."
                 }
@@ -886,6 +1050,7 @@ class RoleplayChatViewModel(
         builder.append("- 別れのビサヤ語フレーズ（Sige, una na ko / Babay / Kita ta napud 等）を必ず述べ、会話の終わりを明確にしてください。\n")
         builder.append("- After the farewell, do not ask or imply any follow-up question. Keep learner options empty or limited to a single acknowledgement if absolutely necessary.\n")
         builder.append("- フェアウェル後は新規の問いかけをせず、必要なら『Salamat kaayo, mag-uban ta napud.』のような余韻のみ提示してください。\n")
+        builder.append("- Even while closing, never switch to Tagalog; maintain 100% Cebuano vocabulary.\n")
         scenario?.let {
             builder.append("- Reference the current situation (e.g., ${it.description}) and tie loose ends before ending.\n")
             builder.append("- Make the learner feel the mission \"${it.goal}\" was accomplished.\n")
@@ -948,7 +1113,7 @@ private data class ScriptedTurn(
     val id: String,
     val aiText: String,
     val translation: String,
-    val voiceCue: GeminiVoiceCue = GeminiVoiceCue.TALK_HIGH,
+    val voiceCue: GeminiVoiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE,
     val options: List<ScriptedOption> = emptyList(),
     val defaultNextId: String? = null
 )

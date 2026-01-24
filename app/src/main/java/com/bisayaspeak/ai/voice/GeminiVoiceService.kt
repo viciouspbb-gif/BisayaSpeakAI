@@ -17,10 +17,13 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.ArrayDeque
 
-enum class GeminiVoiceCue(val voiceName: String, val speed: Float) {
+enum class GeminiVoiceCue(val voiceName: String, val speed: Float, val pitch: Float = 1.0f) {
     DEFAULT("verse", 0.9f),
     TALK_LOW("verse", 0.82f),
     TALK_HIGH("verse", 0.96f),
+    ROLEPLAY_SHIMMER("shimmer", 1.05f),
+    ROLEPLAY_NOVA_CUTE("nova", 1.0f, 1.3f),
+    TALK_CONVERSATION("verse", 1.08f),
     TRANSLATOR_SWIFT("verse", 1.04f)
 }
 
@@ -63,13 +66,18 @@ class GeminiVoiceService(
         currentJob?.cancel()
         currentJob = scope.launch {
             try {
+                Log.d(
+                    "GeminiVoiceService",
+                    "synthesize voice=${request.cue.voiceName} speed=${request.cue.speed} pitch=${request.cue.pitch} textLength=${request.text.length}"
+                )
                 val audioBytes = speechService.synthesizeSpeech(
                     OpenAiSpeechService.SpeechRequest(
                         input = request.text,
                         voice = request.cue.voiceName,
                         model = "gpt-4o-mini-tts",
                         format = "mp3",
-                        speed = request.cue.speed
+                        speed = request.cue.speed,
+                        pitch = request.cue.pitch
                     )
                 ).use { it.bytes() }
                 playAudio(audioBytes, request)
