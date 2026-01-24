@@ -281,7 +281,6 @@ fun RoleplayChatScreen(
     val handleImmediateExit: () -> Unit = {
         val snapshot = viewModel.prepareImmediateExit()
         onSaveAndExit(snapshot)
-        viewModel.consumePendingExitHistory()
     }
 
     val screenScrollState = rememberScrollState()
