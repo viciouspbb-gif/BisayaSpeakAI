@@ -25,7 +25,8 @@ interface OpenAiSpeechService {
         @SerializedName("voice") val voice: String = "nova",
         @SerializedName("input") val input: String,
         @SerializedName("format") val format: String = "mp3",
-        @SerializedName("speed") val speed: Float = 1.0f
+        @SerializedName("speed") val speed: Float = 1.0f,
+        @SerializedName("pitch") val pitch: Float = 1.0f
     )
 
     companion object {

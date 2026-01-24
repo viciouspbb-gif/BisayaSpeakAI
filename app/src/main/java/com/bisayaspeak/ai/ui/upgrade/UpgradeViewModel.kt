@@ -4,12 +4,14 @@ import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.billingclient.api.ProductDetails
 import com.bisayaspeak.ai.billing.BillingManager
 import com.bisayaspeak.ai.data.PurchaseStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -25,6 +27,8 @@ class UpgradeViewModel(application: Application) : AndroidViewModel(application)
     
     private val _showPurchaseSuccess = MutableStateFlow<String?>(null)
     val showPurchaseSuccess: StateFlow<String?> = _showPurchaseSuccess.asStateFlow()
+    
+    val products: StateFlow<List<ProductDetails>> = billingManager.products
     
     init {
         // BillingManager初期化
@@ -98,14 +102,22 @@ class UpgradeViewModel(application: Application) : AndroidViewModel(application)
      * Premium AI (月額)を購入
      */
     fun purchasePremiumAIMonthly(activity: Activity) {
-        billingManager.launchPurchaseFlowByProductId(activity, BillingManager.PREMIUM_AI_MONTHLY_SKU)
+        billingManager.launchPurchaseFlowByProductId(
+            activity,
+            BillingManager.PREMIUM_AI_MONTHLY_SKU,
+            BillingManager.MONTHLY_TRIAL_TAG
+        )
     }
     
     /**
      * Premium AI (年額)を購入
      */
     fun purchasePremiumAIYearly(activity: Activity) {
-        billingManager.launchPurchaseFlowByProductId(activity, BillingManager.PREMIUM_AI_YEARLY_SKU)
+        billingManager.launchPurchaseFlowByProductId(
+            activity,
+            BillingManager.PREMIUM_AI_YEARLY_SKU,
+            BillingManager.YEARLY_TRIAL_TAG
+        )
     }
     
     /**

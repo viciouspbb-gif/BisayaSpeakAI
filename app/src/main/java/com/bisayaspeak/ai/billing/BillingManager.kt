@@ -28,8 +28,11 @@ class BillingManager(private val context: Context) {
         
         // 商品ID
         const val PRO_UNLOCK_SKU = "pro_unlock"
-        const val PREMIUM_AI_MONTHLY_SKU = "premium_ai_monthly"
+        const val PREMIUM_AI_MONTHLY_SKU = "premium_ai_monthly_sub"
         const val PREMIUM_AI_YEARLY_SKU = "premium_ai_yearly"
+
+        const val MONTHLY_TRIAL_TAG = "monthly-trial"
+        const val YEARLY_TRIAL_TAG = "yearly-trial"
         
         // 旧商品ID（互換性のため）
         const val PREMIUM_MONTHLY_SKU = "premium_monthly"
@@ -248,7 +251,7 @@ class BillingManager(private val context: Context) {
     /**
      * 購入フローを開始
      */
-    fun launchPurchaseFlow(activity: Activity, productDetails: ProductDetails) {
+    fun launchPurchaseFlow(activity: Activity, productDetails: ProductDetails, offerTag: String? = null) {
         val client = billingClient ?: return
         if (!isClientReady) {
             Log.w(TAG, "BillingClient not ready. Ignoring purchase flow launch")
@@ -257,9 +260,12 @@ class BillingManager(private val context: Context) {
 
         val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(productDetails)
-        
-        // サブスクリプションの場合はofferTokenが必要
-        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+
+        val targetOffer = productDetails.subscriptionOfferDetails?.let { offers ->
+            offerTag?.let { tag -> offers.firstOrNull { it.offerTags.contains(tag) } } ?: offers.firstOrNull()
+        }
+
+        val offerToken = targetOffer?.offerToken
         if (offerToken != null) {
             productDetailsParamsBuilder.setOfferToken(offerToken)
         }
@@ -277,10 +283,10 @@ class BillingManager(private val context: Context) {
     /**
      * 商品IDで購入フローを開始
      */
-    fun launchPurchaseFlowByProductId(activity: Activity, productId: String) {
+    fun launchPurchaseFlowByProductId(activity: Activity, productId: String, offerTag: String? = null) {
         val product = _products.value.find { it.productId == productId }
         if (product != null) {
-            launchPurchaseFlow(activity, product)
+            launchPurchaseFlow(activity, product, offerTag)
         } else {
             Log.e(TAG, "Product not found: $productId")
             // まだ商品情報が取得できていない場合は再取得を試みる

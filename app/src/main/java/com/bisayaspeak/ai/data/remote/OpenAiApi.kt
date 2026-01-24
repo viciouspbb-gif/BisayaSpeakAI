@@ -4,6 +4,7 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import java.util.concurrent.TimeUnit
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -21,6 +22,10 @@ interface OpenAiApi {
     companion object {
         private const val BASE_URL = "https://api.openai.com/v1/"
 
+        private const val CONNECT_TIMEOUT_SECONDS = 30L
+        private const val READ_TIMEOUT_SECONDS = 120L
+        private const val WRITE_TIMEOUT_SECONDS = 60L
+
         fun create(apiKey: String): OpenAiApi {
             val logging = HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BASIC
@@ -33,6 +38,10 @@ interface OpenAiApi {
                     chain.proceed(request)
                 }
                 .addInterceptor(logging)
+                .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
                 .build()
 
             return Retrofit.Builder()

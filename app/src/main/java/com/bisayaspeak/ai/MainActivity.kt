@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
     
     private lateinit var billingManager: BillingManager
     private lateinit var purchaseStore: PurchaseStore
-    private lateinit var updateManager: UpdateManager
+    private var updateManager: UpdateManager? = null
+    private val isInAppUpdateSupported: Boolean by lazy { isInstalledFromPlayStore() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,13 +49,13 @@ class MainActivity : ComponentActivity() {
             }
         }
         
-        // アップデートマネージャー初期化
-        updateManager = UpdateManager(this)
-        setupUpdateCallbacks()
-        
-        // アプリ起動時にアップデートチェック
-        lifecycleScope.launch {
-            checkForAppUpdate()
+        if (isInAppUpdateSupported) {
+            updateManager = UpdateManager(this).also { manager ->
+                setupUpdateCallbacks(manager)
+                lifecycleScope.launch { checkForAppUpdate(manager) }
+            }
+        } else {
+            android.util.Log.d("MainActivity", "Skip in-app update: not installed from Play Store")
         }
 
         val app = application as MyApp
@@ -109,34 +110,36 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // 中断された更新をチェック
-        lifecycleScope.launch {
-            updateManager.checkUpdateInProgress(this@MainActivity)
+        updateManager?.let { manager ->
+            lifecycleScope.launch {
+                manager.checkUpdateInProgress(this@MainActivity)
+            }
         }
     }
     
     override fun onDestroy() {
         super.onDestroy()
         billingManager.destroy()
-        updateManager.cleanup()
+        updateManager?.cleanup()
     }
     
     /**
      * アップデートコールバック設定
      */
-    private fun setupUpdateCallbacks() {
-        updateManager.onDownloadProgress = { progress ->
+    private fun setupUpdateCallbacks(manager: UpdateManager) {
+        manager.onDownloadProgress = { progress ->
             android.util.Log.d("MainActivity", "Update download progress: $progress%")
         }
         
-        updateManager.onDownloadCompleted = {
+        manager.onDownloadCompleted = {
             runOnUiThread {
                 android.util.Log.d("MainActivity", "Update downloaded. Restart to install.")
                 // ユーザーに再起動を促す
-                updateManager.completeUpdate()
+                manager.completeUpdate()
             }
         }
         
-        updateManager.onUpdateFailed = { error ->
+        manager.onUpdateFailed = { error ->
             runOnUiThread {
                 android.util.Log.d("MainActivity", "Update failed: $error")
             }
@@ -146,22 +149,22 @@ class MainActivity : ComponentActivity() {
     /**
      * アップデートチェック
      */
-    private suspend fun checkForAppUpdate() {
-        when (val result = updateManager.checkForUpdate()) {
+    private suspend fun checkForAppUpdate(manager: UpdateManager) {
+        when (val result = manager.checkForUpdate()) {
             is UpdateCheckResult.NoUpdateAvailable -> {
                 android.util.Log.d("MainActivity", "No update available")
             }
             is UpdateCheckResult.FlexibleUpdateAvailable -> {
                 android.util.Log.d("MainActivity", "Flexible update available")
-                updateManager.startFlexibleUpdate(this, result.appUpdateInfo)
+                manager.startFlexibleUpdate(this, result.appUpdateInfo)
             }
             is UpdateCheckResult.ImmediateUpdateAvailable -> {
                 android.util.Log.d("MainActivity", "Immediate update available")
-                updateManager.startImmediateUpdate(this, result.appUpdateInfo)
+                manager.startImmediateUpdate(this, result.appUpdateInfo)
             }
             is UpdateCheckResult.ImmediateUpdateRequired -> {
                 android.util.Log.d("MainActivity", "Immediate update REQUIRED (force update)")
-                updateManager.startImmediateUpdate(this, result.appUpdateInfo)
+                manager.startImmediateUpdate(this, result.appUpdateInfo)
             }
             is UpdateCheckResult.UpdateNotAllowed -> {
                 android.util.Log.w("MainActivity", "Update not allowed: ${result.reason}")
@@ -169,6 +172,16 @@ class MainActivity : ComponentActivity() {
             is UpdateCheckResult.Error -> {
                 android.util.Log.e("MainActivity", "Update check error: ${result.message}")
             }
+        }
+    }
+
+    private fun isInstalledFromPlayStore(): Boolean {
+        return try {
+            val installer = packageManager.getInstallerPackageName(packageName)
+            installer == "com.android.vending" || installer == "com.google.android.feedback"
+        } catch (e: Exception) {
+            android.util.Log.w("MainActivity", "Failed to determine installer package", e)
+            false
         }
     }
 }

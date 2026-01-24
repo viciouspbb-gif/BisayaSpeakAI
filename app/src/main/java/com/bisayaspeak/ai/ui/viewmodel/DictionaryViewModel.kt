@@ -272,7 +272,7 @@ class DictionaryViewModel(
         val cue = if (language == DictionaryLanguage.JAPANESE) {
             GeminiVoiceCue.TALK_HIGH
         } else {
-            GeminiVoiceCue.TALK_HIGH
+            GeminiVoiceCue.TALK_CONVERSATION
         }
         voiceService.speak(
             text = speechText,

@@ -461,19 +461,24 @@ private fun ResultCard(isCorrect: Boolean) {
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isCorrect) {
-                Image(painterResource(id = R.drawable.char_tarsier), "Correct", Modifier.size(80.dp))
-                Spacer(Modifier.height(16.dp))
-                Text("正解！完璧だね！", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 22.sp)
-            } else {
-                Text("残念...", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                Spacer(Modifier.height(16.dp))
-                Text("ヒントを聞いてみて", color = Color.Gray, fontSize = 14.sp)
-            }
+            Image(
+                painter = painterResource(id = R.drawable.char_tarsier),
+                contentDescription = "Tarsier coach",
+                modifier = Modifier.size(52.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = if (isCorrect) "正解！完璧だね！" else "残念... ヒントを聞いてみて！",
+                color = if (isCorrect) Color(0xFF1B5E20) else MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp
+            )
         }
     }
 }
