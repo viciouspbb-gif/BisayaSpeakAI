@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
+import com.bisayaspeak.ai.data.model.MissionScenario
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
+import com.bisayaspeak.ai.data.repository.PromptProvider
 import com.bisayaspeak.ai.data.repository.RoleplayHistoryRepository
+import com.bisayaspeak.ai.data.repository.ScenarioRepository
 import com.bisayaspeak.ai.data.repository.UserPreferencesRepository
 import com.bisayaspeak.ai.data.repository.UsageRepository
 import com.bisayaspeak.ai.data.repository.WhisperRepository
@@ -101,12 +104,14 @@ class RoleplayChatViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val chatRepository: OpenAiChatRepository = OpenAiChatRepository()
+    private val chatRepository: OpenAiChatRepository = OpenAiChatRepository(promptProvider = PromptProvider(application))
     private val whisperRepository: WhisperRepository = WhisperRepository()
     private val historyRepository: RoleplayHistoryRepository = RoleplayHistoryRepository(application)
     private val voiceRecorder: VoiceInputRecorder = VoiceInputRecorder(application.applicationContext)
-    private val userPreferencesRepository = UserPreferencesRepository(application)
-    private val usageRepository = UsageRepository(application)
+    private val userPreferencesRepository: UserPreferencesRepository = UserPreferencesRepository(application)
+    private val usageRepository: UsageRepository = UsageRepository(application)
+    private val scenarioRepository: ScenarioRepository = ScenarioRepository(application)
+    private val promptProvider: PromptProvider = PromptProvider(application)
     private val random = Random(System.currentTimeMillis())
     private val themeManager = RoleplayThemeManager(random)
 
@@ -319,7 +324,13 @@ class RoleplayChatViewModel(
     }
 
     fun loadScenario(scenarioId: String, isProUser: Boolean = isProVersion) {
-        val definition = getRoleplayScenarioDefinition(scenarioId)
+        val scenario = scenarioRepository.getScenarioById(scenarioId)
+        if (scenario == null) {
+            _uiState.update { it.copy(isLoading = false) }
+            return
+        }
+        
+        val definition = convertToRoleplayScenarioDefinition(scenario)
         history.clear()
         branchFacts.clear()
         pendingAutoExitHistory = null
@@ -337,7 +348,7 @@ class RoleplayChatViewModel(
             currentScenario = definition,
             missionGoal = definition.goal,
             aiCharacterName = definition.aiRole,
-            systemPrompt = definition.systemPrompt,
+            systemPrompt = promptProvider.getRoleplaySystemPrompt(scenarioId),
             messages = emptyList(),
             isLoading = scriptedRuntime == null,
             isProUser = isProVersion,
@@ -366,6 +377,28 @@ class RoleplayChatViewModel(
         } ?: requestAiTurn(
             scenario = definition,
             userMessage = START_TOKEN
+        )
+    }
+    
+    private fun convertToRoleplayScenarioDefinition(scenario: MissionScenario): RoleplayScenarioDefinition {
+        return RoleplayScenarioDefinition(
+            id = scenario.id,
+            level = when (scenario.context.level) {
+                com.bisayaspeak.ai.data.model.LearningLevel.BEGINNER -> 1
+                com.bisayaspeak.ai.data.model.LearningLevel.INTERMEDIATE -> 2
+                com.bisayaspeak.ai.data.model.LearningLevel.ADVANCED -> 3
+                else -> 1
+            },
+            title = scenario.title,
+            description = scenario.subtitle,
+            situation = scenario.context.situation,
+            aiRole = scenario.context.role,
+            goal = scenario.context.goal,
+            iconEmoji = "🎭",
+            initialMessage = scenario.openingMessage,
+            systemPrompt = scenario.systemPrompt,
+            hintPhrases = scenario.context.hints.map { HintPhrase(it, it) },
+            closingGuidance = null
         )
     }
 

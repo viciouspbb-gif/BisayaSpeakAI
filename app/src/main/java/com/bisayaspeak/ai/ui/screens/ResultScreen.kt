@@ -37,7 +37,7 @@ import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ui.viewmodel.RecordingViewModel
 
 /**
- * 診断結果表示画面
+ * Pronunciation diagnosis result screen
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +46,7 @@ fun ResultScreen(
     onBackClick: () -> Unit,
     onRetry: () -> Unit
 ) {
-    // 発音練習の状態が他のセッションに残らないようにする
+    // Reset pronunciation practice state so it does not leak across sessions
     val recordingViewModel: RecordingViewModel = viewModel()
 
     DisposableEffect(Unit) {
@@ -111,7 +111,7 @@ fun ResultScreen(
                 .navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // スコアゲージ（コンパクト版）
+            // Score gauge (compact)
             item {
                 MascotRow(
                     modifier = Modifier
@@ -128,7 +128,7 @@ fun ResultScreen(
                 )
             }
             
-            // 総合フィードバック
+            // Overall feedback
             item {
                 OverallFeedbackCard(
                     overall = result.feedback,
@@ -136,7 +136,7 @@ fun ResultScreen(
                 )
             }
             
-            // 詳細フィードバック見出し＋各項目（個別アコーディオン）
+            // Detailed feedback header + items
             item {
                 Text(
                     text = stringResource(R.string.detailed_analysis),
@@ -145,7 +145,7 @@ fun ResultScreen(
                 )
             }
 
-            // 項目の表示順を統一: ピッチ, タイミング, 音量, 全体評価, アドバイス
+            // Unified order: Pitch, Timing, Volume, Overall, Advice
             val orderedAspects = listOf("Pitch", "Timing", "Volume", "Overall", "Advice")
             val sortedDetails = result.detailedFeedback.sortedWith(compareBy(
                 { detail ->
@@ -192,7 +192,7 @@ private fun MascotRow(
 }
 
 /**
- * 詳細分析アコーディオン
+ * Detailed analysis accordion
  */
 @Composable
 fun DetailedFeedbackAccordion(details: List<FeedbackDetail>) {
@@ -238,7 +238,7 @@ fun DetailedFeedbackAccordion(details: List<FeedbackDetail>) {
 }
 
 /**
- * スコアゲージカード
+ * Score gauge card
  */
 @Composable
 fun ScoreGaugeCard(
@@ -274,19 +274,19 @@ fun ScoreGaugeCard(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // アニメーション付きスコアゲージ
+            // Animated score gauge
             AnimatedScoreGauge(score = score)
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // 評価バッジ
+            // Rating badge
             RatingBadge(rating = rating)
         }
     }
 }
 
 /**
- * アニメーション付きスコアゲージ
+ * Animated score gauge
  */
 @Composable
 fun AnimatedScoreGauge(score: Double) {
@@ -306,12 +306,12 @@ fun AnimatedScoreGauge(score: Double) {
         contentAlignment = Alignment.Center,
         modifier = Modifier.size(160.dp)
     ) {
-        // 背景円
+        // Background arc
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokeWidth = 20.dp.toPx()
             val diameter = size.minDimension - strokeWidth
             
-            // 背景円
+            // Background arc
             drawArc(
                 color = Color.LightGray.copy(alpha = 0.3f),
                 startAngle = 135f,
@@ -322,7 +322,7 @@ fun AnimatedScoreGauge(score: Double) {
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
             
-            // スコア円（グラデーション色）
+            // Score arc
             val sweepAngle = (animatedScore / 100f) * 270f
             val color = when {
                 animatedScore >= 90 -> Color(0xFF4CAF50)
@@ -343,7 +343,7 @@ fun AnimatedScoreGauge(score: Double) {
             )
         }
         
-        // スコアテキスト
+        // Score text
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -380,7 +380,7 @@ fun AnimatedScoreGauge(score: Double) {
 }
 
 /**
- * 評価バッジ
+ * Rating badge
  */
 @Composable
 fun RatingBadge(rating: String) {
@@ -406,7 +406,7 @@ fun RatingBadge(rating: String) {
 }
 
 /**
- * 総合フィードバックカード
+ * Overall feedback card
  */
 @Composable
 fun OverallFeedbackCard(overall: String, rating: String) {
@@ -437,16 +437,16 @@ fun OverallFeedbackCard(overall: String, rating: String) {
 }
 
 /**
- * フィードバック詳細カード
+ * Feedback detail card
  */
 @Composable
 fun FeedbackDetailCard(detail: FeedbackDetail) {
     var expanded by remember { mutableStateOf(false) }
     val scoreValue: Double = (detail.score ?: 0.0).toDouble()
     val scoreLabel = when {
-        scoreValue >= 70.0 -> "良好"
-        scoreValue >= 50.0 -> "普通"
-        else -> "要改善"
+        scoreValue >= 70.0 -> "Good"
+        scoreValue >= 50.0 -> "Fair"
+        else -> "Needs work"
     }
     
     Card(
@@ -498,7 +498,7 @@ fun FeedbackDetailCard(detail: FeedbackDetail) {
                     )
                     detail.score?.let { score ->
                         Text(
-                            text = "${score.toInt()}点（$scoreLabel）",
+                            text = "${score.toInt()} ($scoreLabel)",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = when {
@@ -523,7 +523,7 @@ fun FeedbackDetailCard(detail: FeedbackDetail) {
 }
 
 /**
- * Tipsカード
+ * Tips card
  */
 @Composable
 fun TipsCard(tips: List<String>) {
@@ -570,7 +570,7 @@ fun TipsCard(tips: List<String>) {
 }
 
 /**
- * 比較詳細カード
+ * Comparison detail card
  */
 @Composable
 fun ComparisonCard(
@@ -589,7 +589,7 @@ fun ComparisonCard(
                 .padding(16.dp)
         ) {
             Text(
-                text = "詳細比較",
+                text = "Detailed comparison",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -597,15 +597,15 @@ fun ComparisonCard(
             Spacer(modifier = Modifier.height(12.dp))
             
             ComparisonRow(
-                label = "発話時間",
-                userValue = String.format("%.2f秒", userDuration),
-                refValue = String.format("%.2f秒", refDuration)
+                label = "Duration",
+                userValue = String.format("%.2fs", userDuration),
+                refValue = String.format("%.2fs", refDuration)
             )
             
             Divider(modifier = Modifier.padding(vertical = 8.dp))
             
             ComparisonRow(
-                label = "ピッチ",
+                label = "Pitch",
                 userValue = String.format("%.1f Hz", userPitch),
                 refValue = String.format("%.1f Hz", refPitch)
             )
@@ -621,17 +621,17 @@ fun ComparisonRow(label: String, userValue: String, refValue: String) {
     ) {
         Text(text = label, fontWeight = FontWeight.Medium)
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(text = "あなた: $userValue", fontSize = 14.sp)
-            Text(text = "参照: $refValue", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+            Text(text = "You: $userValue", fontSize = 14.sp)
+            Text(text = "Ref: $refValue", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
 
 private fun getRating(score: Int): String {
     return when {
-        score >= 90 -> "優秀"
-        score >= 70 -> "良好"
-        score >= 50 -> "普通"
-        else -> "要改善"
+        score >= 90 -> "Excellent"
+        score >= 70 -> "Good"
+        score >= 50 -> "Fair"
+        else -> "Needs work"
     }
 }

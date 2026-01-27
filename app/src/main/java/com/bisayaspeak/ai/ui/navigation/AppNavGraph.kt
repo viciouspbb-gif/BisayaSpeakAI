@@ -25,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -33,6 +34,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.MyApp
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.auth.AuthManager
 import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.model.UserPlan
@@ -165,7 +167,11 @@ fun AppNavGraph(
                         when (feature) {
                             FeatureId.AI_CHAT -> {
                                 if (!BuildConfig.DEBUG) {
-                                    Toast.makeText(context, "タリ先生は修行中…近日公開！", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.roleplay_coming_soon_message),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 } else if (isPremiumPlan) {
                                     navController.navigate(AppRoute.TariDojo.route)
                                 } else {
@@ -218,7 +224,7 @@ fun AppNavGraph(
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                     context.startActivity(intent)
                 }.onFailure {
-                    Toast.makeText(context, "ブラウザを開けませんでした", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.account_open_browser_failed), Toast.LENGTH_SHORT).show()
                 }
             }
             val legalSupportUrl = "https://gist.github.com/viciouspbb-gif/e63ebfe03645c3281a7ae847f280f9a7"
@@ -273,15 +279,27 @@ fun AppNavGraph(
                             scope.launch {
                                 val result = authManager?.deleteAccount()
                                 if (result == null) {
-                                    Toast.makeText(context, "アカウント削除は利用できません", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.account_delete_unavailable),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 } else {
                                     result.onSuccess {
-                                        Toast.makeText(context, "アカウントを削除しました", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.account_delete_success),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         navController.navigate(AppRoute.Home.route) {
                                             popUpTo(AppRoute.Home.route) { inclusive = true }
                                         }
                                     }.onFailure {
-                                        Toast.makeText(context, it.message ?: "削除に失敗しました", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            it.message ?: context.getString(R.string.account_delete_failed),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
                                 }
                             }
@@ -349,7 +367,7 @@ fun AppNavGraph(
                 )
             } else {
                 ComingSoonScreen(
-                    message = "タリ先生は修行中…近日公開！",
+                    message = stringResource(R.string.roleplay_coming_soon_message),
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

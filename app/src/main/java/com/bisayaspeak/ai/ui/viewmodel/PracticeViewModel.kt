@@ -1,9 +1,11 @@
 package com.bisayaspeak.ai.ui.viewmodel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bisayaspeak.ai.data.model.PracticeData
 import com.bisayaspeak.ai.data.model.PracticeItem
+import com.bisayaspeak.ai.data.repository.PracticeContentRepository
 import com.bisayaspeak.ai.data.repository.PronunciationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,15 +15,16 @@ import kotlinx.coroutines.launch
 /**
  * 練習画面のViewModel
  */
-class PracticeViewModel : ViewModel() {
+class PracticeViewModel(application: Application) : AndroidViewModel(application) {
     
     private val pronunciationRepository = PronunciationRepository()
+    private val practiceContentRepository = PracticeContentRepository(application.applicationContext)
     
     private val _serverStatus = MutableStateFlow<ServerStatus>(ServerStatus.Checking)
     val serverStatus: StateFlow<ServerStatus> = _serverStatus.asStateFlow()
     
     // 全Practiceデータ
-    private val _practiceItems = MutableStateFlow<List<PracticeItem>>(PracticeData.allItems)
+    private val _practiceItems = MutableStateFlow<List<PracticeItem>>(emptyList())
     val practiceItems: StateFlow<List<PracticeItem>> = _practiceItems.asStateFlow()
     
     // カテゴリ別にグループ化
@@ -38,8 +41,14 @@ class PracticeViewModel : ViewModel() {
     
     private fun loadPracticeItems() {
         viewModelScope.launch {
-            // カテゴリ別にグループ化
-            _groupedItems.value = PracticeData.allItems.groupBy { it.category }
+            val loadedItems = try {
+                practiceContentRepository.loadPracticeItemsV1()
+            } catch (_: Exception) {
+                emptyList()
+            }
+
+            _practiceItems.value = loadedItems
+            _groupedItems.value = loadedItems.groupBy { it.category }
         }
     }
     

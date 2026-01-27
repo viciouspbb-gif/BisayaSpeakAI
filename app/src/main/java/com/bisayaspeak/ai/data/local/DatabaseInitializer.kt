@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.Locale
 
 /**
  * アセット内のJSONからRoomに初期データを流し込むユーティリティ。
@@ -13,7 +14,7 @@ import java.io.InputStreamReader
  */
 object DatabaseInitializer {
     private const val TAG = "DatabaseInitializer"
-    private const val SEED_FILE = "listening_seed.json"
+    private const val SEED_FILE = "content/listening_seed_v2.json"
 
     private val gson = Gson()
 
@@ -179,11 +180,18 @@ object DatabaseInitializer {
                     val listType = object : TypeToken<List<QuestionSeedDto>>() {}.type
                     val seedItems: List<QuestionSeedDto> = gson.fromJson(jsonText, listType) ?: emptyList()
                     Log.d(TAG, "Parsed ${seedItems.size} seed items from JSON")
+
+                    val language = Locale.getDefault().language.lowercase(Locale.US)
+                    val meaningKey = if (language == "ja") "ja" else "en"
                     
                     val questions = seedItems.map { seedDto ->
+                        val meaning = seedDto.translations
+                            ?.get(meaningKey)
+                            ?.meaning
+                            .orEmpty()
                         Question(
                             sentence = seedDto.native,
-                            meaning = seedDto.translation,
+                            meaning = meaning,
                             level = seedDto.level,
                             type = "LISTENING"
                         )
@@ -207,7 +215,11 @@ object DatabaseInitializer {
         val id: Int,
         val level: Int,
         val native: String,
-        val translation: String,
+        val translations: Map<String, TranslationDto>?,
         val words: List<String>
+    )
+
+    private data class TranslationDto(
+        val meaning: String
     )
 }

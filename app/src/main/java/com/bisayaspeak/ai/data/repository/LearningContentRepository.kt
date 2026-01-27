@@ -1,9 +1,21 @@
 package com.bisayaspeak.ai.data.repository
 
+import android.content.Context
 import com.bisayaspeak.ai.data.model.LearningContent
 import com.bisayaspeak.ai.data.model.LearningLevel
 
 class LearningContentRepository {
+
+    fun getContentByLevel(context: Context, level: LearningLevel): List<LearningContent> {
+        val loaded = try {
+            ContentRepository(context.applicationContext).loadLearningContentV1()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        val filtered = loaded.filter { it.level == level }
+        return if (filtered.isNotEmpty()) filtered else getContentByLevel(level)
+    }
     
     fun getContentByLevel(level: LearningLevel): List<LearningContent> {
         return when (level) {

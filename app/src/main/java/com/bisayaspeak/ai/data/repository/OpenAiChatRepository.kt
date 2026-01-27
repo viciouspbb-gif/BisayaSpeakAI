@@ -9,7 +9,8 @@ import com.bisayaspeak.ai.data.remote.OpenAiApi
 import java.net.SocketTimeoutException
 
 class OpenAiChatRepository(
-    private val api: OpenAiApi = OpenAiApi.create(BuildConfig.OPENAI_API_KEY)
+    private val api: OpenAiApi = OpenAiApi.create(BuildConfig.OPENAI_API_KEY),
+    private val promptProvider: PromptProvider? = null
 ) {
 
     companion object {
@@ -26,13 +27,17 @@ class OpenAiChatRepository(
         shouldConclude: Boolean = false,
         farewellExamples: List<String> = emptyList()
     ): String {
-        val systemPrompt = buildString {
+        val basePrompt = promptProvider?.getSystemPrompt() ?: buildString {
             appendLine("You are Tari, a friendly Bisaya teacher.")
             appendLine("The user is ${if (isUserFemale) "FEMALE" else "MALE"} and must be addressed as '$addressTerm'.")
             appendLine("Teach Bisaya with short, encouraging lines and keep translations in Japanese.")
             appendLine("User input may be recognized as Katakana Japanese but it actually represents Bisaya intent—interpret it accurately based on context.")
             appendLine("Output MUST be a JSON object with 'aiSpeech', 'aiTranslation', and 'options' fields.")
             appendLine("Always produce exactly 3 options in the 'options' array, each containing Bisaya text, a Japanese translation, and a tone descriptor.")
+        }
+        
+        val systemPrompt = buildString {
+            append(basePrompt)
             if (shouldConclude) {
                 appendLine("This is the climax of today's mini-episode.")
                 appendLine("Wrap the scene naturally, praise the learner's progress, and gently end the conversation.")

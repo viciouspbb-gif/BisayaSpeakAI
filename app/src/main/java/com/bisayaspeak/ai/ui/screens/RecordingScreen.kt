@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.data.model.LearningContent
 import com.bisayaspeak.ai.data.model.LearningLevel
+import androidx.compose.ui.res.stringResource
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ui.viewmodel.DiagnosisState
 import com.bisayaspeak.ai.ui.viewmodel.RecordingState
 import com.bisayaspeak.ai.ui.viewmodel.RecordingViewModel
@@ -50,7 +52,7 @@ fun RecordingScreen(
     val context = LocalContext.current
     val activity = context as? Activity
     
-    // セッション管理
+    // Session management
     val sessionManager = remember { PracticeSessionManager(isPremium) }
     var sessionStarted by remember { mutableStateOf(false) }
     
@@ -69,7 +71,7 @@ fun RecordingScreen(
         }
     }
 
-    // 中断時の広告表示（統一ルール：中断 = 1回広告）
+    // Show an ad on interruption (rule: interruption = 1 ad)
     DisposableEffect(Unit) {
         onDispose {
             viewModel.reset()
@@ -80,7 +82,7 @@ fun RecordingScreen(
         }
     }
     
-    // バックボタン処理
+    // Back handling
     BackHandler {
         if (sessionStarted && diagnosisState !is DiagnosisState.Success) {
             sessionManager.onSessionInterrupted(activity) {
@@ -91,7 +93,7 @@ fun RecordingScreen(
         }
     }
 
-    // 診断成功 → 広告表示 → 結果画面へ（統一ルール：1セット完了 = 1回広告）
+    // On success: show ad then navigate to result (rule: 1 set complete = 1 ad)
     LaunchedEffect(diagnosisState) {
         if (diagnosisState is DiagnosisState.Success) {
             android.util.Log.d("RecordingScreen", "Diagnosis success, showing ad")
@@ -104,7 +106,7 @@ fun RecordingScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("発音チェック", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.recording_title), fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = null)
@@ -124,12 +126,12 @@ fun RecordingScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // 残り回数カード
+            // Remaining attempts
             RemainingCountCard(remaining = remainingCount)
 
             Spacer(Modifier.height(24.dp))
 
-            // お手本カード
+            // Reference card
             ContentCard(
                 content = content,
                 level = level,
@@ -145,7 +147,7 @@ fun RecordingScreen(
 
             Spacer(Modifier.height(30.dp))
 
-            // --- 録音状態に応じたUI ---
+            // UI based on recording state
             when (recordingState) {
 
                 RecordingState.Idle -> IdleRecordButton(
@@ -173,7 +175,7 @@ fun RecordingScreen(
                         if (remainingCount > 0) {
                             viewModel.diagnosePronunciation(content.bisayaText, level)
                         } else {
-                            // 回数が0のときはリワード広告を表示し、視聴後に回数を復活させる
+                            // If there are no remaining attempts, show a rewarded ad to recover attempts
                             onShowRewardedAd()
                         }
                     }
@@ -185,11 +187,11 @@ fun RecordingScreen(
                 )
             }
 
-            // --- 診断状態に応じたUI（録音とは別管理） ---
+            // UI based on diagnosis state (managed separately from recording)
             when (diagnosisState) {
 
                 DiagnosisState.Idle -> {
-                    // 初期状態（何もしない）
+                    // Initial state (no UI)
                 }
 
                 DiagnosisState.Loading -> LoadingUI()
@@ -200,7 +202,7 @@ fun RecordingScreen(
                 )
 
                 is DiagnosisState.Success -> {
-                    // 成功した場合は外側の LaunchedEffect がハンドリングするためここでは描画なし
+                    // Handled by outer LaunchedEffect; no UI here
                 }
             }
         }
@@ -228,7 +230,7 @@ fun RemainingCountCard(remaining: Int) {
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                text = "残り診断回数：$remaining",
+                text = stringResource(R.string.remaining_count, remaining),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -263,7 +265,7 @@ fun ContentCard(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "発音：${content.pronunciation}",
+                text = stringResource(R.string.recording_pronunciation_format, content.pronunciation),
                 fontSize = 16.sp,
                 color = Color.Gray
             )
@@ -280,7 +282,7 @@ fun ContentCard(
                     contentDescription = null
                 )
                 Spacer(Modifier.width(8.dp))
-                Text(if (isPlaying) "停止" else "お手本を再生")
+                Text(if (isPlaying) stringResource(R.string.stop_reference) else stringResource(R.string.play_reference))
             }
         }
     }
@@ -289,7 +291,7 @@ fun ContentCard(
 @Composable
 fun IdleRecordButton(onRecord: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("マイクをタップして録音", fontSize = 16.sp, color = Color.Gray)
+        Text(stringResource(R.string.tap_to_record), fontSize = 16.sp, color = Color.Gray)
         Spacer(Modifier.height(16.dp))
 
         FloatingActionButton(
@@ -316,7 +318,7 @@ fun RecordingUI(volume: Float, onStop: () -> Unit) {
     )
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("録音中…", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Red)
+        Text(stringResource(R.string.recording), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Red)
         Spacer(Modifier.height(16.dp))
 
         Box(
@@ -346,7 +348,7 @@ fun RecordingUI(volume: Float, onStop: () -> Unit) {
         ) {
             Icon(Icons.Default.Stop, null)
             Spacer(Modifier.width(8.dp))
-            Text("停止", fontSize = 18.sp)
+            Text(stringResource(R.string.stop_recording), fontSize = 18.sp)
         }
     }
 }
@@ -369,10 +371,10 @@ fun CompletedUI(
         )
         Spacer(Modifier.height(12.dp))
 
-        Text("録音完了", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.recording_completed), fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
 
-        // 再生ボタン
+        // Playback button
         OutlinedButton(
             onClick = onPlay,
             modifier = Modifier
@@ -382,7 +384,7 @@ fun CompletedUI(
         ) {
             Icon(if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow, null)
             Spacer(Modifier.width(8.dp))
-            Text(if (isPlaying) "停止" else "録音を再生", fontSize = 18.sp)
+            Text(if (isPlaying) stringResource(R.string.stop_recording) else stringResource(R.string.play_recording), fontSize = 18.sp)
         }
 
         Spacer(Modifier.height(12.dp))
@@ -397,7 +399,10 @@ fun CompletedUI(
         ) {
             Icon(Icons.Default.Psychology, null)
             Spacer(Modifier.width(8.dp))
-            Text(if (canDiagnose) "診断する" else "回数がありません", fontSize = 18.sp)
+            Text(
+                if (canDiagnose) stringResource(R.string.diagnose) else stringResource(R.string.recording_no_remaining),
+                fontSize = 18.sp
+            )
         }
 
         Spacer(Modifier.height(12.dp))
@@ -411,7 +416,7 @@ fun CompletedUI(
         ) {
             Icon(Icons.Default.Refresh, null)
             Spacer(Modifier.width(8.dp))
-            Text("録音し直す", fontSize = 18.sp)
+            Text(stringResource(R.string.record_again), fontSize = 18.sp)
         }
     }
 }
@@ -421,7 +426,7 @@ fun LoadingUI() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         CircularProgressIndicator(modifier = Modifier.size(60.dp))
         Spacer(Modifier.height(16.dp))
-        Text("分析中…", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text(stringResource(R.string.analyzing), fontWeight = FontWeight.Bold, fontSize = 18.sp)
     }
 }
 
@@ -430,7 +435,7 @@ fun ErrorUI(message: String, onRetry: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(Icons.Default.Error, null, tint = Color.Red, modifier = Modifier.size(60.dp))
         Spacer(Modifier.height(16.dp))
-        Text("エラーが発生しました", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.error_occurred), fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(message, textAlign = TextAlign.Center, color = Color.Gray)
         Spacer(Modifier.height(16.dp))
 
@@ -443,7 +448,7 @@ fun ErrorUI(message: String, onRetry: () -> Unit) {
         ) {
             Icon(Icons.Default.Refresh, null)
             Spacer(Modifier.width(8.dp))
-            Text("再試行", fontSize = 18.sp)
+            Text(stringResource(R.string.retry), fontSize = 18.sp)
         }
     }
 }

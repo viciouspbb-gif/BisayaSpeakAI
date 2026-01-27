@@ -33,9 +33,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bisayaspeak.ai.data.model.ConversationMode
+import com.bisayaspeak.ai.R
 
 private enum class ConversationSpeaker {
     JAPANESE,
@@ -56,28 +58,29 @@ fun ConversationModeScreen(
     onStartRolePlay: () -> Unit,
     onBack: () -> Unit
 ) {
-    val sampleHistory = remember {
-        listOf(
-            ConversationMessage(
-                speaker = ConversationSpeaker.JAPANESE,
-                transcript = "明日の天気はどう？",
-                translation = "Unsa ang panahon ugma?"
-            ),
-            ConversationMessage(
-                speaker = ConversationSpeaker.BISAYAN,
-                transcript = "Maayo ang panahon ugma, init ug mahayag.",
-                translation = "明日は良い天気で晴れますよ"
-            )
+    val sampleHistory = listOf(
+        ConversationMessage(
+            speaker = ConversationSpeaker.JAPANESE,
+            transcript = stringResource(R.string.conversation_mode_sample_question),
+            translation = stringResource(R.string.conversation_mode_sample_question_translation)
+        ),
+        ConversationMessage(
+            speaker = ConversationSpeaker.BISAYAN,
+            transcript = stringResource(R.string.conversation_mode_sample_answer_transcript),
+            translation = stringResource(R.string.conversation_mode_sample_answer_translation)
         )
-    }
+    )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("リアルタイム翻訳モード") },
+                title = { Text(stringResource(R.string.conversation_mode_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "戻る")
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 }
             )
@@ -118,15 +121,15 @@ fun ConversationModeScreen(
 private fun VoicePipelineRow(isPremium: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PipelineCard(
-            title = "日本語 → ビサヤ語",
-            description = "日本語マイク入力 / STT / 翻訳 / ビサヤ語TTS",
+            title = stringResource(R.string.conversation_mode_pipeline_title_ja_ceb),
+            description = stringResource(R.string.conversation_mode_pipeline_desc_ja_ceb),
             accentColor = Color(0xFF4A90E2),
             locked = !isPremium,
             steps = listOf("🎙️", "STT", "Translate", "🔊")
         )
         PipelineCard(
-            title = "ビサヤ語 → 日本語",
-            description = "ビサヤ語マイク入力 / STT / 翻訳 / 日本語TTS",
+            title = stringResource(R.string.conversation_mode_pipeline_title_ceb_ja),
+            description = stringResource(R.string.conversation_mode_pipeline_desc_ceb_ja),
             accentColor = Color(0xFF8BC34A),
             locked = !isPremium,
             steps = listOf("🎙️", "STT", "Translate", "🔊")
@@ -188,7 +191,11 @@ private fun ConversationHistoryCard(
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            Text("会話履歴", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.conversation_mode_history_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Divider()
             Spacer(modifier = Modifier.height(8.dp))
@@ -218,7 +225,11 @@ private fun ConversationBubble(message: ConversationMessage) {
             .padding(12.dp)
     ) {
         Text(
-            text = if (message.speaker == ConversationSpeaker.JAPANESE) "日本語" else "ビサヤ語",
+            text = if (message.speaker == ConversationSpeaker.JAPANESE) {
+                stringResource(R.string.japanese)
+            } else {
+                stringResource(R.string.bisaya)
+            },
             style = MaterialTheme.typography.labelSmall,
             color = Color.Gray
         )
@@ -250,7 +261,7 @@ private fun ActionButtons(
         ) {
             Icon(imageVector = Icons.Filled.Chat, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Free Talk を開始")
+            Text(stringResource(R.string.conversation_mode_button_free_talk))
         }
 
         Button(
@@ -263,7 +274,7 @@ private fun ActionButtons(
         ) {
             Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("ロールプレイを開始")
+            Text(stringResource(R.string.conversation_mode_button_roleplay))
         }
     }
 }
@@ -288,11 +299,11 @@ private fun BoxScope.PremiumLockOverlay(onOpenPremiumInfo: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(imageVector = Icons.Filled.Lock, contentDescription = null, tint = Color(0xFFFF7043))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Premium専用モード", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.conversation_mode_premium_banner_title), fontWeight = FontWeight.SemiBold)
             }
-            Text("リアルタイム音声翻訳はPremiumで無制限にご利用いただけます。")
+            Text(stringResource(R.string.conversation_mode_premium_banner_desc))
             TextButton(onClick = onOpenPremiumInfo) {
-                Text("Premiumプランを見る")
+                Text(stringResource(R.string.conversation_mode_premium_banner_cta))
             }
         }
     }

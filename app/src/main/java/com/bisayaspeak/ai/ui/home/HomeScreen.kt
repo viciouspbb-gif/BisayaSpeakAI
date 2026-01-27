@@ -33,11 +33,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.ui.ads.AdMobBanner
+import com.bisayaspeak.ai.ui.ads.AdUnitIds
+import com.bisayaspeak.ai.ui.ads.AdsPolicy
 
 // --- 必須定義 ---
 enum class FeatureId {
@@ -64,7 +66,7 @@ data class FeatureItem(
 // --- メイン画面 ---
 @Composable
 fun HomeScreen(
-    homeStatus: Any? = null,
+    homeStatus: HomeStatus? = null,
     isLiteBuild: Boolean = false,
     isPremiumPlan: Boolean = false,
     isProUnlocked: Boolean = false,
@@ -90,14 +92,17 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 学習セクション（画像あり）
-        LearningSection(onStartLearning)
+        // 学習セクション（称号・レッスン導線）
+        LearningSection(
+            status = homeStatus,
+            onStartLearning = onStartLearning
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // PRO機能セクション
         Text(
-            text = "PRO機能",
+            text = stringResource(R.string.pro_feature_section_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -110,15 +115,19 @@ fun HomeScreen(
             onShowProDialog = { showProDialog = true },
             isTariComingSoon = isTariComingSoon,
             onComingSoon = {
-                Toast.makeText(context, "新機能を準備中です。もう少しお待ちください！", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.home_new_feature_message),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // 広告バナー
-        if (AdsPolicy.shouldShowAds(context)) {
-            AdMobBanner(adUnitId = AdUnitIds.HOME_BANNER)
+        if (AdsPolicy.areAdsEnabled) {
+            AdMobBanner(adUnitId = AdUnitIds.BANNER_MAIN)
         }
 
         Spacer(modifier = Modifier.height(80.dp))
@@ -140,21 +149,21 @@ fun HomeHeader(onClickProfile: () -> Unit) {
     ) {
         Column {
             Text(
-                text = "今日もビサヤ語を磨こう",
+                text = stringResource(R.string.home_header_tagline),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color(0xFFFFD700)
             )
             Text(
-                text = "Learn Bisaya AI",
+                text = "LearnBisaya",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color(0xFFFFD700)
             )
         }
         IconButton(onClick = onClickProfile) {
             Icon(
                 imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Profile",
+                contentDescription = stringResource(R.string.home_profile_icon_desc),
                 modifier = Modifier.size(48.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -163,7 +172,25 @@ fun HomeHeader(onClickProfile: () -> Unit) {
 }
 
 @Composable
-fun LearningSection(onStartLearning: () -> Unit) {
+fun LearningSection(
+    status: HomeStatus?,
+    onStartLearning: () -> Unit
+) {
+    val level = status?.currentLevel ?: 1
+    val honorTitle = status?.honorTitle?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.home_honor_unlock_prompt)
+    val honorNickname = status?.honorNickname?.takeIf { it.isNotBlank() }
+    val progress = status?.progressToNextLevel ?: 0f
+    val nextXpMessage = status?.let {
+        when {
+            it.xpForNextLevel <= it.xpForCurrentLevel -> stringResource(R.string.home_honor_reached)
+            else -> stringResource(
+                R.string.home_honor_next_xp,
+                (it.xpForNextLevel - it.totalXp).coerceAtLeast(0)
+            )
+        }
+    } ?: stringResource(R.string.home_honor_unlock_hint)
+
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.padding(horizontal = 16.dp)
@@ -182,28 +209,45 @@ fun LearningSection(onStartLearning: () -> Unit) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "称号レベル Lv 25",
+                        text = stringResource(R.string.home_honor_level_label, level),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "ジンベエザメと泳ぐ（セブの達人！）",
+                        text = honorTitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.8f)
                     )
+                    honorNickname?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(50)),
+                        trackColor = Color.White.copy(alpha = 0.2f),
+                        color = Color(0xFFFFD700)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "累計XP 3000",
+                        text = nextXpMessage,
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(top = 4.dp)
+                        color = Color.White.copy(alpha = 0.8f)
                     )
                 }
 
                 // フクロウの画像表示 (正しいリソースID: char_owl)
                 Image(
                     painter = painterResource(id = R.drawable.char_owl),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.home_owl_description),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxHeight()
@@ -227,13 +271,13 @@ fun LearningSection(onStartLearning: () -> Unit) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "学習開始",
+                        text = stringResource(R.string.home_start_learning_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "今日のおすすめレッスンからスタートしよう",
+                        text = stringResource(R.string.home_start_learning_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.9f)
                     )
@@ -252,7 +296,7 @@ fun LearningSection(onStartLearning: () -> Unit) {
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "今すぐ学ぶ",
+                            text = stringResource(R.string.home_start_learning_cta),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -263,7 +307,7 @@ fun LearningSection(onStartLearning: () -> Unit) {
                 // タルシエの画像表示 (正しいリソースID: char_tarsier)
                 Image(
                     painter = painterResource(id = R.drawable.char_tarsier),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.home_tarsier_description),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxHeight()
@@ -290,8 +334,8 @@ fun ProFeaturesSection(
     ) {
         // AI翻訳機
         ProFeatureItem(
-            title = "AI 翻訳機",
-            subtitle = "ネイティブ翻訳",
+            title = stringResource(R.string.home_feature_ai_translator_title),
+            subtitle = stringResource(R.string.home_feature_ai_translator_subtitle),
             icon = Icons.Default.Translate,
             color = Color(0xFFD4A017),
             onClick = { onClickFeature(FeatureId.AI_TRANSLATOR) },
@@ -300,8 +344,8 @@ fun ProFeaturesSection(
 
         // タリと散歩道
         ProFeatureItem(
-            title = "タリと散歩道",
-            subtitle = "自由な会話の旅",
+            title = stringResource(R.string.home_feature_tari_walk_title),
+            subtitle = stringResource(R.string.home_feature_tari_walk_subtitle),
             icon = Icons.Default.ViewList,
             color = MaterialTheme.colorScheme.primary,
             onClick = { onClickFeature(FeatureId.ROLE_PLAY) },
@@ -309,9 +353,13 @@ fun ProFeaturesSection(
         )
 
         // カミングスーン（リリース） / タリ道場（デバッグ）
-        val dojoTitle = if (isTariComingSoon) "カミングスーン" else "タリ道場"
-        val dojoSubtitle = if (isTariComingSoon) "特別トレーニング準備中" else "実践ボイス会話"
-        val dojoBadge = if (isTariComingSoon) "修行中" else null
+        val dojoTitle = stringResource(
+            if (isTariComingSoon) R.string.home_feature_dojo_title_coming else R.string.home_feature_dojo_title_debug
+        )
+        val dojoSubtitle = stringResource(
+            if (isTariComingSoon) R.string.home_feature_dojo_subtitle_coming else R.string.home_feature_dojo_subtitle_debug
+        )
+        val dojoBadge = if (isTariComingSoon) stringResource(R.string.home_feature_dojo_badge) else null
         val dojoIllustration = if (isTariComingSoon) R.drawable.taridoujo else null
 
         ProFeatureItem(
@@ -398,7 +446,7 @@ fun ProFeatureItem(
                     Spacer(modifier = Modifier.height(8.dp))
                     Image(
                         painter = painterResource(id = illustration),
-                        contentDescription = "タリ先生",
+                        contentDescription = stringResource(R.string.home_pro_feature_illustration_desc),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -414,35 +462,10 @@ fun ProFeatureItem(
 fun ProDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("PRO版にアップグレード") },
-        text = { Text("この機能はPRO版限定です。") },
+        title = { Text(stringResource(R.string.home_pro_dialog_title)) },
+        text = { Text(stringResource(R.string.home_pro_dialog_message)) },
         confirmButton = {
-            Button(onClick = onDismiss) { Text("OK") }
+            Button(onClick = onDismiss) { Text(stringResource(R.string.ok)) }
         }
     )
-}
-
-// ==========================================
-// エラー回避用のスタブ
-// ==========================================
-
-object AdUnitIds {
-    const val HOME_BANNER = "ca-app-pub-3940256099942544/6300978111"
-}
-
-object AdsPolicy {
-    fun shouldShowAds(context: android.content.Context): Boolean = true
-}
-
-@Composable
-fun AdMobBanner(adUnitId: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .background(Color.Gray.copy(alpha = 0.1f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Ad Banner", style = MaterialTheme.typography.labelSmall)
-    }
 }

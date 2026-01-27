@@ -61,12 +61,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ui.viewmodel.AiExplanation
 import com.bisayaspeak.ai.ui.viewmodel.DictionaryLanguage
 import com.bisayaspeak.ai.ui.viewmodel.DictionaryMode
@@ -105,9 +107,9 @@ fun DictionaryScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("AI翻訳機", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.dictionary_title), fontWeight = FontWeight.Bold)
                         Text(
-                            text = "辞書・翻訳 / トークモード",
+                            text = stringResource(R.string.dictionary_subtitle),
                             color = Color.White.copy(alpha = 0.7f),
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -115,7 +117,7 @@ fun DictionaryScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "戻る")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -193,12 +195,12 @@ private fun ModeToggle(current: DictionaryMode, onModeChange: (DictionaryMode) -
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ModeChip(
-                text = "辞書・翻訳",
+                text = stringResource(R.string.dictionary_mode_explore),
                 selected = current == DictionaryMode.EXPLORE,
                 onClick = { onModeChange(DictionaryMode.EXPLORE) }
             )
             ModeChip(
-                text = "トークモード",
+                text = stringResource(R.string.dictionary_mode_talk),
                 selected = current == DictionaryMode.TALK,
                 onClick = { onModeChange(DictionaryMode.TALK) }
             )
@@ -246,7 +248,7 @@ private fun ExploreSection(
             value = state.query,
             onValueChange = onQueryChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("日本語でもビサヤ語でもOK", color = Color(0xFF7E8DA8)) },
+            placeholder = { Text(stringResource(R.string.dictionary_query_placeholder), color = Color(0xFF7E8DA8)) },
             leadingIcon = {
                 Icon(Icons.Default.GraphicEq, contentDescription = null, tint = Color(0xFF38BDF8))
             },
@@ -265,7 +267,14 @@ private fun ExploreSection(
             enabled = !state.isLoading,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF14B8A6))
         ) {
-            Text(if (state.isLoading) "探索中…" else "探索する", fontWeight = FontWeight.Bold)
+            Text(
+                text = if (state.isLoading) {
+                    stringResource(R.string.dictionary_button_searching)
+                } else {
+                    stringResource(R.string.dictionary_button_explore)
+                },
+                fontWeight = FontWeight.Bold
+            )
         }
 
         state.errorMessage?.let { message ->
@@ -314,7 +323,7 @@ private fun CandidateCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.VolumeUp,
-                        contentDescription = "ビサヤ語を再生",
+                        contentDescription = stringResource(R.string.dictionary_play_bisaya_desc),
                         tint = Color(0xFF38BDF8)
                     )
                 }
@@ -322,8 +331,8 @@ private fun CandidateCard(
             Text(candidate.japanese, color = Color.White, fontWeight = FontWeight.SemiBold)
             Text(candidate.english, color = Color(0xFF94A3B8), fontSize = 13.sp)
             Spacer(modifier = Modifier.height(6.dp))
-            InfoPill("丁寧度 ${candidate.politeness}")
-            InfoPill("シチュエーション: ${candidate.situation}")
+            InfoPill(stringResource(R.string.dictionary_politeness_label, candidate.politeness))
+            InfoPill(stringResource(R.string.dictionary_situation_label, candidate.situation))
             Text(candidate.nuance, color = Color(0xFFD1D9E6), fontSize = 13.sp)
             Text(candidate.tip, color = Color(0xFF93E6C8), fontSize = 12.sp)
         }
@@ -353,12 +362,12 @@ private fun ExplanationCard(explanation: AiExplanation) {
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0B1220))
     ) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("タリのメモ", color = Color(0xFFFB7185), fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.dictionary_explanation_title), color = Color(0xFFFB7185), fontWeight = FontWeight.Bold)
             Text(explanation.summary, color = Color.White)
-            Text("使い方ヒント", color = Color(0xFF38BDF8), fontSize = 13.sp)
+            Text(stringResource(R.string.dictionary_usage_title), color = Color(0xFF38BDF8), fontSize = 13.sp)
             Text(explanation.usage, color = Color(0xFFD7E0F5))
             if (explanation.relatedPhrases.isNotEmpty()) {
-                Text("関連表現", color = Color(0xFF22C55E), fontSize = 13.sp)
+                Text(stringResource(R.string.dictionary_related_title), color = Color(0xFF22C55E), fontSize = 13.sp)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     explanation.relatedPhrases.forEach { phrase ->
                         Text("・$phrase", color = Color(0xFFA5B4FC))
@@ -404,7 +413,7 @@ private fun TalkSection(
             state.errorMessage?.let { ErrorCard(it) }
 
             if (state.talkHistory.isNotEmpty()) {
-                Text("最近のトーク", color = Color(0xFF9CA3AF), fontSize = 13.sp)
+                Text(stringResource(R.string.dictionary_recent_talks), color = Color(0xFF9CA3AF), fontSize = 13.sp)
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     state.talkHistory.forEach { history ->
                         TalkHistoryRow(history)
@@ -448,19 +457,27 @@ private fun TalkStatusCard(status: TalkStatus, isManualRecording: Boolean) {
             statusColor = Color(0xFFF87171)
         }
         TalkStatus.Idle -> {
-            label = if (isManualRecording) "録音待機" else "待機中 (タップで録音)"
+            label = if (isManualRecording) {
+                stringResource(R.string.dictionary_status_idle_manual)
+            } else {
+                stringResource(R.string.dictionary_status_idle_tap)
+            }
             statusColor = Color(0xFF94A3B8)
         }
         TalkStatus.Listening -> {
-            label = if (isManualRecording) "録音中 (タップで翻訳)" else "リスニング中"
+            label = if (isManualRecording) {
+                stringResource(R.string.dictionary_status_listening_manual)
+            } else {
+                stringResource(R.string.dictionary_status_listening_auto)
+            }
             statusColor = if (isManualRecording) Color(0xFFFB923C) else Color(0xFF34D399)
         }
         TalkStatus.Processing -> {
-            label = "翻訳中"
+            label = stringResource(R.string.dictionary_status_processing)
             statusColor = Color(0xFFFCD34D)
         }
         TalkStatus.Speaking -> {
-            label = "翻訳テキストを再生中"
+            label = stringResource(R.string.dictionary_status_speaking)
             statusColor = Color(0xFF6366F1)
         }
     }
@@ -497,13 +514,13 @@ private fun TalkResultCard(
     ) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = "検知言語: ${languageLabel(response.detectedLanguage)}",
+                text = stringResource(R.string.dictionary_detected_language, languageLabel(response.detectedLanguage)),
                 color = Color(0xFF60A5FA),
                 fontSize = 12.sp
             )
-            Text("入力", color = Color(0xFF9CA3AF), fontSize = 12.sp)
+            Text(stringResource(R.string.dictionary_input_label), color = Color(0xFF9CA3AF), fontSize = 12.sp)
             Text(response.sourceText, color = Color.White, fontWeight = FontWeight.SemiBold)
-            Text("翻訳", color = Color(0xFF9CA3AF), fontSize = 12.sp)
+            Text(stringResource(R.string.dictionary_translation_label), color = Color(0xFF9CA3AF), fontSize = 12.sp)
             Text(
                 response.translatedText,
                 color = Color(0xFFBAE6FD),
@@ -512,14 +529,14 @@ private fun TalkResultCard(
             if (response.romanized.isNotBlank()) {
                 Text(response.romanized, color = Color(0xFFFB923C), fontSize = 12.sp)
             }
-            Text("解説", color = Color(0xFF9CA3AF), fontSize = 12.sp)
+            Text(stringResource(R.string.dictionary_explanation_label), color = Color(0xFF9CA3AF), fontSize = 12.sp)
             Text(response.explanation, color = Color(0xFFFDE68A))
             Button(
                 onClick = onReplay,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
             ) {
-                Text("この発話で再翻訳", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.dictionary_retranslate_button), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -555,11 +572,12 @@ private fun ErrorCard(message: String) {
     }
 }
 
+@Composable
 private fun languageLabel(language: DictionaryLanguage): String = when (language) {
-    DictionaryLanguage.JAPANESE -> "日本語"
-    DictionaryLanguage.BISAYA -> "ビサヤ語"
-    DictionaryLanguage.ENGLISH -> "英語"
-    DictionaryLanguage.UNKNOWN -> "未判定"
+    DictionaryLanguage.JAPANESE -> stringResource(R.string.japanese)
+    DictionaryLanguage.BISAYA -> stringResource(R.string.bisaya)
+    DictionaryLanguage.ENGLISH -> stringResource(R.string.english)
+    DictionaryLanguage.UNKNOWN -> stringResource(R.string.dictionary_language_unknown)
 }
 
 @Composable
@@ -571,14 +589,14 @@ private fun ManualMicButton(
 ) {
     val baseColor = if (isRecording) Color(0xFF7C3AED) else Color(0xFF1E293B)
     val label = when {
-        isRecording -> "録音中…タップで翻訳する"
-        isBusy -> "翻訳処理中"
-        else -> "タップで録音開始"
+        isRecording -> stringResource(R.string.dictionary_mic_label_recording)
+        isBusy -> stringResource(R.string.dictionary_mic_label_busy)
+        else -> stringResource(R.string.dictionary_mic_label_idle)
     }
     val subLabel = when {
-        isRecording -> "話し終えたらもう一度タップ"
-        isBusy -> "タリが処理しています"
-        else -> "タップ → 録音 / もう一度タップ → 訳＆読み上げ"
+        isRecording -> stringResource(R.string.dictionary_mic_sub_label_recording)
+        isBusy -> stringResource(R.string.dictionary_mic_sub_label_busy)
+        else -> stringResource(R.string.dictionary_mic_sub_label_idle)
     }
     Box(
         modifier = Modifier
@@ -618,7 +636,7 @@ private fun ManualMicButton(
 private fun PermissionHint(onRequest: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            text = "マイク権限が必要です",
+            text = stringResource(R.string.dictionary_permission_title),
             color = Color(0xFFF87171),
             fontSize = 13.sp
         )
@@ -626,7 +644,7 @@ private fun PermissionHint(onRequest: () -> Unit) {
             onClick = onRequest,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("マイク権限を許可する", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.dictionary_permission_button), fontWeight = FontWeight.Bold)
         }
     }
 }

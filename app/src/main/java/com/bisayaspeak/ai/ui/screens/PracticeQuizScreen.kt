@@ -33,9 +33,9 @@ import com.bisayaspeak.ai.R
 import androidx.core.content.ContextCompat
 import com.bisayaspeak.ai.data.model.PracticeItem
 import com.bisayaspeak.ai.util.AudioUtil
-import com.bisayaspeak.ai.data.model.PracticeData
 import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.model.PronunciationStatus
+import com.bisayaspeak.ai.data.repository.PracticeContentRepository
 import com.bisayaspeak.ai.data.repository.PronunciationRepository
 import com.bisayaspeak.ai.data.repository.PronunciationFeedbackRepository
 import com.bisayaspeak.ai.ads.AdManager
@@ -71,7 +71,11 @@ fun PracticeQuizScreen(
     
     // 5問をランダムに抽出
     val questions = remember(category) {
-        PracticeData.getRandomQuestions(category, 5)
+        try {
+            PracticeContentRepository(context.applicationContext).getRandomQuestions(category, 5)
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
     
     var currentQuestionIndex by remember { mutableStateOf(0) }
@@ -227,7 +231,11 @@ fun PracticeQuizScreen(
                             color = Color.White
                         )
                         Text(
-                            text = "問題 ${currentQuestionIndex + 1} / ${questions.size}",
+                            text = stringResource(
+                                R.string.practice_quiz_question_progress,
+                                currentQuestionIndex + 1,
+                                questions.size
+                            ),
                             fontSize = 12.sp,
                             color = Color.Gray
                         )
@@ -237,7 +245,7 @@ fun PracticeQuizScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.Default.ArrowBack,
-                            contentDescription = "戻る",
+                            contentDescription = stringResource(R.string.back),
                             tint = Color.White
                         )
                     }
@@ -312,7 +320,7 @@ fun PracticeQuizScreen(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Text(
-                                    text = "日本語",
+                                    text = stringResource(R.string.language_japanese),
                                     fontSize = 12.sp,
                                     color = Color.Gray
                                 )
@@ -381,7 +389,16 @@ fun PracticeQuizScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "判定モード：${if (proJudgmentMode == PronunciationThreshold.ProJudgmentMode.STRICT) "厳密" else "甘め"}",
+                                        text = stringResource(
+                                            R.string.practice_quiz_judgment_mode,
+                                            stringResource(
+                                                if (proJudgmentMode == PronunciationThreshold.ProJudgmentMode.STRICT) {
+                                                    R.string.practice_quiz_judgment_mode_strict
+                                                } else {
+                                                    R.string.practice_quiz_judgment_mode_lenient
+                                                }
+                                            )
+                                        ),
                                         fontSize = 12.sp,
                                         color = Color(0xFFFFD700),
                                         fontWeight = FontWeight.Bold
@@ -419,7 +436,7 @@ fun PracticeQuizScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("サンプル音声を再生", fontSize = 14.sp)
+                            Text(stringResource(R.string.practice_quiz_play_sample_audio), fontSize = 14.sp)
                         }
 
                         Column(
@@ -467,7 +484,7 @@ fun PracticeQuizScreen(
 
                                             if (recordingResult.file == null) {
                                                 android.util.Log.e("DEBUG", "❌ Recording file is NULL!")
-                                                errorMessage = "録音に失敗しました"
+                                                errorMessage = context.getString(R.string.practice_quiz_recording_failed)
                                                 result = PronunciationStatus.TRY_AGAIN
                                                 return@launch
                                             }
@@ -506,13 +523,13 @@ fun PracticeQuizScreen(
                                                         result = PronunciationThreshold.getStatus(score, isPremium, proJudgmentMode)
                                                         judgmentHistory = judgmentHistory + (score to result!!)
 
-                                                        android.util.Log.i("PracticeQuiz", "═══════════════════════════════════════")
-                                                        android.util.Log.i("PracticeQuiz", "📝 単語: ${currentQuestion.bisaya}")
-                                                        android.util.Log.i("PracticeQuiz", "🎯 スコア: $score / 100")
-                                                        android.util.Log.i("PracticeQuiz", "✅ 判定: $result")
-                                                        android.util.Log.i("PracticeQuiz", "📊 閾値: ${PronunciationThreshold.getThresholdInfo(isPremium, proJudgmentMode)}")
-                                                        android.util.Log.i("PracticeQuiz", "🔄 試行回数: ${judgmentHistory.size}")
-                                                        android.util.Log.i("PracticeQuiz", "═══════════════════════════════════════")
+                                                        android.util.Log.i("PracticeQuiz", "=======================================")
+                                                        android.util.Log.i("PracticeQuiz", "Word: ${currentQuestion.bisaya}")
+                                                        android.util.Log.i("PracticeQuiz", "Score: $score / 100")
+                                                        android.util.Log.i("PracticeQuiz", "Result: $result")
+                                                        android.util.Log.i("PracticeQuiz", "Thresholds: ${PronunciationThreshold.getThresholdInfo(isPremium, proJudgmentMode)}")
+                                                        android.util.Log.i("PracticeQuiz", "Attempts: ${judgmentHistory.size}")
+                                                        android.util.Log.i("PracticeQuiz", "=======================================")
 
                                                         if (isPremium && result == PronunciationStatus.TRY_AGAIN) {
                                                             scope.launch {
@@ -529,18 +546,24 @@ fun PracticeQuizScreen(
                                                         }
                                                     } else {
                                                         result = PronunciationStatus.TRY_AGAIN
-                                                        errorMessage = "評価に失敗しました"
+                                                        errorMessage = context.getString(R.string.practice_quiz_evaluation_failed)
                                                     }
                                                 } catch (e: Exception) {
                                                     result = PronunciationStatus.TRY_AGAIN
-                                                    errorMessage = "エラー: ${e.message}"
+                                                    errorMessage = context.getString(
+                                                        R.string.practice_quiz_error_generic,
+                                                        e.message ?: ""
+                                                    )
                                                 } finally {
                                                     isAnalyzing = false
                                                 }
                                             }
                                         } catch (e: Exception) {
                                             isRecording = false
-                                            errorMessage = "録音エラー: ${e.message}"
+                                            errorMessage = context.getString(
+                                                R.string.practice_quiz_recording_error,
+                                                e.message ?: ""
+                                            )
                                             result = PronunciationStatus.TRY_AGAIN
                                             android.util.Log.e("PracticeQuiz", "Recording error", e)
                                         }
@@ -569,10 +592,10 @@ fun PracticeQuizScreen(
 
                             Text(
                                 text = when {
-                                    isAnalyzing -> "評価中..."
-                                    isRecording -> "録音中..."
-                                    result == PronunciationStatus.TRY_AGAIN -> "もう一度録音してみましょう"
-                                    else -> "タップして録音"
+                                    isAnalyzing -> stringResource(R.string.practice_quiz_status_analyzing)
+                                    isRecording -> stringResource(R.string.practice_quiz_status_recording)
+                                    result == PronunciationStatus.TRY_AGAIN -> stringResource(R.string.practice_quiz_status_try_again)
+                                    else -> stringResource(R.string.practice_quiz_status_tap_to_record)
                                 },
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
@@ -615,9 +638,9 @@ fun PracticeQuizScreen(
                                         ) {
                                             Text(
                                                 text = when (resultValue) {
-                                                    PronunciationStatus.PERFECT -> "Perfect!"
-                                                    PronunciationStatus.OKAY -> "Okay"
-                                                    PronunciationStatus.TRY_AGAIN -> "Try Again"
+                                                    PronunciationStatus.PERFECT -> stringResource(R.string.practice_quiz_result_perfect)
+                                                    PronunciationStatus.OKAY -> stringResource(R.string.practice_quiz_result_okay)
+                                                    PronunciationStatus.TRY_AGAIN -> stringResource(R.string.practice_quiz_result_try_again)
                                                 },
                                                 fontSize = 24.sp,
                                                 fontWeight = FontWeight.Bold,
@@ -627,9 +650,9 @@ fun PracticeQuizScreen(
                                         }
                                         Text(
                                             text = when (resultValue) {
-                                                PronunciationStatus.PERFECT -> "よくできました！🎉"
-                                                PronunciationStatus.OKAY -> "良い発音です！もう少しで完璧！👍"
-                                                PronunciationStatus.TRY_AGAIN -> "もう一度録音してみましょう"
+                                                PronunciationStatus.PERFECT -> stringResource(R.string.practice_quiz_feedback_perfect)
+                                                PronunciationStatus.OKAY -> stringResource(R.string.practice_quiz_feedback_okay)
+                                                PronunciationStatus.TRY_AGAIN -> stringResource(R.string.practice_quiz_status_try_again)
                                             },
                                             fontSize = 14.sp,
                                             color = Color.White,
@@ -660,7 +683,7 @@ fun PracticeQuizScreen(
                                     )
                                     Column {
                                         Text(
-                                            text = "AI発音コーチ",
+                                            text = stringResource(R.string.practice_quiz_ai_pronunciation_coach),
                                             fontSize = 11.sp,
                                             color = Color(0xFFFFD700),
                                             fontWeight = FontWeight.Bold
@@ -734,13 +757,13 @@ fun PracticeQuizScreen(
                                     )
                                     Column {
                                         Text(
-                                            text = "もう一度挑戦しましょう",
+                                            text = stringResource(R.string.practice_quiz_try_again_title),
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFFF44336)
                                         )
                                         Text(
-                                            text = "マイクボタンをタップして再録音",
+                                            text = stringResource(R.string.practice_quiz_try_again_subtitle),
                                             fontSize = 14.sp,
                                             color = Color.Gray
                                         )
@@ -774,7 +797,11 @@ fun PracticeQuizScreen(
                                 enabled = result != null
                             ) {
                                 Text(
-                                    text = if (currentQuestionIndex < questions.size - 1) "次の問題へ" else "完了",
+                                    text = if (currentQuestionIndex < questions.size - 1) {
+                                        stringResource(R.string.practice_quiz_next_question)
+                                    } else {
+                                        stringResource(R.string.done)
+                                    },
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
                                 )
