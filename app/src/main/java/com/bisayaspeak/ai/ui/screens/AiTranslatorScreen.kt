@@ -62,6 +62,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -73,6 +74,7 @@ import com.bisayaspeak.ai.ui.viewmodel.AiTranslatorViewModel
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorUiState
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
+import com.bisayaspeak.ai.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,7 +121,7 @@ fun AiTranslatorScreen(
     ) { granted ->
         hasMicPermission = granted
         if (granted) {
-            launchSpeechRecognizer(direction, speechLauncher)
+            launchSpeechRecognizer(direction, speechLauncher, context)
         }
     }
 
@@ -128,7 +130,10 @@ fun AiTranslatorScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "戻る")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -138,9 +143,9 @@ fun AiTranslatorScreen(
                 ),
                 title = {
                     Column {
-                        Text("AI Translator")
+                        Text(stringResource(R.string.bisaya_translate))
                         Text(
-                            text = "現地ネイティブのニュアンスで翻訳",
+                            text = stringResource(R.string.translator_top_subtitle),
                             color = Color.White.copy(alpha = 0.7f),
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -170,7 +175,7 @@ fun AiTranslatorScreen(
                 onClear = viewModel::clearAll,
                 onMicClick = {
                     if (hasMicPermission) {
-                        launchSpeechRecognizer(direction, speechLauncher)
+                        launchSpeechRecognizer(direction, speechLauncher, context)
                     } else {
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     }
@@ -244,15 +249,16 @@ private fun InputCard(
             ) {
                 Column {
                     Text(
-                        text = "入力テキスト",
+                        text = stringResource(R.string.translator_input_label),
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = when (direction) {
-                            TranslationDirection.JA_TO_CEB -> "日本語 → ビサヤ語"
-                            TranslationDirection.CEB_TO_JA -> "ビサヤ語 → 日本語"
-                        },
+                        text = stringResource(
+                            if (direction == TranslationDirection.JA_TO_CEB)
+                                R.string.translator_direction_ja_ceb
+                            else R.string.translator_direction_ceb_ja
+                        ),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 13.sp
                     )
@@ -261,7 +267,7 @@ private fun InputCard(
                     IconButton(onClick = onClear) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "クリア",
+                            contentDescription = stringResource(R.string.translator_clear_desc),
                             tint = Color.White.copy(alpha = 0.6f)
                         )
                     }
@@ -271,7 +277,7 @@ private fun InputCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
-                            contentDescription = "音声入力",
+                            contentDescription = stringResource(R.string.translator_mic_desc),
                             tint = Color.White
                         )
                     }
@@ -295,7 +301,7 @@ private fun InputCard(
                     ) { inner ->
                         if (text.isEmpty()) {
                             Text(
-                                text = "ここに文章を入力するか、マイクで話してください",
+                                text = stringResource(R.string.translator_input_placeholder),
                                 color = Color.White.copy(alpha = 0.4f)
                             )
                         }
@@ -333,15 +339,16 @@ private fun ActionButtons(
             ) {
                 Column {
                     Text(
-                        text = "言語切替",
+                        text = stringResource(R.string.translator_swap_label),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 12.sp
                     )
                     Text(
-                        text = when (direction) {
-                            TranslationDirection.JA_TO_CEB -> "日本語 → ビサヤ語"
-                            TranslationDirection.CEB_TO_JA -> "ビサヤ語 → 日本語"
-                        },
+                        text = stringResource(
+                            if (direction == TranslationDirection.JA_TO_CEB)
+                                R.string.translator_direction_ja_ceb
+                            else R.string.translator_direction_ceb_ja
+                        ),
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -349,7 +356,7 @@ private fun ActionButtons(
                 IconButton(onClick = onSwap) {
                     Icon(
                         imageVector = Icons.Default.SwapHoriz,
-                        contentDescription = "切替",
+                        contentDescription = stringResource(R.string.translator_swap_desc),
                         tint = Color.White
                     )
                 }
@@ -380,7 +387,7 @@ private fun ActionButtons(
             } else {
                 TextButton(onClick = onTranslate) {
                     Text(
-                        text = "翻訳",
+                        text = stringResource(R.string.translator_translate_button),
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -419,15 +426,16 @@ private fun ResultCard(
             ) {
                 Column {
                     Text(
-                        text = "翻訳結果",
+                        text = stringResource(R.string.translator_result_label),
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = when (direction) {
-                            TranslationDirection.JA_TO_CEB -> "ビサヤ語（ネイティブ口語）"
-                            TranslationDirection.CEB_TO_JA -> "日本語（自然なニュアンス）"
-                        },
+                        text = stringResource(
+                            if (direction == TranslationDirection.JA_TO_CEB)
+                                R.string.translator_result_ja_ceb_sub
+                            else R.string.translator_result_ceb_ja_sub
+                        ),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 13.sp
                     )
@@ -438,7 +446,7 @@ private fun ResultCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "コピー",
+                        contentDescription = stringResource(R.string.translator_copy_desc),
                         tint = if (text.isNotBlank()) Color.White else Color.White.copy(alpha = 0.4f)
                     )
                 }
@@ -455,7 +463,7 @@ private fun ResultCard(
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = if (text.isBlank()) "ここに翻訳結果が表示されます" else text,
+                        text = if (text.isBlank()) stringResource(R.string.translator_result_placeholder) else text,
                         color = if (text.isBlank()) Color.White.copy(alpha = 0.4f) else Color.White,
                         fontSize = 18.sp,
                         lineHeight = 26.sp
@@ -464,7 +472,7 @@ private fun ResultCard(
             }
             if (isSpeakEnabled) {
                 Text(
-                    text = "タップするとビサヤ語音声を再生",
+                    text = stringResource(R.string.translator_tap_to_play_bisaya),
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 12.sp
                 )
@@ -492,7 +500,8 @@ private fun ErrorBanner(message: String) {
 
 private fun launchSpeechRecognizer(
     direction: TranslationDirection,
-    launcher: androidx.activity.result.ActivityResultLauncher<Intent>
+    launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
+    context: android.content.Context
 ) {
     val language = when (direction) {
         TranslationDirection.JA_TO_CEB -> "ja-JP"
@@ -503,7 +512,7 @@ private fun launchSpeechRecognizer(
         putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
         putExtra(
             RecognizerIntent.EXTRA_PROMPT,
-            "自然な口語で話すと、ニュアンスごと翻訳されます"
+            context.getString(R.string.translator_voice_prompt)
         )
     }
     launcher.launch(intent)

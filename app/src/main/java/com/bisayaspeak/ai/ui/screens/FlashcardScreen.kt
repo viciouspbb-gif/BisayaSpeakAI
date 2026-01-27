@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,19 +36,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
-import com.bisayaspeak.ai.data.model.PracticeData
 import com.bisayaspeak.ai.data.model.PracticeItem
+import com.bisayaspeak.ai.data.repository.PracticeContentRepository
 import com.bisayaspeak.ai.ui.viewmodel.FlashcardUiState
 import com.bisayaspeak.ai.ui.viewmodel.FlashcardViewModel
 import com.bisayaspeak.ai.ui.viewmodel.PracticeViewModel
-import androidx.compose.ui.res.stringResource
-import androidx.compose.material3.ExperimentalMaterial3Api
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,13 +56,19 @@ fun FlashcardScreen(
     onNavigateBack: () -> Unit
 ) {
     val isLiteBuild = BuildConfig.IS_LITE_BUILD
+    val context = LocalContext.current
 
     if (isLiteBuild) {
         val liteViewModel: FlashcardViewModel = viewModel()
         val uiState by liteViewModel.uiState.collectAsState()
 
         LaunchedEffect(Unit) {
-            liteViewModel.startLiteSession(PracticeData.allItems)
+            val items = try {
+                PracticeContentRepository(context.applicationContext).loadPracticeItemsV1()
+            } catch (_: Exception) {
+                emptyList()
+            }
+            liteViewModel.startLiteSession(items)
         }
 
         FlashcardLiteScaffold(
@@ -140,7 +147,7 @@ private fun FlashcardLiteScaffold(
             TopAppBar(
                 title = {
                     Text(
-                        text = "今日のフラッシュカード",
+                        text = stringResource(R.string.flashcard_today_title),
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -170,7 +177,7 @@ private fun FlashcardLiteScaffold(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "今日のカードは準備中です",
+                        text = stringResource(R.string.flashcard_empty_message),
                         color = Color.White
                     )
                 }
@@ -219,7 +226,11 @@ private fun FlashcardLiteContent(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "${uiState.currentIndex + 1} / ${uiState.items.size}",
+                text = stringResource(
+                    R.string.flashcard_progress_format,
+                    uiState.currentIndex + 1,
+                    uiState.items.size
+                ),
                 color = Color.White.copy(alpha = 0.85f),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium
@@ -285,7 +296,7 @@ private fun FlashcardLiteContent(
                         }
                     } else {
                         Text(
-                            text = "タップで意味を表示",
+                            text = stringResource(R.string.flashcard_tap_to_reveal),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = Color.White.copy(alpha = 0.7f)
                             )
@@ -307,10 +318,10 @@ private fun FlashcardLiteContent(
                     .fillMaxWidth()
                     .height(54.dp)
             ) {
-                Text(text = "次へ")
+                Text(text = stringResource(R.string.flashcard_next_button))
             }
             Text(
-                text = "スワイプでも次へ進みます",
+                text = stringResource(R.string.flashcard_swipe_hint),
                 color = Color.White.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -331,7 +342,7 @@ private fun FlashcardCompletion(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "今日はこれだけで十分です。\nまた次のフラッシュカードで。",
+            text = stringResource(R.string.flashcard_completion_message),
             style = MaterialTheme.typography.titleMedium.copy(
                 color = Color.White,
                 lineHeight = 24.sp
@@ -340,7 +351,7 @@ private fun FlashcardCompletion(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Kita ta puhon.",
+            text = stringResource(R.string.flashcard_completion_phrase),
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFFFC400)
@@ -353,7 +364,7 @@ private fun FlashcardCompletion(
                 .fillMaxWidth()
                 .height(54.dp)
         ) {
-            Text(text = "トップへ戻る")
+            Text(text = stringResource(R.string.flashcard_completion_back_button))
         }
     }
 }
@@ -401,7 +412,7 @@ private fun FlashcardItem(
             ) {
                 Column {
                     Text(
-                        text = "日本語",
+                        text = stringResource(R.string.japanese_translation),
                         style = MaterialTheme.typography.labelMedium.copy(
                             color = Color.Gray
                         )
@@ -415,7 +426,7 @@ private fun FlashcardItem(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "English",
+                        text = stringResource(R.string.english_translation),
                         style = MaterialTheme.typography.labelMedium.copy(
                             color = Color.Gray
                         )

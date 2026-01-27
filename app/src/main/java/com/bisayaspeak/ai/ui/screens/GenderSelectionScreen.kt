@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -46,8 +47,9 @@ fun GenderSelectionScreen(
     navController: NavController,
     viewModel: GenderSelectionViewModel
 ) {
-    val tariSpeech = "Maayong buntag! Ako si Tali. Pwede nimo isulti unsa imong gender?"
-    val tariSpeechTranslation = "初めまして、タリです。あなたの性別を教えてくれる？"
+    val tariSpeech = stringResource(R.string.gender_selection_tari_speech)
+    val tariSpeechTranslation = stringResource(R.string.gender_selection_tari_translation)
+
     var showTranslation by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val voiceService = remember { GeminiVoiceService(context) }
@@ -89,7 +91,8 @@ fun GenderSelectionScreen(
         ) {
             Image(
                 painter = painterResource(id = R.drawable.char_tarsier),
-                contentDescription = "Tari",
+                contentDescription = stringResource(R.string.gender_selection_tari_image_desc),
+
                 modifier = Modifier
                     .size(140.dp)
                     .padding(bottom = 24.dp)
@@ -136,7 +139,8 @@ fun GenderSelectionScreen(
                         )
                     }
                     Text(
-                        text = "（長押しで日本語訳）",
+                        text = stringResource(R.string.gender_selection_translation_hint),
+
                         style = MaterialTheme.typography.caption,
                         color = Color(0xFFB0B0B0),
                         modifier = Modifier.padding(top = 12.dp)
@@ -147,7 +151,8 @@ fun GenderSelectionScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             GenderButton(
-                text = "Lalaki (Male)",
+                text = stringResource(R.string.gender_selection_button_male),
+
                 onClick = {
                     viewModel.saveUserGender(UserGender.MALE)
                     navController.navigate(targetRoute) {
@@ -159,7 +164,8 @@ fun GenderSelectionScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             GenderButton(
-                text = "Babae (Female)",
+                text = stringResource(R.string.gender_selection_button_female),
+
                 onClick = {
                     viewModel.saveUserGender(UserGender.FEMALE)
                     navController.navigate(targetRoute) {
@@ -171,7 +177,8 @@ fun GenderSelectionScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             GenderButton(
-                text = "Sekreto (Other)",
+                text = stringResource(R.string.gender_selection_button_other),
+
                 onClick = {
                     viewModel.saveUserGender(UserGender.OTHER)
                     navController.navigate(targetRoute) {

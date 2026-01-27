@@ -74,8 +74,9 @@ fun UpgradeScreen(
     // 購入成功メッセージ表示
     LaunchedEffect(showPurchaseSuccess) {
         showPurchaseSuccess?.let { productName ->
+            val message = context.getString(R.string.upgrade_purchase_success_message, productName)
             snackbarHostState.showSnackbar(
-                message = "$productName の購入が完了しました",
+                message = message,
                 duration = SnackbarDuration.Short
             )
             viewModel.clearPurchaseSuccessMessage()
@@ -140,21 +141,21 @@ fun UpgradeScreen(
 private fun PaywallHeader() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = "Premium AI",
+            text = stringResource(R.string.upgrade_paywall_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "AIレッスンを無制限で楽しもう",
+            text = stringResource(R.string.upgrade_paywall_tagline),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "初回7日間は無料トライアル付き。いつでもキャンセルできます。",
+            text = stringResource(R.string.upgrade_paywall_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -173,7 +174,7 @@ private fun HeroCtaButton(onClick: () -> Unit) {
         shape = RoundedCornerShape(18.dp)
     ) {
         Text(
-            text = "まずは7日間無料で試す",
+            text = stringResource(R.string.upgrade_cta_try_free),
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White
@@ -191,7 +192,7 @@ private fun SubscriptionPlanSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            text = "2つのプレミアムプラン",
+            text = stringResource(R.string.upgrade_plan_section_title),
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface
@@ -204,10 +205,11 @@ private fun SubscriptionPlanSection(
 
         monthlyPlan?.let { plan ->
             SubscriptionPlanCard(
-                title = "月間プラン",
+                title = stringResource(R.string.upgrade_plan_monthly_title),
                 priceLabel = plan.priceLabel(BillingManager.MONTHLY_TRIAL_TAG),
-                trialLabel = plan.trialLabel(BillingManager.MONTHLY_TRIAL_TAG) ?: "最初の7日間は無料",
-                badge = "定番",
+                trialLabel = plan.trialLabel(BillingManager.MONTHLY_TRIAL_TAG)
+                    ?: stringResource(R.string.upgrade_plan_trial_default),
+                badge = stringResource(R.string.upgrade_plan_badge_popular),
                 highlight = true,
                 onClick = { activity?.let(onMonthly) }
             )
@@ -215,10 +217,11 @@ private fun SubscriptionPlanSection(
 
         yearlyPlan?.let { plan ->
             SubscriptionPlanCard(
-                title = "年間プラン",
+                title = stringResource(R.string.upgrade_plan_yearly_title),
                 priceLabel = plan.priceLabel(BillingManager.YEARLY_TRIAL_TAG),
-                trialLabel = plan.trialLabel(BillingManager.YEARLY_TRIAL_TAG) ?: "最初の7日間は無料",
-                badge = "2ヶ月分お得",
+                trialLabel = plan.trialLabel(BillingManager.YEARLY_TRIAL_TAG)
+                    ?: stringResource(R.string.upgrade_plan_trial_default),
+                badge = stringResource(R.string.upgrade_plan_badge_savings),
                 highlight = false,
                 onClick = { activity?.let(onYearly) }
             )
@@ -276,7 +279,7 @@ private fun SubscriptionPlanCard(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
                 Text(
-                    text = "7日間無料で試す",
+                    text = stringResource(R.string.upgrade_plan_button_text),
                     color = if (highlight) Color(0xFF1E40AF) else Color(0xFFB45309),
                     fontWeight = FontWeight.Bold
                 )
@@ -299,7 +302,7 @@ private fun LoadingCard() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             CircularProgressIndicator(color = Color.White)
-            Text("プラン情報を読み込み中…", color = Color.White)
+            Text(stringResource(R.string.upgrade_loading_message), color = Color.White)
         }
     }
 }
@@ -315,16 +318,16 @@ private fun RestoreNote(onRestore: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "すでに登録済みですか？",
+                text = stringResource(R.string.upgrade_restore_title),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "過去に購入したサブスクは「購入を復元」からすぐに回復できます。",
+                text = stringResource(R.string.upgrade_restore_description),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             TextButton(onClick = onRestore) {
-                Text("購入を復元")
+                Text(stringResource(R.string.upgrade_restore_button))
             }
         }
     }

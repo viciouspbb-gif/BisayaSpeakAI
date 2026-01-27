@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -82,6 +83,14 @@ fun PracticeItemCard(
     content: PracticeItem,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val localeLanguage = context.resources.configuration.locales[0].language
+    val showJapanese = localeLanguage.equals("ja", ignoreCase = true)
+    val secondaryText = if (showJapanese) {
+        content.japanese
+    } else {
+        content.english
+    }
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -109,7 +118,7 @@ fun PracticeItemCard(
                 Spacer(Modifier.height(4.dp))
 
                 Text(
-                    text = content.japanese,
+                    text = secondaryText,
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.Gray
                 )

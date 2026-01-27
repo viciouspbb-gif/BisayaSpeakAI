@@ -43,9 +43,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bisayaspeak.ai.R
 
 data class QuizQuestion(
     val id: Int,
@@ -67,8 +69,8 @@ data class QuizResult(
     val totalScore: Int,
     val correctCount: Int,
     val totalQuestions: Int,
-    val weakPoints: List<String>,
-    val aiAdvice: String
+    val weakPointResIds: List<Int>,
+    val aiAdviceResId: Int
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,32 +85,44 @@ fun AIQuizScreen(
     var correctCount by remember { mutableStateOf(0) }
     var quizResult by remember { mutableStateOf<QuizResult?>(null) }
 
-    // サンプル問題（実際はAIが生成）
-    val questions = remember {
+    val questionHello = stringResource(R.string.ai_quiz_question_hello)
+    val questionGap = stringResource(R.string.ai_quiz_question_gap)
+    val questionThanks = stringResource(R.string.ai_quiz_question_thanks)
+    val explanationHello = stringResource(R.string.ai_quiz_explanation_hello)
+    val explanationGap = stringResource(R.string.ai_quiz_explanation_gap)
+    val explanationThanks = stringResource(R.string.ai_quiz_explanation_thanks)
+    val questions = remember(
+        questionHello,
+        questionGap,
+        questionThanks,
+        explanationHello,
+        explanationGap,
+        explanationThanks
+    ) {
         listOf(
             QuizQuestion(
                 id = 1,
                 type = QuizType.VOCABULARY,
-                question = "「こんにちは」をビサヤ語で何と言いますか？",
+                question = questionHello,
                 options = listOf("Maayong buntag", "Maayong hapon", "Kumusta", "Salamat"),
                 correctAnswer = 2,
-                explanation = "「Kumusta」は一般的な挨拶で、「こんにちは」や「元気ですか？」の意味です。"
+                explanation = explanationHello
             ),
             QuizQuestion(
                 id = 2,
                 type = QuizType.GRAMMAR,
-                question = "次の文の空欄に入る適切な単語は？\n「Ako ___ estudyante.」",
+                question = questionGap,
                 options = listOf("kay", "usa", "ang", "og"),
                 correctAnswer = 1,
-                explanation = "「usa」は「一つの」という意味で、「Ako usa ka estudyante」で「私は学生です」となります。"
+                explanation = explanationGap
             ),
             QuizQuestion(
                 id = 3,
                 type = QuizType.VOCABULARY,
-                question = "「ありがとう」をビサヤ語で何と言いますか？",
+                question = questionThanks,
                 options = listOf("Kumusta", "Salamat", "Palihug", "Oo"),
                 correctAnswer = 1,
-                explanation = "「Salamat」は「ありがとう」を意味します。"
+                explanation = explanationThanks
             )
         )
     }
@@ -123,12 +137,12 @@ fun AIQuizScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AIクイズ") },
+                title = { Text(stringResource(R.string.ai_quiz_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Outlined.ArrowBack,
-                            contentDescription = "戻る"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -180,8 +194,11 @@ fun AIQuizScreen(
                                         totalScore = (correctCount.toFloat() / questions.size * 100).toInt(),
                                         correctCount = correctCount,
                                         totalQuestions = questions.size,
-                                        weakPoints = listOf("文法の基礎", "語彙の強化"),
-                                        aiAdvice = "基本的な挨拶や単語は理解していますが、文法の理解を深めることで、より自然な会話ができるようになります。日常会話の練習を増やすことをおすすめします。"
+                                        weakPointResIds = listOf(
+                                            R.string.ai_quiz_weak_point_grammar,
+                                            R.string.ai_quiz_weak_point_vocab
+                                        ),
+                                        aiAdviceResId = R.string.ai_quiz_advice
                                     )
                                     quizState = QuizState.Result
                                 }
@@ -229,7 +246,7 @@ fun QuizIntroductionView(onStart: () -> Unit) {
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "AIが生成するパーソナライズドクイズ",
+            text = stringResource(R.string.ai_quiz_intro_title),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF222222),
@@ -239,7 +256,7 @@ fun QuizIntroductionView(onStart: () -> Unit) {
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "あなたの学習履歴をもとに、AIが最適な問題を自動生成します。",
+            text = stringResource(R.string.ai_quiz_intro_desc),
             fontSize = 16.sp,
             color = Color(0xFF666666)
         )
@@ -253,16 +270,16 @@ fun QuizIntroductionView(onStart: () -> Unit) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "出題形式",
+                text = stringResource(R.string.ai_quiz_intro_format_title),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF222222)
             )
             Spacer(Modifier.height(8.dp))
-            Text("• 並べ替え問題（リスニング）", fontSize = 14.sp, color = Color(0xFF666666))
-            Text("• 穴埋め問題（文法）", fontSize = 14.sp, color = Color(0xFF666666))
-            Text("• 音声問題（発音）", fontSize = 14.sp, color = Color(0xFF666666))
-            Text("• 選択式（語彙）", fontSize = 14.sp, color = Color(0xFF666666))
+            Text(stringResource(R.string.ai_quiz_intro_format_listening), fontSize = 14.sp, color = Color(0xFF666666))
+            Text(stringResource(R.string.ai_quiz_intro_format_grammar), fontSize = 14.sp, color = Color(0xFF666666))
+            Text(stringResource(R.string.ai_quiz_intro_format_pronunciation), fontSize = 14.sp, color = Color(0xFF666666))
+            Text(stringResource(R.string.ai_quiz_intro_format_vocab), fontSize = 14.sp, color = Color(0xFF666666))
         }
 
         Spacer(Modifier.height(24.dp))
@@ -276,7 +293,7 @@ fun QuizIntroductionView(onStart: () -> Unit) {
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "クイズを開始",
+                text = stringResource(R.string.ai_quiz_start_button),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -308,7 +325,7 @@ fun QuizQuestionView(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "問題 ${currentIndex + 1} / $totalQuestions",
+                text = stringResource(R.string.ai_quiz_question_progress, currentIndex + 1, totalQuestions),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF222222)
@@ -376,7 +393,11 @@ fun QuizQuestionView(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = if (selectedAnswer == question.correctAnswer) "正解！" else "不正解",
+                        text = if (selectedAnswer == question.correctAnswer) {
+                            stringResource(R.string.ai_quiz_feedback_correct)
+                        } else {
+                            stringResource(R.string.ai_quiz_feedback_incorrect)
+                        },
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (selectedAnswer == question.correctAnswer) Color(0xFF4CAF50) else Color(0xFFF44336)
@@ -401,7 +422,11 @@ fun QuizQuestionView(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = if (currentIndex < totalQuestions - 1) "次の問題" else "結果を見る",
+                    text = if (currentIndex < totalQuestions - 1) {
+                        stringResource(R.string.ai_quiz_next_question_button)
+                    } else {
+                        stringResource(R.string.ai_quiz_view_result_button)
+                    },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(vertical = 8.dp)
@@ -507,7 +532,7 @@ fun QuizResultView(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "クイズ完了！",
+                text = stringResource(R.string.ai_quiz_result_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF222222)
@@ -516,7 +541,7 @@ fun QuizResultView(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "${result.correctCount} / ${result.totalQuestions} 問正解",
+                text = stringResource(R.string.ai_quiz_result_summary, result.correctCount, result.totalQuestions),
                 fontSize = 16.sp,
                 color = Color(0xFF666666)
             )
@@ -524,7 +549,7 @@ fun QuizResultView(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "${result.totalScore}点",
+                text = stringResource(R.string.ai_quiz_result_score_value, result.totalScore),
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFD2691E)
@@ -542,17 +567,17 @@ fun QuizResultView(
                 .padding(24.dp)
         ) {
             Text(
-                text = "弱点分析",
+                text = stringResource(R.string.ai_quiz_result_weak_points_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF222222),
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            result.weakPoints.forEach { point ->
+            result.weakPointResIds.forEach { pointResId ->
                 Row(modifier = Modifier.padding(vertical = 4.dp)) {
                     Text("• ", color = Color(0xFFD2691E))
-                    Text(point, fontSize = 14.sp, color = Color(0xFF666666))
+                    Text(stringResource(pointResId), fontSize = 14.sp, color = Color(0xFF666666))
                 }
             }
         }
@@ -568,7 +593,7 @@ fun QuizResultView(
                 .padding(24.dp)
         ) {
             Text(
-                text = "AIからのアドバイス",
+                text = stringResource(R.string.ai_quiz_result_advice_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF222222),
@@ -576,7 +601,7 @@ fun QuizResultView(
             )
 
             Text(
-                text = result.aiAdvice,
+                text = stringResource(result.aiAdviceResId),
                 fontSize = 14.sp,
                 color = Color(0xFF666666),
                 lineHeight = 20.sp
@@ -594,7 +619,7 @@ fun QuizResultView(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "完了",
+                text = stringResource(R.string.ai_quiz_done_button),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(vertical = 8.dp)

@@ -61,10 +61,10 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 /**
- * 全端末共通ルール：広告ボタン黄色＝即実行
+ * Universal rule: yellow ad button means ready to play immediately
  */
 private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, viewModel: ListeningViewModel, rewardedAdLoaded: Boolean) {
-    // 全端末共通ルール：黄色＝準備完了＝即再生
+    // Universal rule: yellow = ready = play immediately
     if (rewardedAdLoaded) {
         Log.d("ListeningScreen", "Ad ready - executing immediate playback (universal rule)")
         
@@ -72,7 +72,7 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
             AdManager.showRewardAd(
                 activity = activity,
                 onRewardEarned = {
-                    // 広告視聴完了時のみヒントを復活
+                    // Recover hints only after reward is earned
                     viewModel.recoverHintsThroughAd()
                     Log.d("ListeningScreen", "Reward earned, hints recovered through ad watching")
                 },
@@ -84,7 +84,7 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
             Log.e("ListeningScreen", "Activity is null, cannot show ad")
         }
     } else {
-        // 黄色でない場合は何もしない（表示の嘘を完全排除）
+        // If not yellow, do nothing (no misleading behavior)
         Log.w("ListeningScreen", "Ad not ready - button should be disabled, no action taken")
     }
 }
@@ -126,10 +126,10 @@ fun ListeningScreen(
                 popUpTo(AppRoute.Listening.route) { inclusive = true }
             }
         } else {
-            // レッスンキャンセル時にも広告カウンターを更新
+            // Update ad counter even on lesson cancel
             viewModel.incrementAdCounter()
             
-            // 広告表示が必要な場合は強制表示
+            // Force-show ad if needed
             if (activity != null) {
                 AdManager.checkAndShowInterstitial(activity) {
                     navController.popBackStack()
@@ -150,7 +150,7 @@ fun ListeningScreen(
         viewModel.loadQuestions(level)
     }
     
-    // セッション状態を監視し、UIが確実に更新されるようにする
+    // Observe session state so the UI updates reliably
     LaunchedEffect(session) {
         val currentSession = session
         Log.d("ListeningScreen", "Session state changed: ${currentSession?.let { "questions=${it.questions.size}, completed=${it.completed}" } ?: "null"}")
@@ -159,7 +159,7 @@ fun ListeningScreen(
         }
     }
     
-    // 現在の問題変化を監視
+    // Observe current question changes
     LaunchedEffect(currentQuestion) {
         Log.d("ListeningScreen", "Current question changed: ${currentQuestion?.phrase}")
     }
@@ -171,7 +171,7 @@ fun ListeningScreen(
             val levelCleared = clearedLevel
             val displayLevel = levelCleared ?: level
             val leveledUpFlag = result.leveledUp.toString()
-            // AppRoute.LessonResult.route を使用して正しいルートを生成
+            // Use AppRoute.LessonResult.route to generate the correct route
             val destinationRoute = AppRoute.LessonResult.route
                 .replace("{correctCount}", result.correctCount.toString())
                 .replace("{totalQuestions}", result.totalQuestions.toString())
@@ -191,17 +191,17 @@ fun ListeningScreen(
                 LessonStatusManager.setLessonCleared(context, level)
             }
             if (activity != null) {
-                Log.e("DEBUG_ADS", "[ListeningScreen] 広告表示開始 (LaunchedEffect)")
+                Log.e("DEBUG_ADS", "[ListeningScreen] Starting interstitial (LaunchedEffect)")
                 AdManager.showInterstitialWithTimeout(
                     activity = activity,
                     timeoutMs = 2_000L
                 ) {
-                    Log.e("DEBUG_ADS", "[ListeningScreen] navigateToResult 実行直前 (LaunchedEffect)")
+                    Log.e("DEBUG_ADS", "[ListeningScreen] navigateToResult right before run (LaunchedEffect)")
                     Log.e("ListeningScreen", "★★★ TIMEOUT OR AD CLOSED, FORCING NAVIGATION ★★★")
                     navigateToResult()
                 }
             } else {
-                Log.e("DEBUG_ADS", "[ListeningScreen] Activityがnullのため直接navigateToResult 実行直前")
+                Log.e("DEBUG_ADS", "[ListeningScreen] Activity is null; navigateToResult directly")
                 Log.e("ListeningScreen", "★★★ NO ACTIVITY, FORCING NAVIGATION ★★★")
                 navigateToResult()
             }
@@ -251,7 +251,7 @@ fun ListeningScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // ヘッダー
+                    // Header
                     Box(modifier = Modifier.fillMaxWidth().height(40.dp)) {
                         IconButton(onClick = { handleBackNavigation() }, modifier = Modifier.align(Alignment.CenterStart)) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -261,7 +261,7 @@ fun ListeningScreen(
                         }
                     }
 
-                    // キャラ & ヒントボタン
+                    // Mascot & hint button
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -271,7 +271,7 @@ fun ListeningScreen(
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.char_owl),
-                            contentDescription = "フクロウ先生",
+                            contentDescription = "Owl coach",
                             modifier = Modifier.size(56.dp),
                             contentScale = ContentScale.Fit
                         )
@@ -308,10 +308,10 @@ fun ListeningScreen(
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 text = when {
-                                    voiceHintRemaining > 0 -> "ヒント ($voiceHintRemaining)"
-                                    rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> "広告で回復"
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> "ヒントを見る"
-                                    else -> "広告準備中..."
+                                    voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining, voiceHintRemaining)
+                                    rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad)
+                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> stringResource(R.string.listening_hint_view)
+                                    else -> stringResource(R.string.listening_ad_loading)
                                 },
                                 color = Color.White,
                                 fontSize = 13.sp
@@ -321,9 +321,9 @@ fun ListeningScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // 問題文ラベル
+                    // Prompt label
                     Text(
-                        text = "問題文",
+                        text = stringResource(R.string.listening_prompt_label),
                         color = Color.White,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
@@ -332,7 +332,7 @@ fun ListeningScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 問題文
+                    // Prompt
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -350,12 +350,12 @@ fun ListeningScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 回答エリア
+                    // Answer area
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("あなたの回答", color = Color.Gray, fontSize = 12.sp)
+                        Text(stringResource(R.string.listening_your_answer), color = Color.Gray, fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         AnswerSlots(
                             slotCount = question?.correctOrder?.size ?: 0,
@@ -364,7 +364,7 @@ fun ListeningScreen(
                         )
                     }
 
-                    // 単語選択 & 結果カード
+                    // Word selection & result card
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -383,7 +383,7 @@ fun ListeningScreen(
                                     selectedWords = selectedWords,
                                     showResult = showResult,
                                     onSelectWord = { word ->
-                                        viewModel.selectWord(word) // 音声フィードバックはViewModel側で実行
+                                        viewModel.selectWord(word) // Audio feedback is handled in the ViewModel
                                     }
                                 )
                             }
@@ -413,24 +413,24 @@ fun ListeningScreen(
                 TextButton(onClick = {
                     if (activity != null) {
                         if (rewardedAdLoaded) {
-                            // 広告がプリロード済みの場合、即時表示
+                            // If the ad is preloaded, show immediately
                             AdManager.showRewardAd(
                                 activity = activity,
                                 onRewardEarned = {
-                                    // 広告視聴完了時のみヒントを復活
+                                    // Recover hints only after reward is earned
                                     viewModel.recoverHintsThroughAd()
                                     Log.d("ListeningScreen", "Hint recovery ad watched (preloaded)")
                                     
-                                    // 広告視聴後はヒントを回復するだけで、自動再生はしない
+                                    // After watching: recover hints only (no auto playback)
                                 },
                                 onAdClosed = {}
                             )
                         } else {
-                            // 広告が準備できていない場合、ロードしてから表示
+                            // If the ad is not ready, show on-demand
                             AdManager.showRewardAd(
                                 activity = activity,
                                 onRewardEarned = {
-                                    // 広告視聴完了時のみヒントを復活
+                                    // Recover hints only after reward is earned
                                     viewModel.recoverHintsThroughAd()
                                     Log.d("ListeningScreen", "Hint recovery ad watched (on-demand)")
                                 },
@@ -439,16 +439,22 @@ fun ListeningScreen(
                         }
                     }
                 }) {
-                    Text(if (rewardedAdLoaded) "動画を見てヒントを回復" else "広告を読み込み中...")
+                    Text(
+                        text = if (rewardedAdLoaded) {
+                            stringResource(R.string.listening_recover_hint_watch_video)
+                        } else {
+                            stringResource(R.string.listening_ad_loading)
+                        }
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissHintRecoveryDialog() }) {
-                    Text("閉じる")
+                    Text(stringResource(R.string.close))
                 }
             },
-            title = { Text("ヒントがありません") },
-            text = { Text("動画広告を見るとヒントが3回分回復します。") }
+            title = { Text(stringResource(R.string.listening_no_hints_title)) },
+            text = { Text(stringResource(R.string.listening_no_hints_message)) }
         )
     }
 }
@@ -474,7 +480,11 @@ private fun ResultCard(isCorrect: Boolean) {
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = if (isCorrect) "正解！完璧だね！" else "残念... ヒントを聞いてみて！",
+                text = if (isCorrect) {
+                    stringResource(R.string.listening_result_correct)
+                } else {
+                    stringResource(R.string.listening_result_incorrect)
+                },
                 color = if (isCorrect) Color(0xFF1B5E20) else MaterialTheme.colorScheme.error,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp
@@ -540,7 +550,7 @@ private fun ListeningBottomBar(showResult: Boolean, sessionCompleted: Boolean, o
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
             if (showResult && !sessionCompleted) {
                 Button(onClick = onNext, modifier = Modifier.fillMaxWidth().height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2))) {
-                    Text("次へ →", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.listening_next), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             } else { Spacer(Modifier.height(8.dp)) }
         }

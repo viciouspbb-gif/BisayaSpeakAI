@@ -86,6 +86,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -361,14 +362,14 @@ fun RoleplayChatScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "戻る"
+                            contentDescription = stringResource(R.string.roleplay_back_desc)
                         )
                     }
                 },
                 actions = {
                     TextButton(onClick = handleImmediateExit) {
                         Text(
-                            text = "終了してTOP",
+                            text = stringResource(R.string.roleplay_immediate_exit),
                             color = Color.White,
                             fontSize = 12.sp
                         )
@@ -459,24 +460,24 @@ fun RoleplayChatScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Info,
-                                contentDescription = "操作ガイド",
+                                contentDescription = stringResource(R.string.roleplay_info_desc),
                                 tint = Color(0xFF22C55E)
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "長押しで訳を表示、ダブルタップで決定できます。",
+                                    text = stringResource(R.string.roleplay_tutorial_message),
                                     color = Color.White,
                                     fontSize = 13.sp * textScaleFactor
                                 )
                                 Text(
-                                    text = "OKを押すと次回から表示されません",
+                                    text = stringResource(R.string.roleplay_tutorial_hint),
                                     color = Color(0xFF9FB4D3),
                                     fontSize = 11.sp * textScaleFactor,
                                     modifier = Modifier.padding(top = 2.dp)
                                 )
                             }
                             TextButton(onClick = { viewModel.dismissOptionTutorial() }) {
-                                Text("OK", color = Color(0xFF22C55E))
+                                Text(stringResource(R.string.roleplay_tutorial_ok), color = Color(0xFF22C55E))
                             }
                         }
                     }
@@ -545,16 +546,16 @@ fun RoleplayChatScreen(
                     showPermissionDialog = false
                     openAppSettings(context)
                 }) {
-                    Text("設定を開く")
+                    Text(stringResource(R.string.roleplay_permission_open_settings))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPermissionDialog = false }) {
-                    Text("閉じる")
+                    Text(stringResource(R.string.roleplay_permission_close))
                 }
             },
-            title = { Text("マイク権限が必要です") },
-            text = { Text("録音を利用するには、アプリ設定からマイク権限を付与してください。") }
+            title = { Text(stringResource(R.string.roleplay_permission_title)) },
+            text = { Text(stringResource(R.string.roleplay_permission_message)) }
         )
     }
 }
@@ -578,7 +579,7 @@ private fun ExitReminderCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "今日のレッスンは終了しました",
+                text = stringResource(R.string.roleplay_session_finished),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
@@ -588,7 +589,7 @@ private fun ExitReminderCard(
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("TOPへ戻る")
+                Text(stringResource(R.string.roleplay_back_to_home))
             }
         }
     }
@@ -622,7 +623,8 @@ private fun StageSection(
     textScale: Float = 1f
 ) {
     val bubbleKey = latestAiLine?.id ?: "initial"
-    val fullDisplayText = latestAiLine?.text ?: initialLine ?: "Maayong buntag! はじめようかの？"
+    val defaultIntro = stringResource(R.string.roleplay_default_intro)
+    val fullDisplayText = latestAiLine?.text ?: initialLine ?: defaultIntro
     val splitResult = remember(fullDisplayText) {
         splitInlineTranslation(fullDisplayText)
     }
@@ -658,7 +660,7 @@ private fun StageSection(
     ) {
         Image(
             painter = painterResource(id = R.drawable.char_tarsier),
-            contentDescription = "タルシエ先生",
+            contentDescription = stringResource(R.string.roleplay_teacher_desc),
             modifier = Modifier
                 .size(110.dp * scale)
                 .padding(end = 4.dp * scale),
@@ -800,7 +802,7 @@ private fun ResponsePanel(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "先生の返答を待っています…",
+                            text = stringResource(R.string.roleplay_waiting_teacher),
                             color = Color(0xFFFFF176)
                         )
                     }
@@ -898,7 +900,7 @@ private fun RoleplayOptionCard(
             )
             AnimatedVisibility(visible = showHint) {
                 Text(
-                    text = "長押しで訳 ・ ダブルタップで決定",
+                    text = stringResource(R.string.roleplay_option_hint),
                     color = Color(0xFFB6C5E0),
                     fontSize = 11.sp * scale,
                     modifier = Modifier.padding(top = 4.dp * scale.coerceAtLeast(0.85f)),
@@ -926,14 +928,14 @@ private fun VoiceInputPanel(
         if (text.length > 80) text.take(80) + "…" else text
     }
     val statusText = when {
-        isRecording -> "録音中…タップで送信"
-        isTranscribing -> "音声テキスト化中…"
-        else -> "自由に話しかけてOK！"
+        isRecording -> stringResource(R.string.roleplay_voice_status_recording)
+        isTranscribing -> stringResource(R.string.roleplay_voice_status_transcribing)
+        else -> stringResource(R.string.roleplay_voice_status_idle)
     }
     val helperText = when {
-        isRecording -> "終わったらもう一度タップ。キャンセルも可能です。"
-        isTranscribing -> "タリがビサヤ語に変換しています。少し待ってね。"
-        else -> "選択肢以外のアドリブ台詞も大歓迎。"
+        isRecording -> stringResource(R.string.roleplay_voice_helper_recording)
+        isTranscribing -> stringResource(R.string.roleplay_voice_helper_transcribing)
+        else -> stringResource(R.string.roleplay_voice_helper_idle)
     }
     val buttonColor = when {
         !permissionGranted -> Color(0xFF475569)
@@ -968,7 +970,11 @@ private fun VoiceInputPanel(
                 ) {
                     Icon(
                         imageVector = icon,
-                        contentDescription = if (isRecording) "録音停止" else "録音開始",
+                        contentDescription = if (isRecording) {
+                            stringResource(R.string.roleplay_mic_stop_desc)
+                        } else {
+                            stringResource(R.string.roleplay_mic_start_desc)
+                        },
                         tint = Color.White
                     )
                 }
@@ -990,11 +996,11 @@ private fun VoiceInputPanel(
                     TextButton(onClick = onCancelRecording, contentPadding = PaddingValues(horizontal = 8.dp * scale.coerceAtLeast(0.85f))) {
                         Icon(
                             imageVector = Icons.Filled.Close,
-                            contentDescription = "録音を破棄",
+                            contentDescription = stringResource(R.string.roleplay_voice_cancel_desc),
                             tint = Color.White
                         )
                         Text(
-                            text = "キャンセル",
+                            text = stringResource(R.string.roleplay_voice_cancel),
                             color = Color.White,
                             modifier = Modifier.padding(start = 4.dp * scale.coerceAtLeast(0.85f))
                         )
@@ -1012,7 +1018,7 @@ private fun VoiceInputPanel(
 
             AnimatedVisibility(visible = !permissionGranted, modifier = Modifier.padding(top = 8.dp * scale.coerceAtLeast(0.85f))) {
                 Text(
-                    text = "マイク権限が必要です。ボタンを押して許可すると録音できます。",
+                    text = stringResource(R.string.roleplay_voice_permission_hint),
                     color = Color(0xFFFFB4AB),
                     fontSize = 13.sp * scale
                 )
@@ -1035,12 +1041,12 @@ private fun VoiceInputPanel(
             ) {
                 Column {
                     Text(
-                        text = "前回の音声メモ",
+                        text = stringResource(R.string.roleplay_voice_last_memo),
                         color = Color(0xFF8FD3FF),
                         fontSize = 13.sp * scale
                     )
                     Text(
-                        text = "「$trimmedPreview」",
+                        text = stringResource(R.string.roleplay_voice_last_memo_quote, trimmedPreview.orEmpty()),
                         color = Color.White,
                         fontSize = 14.sp * scale,
                         modifier = Modifier.padding(top = 4.dp * scale.coerceAtLeast(0.85f))

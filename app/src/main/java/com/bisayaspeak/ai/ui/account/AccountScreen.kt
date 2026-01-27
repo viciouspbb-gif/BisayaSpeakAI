@@ -43,10 +43,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,17 +60,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.annotation.StringRes
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.repository.UserProfilePreferences
 
-enum class LoginType(val label: String) {
-    Guest("ゲスト"),
-    Email("メール"),
-    Google("Google"),
-    Apple("Apple")
+enum class LoginType(@StringRes val labelRes: Int) {
+    Guest(R.string.account_login_type_guest),
+    Email(R.string.account_login_type_email),
+    Google(R.string.account_login_type_google),
+    Apple(R.string.account_login_type_apple)
 }
 
 @Composable
@@ -93,12 +96,12 @@ private fun PremiumTestToggleCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Premiumテスト",
+                    text = stringResource(R.string.account_premium_test_title),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Debugビルド専用：プレミアム状態を強制的に切替",
+                    text = stringResource(R.string.account_premium_test_desc),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -164,7 +167,7 @@ fun AccountScreen(
 
     LaunchedEffect(profileState.lastSavedAt) {
         profileState.lastSavedAt?.let {
-            Toast.makeText(context, "プロフィールを保存しました", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.account_profile_saved_toast), Toast.LENGTH_SHORT).show()
         }
     }
     LaunchedEffect(profileState.errorMessage) {
@@ -188,13 +191,13 @@ fun AccountScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "戻る",
+                    contentDescription = stringResource(R.string.back),
                     tint = Color.White
                 )
             }
 
             Text(
-                text = "アカウント情報",
+                text = stringResource(R.string.account_title),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -237,7 +240,7 @@ fun AccountScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // アクションボタン
+            // Actions
             if (!authEnabled) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -250,7 +253,7 @@ fun AccountScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Lite版ではアカウント機能は利用できません",
+                            text = stringResource(R.string.account_lite_notice_title),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -258,7 +261,7 @@ fun AccountScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "現在の学習データはこのデバイス内でのみ管理されます。",
+                            text = stringResource(R.string.account_lite_notice_desc),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
                             )
@@ -266,7 +269,7 @@ fun AccountScreen(
                     }
                 }
             } else if (uiState.loginType == LoginType.Guest) {
-                // ゲスト状態：ログイン促し
+                // Guest state
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -278,7 +281,7 @@ fun AccountScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "📱 アカウント登録のおすすめ",
+                            text = stringResource(R.string.account_guest_card_title),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1E88E5)
@@ -286,7 +289,7 @@ fun AccountScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "アカウント登録すると、学習データが保存され、複数のデバイスで同期できます。",
+                            text = stringResource(R.string.account_guest_card_desc),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                             )
@@ -307,7 +310,7 @@ fun AccountScreen(
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text("ログイン／既存アカウントでサインイン")
+                    Text(stringResource(R.string.account_login_button))
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -323,7 +326,7 @@ fun AccountScreen(
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text("新規アカウント作成")
+                    Text(stringResource(R.string.account_create_button))
                 }
             } else if (authEnabled) {
                 Button(
@@ -337,7 +340,7 @@ fun AccountScreen(
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text("ログアウト")
+                    Text(stringResource(R.string.account_logout_button))
                 }
             }
 
@@ -367,21 +370,21 @@ fun AccountScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("アカウントの削除") },
+            title = { Text(stringResource(R.string.account_delete_dialog_title)) },
             text = {
-                Text("この操作は取り消せません。サーバー上の学習履歴とサブスクリプション情報が完全に削除されます。本当に削除しますか？")
+                Text(stringResource(R.string.account_delete_dialog_message))
             },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
                     onDeleteAccount()
                 }) {
-                    Text("削除する", color = Color.Red)
+                    Text(stringResource(R.string.account_delete_confirm), color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("キャンセル")
+                    Text(stringResource(R.string.account_delete_cancel))
                 }
             }
         )
@@ -418,8 +421,14 @@ private fun StatusCard(
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(8.dp))
+                val loginLabel = stringResource(uiState.loginType.labelRes)
+                val status = if (uiState.loginType == LoginType.Guest) {
+                    stringResource(R.string.account_status_logged_in_guest)
+                } else {
+                    stringResource(R.string.account_status_logged_in_format, loginLabel)
+                }
                 Text(
-                    text = if (uiState.loginType == LoginType.Guest) "ゲストとしてログイン中" else "${uiState.loginType.label}でログイン中",
+                    text = status,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -440,7 +449,10 @@ private fun StatusCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "メールアドレス：${uiState.email.ifBlank { "未設定" }}",
+                    text = stringResource(
+                        R.string.account_email_label,
+                        uiState.email.ifBlank { stringResource(R.string.account_value_unset) }
+                    ),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White
                     )
@@ -457,8 +469,13 @@ private fun StatusCard(
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(6.dp))
+                val nicknameLabel = nickname.ifBlank { stringResource(R.string.account_value_unset) }
                 Text(
-                    text = "ニックネーム：${nickname.ifBlank { "未設定" }} / 性別：${gender.displayLabel()}",
+                    text = stringResource(
+                        R.string.account_nickname_gender,
+                        nicknameLabel,
+                        stringResource(gender.displayLabelRes())
+                    ),
                     style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
                 )
             }
@@ -475,8 +492,13 @@ private fun StatusCard(
                     tint = if (uiState.isPremium) Color(0xFFFFD700) else Color.White
                 )
                 Spacer(modifier = Modifier.width(6.dp))
+                val planText = if (uiState.isPremium) {
+                    stringResource(R.string.account_status_plan_premium)
+                } else {
+                    stringResource(R.string.account_status_plan_free)
+                }
                 Text(
-                    text = "ステータス：${if (uiState.isPremium) "プレミアム" else "無料プラン"}",
+                    text = stringResource(R.string.account_status_plan_label, planText),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White
                     )
@@ -494,7 +516,7 @@ private fun StatusCard(
                         .padding(10.dp)
                 ) {
                     Text(
-                        text = "🔓 プレミアムでできること",
+                        text = stringResource(R.string.account_benefit_section_title),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold
                         )
@@ -533,18 +555,22 @@ private fun ProfileEditorCard(
             ) {
                 Column {
                     Text(
-                        text = "プロフィール",
+                        text = stringResource(R.string.account_profile_title),
                         style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = if (isEditing) "タリに呼んでほしい名前を設定" else "タップしてニックネームと性別を編集",
+                        text = if (isEditing) {
+                            stringResource(R.string.account_profile_subtitle_editing)
+                        } else {
+                            stringResource(R.string.account_profile_subtitle_view)
+                        },
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f))
                     )
                 }
                 TextButton(onClick = { isEditing = !isEditing }) {
                     Icon(imageVector = Icons.Outlined.Edit, contentDescription = null)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (isEditing) "完了" else "編集")
+                    Text(if (isEditing) stringResource(R.string.account_profile_edit_done) else stringResource(R.string.account_profile_edit))
                 }
             }
 
@@ -552,13 +578,19 @@ private fun ProfileEditorCard(
 
             if (!isEditing) {
                 Text(
-                    text = "ニックネーム：${profileState.savedNickname.ifBlank { "未設定" }}",
+                    text = stringResource(
+                        R.string.account_profile_display_nickname,
+                        profileState.savedNickname.ifBlank { stringResource(R.string.account_value_unset) }
+                    ),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "性別：${profileState.savedGender.displayLabel()}",
+                    text = stringResource(
+                        R.string.account_profile_display_gender,
+                        stringResource(profileState.savedGender.displayLabelRes())
+                    ),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -567,8 +599,8 @@ private fun ProfileEditorCard(
                     value = profileState.nickname,
                     onValueChange = onNicknameChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("ニックネーム", color = Color.White.copy(alpha = 0.8f)) },
-                    placeholder = { Text("例：タリ先輩", color = Color.White.copy(alpha = 0.4f)) },
+                    label = { Text(stringResource(R.string.account_profile_nickname_label), color = Color.White.copy(alpha = 0.8f)) },
+                    placeholder = { Text(stringResource(R.string.account_profile_nickname_placeholder), color = Color.White.copy(alpha = 0.4f)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFF0B1220),
@@ -584,16 +616,16 @@ private fun ProfileEditorCard(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("性別", color = Color.White.copy(alpha = 0.8f), fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.account_profile_gender_label), color = Color.White.copy(alpha = 0.8f), fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    GenderChip(label = "男性", selected = profileState.gender == UserGender.MALE) {
+                    GenderChip(label = stringResource(R.string.account_gender_male), selected = profileState.gender == UserGender.MALE) {
                         onGenderChange(UserGender.MALE)
                     }
-                    GenderChip(label = "女性", selected = profileState.gender == UserGender.FEMALE) {
+                    GenderChip(label = stringResource(R.string.account_gender_female), selected = profileState.gender == UserGender.FEMALE) {
                         onGenderChange(UserGender.FEMALE)
                     }
-                    GenderChip(label = "回答しない", selected = profileState.gender == UserGender.OTHER) {
+                    GenderChip(label = stringResource(R.string.account_gender_unspecified), selected = profileState.gender == UserGender.OTHER) {
                         onGenderChange(UserGender.OTHER)
                     }
                 }
@@ -605,7 +637,10 @@ private fun ProfileEditorCard(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = profileState.isDirty && profileState.isValid && !profileState.isSaving
                 ) {
-                    Text(if (profileState.isSaving) "保存中..." else "プロフィールを保存")
+                    Text(
+                        if (profileState.isSaving) stringResource(R.string.account_profile_saving)
+                        else stringResource(R.string.account_profile_save_button)
+                    )
                 }
             }
         }
@@ -635,14 +670,14 @@ private fun UpgradeCtaSection(
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = if (isPremium) "いつもタリを応援してくれてありがとうございます" else "タリ道場をフル開放するならプロ版へ",
+                text = if (isPremium) stringResource(R.string.account_premium_cta_title_premium) else stringResource(R.string.account_premium_cta_title_free),
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             if (isPremium) {
                 Text(
-                    text = "現在のプラン：プレミアム",
+                    text = stringResource(R.string.account_premium_cta_current_plan),
                     color = Color.White.copy(alpha = 0.85f),
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -652,13 +687,13 @@ private fun UpgradeCtaSection(
                     onClick = onUpgrade,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("プロ版へアップグレード")
+                    Text(stringResource(R.string.account_upgrade_button))
                 }
                 TextButton(
                     onClick = onRestorePurchase,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    Text("購入済みの方はこちら（復元）", textDecoration = TextDecoration.Underline)
+                    Text(stringResource(R.string.account_restore_button), textDecoration = TextDecoration.Underline)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 PremiumBenefitList(
@@ -675,9 +710,9 @@ private fun PremiumBenefitList(
     textColor: Color = Color.White
 ) {
     val benefits = listOf(
-        "広告の非表示",
-        "AI翻訳機の無制限利用",
-        "タリとの終わりのないマルチ散歩道モード"
+        stringResource(R.string.account_benefit_hide_ads),
+        stringResource(R.string.account_benefit_unlimited_translator),
+        stringResource(R.string.account_benefit_roleplay_mode)
     )
     Column(
         modifier = modifier,
@@ -714,14 +749,14 @@ private fun LegalSupportCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("リーガル・サポート", color = Color.White, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.account_legal_title), color = Color.White, fontWeight = FontWeight.Bold)
             Text(
-                text = "利用規約・プライバシーポリシー・サポートガイドは外部ブラウザで確認できます。",
+                text = stringResource(R.string.account_legal_description),
                 color = Color.White.copy(alpha = 0.75f),
                 style = MaterialTheme.typography.bodySmall
             )
             LegalSupportButton(
-                label = "リーガル＆サポートを開く",
+                label = stringResource(R.string.account_legal_button),
                 onClick = onOpenLegalSupport
             )
         }
@@ -756,9 +791,9 @@ private fun DangerZoneCard(onDeleteAccount: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2D0F0F))
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("アカウントの削除", color = Color.White, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.account_danger_title), color = Color.White, fontWeight = FontWeight.Bold)
             Text(
-                text = "アカウントを削除すると、購入履歴・学習データが完全に消去されます。",
+                text = stringResource(R.string.account_danger_description),
                 color = Color.White.copy(alpha = 0.8f)
             )
             OutlinedButton(
@@ -768,16 +803,17 @@ private fun DangerZoneCard(onDeleteAccount: () -> Unit) {
             ) {
                 Icon(imageVector = Icons.Filled.Delete, contentDescription = null, tint = Color.Red)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("アカウントを削除", color = Color.Red)
+                Text(stringResource(R.string.account_danger_button), color = Color.Red)
             }
         }
     }
 }
 
-private fun UserGender.displayLabel(): String = when (this) {
-    UserGender.MALE -> "男性"
-    UserGender.FEMALE -> "女性"
-    UserGender.OTHER -> "回答しない"
+@StringRes
+private fun UserGender.displayLabelRes(): Int = when (this) {
+    UserGender.MALE -> R.string.account_gender_male
+    UserGender.FEMALE -> R.string.account_gender_female
+    UserGender.OTHER -> R.string.account_gender_unspecified
 }
 
 @Composable
@@ -804,7 +840,7 @@ private fun FeedbackCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "フィードバックを送る",
+                    text = stringResource(R.string.account_feedback_title),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     )
@@ -812,7 +848,7 @@ private fun FeedbackCard(
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "不具合報告・要望・感想などありましたら、こちらからお知らせください。",
+                text = stringResource(R.string.account_feedback_description),
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )

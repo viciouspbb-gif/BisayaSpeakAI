@@ -1,0 +1,102 @@
+[
+  {
+    "id": 1,
+    "level": 1,
+    "native": "Maayong buntag",
+    "translations": {
+      "en": { "meaning": "Good morning" },
+      "ja": { "meaning": "おはよう" }
+    },
+    "words": ["Maayong", "buntag"]
+  },
+  {
+    "id": 2,
+    "level": 1,
+    "native": "Maayong adlaw",
+    "translations": {
+      "en": { "meaning": "Have a good day" },
+      "ja": { "meaning": "良い一日を" }
+    },
+    "words": ["Maayong", "adlaw"]
+  },
+  {
+    "id": 3,
+    "level": 1,
+    "native": "Maayong hapon",
+    "translations": {
+      "en": { "meaning": "Good afternoon" },
+      "ja": { "meaning": "こんにちは" }
+    },
+    "words": ["Maayong", "hapon"]
+  },
+  {
+    "id": 4,
+    "level": 1,
+    "native": "Maayong gabii",
+    "translations": {
+      "en": { "meaning": "Good evening" },
+      "ja": { "meaning": "こんばんは" }
+    },
+    "words": ["Maayong", "gabii"]
+  },
+  {
+    "id": 5,
+    "level": 1,
+    "native": "Kumusta ka",
+    "translations": {
+      "en": { "meaning": "How are you?" },
+      "ja": { "meaning": "元気ですか？" }
+    },
+    "words": ["Kumusta", "ka"]
+  },
+  {
+    "id": 6,
+    "level": 1,
+    "native": "Maayo ra ko",
+    "translations": {
+      "en": { "meaning": "I am fine" },
+      "ja": { "meaning": "私は元気です" }
+    },
+    "words": ["Maayo", "ra", "ko"]
+  },
+  {
+    "id": 7,
+    "level": 1,
+    "native": "Salamat",
+    "translations": {
+      "en": { "meaning": "Thank you" },
+      "ja": { "meaning": "ありがとう" }
+    },
+    "words": ["Salamat"]
+  },
+  {
+    "id": 8,
+    "level": 1,
+    "native": "Walay sapayan",
+    "translations": {
+      "en": { "meaning": "You are welcome" },
+      "ja": { "meaning": "どういたしまして" }
+    },
+    "words": ["Walay", "sapayan"]
+  },
+  {
+    "id": 9,
+    "level": 1,
+    "native": "Amping ha",
+    "translations": {
+      "en": { "meaning": "Take care" },
+      "ja": { "meaning": "気をつけてね" }
+    },
+    "words": ["Amping", "ha"]
+  },
+  {
+    "id": 10,
+    "level": 1,
+    "native": "Nalipay ko magkita nimo",
+    "translations": {
+      "en": { "meaning": "Nice to see you" },
+      "ja": { "meaning": "会えて嬉しいです" }
+    },
+    "words": ["Nalipay", "ko", "magkita", "nimo"]
+  }
+]

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.data.model.TranslationDirection
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
+import com.bisayaspeak.ai.data.repository.PromptProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +18,8 @@ sealed interface TranslatorUiState {
 }
 
 class AiTranslatorViewModel(
-    private val repository: OpenAiChatRepository = OpenAiChatRepository()
+    private val repository: OpenAiChatRepository = OpenAiChatRepository(),
+    private val promptProvider: PromptProvider? = null
 ) : ViewModel() {
 
     private val _inputText = MutableStateFlow("")
@@ -54,7 +56,7 @@ class AiTranslatorViewModel(
     fun translate() {
         val text = _inputText.value.trim()
         if (text.isEmpty()) {
-            _uiState.value = TranslatorUiState.Error("翻訳するテキストを入力してください")
+            _uiState.value = TranslatorUiState.Error("Please enter text to translate")
             return
         }
 
@@ -66,7 +68,7 @@ class AiTranslatorViewModel(
                 _uiState.value = TranslatorUiState.Success
             } catch (e: Exception) {
                 _uiState.value =
-                    TranslatorUiState.Error(e.message ?: "翻訳に失敗しました")
+                    TranslatorUiState.Error(e.message ?: "Translation failed")
             }
         }
     }
@@ -75,12 +77,14 @@ class AiTranslatorViewModel(
         text: String,
         direction: TranslationDirection
     ): String {
+        val basePrompt = promptProvider?.getSystemPrompt() ?: "You are a helpful translator."
+        
         val (systemPrompt, temperature) = when (direction) {
             TranslationDirection.JA_TO_CEB -> {
-                "You are a professional Bisaya (Cebuano) translator. Convert the user's Japanese message into natural Bisaya suitable for friendly conversation. Respond with Bisaya only." to 0.2
+                "$basePrompt Convert the user's Japanese message into natural Bisaya suitable for friendly conversation. Respond with Bisaya only." to 0.2
             }
             TranslationDirection.CEB_TO_JA -> {
-                "You are a professional Japanese translator. Convert the user's Bisaya (Cebuano) message into natural Japanese. Respond with Japanese only." to 0.2
+                "$basePrompt Convert the user's Bisaya (Cebuano) message into natural Japanese. Respond with Japanese only." to 0.2
             }
         }
         return repository.sendPrompt(
