@@ -1,6 +1,7 @@
 package com.bisayaspeak.ai.ui.roleplay
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.LessonStatusManager
@@ -11,9 +12,12 @@ import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.PromptProvider
 import com.bisayaspeak.ai.data.repository.RoleplayHistoryRepository
 import com.bisayaspeak.ai.data.repository.ScenarioRepository
-import com.bisayaspeak.ai.data.repository.UserPreferencesRepository
 import com.bisayaspeak.ai.data.repository.UsageRepository
+import com.bisayaspeak.ai.data.repository.UserPreferencesRepository
 import com.bisayaspeak.ai.data.repository.WhisperRepository
+import com.bisayaspeak.ai.domain.honor.HonorLevelManager
+import com.bisayaspeak.ai.ui.roleplay.RoleplayThemeManager
+import com.bisayaspeak.ai.util.LocaleUtils
 import com.bisayaspeak.ai.utils.MistakeManager
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.VoiceInputRecorder
@@ -51,7 +55,6 @@ data class FarewellLine(
 data class RoleplayResultPayload(
     val correctCount: Int,
     val totalQuestions: Int,
-    val earnedXp: Int,
     val clearedLevel: Int,
     val leveledUp: Boolean
 )
@@ -97,7 +100,9 @@ data class RoleplayUiState(
     val isClosingPhase: Boolean = false,
     val scenarioClosingGuidance: ScenarioClosingGuidance? = null,
     val userLevel: Int = 1,
-    val totalXp: Int = 0
+    val totalLessonsCompleted: Int = 0,
+    val tutorialMessage: String = "",
+    val tutorialHint: String = ""
 )
 
 class RoleplayChatViewModel(
@@ -151,6 +156,13 @@ class RoleplayChatViewModel(
             "またあとで",
             "おやすみ"
         ).map { it.lowercase() }.toSet()
+        private val GENERIC_FALLBACK_HINTS = listOf(
+            HintPhrase("Oo, maayo kaayo na!", "いいね、やってみよう！"),
+            HintPhrase("Pwede nimo ikuwento gamay pa?", "もう少し教えて！"),
+            HintPhrase("Salamat kaayo, unsay sunod natong buhaton?", "ありがとう、次はどうする？"),
+            HintPhrase("Gusto ko mosuway ana.", "それを試してみたいな"),
+            HintPhrase("Pwede ko mangayo og tabang gamay?", "少し助けてもらえる？")
+        )
         private val SCENE_LOCATIONS = listOf(
             "オスメニャ・サークル周辺",
             "ITパーク屋台通り",
@@ -218,8 +230,10 @@ class RoleplayChatViewModel(
     private var farewellSignals: Set<String> = DEFAULT_FAREWELL_KEYWORDS
     private var lastSceneSeed: String? = null
     private var optionTutorialVisible: Boolean = true
+    private var isJapaneseLocale: Boolean = true
 
     init {
+        isJapaneseLocale = LocaleUtils.isJapanese(application)
         observeUserProfile()
         observeUserProgress()
         observeOptionTutorialState()
@@ -229,18 +243,30 @@ class RoleplayChatViewModel(
         viewModelScope.launch {
             combine(
                 userPreferencesRepository.roleplayTutorialSeen,
-                userPreferencesRepository.roleplayTutorialVersion
-            ) { seen, version ->
-                seen to version
-            }.collect { (seen, version) ->
-                if (version < OPTION_TUTORIAL_VERSION) {
-                    userPreferencesRepository.setRoleplayTutorialVersion(OPTION_TUTORIAL_VERSION)
-                    userPreferencesRepository.setRoleplayTutorialSeen(false)
-                    optionTutorialVisible = true
-                } else {
-                    optionTutorialVisible = !seen
+                userPreferencesRepository.roleplayTutorialVersion,
+                userPreferencesRepository.roleplayTutorialLocale
+            ) { seen, version, storedLocale ->
+                Triple(seen, version, storedLocale)
+            }.collect { (seen, version, storedLocale) ->
+                val currentLocaleTag = currentLocaleTag()
+                optionTutorialVisible = when {
+                    version < OPTION_TUTORIAL_VERSION -> {
+                        userPreferencesRepository.setRoleplayTutorialVersion(OPTION_TUTORIAL_VERSION)
+                        userPreferencesRepository.setRoleplayTutorialSeen(false)
+                        userPreferencesRepository.setRoleplayTutorialLocale(currentLocaleTag)
+                        true
+                    }
+                    storedLocale != currentLocaleTag -> {
+                        userPreferencesRepository.setRoleplayTutorialSeen(false)
+                        userPreferencesRepository.setRoleplayTutorialLocale(currentLocaleTag)
+                        true
+                    }
+                    else -> !seen
                 }
-                _uiState.update { it.copy(showOptionTutorial = optionTutorialVisible) }
+
+                _uiState.update {
+                    it.copy(showOptionTutorial = optionTutorialVisible)
+                }
             }
         }
     }
@@ -266,14 +292,15 @@ class RoleplayChatViewModel(
 
     private fun observeUserProgress() {
         viewModelScope.launch {
-            usageRepository.getCurrentLevel().collect { level ->
-                currentUserLevel = level
-                _uiState.update { it.copy(userLevel = level) }
-            }
-        }
-        viewModelScope.launch {
-            usageRepository.getTotalXP().collect { xp ->
-                _uiState.update { it.copy(totalXp = xp) }
+            usageRepository.getTotalLessonsCompleted().collect { lessons ->
+                val progress = HonorLevelManager.getProgress(lessons)
+                currentUserLevel = progress.level
+                _uiState.update {
+                    it.copy(
+                        userLevel = progress.level,
+                        totalLessonsCompleted = lessons
+                    )
+                }
             }
         }
     }
@@ -297,8 +324,11 @@ class RoleplayChatViewModel(
         viewModelScope.launch {
             userPreferencesRepository.setRoleplayTutorialSeen(true)
             userPreferencesRepository.setRoleplayTutorialVersion(OPTION_TUTORIAL_VERSION)
+            userPreferencesRepository.setRoleplayTutorialLocale(currentLocaleTag())
         }
     }
+
+    private fun currentLocaleTag(): String = LocaleUtils.resolveAppLocale(getApplication()).toLanguageTag()
 
     private fun observeUserProfile() {
         viewModelScope.launch {
@@ -326,9 +356,11 @@ class RoleplayChatViewModel(
     fun loadScenario(scenarioId: String, isProUser: Boolean = isProVersion) {
         val scenario = scenarioRepository.getScenarioById(scenarioId)
         if (scenario == null) {
-            _uiState.update { it.copy(isLoading = false) }
+            Log.e("RoleplayChatViewModel", "Scenario not found: $scenarioId")
+            _uiState.update { it.copy(isLoading = false, systemPrompt = "", options = emptyList()) }
             return
         }
+        Log.d("RoleplayChatViewModel", "Loading scenario=${scenario.id} title=${scenario.title}")
         
         val definition = convertToRoleplayScenarioDefinition(scenario)
         history.clear()
@@ -343,6 +375,13 @@ class RoleplayChatViewModel(
 
         val cleanThemeTitle = levelPrefixRegex.replace(activeTheme.title, "").trim().ifBlank { activeTheme.title }
         val closingCue = activeTheme.closingCue
+        val localizedThemeTitle = if (isJapaneseLocale) cleanThemeTitle else definition.title
+        val localizedThemeDescription = if (isJapaneseLocale) activeTheme.description else definition.situation
+        val localizedThemePersona = if (isJapaneseLocale) activeTheme.persona else definition.aiRole
+        val localizedThemeGoal = if (isJapaneseLocale) activeTheme.goalStatement else definition.goal
+        val localizedIntroLine = if (isJapaneseLocale) activeTheme.introLine else ""
+        val localizedFarewellTranslation = if (isJapaneseLocale) closingCue.translation else definition.description
+        val localizedFarewellExplanation = if (isJapaneseLocale) closingCue.explanation else definition.goal
 
         _uiState.value = RoleplayUiState(
             currentScenario = definition,
@@ -353,15 +392,15 @@ class RoleplayChatViewModel(
             isLoading = scriptedRuntime == null,
             isProUser = isProVersion,
             userGender = currentUserGender,
-            activeThemeTitle = cleanThemeTitle,
-            activeThemeDescription = activeTheme.description,
-            activeThemePersona = activeTheme.persona,
-            activeThemeGoal = activeTheme.goalStatement,
+            activeThemeTitle = localizedThemeTitle,
+            activeThemeDescription = localizedThemeDescription,
+            activeThemePersona = localizedThemePersona,
+            activeThemeGoal = localizedThemeGoal,
             activeThemeFlavor = activeTheme.flavor,
-            activeThemeIntroLine = activeTheme.introLine,
+            activeThemeIntroLine = localizedIntroLine,
             activeThemeFarewellBisaya = closingCue.bisaya,
-            activeThemeFarewellTranslation = closingCue.translation,
-            activeThemeFarewellExplanation = closingCue.explanation,
+            activeThemeFarewellTranslation = localizedFarewellTranslation,
+            activeThemeFarewellExplanation = localizedFarewellExplanation,
             turnsTarget = endingTurnTarget,
             isClosingPhase = inClosingPhase,
             scenarioClosingGuidance = scenarioClosingGuidance,
@@ -369,15 +408,18 @@ class RoleplayChatViewModel(
         )
 
         if (scriptedRuntime == null) {
-            injectThemeIntroLine()
+            if (isJapaneseLocale) {
+                injectThemeIntroLine()
+            }
+            requestAiTurn(
+                scenario = definition,
+                userMessage = START_TOKEN
+            )
+        } else {
+            scriptedRuntime?.let {
+                deliverScriptedTurn()
+            }
         }
-
-        scriptedRuntime?.let {
-            deliverScriptedTurn()
-        } ?: requestAiTurn(
-            scenario = definition,
-            userMessage = START_TOKEN
-        )
     }
     
     private fun convertToRoleplayScenarioDefinition(scenario: MissionScenario): RoleplayScenarioDefinition {
@@ -387,7 +429,6 @@ class RoleplayChatViewModel(
                 com.bisayaspeak.ai.data.model.LearningLevel.BEGINNER -> 1
                 com.bisayaspeak.ai.data.model.LearningLevel.INTERMEDIATE -> 2
                 com.bisayaspeak.ai.data.model.LearningLevel.ADVANCED -> 3
-                else -> 1
             },
             title = scenario.title,
             description = scenario.subtitle,
@@ -431,9 +472,6 @@ class RoleplayChatViewModel(
             translation = option.hint
         )
         history.add(MissionHistoryMessage(option.text, isUser = true))
-
-        val usedHint = option.id in _uiState.value.peekedHintOptionIds
-
         _uiState.update {
             it.copy(
                 messages = it.messages + userMsg,
@@ -802,11 +840,12 @@ class RoleplayChatViewModel(
                     tone = it.tone
                 )
             }.filterForAccess()
+        val ensuredOptions = if (options.isNotEmpty()) options else buildFallbackOptions()
         val farewellDetected = containsFarewellCue(aiSpeech) || containsFarewellCue(payload.aiTranslation)
         val sanitizedOptions = when {
             farewellDetected -> emptyList()
             inClosingPhase && scriptedTurnsRemaining <= 0 -> emptyList()
-            else -> options
+            else -> ensuredOptions
         }
 
         scriptedTurnsRemaining = (scriptedTurnsRemaining - 1).coerceAtLeast(0)
@@ -851,6 +890,16 @@ class RoleplayChatViewModel(
         val normalized = text.lowercase()
         return farewellSignals.any { signal ->
             signal.isNotBlank() && normalized.contains(signal)
+        }
+    }
+
+    private fun buildFallbackOptions(): List<RoleplayOption> {
+        val picks = GENERIC_FALLBACK_HINTS.shuffled(random).take(3)
+        return picks.map { phrase ->
+            RoleplayOption(
+                text = phrase.nativeText,
+                hint = if (isProVersion) phrase.translation else null
+            )
         }
     }
 

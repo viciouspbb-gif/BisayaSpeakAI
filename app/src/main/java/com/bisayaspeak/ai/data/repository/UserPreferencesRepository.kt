@@ -8,7 +8,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.UserGender
+import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -28,6 +30,8 @@ class UserPreferencesRepository(private val context: Context) {
         private val USER_NICKNAME_KEY = stringPreferencesKey("user_nickname")
         private val ROLEPLAY_TUTORIAL_SEEN_KEY = booleanPreferencesKey("roleplay_tutorial_seen")
         private val ROLEPLAY_TUTORIAL_VERSION_KEY = intPreferencesKey("roleplay_tutorial_version")
+        private val ROLEPLAY_TUTORIAL_LOCALE_KEY = stringPreferencesKey("roleplay_tutorial_locale")
+        private const val LEGACY_JA_GUEST = "ゲストユーザー"
     }
 
     val userProfile: Flow<UserProfilePreferences> = context.userPreferencesDataStore.data.map { preferences ->
@@ -35,9 +39,13 @@ class UserPreferencesRepository(private val context: Context) {
             val stored = preferences[USER_GENDER_KEY].orEmpty()
             UserGender.valueOf(stored)
         }.getOrElse { UserGender.OTHER }
-        val nickname = preferences[USER_NICKNAME_KEY]
-            ?.takeIf { it.isNotBlank() }
-            ?: "ゲストユーザー"
+        val fallback = guestNicknameForLocale()
+        val storedNickname = preferences[USER_NICKNAME_KEY]?.takeIf { it.isNotBlank() }
+        val nickname = when {
+            storedNickname == null -> fallback
+            storedNickname == LEGACY_JA_GUEST && !isJapaneseLocale() -> fallback
+            else -> storedNickname
+        }
         UserProfilePreferences(nickname = nickname, gender = gender)
     }
 
@@ -51,10 +59,20 @@ class UserPreferencesRepository(private val context: Context) {
         preferences[ROLEPLAY_TUTORIAL_VERSION_KEY] ?: 0
     }
 
+    val roleplayTutorialLocale: Flow<String?> = context.userPreferencesDataStore.data.map { preferences ->
+        preferences[ROLEPLAY_TUTORIAL_LOCALE_KEY]
+    }
+
     suspend fun saveUserProfile(nickname: String, gender: UserGender) {
-        val sanitized = nickname.trim().ifBlank { "ゲストユーザー" }
+        val fallback = guestNicknameForLocale()
+        val sanitized = nickname.trim().ifBlank { fallback }
+        val normalized = if (sanitized == LEGACY_JA_GUEST && !isJapaneseLocale()) {
+            fallback
+        } else {
+            sanitized
+        }
         context.userPreferencesDataStore.edit { prefs ->
-            prefs[USER_NICKNAME_KEY] = sanitized
+            prefs[USER_NICKNAME_KEY] = normalized
             prefs[USER_GENDER_KEY] = gender.name
         }
     }
@@ -76,4 +94,16 @@ class UserPreferencesRepository(private val context: Context) {
             prefs[ROLEPLAY_TUTORIAL_VERSION_KEY] = version
         }
     }
+
+    suspend fun setRoleplayTutorialLocale(localeTag: String) {
+        context.userPreferencesDataStore.edit { prefs ->
+            prefs[ROLEPLAY_TUTORIAL_LOCALE_KEY] = localeTag
+        }
+    }
+
+    private fun guestNicknameForLocale(): String {
+        return context.getString(R.string.account_guest_nickname_default)
+    }
+
+    private fun isJapaneseLocale(): Boolean = Locale.getDefault().language == "ja"
 }
