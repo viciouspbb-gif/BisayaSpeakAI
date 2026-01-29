@@ -23,6 +23,15 @@ object DatabaseInitializer {
         questionDao: QuestionDao,
         userProgressDao: UserProgressDao
     ) {
+        // Temporary hard reset to ensure latest seed data is loaded (remove after migration)
+        runCatching {
+            Log.w(TAG, "Force-clearing questions table before seeding (temporary)")
+            questionDao.clearAll()
+        }.onFailure { throwable ->
+            Log.e(TAG, "Failed to force-clear database", throwable)
+            return
+        }
+
         val currentCount = runCatching { questionDao.countQuestions() }.getOrElse { throwable ->
             Log.e(TAG, "Failed to read question count", throwable)
             return

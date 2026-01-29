@@ -439,6 +439,10 @@ class ListeningViewModel(
         viewModelScope.launch {
             Log.d("ListeningViewModel", "Loading questions for level $level")
             currentLevel = level
+            _session.value = null
+            _currentQuestion.value = null
+            _selectedWords.value = emptyList()
+            _shuffledWords.value = emptyList()
             val difficulty = level.toDifficultyLevel()
 
             // Clear used problem IDs and question queue when loading new level
@@ -474,6 +478,7 @@ class ListeningViewModel(
                 val totalQuestions = questionRepository.getAllQuestions()
                 Log.e("ListeningViewModel", "Final total questions in database: ${totalQuestions.size}")
                 Log.e("ListeningViewModel", "Available levels: ${totalQuestions.groupBy { it.level }.keys.sorted()}")
+                showPlaceholderSession(level)
                 return@launch
             }
 
@@ -868,28 +873,30 @@ class ListeningViewModel(
             0
         }
         val passed = totalQuestions > 0 && correct >= requiredCorrect
+        val reachedEightyPercent = totalQuestions > 0 && correct >= (totalQuestions * 0.8f).roundToInt()
         if (_lessonResult.value == null) {
             viewModelScope.launch {
                 val lessonsBefore = usageRepository.getTotalLessonsCompleted().first()
-                val progressBefore = HonorLevelManager.getProgress(lessonsBefore)
-
+                val newLessons = if (passed) lessonsBefore + 1 else lessonsBefore
                 if (passed) {
                     usageRepository.incrementTotalLessonsCompleted()
                 }
 
-                val lessonsAfter = if (passed) lessonsBefore + 1 else lessonsBefore
-                val progressAfter = HonorLevelManager.getProgress(lessonsAfter)
-                val leveledUp = progressAfter.level > progressBefore.level
+                val owlLevelBefore = calculateOwlLevel(lessonsBefore)
+                val owlLevelAfter = calculateOwlLevel(newLessons)
+                val leveledUp = owlLevelAfter > owlLevelBefore
                 val result = calculateLessonResult(correct, totalQuestions, leveledUp)
                 _lessonResult.value = result
-                _clearedLevel.value = if (leveledUp) progressAfter.level else null
+                _clearedLevel.value = if (leveledUp) owlLevelAfter else null
 
                 if (passed) {
                     val starsEarned = calculateStars(correct, totalQuestions)
                     userProgressRepository.markLevelCompleted(this@ListeningViewModel.currentLevel, starsEarned)
-                    if (starsEarned > 0) {
+                    if (starsEarned > 0 || reachedEightyPercent) {
                         userProgressRepository.unlockLevel(this@ListeningViewModel.currentLevel + 1)
                     }
+                } else if (reachedEightyPercent) {
+                    userProgressRepository.unlockLevel(this@ListeningViewModel.currentLevel + 1)
                 }
 
                 // レッスン完了時のフクロウ先生の音声再生（リザルト確定後に遅延再生）
@@ -994,6 +1001,10 @@ class ListeningViewModel(
         )
     }
 
+    private fun calculateOwlLevel(totalLessonsCompleted: Int): Int {
+        return (totalLessonsCompleted / 3) + 1
+    }
+
     private fun calculateStars(correctCount: Int, totalQuestions: Int): Int {
         return when {
             totalQuestions == 0 -> 0
@@ -1077,6 +1088,19 @@ class ListeningViewModel(
             userLevel <= 19 -> RATE_INTERMEDIATE // Lv.10〜19（中級者）
             else -> RATE_ADVANCED               // Lv.20〜30（上級者）
         }
+    }
+
+    private fun showPlaceholderSession(level: Int) {
+        val difficulty = level.toDifficultyLevel()
+        _session.value = ListeningSession(
+            difficulty = difficulty,
+            questions = emptyList(),
+            currentQuestionIndex = 0,
+            score = 0,
+            mistakes = 0,
+            completed = false
+        )
+        _currentQuestion.value = null
     }
 
     private fun getLevelBasedTitle(userLevel: Int): String {
