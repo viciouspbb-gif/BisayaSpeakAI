@@ -44,6 +44,7 @@ import com.bisayaspeak.ai.util.AudioRecorder
 import com.bisayaspeak.ai.util.PronunciationThreshold
 import com.bisayaspeak.ai.ui.util.PracticeSessionManager
 import androidx.activity.compose.BackHandler
+import com.bisayaspeak.ai.util.LocaleUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -78,6 +79,8 @@ fun PracticeQuizScreen(
         }
     }
     
+    val isJapaneseLocale = remember { LocaleUtils.isJapanese(context) }
+
     var currentQuestionIndex by remember { mutableStateOf(0) }
     val currentQuestion = questions.getOrNull(currentQuestionIndex)
     
@@ -319,45 +322,26 @@ fun PracticeQuizScreen(
                                     .fillMaxWidth(),
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Text(
-                                    text = stringResource(R.string.language_japanese),
-                                    fontSize = 12.sp,
-                                    color = Color.Gray
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = currentQuestion.japanese,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color.White,
-                                    softWrap = true
-                                )
-                            }
-                        }
+                                val translationLabel = if (isJapaneseLocale) {
+                                    stringResource(R.string.language_japanese)
+                                } else {
+                                    stringResource(R.string.english)
+                                }
+                                val translationText = if (isJapaneseLocale) {
+                                    currentQuestion.japanese.ifBlank { currentQuestion.english }
+                                } else {
+                                    currentQuestion.english.ifBlank { currentQuestion.japanese }
+                                }
 
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 70.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFF1E1E1E)
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .fillMaxWidth(),
-                                verticalArrangement = Arrangement.Center
-                            ) {
                                 Text(
-                                    text = "English",
+                                    text = translationLabel,
                                     fontSize = 12.sp,
                                     color = Color.Gray
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = currentQuestion.english,
-                                    fontSize = 14.sp,
+                                    text = translationText,
+                                    fontSize = 18.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = Color.White,
                                     softWrap = true

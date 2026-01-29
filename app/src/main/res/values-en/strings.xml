@@ -208,7 +208,7 @@
     <string name="home_honor_level_label">Honor Level Lv %1$d</string>
     <string name="home_honor_unlock_prompt">Unlock a new honor</string>
     <string name="home_honor_reached">You have reached the highest honor!</string>
-    <string name="home_honor_next_xp">Only %1$d XP to the next honor</string>
+    <string name="home_honor_next_xp">Only %1$d lessons to the next honor</string>
     <string name="home_honor_unlock_hint">Keep taking lessons to unlock new honors</string>
     <string name="home_start_learning_title">Start Learning</string>
     <string name="home_start_learning_desc">Start from todays recommended lesson</string>

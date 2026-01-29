@@ -26,6 +26,7 @@ import com.bisayaspeak.ai.data.model.LearningContent
 import com.bisayaspeak.ai.data.model.LearningLevel
 import androidx.compose.ui.res.stringResource
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.util.LocaleUtils
 import com.bisayaspeak.ai.ui.viewmodel.DiagnosisState
 import com.bisayaspeak.ai.ui.viewmodel.RecordingState
 import com.bisayaspeak.ai.ui.viewmodel.RecordingViewModel
@@ -255,6 +256,7 @@ fun ContentCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            val isJapanese = LocaleUtils.isJapanese()
             Text(
                 text = content.bisayaText,
                 fontSize = 32.sp,
@@ -264,10 +266,25 @@ fun ContentCard(
 
             Spacer(Modifier.height(8.dp))
 
+            val translation = if (isJapanese) {
+                content.japaneseTranslation.ifBlank { content.englishTranslation }
+            } else {
+                content.englishTranslation.ifBlank { content.japaneseTranslation }
+            }
+
             Text(
                 text = stringResource(R.string.recording_pronunciation_format, content.pronunciation),
                 fontSize = 16.sp,
                 color = Color.Gray
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                text = translation,
+                fontSize = 18.sp,
+                color = Color.Black,
+                textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.height(12.dp))

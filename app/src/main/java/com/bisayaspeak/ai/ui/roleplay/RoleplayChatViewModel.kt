@@ -22,12 +22,16 @@ import com.bisayaspeak.ai.utils.MistakeManager
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.VoiceInputRecorder
 import java.io.File
+import java.util.Locale
 import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -102,8 +106,12 @@ data class RoleplayUiState(
     val userLevel: Int = 1,
     val totalLessonsCompleted: Int = 0,
     val tutorialMessage: String = "",
-    val tutorialHint: String = ""
+    val tutorialHint: String = "",
+    val translationDirective: String = "",
+    val translationLanguage: TranslationLanguage = TranslationLanguage.JAPANESE
 )
+
+enum class TranslationLanguage { JAPANESE, ENGLISH }
 
 class RoleplayChatViewModel(
     application: Application
@@ -232,8 +240,42 @@ class RoleplayChatViewModel(
     private var optionTutorialVisible: Boolean = true
     private var isJapaneseLocale: Boolean = true
 
+    private val localeState: StateFlow<Locale> = LocaleUtils.localeState
+    private val translationLanguageState: StateFlow<TranslationLanguage> = localeState
+        .map { locale ->
+            if (locale.language.equals("ja", ignoreCase = true)) TranslationLanguage.JAPANESE else TranslationLanguage.ENGLISH
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, if (LocaleUtils.currentLocale().language.equals("ja", true)) TranslationLanguage.JAPANESE else TranslationLanguage.ENGLISH)
+
+    val translationDirective: StateFlow<String> = translationLanguageState
+        .map { lang ->
+            val directive = if (lang == TranslationLanguage.JAPANESE) {
+                "翻訳対象: 日本語"
+            } else {
+                "Translation Target: English"
+            }
+            Log.d("RoleplayChatViewModel", "Translation directive updated: ${'$'}directive")
+            directive
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "翻訳対象: 日本語")
+
     init {
         isJapaneseLocale = LocaleUtils.isJapanese(application)
+        viewModelScope.launch {
+            translationLanguageState.collect { lang ->
+                val wasJapanese = isJapaneseLocale
+                isJapaneseLocale = lang == TranslationLanguage.JAPANESE
+                if (wasJapanese != isJapaneseLocale) {
+                    Log.d("RoleplayChatViewModel", "Locale changed -> isJapanese=${'$'}isJapaneseLocale")
+                }
+                _uiState.update { it.copy(translationLanguage = lang) }
+            }
+        }
+        viewModelScope.launch {
+            translationDirective.collect { directive ->
+                _uiState.update { it.copy(translationDirective = directive) }
+            }
+        }
         observeUserProfile()
         observeUserProgress()
         observeOptionTutorialState()
@@ -336,10 +378,6 @@ class RoleplayChatViewModel(
                 currentUserGender = profile.gender
                 _uiState.update { it.copy(userGender = profile.gender) }
 
-                val normalizedNickname = profile.nickname.trim()
-                    .takeUnless { it.isBlank() || it.equals("ゲストユーザー", ignoreCase = true) }
-                userNickname = normalizedNickname
-
                 val (baseBisaya, baseEnglish, callSignLabel) = when (profile.gender) {
                     UserGender.MALE -> Triple("Guapo", "Guapo", "タリ")
                     UserGender.FEMALE -> Triple("Gwapa", "Gwapa", "タリ")
@@ -347,8 +385,9 @@ class RoleplayChatViewModel(
                 }
 
                 userCallSign = callSignLabel
-                calloutBisaya = normalizedNickname ?: baseBisaya
-                calloutEnglish = normalizedNickname ?: baseEnglish
+                calloutBisaya = baseBisaya
+                calloutEnglish = baseEnglish
+                userNickname = null
             }
         }
     }
@@ -404,7 +443,8 @@ class RoleplayChatViewModel(
             turnsTarget = endingTurnTarget,
             isClosingPhase = inClosingPhase,
             scenarioClosingGuidance = scenarioClosingGuidance,
-            showOptionTutorial = optionTutorialVisible
+            showOptionTutorial = optionTutorialVisible,
+            translationDirective = translationDirective.value
         )
 
         if (scriptedRuntime == null) {
@@ -959,6 +999,7 @@ class RoleplayChatViewModel(
         scenario: RoleplayScenarioDefinition,
         userMessage: String
     ): String {
+        val translationLanguage = translationLanguageState.value
         val historyText = history.joinToString(separator = "\n") { entry ->
             val speaker = if (entry.isUser) "USER" else "AI"
             "$speaker: ${entry.text}"
@@ -976,15 +1017,20 @@ class RoleplayChatViewModel(
         val nicknameLine = userNickname?.let {
             "- The learner’s preferred nickname is \"$it\". Blend it with the affectionate titles when you call out to them."
         } ?: "- The learner has not set a nickname. Use the affectionate titles as-is."
+        val translationInstructionLine = when (translationLanguage) {
+            TranslationLanguage.JAPANESE -> "- Provide a separate Japanese translation ONLY inside the dedicated translation field."
+            TranslationLanguage.ENGLISH -> "- Provide a separate English translation ONLY inside the dedicated translation field."
+        }
+
         val genderInstruction = """
             SYSTEM DIRECTIVE:
             - You are Tari, a real Cebuana woman living in Cebu.
             - You must always speak Bisaya (Cebuano) in your dialogue. Never mix Japanese or English into your speech field.
-            - Provide a separate Japanese translation ONLY inside the dedicated translation field.
+            $translationInstructionLine
             - Tagalog / Filipino words (e.g., "masarap", "mahal", "po", "opo") are strictly forbidden. Use pure Cebuano alternatives such as "lami" (おいしい), "mahal kaayo" (高い), "salamat" (ありがとう) with NO "po" suffix.
             - ABSOLUTE RULE: 100% Cebuano vocabulary in every aiSpeech line and suggested option. If the learner uses Tagalog, interpret it but respond with Bisaya expressions only.
             - If you notice a Tagalog syllable sneaking into your output, immediately restate that sentence in Cebuano within the same response and continue in Bisaya only.
-            - The learner is $learnerGenderLabel. Address them affectionately as "$calloutBisaya" (Bisaya) or "$calloutEnglish" (English) and never use other titles.
+            - The learner is $learnerGenderLabel. Address them affectionately as "$calloutBisaya" (Bisaya) or "$calloutEnglish" (English) during greetings/farewells only; avoid repeating names every line.
             $nicknameLine
             - Mention these affectionate titles only during greetings, farewells, when praising the learner, or when double-checking their understanding/feelings. Avoid repeating the name on every line so the flow feels natural.
             - These affectionate callouts are for Tari's speech bubbles only. Never include them inside the suggested learner reply options or translations.
@@ -1032,7 +1078,7 @@ class RoleplayChatViewModel(
             }
         }.trim()
 
-        return """
+        val localizedPrompt = """
             $systemPromptWithGender
 
             Helpful hint phrases:
@@ -1057,6 +1103,17 @@ class RoleplayChatViewModel(
             }
             Output 2-3 concise options that build upon the learner's most recent intent. Never include markdown or explanations outside JSON.
         """.trimIndent()
+
+        val prompt = when (translationLanguage) {
+            TranslationLanguage.JAPANESE -> localizedPrompt
+            TranslationLanguage.ENGLISH -> "Translate to English: \n$localizedPrompt"
+        }
+
+        Log.d(
+            "RoleplayChatViewModel",
+            "Prompt generated lang=${'$'}translationLanguage userMsg='${'$'}{userMessage.take(40)}'"
+        )
+        return prompt
     }
 
     private fun parseRoleplayPayload(raw: String): RoleplayAiResponsePayload {

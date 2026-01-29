@@ -22,9 +22,9 @@ interface OpenAiApi {
     companion object {
         private const val BASE_URL = "https://api.openai.com/v1/"
 
-        private const val CONNECT_TIMEOUT_SECONDS = 30L
-        private const val READ_TIMEOUT_SECONDS = 120L
-        private const val WRITE_TIMEOUT_SECONDS = 60L
+        private const val CONNECT_TIMEOUT_SECONDS = 60L
+        private const val READ_TIMEOUT_SECONDS = 180L
+        private const val WRITE_TIMEOUT_SECONDS = 120L
 
         fun create(apiKey: String): OpenAiApi {
             val logging = HttpLoggingInterceptor().apply {

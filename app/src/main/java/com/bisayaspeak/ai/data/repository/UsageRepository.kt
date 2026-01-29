@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.bisayaspeak.ai.domain.honor.HonorLevelManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,7 +18,8 @@ class UsageRepository(private val context: Context) {
         private val DIAGNOSIS_COUNT_KEY = intPreferencesKey("diagnosis_count")
         private val AD_WATCH_COUNT_KEY = intPreferencesKey("ad_watch_count")
         private val CURRENT_LEVEL_KEY = intPreferencesKey("current_level")
-        private val TOTAL_XP_KEY = intPreferencesKey("total_xp")
+        // private val TOTAL_XP_KEY = intPreferencesKey("total_xp")
+        private val TOTAL_LESSONS_COMPLETED_KEY = intPreferencesKey("total_lessons_completed")
         private const val MAX_FREE_DIAGNOSIS = 10
         // リワード視聴ごとに +2 回の診断権を付与
         private const val BONUS_PER_AD = 2
@@ -47,17 +49,26 @@ class UsageRepository(private val context: Context) {
      * 現在のレベルを取得（初期値: 1）
      */
     fun getCurrentLevel(): Flow<Int> {
-        return context.dataStore.data.map { preferences ->
-            preferences[CURRENT_LEVEL_KEY] ?: 1
+        return getTotalLessonsCompleted().map { lessons ->
+            HonorLevelManager.levelForLessons(lessons)
         }
     }
     
+    // /**
+    //  * 累計XPを取得（初期値: 0）
+    //  */
+    // fun getTotalXP(): Flow<Int> {
+    //     return context.dataStore.data.map { preferences ->
+    //         preferences[TOTAL_XP_KEY] ?: 0
+    //     }
+    // }
+
     /**
-     * 累計XPを取得（初期値: 0）
+     * 累計レッスン完了数を取得（初期値: 0）
      */
-    fun getTotalXP(): Flow<Int> {
+    fun getTotalLessonsCompleted(): Flow<Int> {
         return context.dataStore.data.map { preferences ->
-            preferences[TOTAL_XP_KEY] ?: 0
+            preferences[TOTAL_LESSONS_COMPLETED_KEY] ?: 0
         }
     }
     
@@ -112,24 +123,34 @@ class UsageRepository(private val context: Context) {
         }
     }
     
+    // /**
+    //  * XPを加算
+    //  */
+    // suspend fun addXP(amount: Int) {
+    //     if (amount <= 0) return
+    //     context.dataStore.edit { preferences ->
+    //         val currentXP = preferences[TOTAL_XP_KEY] ?: 0
+    //         preferences[TOTAL_XP_KEY] = currentXP + amount
+    //     }
+    // }
+
+    // /**
+    //  * レベルを1つ上げる
+    //  */
+    // suspend fun incrementLevel() {
+    //     context.dataStore.edit { preferences ->
+    //         val currentLevel = preferences[CURRENT_LEVEL_KEY] ?: 1
+    //         preferences[CURRENT_LEVEL_KEY] = currentLevel + 1
+    //     }
+    // }
+
     /**
-     * XPを加算
+     * 累計レッスン完了数を1つ増やす
      */
-    suspend fun addXP(amount: Int) {
-        if (amount <= 0) return
+    suspend fun incrementTotalLessonsCompleted() {
         context.dataStore.edit { preferences ->
-            val currentXP = preferences[TOTAL_XP_KEY] ?: 0
-            preferences[TOTAL_XP_KEY] = currentXP + amount
-        }
-    }
-    
-    /**
-     * レベルを1つ上げる
-     */
-    suspend fun incrementLevel() {
-        context.dataStore.edit { preferences ->
-            val currentLevel = preferences[CURRENT_LEVEL_KEY] ?: 1
-            preferences[CURRENT_LEVEL_KEY] = currentLevel + 1
+            val totalCompleted = preferences[TOTAL_LESSONS_COMPLETED_KEY] ?: 0
+            preferences[TOTAL_LESSONS_COMPLETED_KEY] = totalCompleted + 1
         }
     }
     
@@ -141,7 +162,8 @@ class UsageRepository(private val context: Context) {
             preferences[DIAGNOSIS_COUNT_KEY] = 0
             preferences[AD_WATCH_COUNT_KEY] = 0
             preferences[CURRENT_LEVEL_KEY] = 1
-            preferences[TOTAL_XP_KEY] = 0
+            // preferences[TOTAL_XP_KEY] = 0
+            preferences[TOTAL_LESSONS_COMPLETED_KEY] = 0
         }
     }
 }

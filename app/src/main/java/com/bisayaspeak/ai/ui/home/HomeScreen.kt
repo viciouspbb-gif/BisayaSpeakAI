@@ -181,12 +181,12 @@ fun LearningSection(
         ?: stringResource(R.string.home_honor_unlock_prompt)
     val honorNickname = status?.honorNickname?.takeIf { it.isNotBlank() }
     val progress = status?.progressToNextLevel ?: 0f
-    val nextXpMessage = status?.let {
+    val nextLessonMessage = status?.let {
         when {
-            it.xpForNextLevel <= it.xpForCurrentLevel -> stringResource(R.string.home_honor_reached)
+            it.lessonsRemainingToNext <= 0 -> stringResource(R.string.home_honor_reached)
             else -> stringResource(
                 R.string.home_honor_next_xp,
-                (it.xpForNextLevel - it.totalXp).coerceAtLeast(0)
+                it.lessonsRemainingToNext
             )
         }
     } ?: stringResource(R.string.home_honor_unlock_hint)
@@ -238,7 +238,7 @@ fun LearningSection(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = nextXpMessage,
+                        text = nextLessonMessage,
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White.copy(alpha = 0.8f)
                     )

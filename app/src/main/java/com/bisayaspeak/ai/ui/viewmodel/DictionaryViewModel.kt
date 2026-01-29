@@ -8,12 +8,14 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
+import com.bisayaspeak.ai.data.repository.PromptProvider
 import com.bisayaspeak.ai.data.repository.WhisperRepository
 import android.util.Log
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.voice.VoiceInputRecorder
 import java.io.File
+import java.util.Locale
 import java.util.UUID
 import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +54,8 @@ data class TalkResponse(
     val translatedText: String,
     val spokenOutput: String,
     val romanized: String,
-    val explanation: String
+    val explanation: String,
+    val targetLanguage: DictionaryLanguage = DictionaryLanguage.BISAYA
 )
 
 sealed interface TalkStatus {
@@ -88,6 +91,7 @@ sealed interface DictionaryTtsState {
 class DictionaryViewModel(
     application: Application,
     private val repository: OpenAiChatRepository = OpenAiChatRepository(),
+    private val promptProvider: PromptProvider = PromptProvider(application),
     private val whisperRepository: WhisperRepository = WhisperRepository(),
     private val random: Random = Random(System.currentTimeMillis())
 ) : AndroidViewModel(application) {
@@ -101,6 +105,10 @@ class DictionaryViewModel(
     private val voiceService by lazy { GeminiVoiceService(application.applicationContext) }
     private val dictionaryVoiceService by lazy { GeminiVoiceService(application.applicationContext) }
     private val hasOpenAiKey = BuildConfig.OPENAI_API_KEY.isNotBlank()
+    private val prefersJapaneseOutput: Boolean = run {
+        val locale = application.resources.configuration.locales[0]
+        (locale?.language ?: Locale.getDefault().language).equals("ja", ignoreCase = true)
+    }
 
     fun updateQuery(query: String) {
         _uiState.update { it.copy(query = query, errorMessage = null) }
@@ -324,6 +332,7 @@ class DictionaryViewModel(
 
     private suspend fun requestExploration(query: String): Pair<List<TranslationCandidate>, AiExplanation?> {
         val prompt = buildString {
+            appendLine(promptProvider.getSystemPrompt())
             appendLine("You are an AI exploration dictionary that bridges Japanese and Cebuano (Bisaya) learners.")
             appendLine("Analyze the provided query and output rich translation candidates with nuance.")
             appendLine("Respond ONLY in JSON with the following schema:")
@@ -348,7 +357,12 @@ class DictionaryViewModel(
             appendLine("  }")
             appendLine("}")
             appendLine("Keep answers concise, 2-4 candidates maximum. Use plain text (no markdown).")
-            appendLine("IMPORTANT: explanation.summary・explanation.usage・explanation.related must be in natural Japanese with concise sentences.")
+            val explanationLanguage = if (promptProvider.getSystemPrompt().contains("Do not output Japanese")) {
+                "English"
+            } else {
+                "Japanese"
+            }
+            appendLine("IMPORTANT: explanation.summary・explanation.usage・explanation.related must be in natural $explanationLanguage with concise sentences.")
             appendLine("User query: \"$query\"")
         }
         val raw = repository.generateJsonResponse(prompt, temperature = 0.35)
@@ -397,6 +411,7 @@ class DictionaryViewModel(
         if (trimmed.isEmpty()) return DictionaryLanguage.UNKNOWN
         var japaneseScore = 0
         var bisayaScore = 0
+        var englishScore = 0
         val lower = trimmed.lowercase()
 
         val japaneseTokens = listOf("です", "ます", "ました", "ありがとう", "こんにちは", "すみません", "ましたか", "でしょう")
@@ -404,16 +419,47 @@ class DictionaryViewModel(
 
         val bisayaTokens = listOf(
             "ako", "ikaw", "siya", "palihug", "salamat", "maayong", "unsa", "kaayo", "kana",
-            "gani", "nimo", "kita", "balik", "laag", "pila", "gikan", "tawo", "nimo", "nato"
+            "gani", "nimo", "kita", "balik", "laag", "pila", "gikan", "tawo", "nato", "adto",
+            "puhon", "bai", "unsaon", "sige", "wala", "naa", "ganiha", "gihapon"
         )
         bisayaTokens.forEach { token -> if (lower.contains(token)) bisayaScore += 2 }
 
-        val hasKana = trimmed.any { Character.UnicodeBlock.of(it) == Character.UnicodeBlock.HIRAGANA || Character.UnicodeBlock.of(it) == Character.UnicodeBlock.KATAKANA }
+        val englishTokens = listOf(
+            "hello", "hi", "please", "thank", "thanks", "sorry", "good", "morning", "evening",
+            "night", "how", "are", "you", "today", "tomorrow", "yesterday", "where", "what",
+            "why", "when", "who", "the", "and", "but", "because", "help", "need", "want",
+            "love", "friend", "meet", "nice", "great"
+        )
+        englishTokens.forEach { token -> if (lower.contains(token)) englishScore += 2 }
+
+        val words = lower.replace("[^a-z']".toRegex(), " ")
+            .split("\\s+".toRegex())
+            .filter { it.isNotBlank() }
+        val englishWordSet = setOf(
+            "i", "you", "we", "they", "it", "hello", "hey", "please", "thanks", "thank",
+            "help", "need", "want", "can", "could", "would", "should", "maybe", "sure",
+            "okay", "ok", "alright", "right", "left"
+        )
+        val bisayaWordSet = setOf(
+            "ako", "ikaw", "siya", "kami", "kita", "sila", "palihug", "salamat", "maayong",
+            "buntag", "gabi", "gabii", "unsa", "asa", "ngano", "kanus-a", "pwede", "pwdi",
+            "gusto", "pasensya", "laag", "adto", "unya", "karun", "karon"
+        )
+        words.forEach { word ->
+            if (word in englishWordSet) englishScore += 3
+            if (word in bisayaWordSet) bisayaScore += 3
+        }
+
+        if (words.any { it.contains("'m") || it.contains("n't") || it.contains("'re") }) {
+            englishScore += 2
+        }
+
+        val hasKana = trimmed.any {
+            val block = Character.UnicodeBlock.of(it)
+            block == Character.UnicodeBlock.HIRAGANA || block == Character.UnicodeBlock.KATAKANA
+        }
         val hasKanji = trimmed.any { Character.UnicodeBlock.of(it) == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS }
         if (hasKana || hasKanji) japaneseScore += 4
-
-        val latinClusters = listOf("ng", "ka", "pa", "sa", "ta", "gi", "ma")
-        latinClusters.forEach { cluster -> if (lower.contains(cluster)) bisayaScore += 1 }
 
         val latinOnly = trimmed.none {
             val block = Character.UnicodeBlock.of(it)
@@ -424,38 +470,61 @@ class DictionaryViewModel(
 
         return when {
             hasKana || hasKanji -> DictionaryLanguage.JAPANESE
-            bisayaScore >= max(2, japaneseScore) -> DictionaryLanguage.BISAYA
-            japaneseScore >= max(3, bisayaScore + 2) -> DictionaryLanguage.JAPANESE
-            latinOnly -> DictionaryLanguage.BISAYA
+            englishScore >= max(2, bisayaScore + 1) -> DictionaryLanguage.ENGLISH
+            bisayaScore >= max(2, englishScore + 1) -> DictionaryLanguage.BISAYA
+            latinOnly && englishScore >= bisayaScore -> DictionaryLanguage.ENGLISH
+            latinOnly && bisayaScore > englishScore -> DictionaryLanguage.BISAYA
+            japaneseScore > 0 -> DictionaryLanguage.JAPANESE
             else -> DictionaryLanguage.UNKNOWN
         }
     }
 
+    private data class TalkDirectionSpec(
+        val sourceLabel: String,
+        val targetLabel: String,
+        val targetLanguage: DictionaryLanguage
+    )
+
+    private fun resolveTalkDirection(language: DictionaryLanguage): TalkDirectionSpec {
+        return when (language) {
+            DictionaryLanguage.ENGLISH -> TalkDirectionSpec("English", "Cebuano", DictionaryLanguage.BISAYA)
+            DictionaryLanguage.BISAYA -> {
+                if (prefersJapaneseOutput) {
+                    TalkDirectionSpec("Cebuano", "Japanese", DictionaryLanguage.JAPANESE)
+                } else {
+                    TalkDirectionSpec("Cebuano", "English", DictionaryLanguage.ENGLISH)
+                }
+            }
+            DictionaryLanguage.JAPANESE -> TalkDirectionSpec("Japanese", "Cebuano", DictionaryLanguage.BISAYA)
+            else -> TalkDirectionSpec("English", "Cebuano", DictionaryLanguage.BISAYA)
+        }
+    }
+
     private suspend fun requestTalkTranslation(text: String, language: DictionaryLanguage): TalkResponse {
-        val direction = when (language) {
-            DictionaryLanguage.JAPANESE -> "ja_to_ceb"
-            DictionaryLanguage.BISAYA -> "ceb_to_ja"
-            else -> if (random.nextBoolean()) "ja_to_ceb" else "ceb_to_ja"
-        }
-        val (sourceLabel, targetLabel) = when (direction) {
-            "ja_to_ceb" -> "Japanese" to "Cebuano"
-            else -> "Cebuano" to "Japanese"
-        }
+        val direction = resolveTalkDirection(language)
         val prompt = buildString {
-            appendLine("You are a hands-free interpreter shuttling between Japanese and Cebuano.")
-            appendLine("Return JSON only with fields: detectedLanguage('ja'|'ceb'), sourceText, translatedText, spokenOutput, romanized, explanation.")
-            appendLine("Source language: $sourceLabel. Target language: $targetLabel.")
-            appendLine("translatedText MUST always be written in the target language and must be a faithful translation of the input. Never echo the source language verbatim.")
-            appendLine("spokenOutput must also be in the target language (natural, short, ready for TTS). If the input already matches the target language, respond with a natural acknowledgement sentence in that target language.")
-            appendLine("Explanation should be <= 60 Japanese characters and describe the translation choice.")
+            appendLine(promptProvider.getSystemPrompt())
+            appendLine("You are a hands-free interpreter shuttling between ${direction.sourceLabel} and ${direction.targetLabel}.")
+            appendLine("Return JSON only with fields: detectedLanguage('en'|'ceb'), sourceText, translatedText, spokenOutput, romanized, explanation.")
+            appendLine("Source language: ${direction.sourceLabel}. Target language: ${direction.targetLabel}.")
+            appendLine("translatedText MUST always be written in ${direction.targetLabel} and must be a faithful translation of the input. Never echo the source language verbatim.")
+            appendLine("spokenOutput must also be in ${direction.targetLabel} (natural, short, ready for TTS). If the input already matches the target language, respond with a natural acknowledgement sentence in that target language.")
+            val explanationLanguage = when {
+                promptProvider.getSystemPrompt().contains("Do not output Japanese") -> "English"
+                direction.targetLabel == "Japanese" -> "Japanese"
+                prefersJapaneseOutput -> "Japanese"
+                else -> "English"
+            }
+            appendLine("Explanation should be <= 60 $explanationLanguage characters and describe the translation choice.")
             appendLine("Input: $text")
         }
         val raw = repository.generateJsonResponse(prompt, temperature = 0.4)
         val cleaned = raw.trim().removePrefix("```json").removeSuffix("```")
         val json = JSONObject(cleaned)
-        val detectedCode = json.optString("detectedLanguage", "ja")
+        val detectedCode = json.optString("detectedLanguage", "en")
         val detected = when (detectedCode.lowercase()) {
-            "ja" -> DictionaryLanguage.JAPANESE
+            "ja", "jp" -> DictionaryLanguage.JAPANESE
+            "en", "eng", "english" -> DictionaryLanguage.ENGLISH
             "ceb", "bisaya", "cebuano" -> DictionaryLanguage.BISAYA
             else -> language
         }
@@ -465,7 +534,8 @@ class DictionaryViewModel(
             translatedText = json.optString("translatedText"),
             spokenOutput = json.optString("spokenOutput"),
             romanized = json.optString("romanized"),
-            explanation = json.optString("explanation")
+            explanation = json.optString("explanation"),
+            targetLanguage = direction.targetLanguage
         )
     }
 

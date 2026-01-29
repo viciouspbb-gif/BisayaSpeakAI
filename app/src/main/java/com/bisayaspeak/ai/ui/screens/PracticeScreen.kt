@@ -13,13 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.model.PracticeItem
 import com.bisayaspeak.ai.ui.viewmodel.PracticeViewModel
+import com.bisayaspeak.ai.util.LocaleUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,13 +83,11 @@ fun PracticeItemCard(
     content: PracticeItem,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val localeLanguage = context.resources.configuration.locales[0].language
-    val showJapanese = localeLanguage.equals("ja", ignoreCase = true)
-    val secondaryText = if (showJapanese) {
-        content.japanese
+    val isJapanese = LocaleUtils.isJapanese()
+    val secondaryText = if (isJapanese) {
+        content.japanese.ifBlank { content.english }
     } else {
-        content.english
+        content.english.ifBlank { content.japanese }
     }
     Card(
         onClick = onClick,

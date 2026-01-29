@@ -112,7 +112,7 @@ object SeedDataProvider {
                 val sampleWord = numberToCebuano(index + 1)
                 generated += q(
                     sentence = "Level $levelWord Listening $sampleWord",
-                    meaning = "レベル$level リスニング サンプル${index + 1}",
+                    meaningJa = "レベル$level リスニング サンプル${index + 1}",
                     level = level,
                     type = LISTENING
                 )
@@ -121,7 +121,7 @@ object SeedDataProvider {
                 val sampleWord = numberToCebuano(index + 1)
                 generated += q(
                     sentence = "Level $levelWord Translation $sampleWord",
-                    meaning = "レベル$level 翻訳 サンプル${index + 1}",
+                    meaningJa = "レベル$level 翻訳 サンプル${index + 1}",
                     level = level,
                     type = TRANSLATION
                 )
@@ -130,7 +130,7 @@ object SeedDataProvider {
                 val sampleWord = numberToCebuano(index + 1)
                 generated += q(
                     sentence = "Level $levelWord Ordering $sampleWord",
-                    meaning = "レベル$level 並べ替え サンプル${index + 1}",
+                    meaningJa = "レベル$level 並べ替え サンプル${index + 1}",
                     level = level,
                     type = ORDERING
                 )
@@ -143,8 +143,30 @@ object SeedDataProvider {
         return cebuanoNumbers[number] ?: number.toString()
     }
 
-    private fun q(sentence: String, meaning: String, level: Int, type: String) =
-        Question(sentence = sentence, meaning = meaning, level = level, type = type)
+    private fun q(
+        sentence: String,
+        meaningJa: String,
+        level: Int,
+        type: String,
+        meaningEn: String = meaningJa
+    ) =
+        Question(
+            sentence = sentence,
+            meaningJa = meaningJa,
+            meaningEn = meaningEn,
+            level = level,
+            type = type
+        )
+
+    @Suppress("FunctionName")
+    private fun q(sentence: String, meaning: String, level: Int, type: String): Question =
+        q(
+            sentence = sentence,
+            meaningJa = meaning,
+            level = level,
+            type = type,
+            meaningEn = meaning
+        )
 
     private const val LISTENING = "LISTENING"
     private const val TRANSLATION = "TRANSLATION"

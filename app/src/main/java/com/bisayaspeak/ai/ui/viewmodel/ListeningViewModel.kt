@@ -5,12 +5,13 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.SoundPool
-import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.data.model.LearningContent
+import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.listening.QuestionType
 import com.bisayaspeak.ai.data.listening.ListeningQuestion
 import com.bisayaspeak.ai.data.listening.ListeningSession
@@ -20,6 +21,7 @@ import com.bisayaspeak.ai.data.local.Question
 import com.bisayaspeak.ai.data.repository.QuestionRepository
 import com.bisayaspeak.ai.data.repository.UsageRepository
 import com.bisayaspeak.ai.data.repository.UserProgressRepository
+import com.bisayaspeak.ai.domain.honor.HonorLevelManager
 import com.bisayaspeak.ai.ads.AdManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -27,12 +29,22 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import com.bisayaspeak.ai.util.LocaleUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import java.util.*
+import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+
+data class LocalizedPromptItem(
+    val id: String,
+    val text: String
+)
 
 class ListeningViewModel(
     application: Application,
@@ -46,6 +58,85 @@ class ListeningViewModel(
 
     private val _currentQuestion = MutableStateFlow<ListeningQuestion?>(null)
     val currentQuestion: StateFlow<ListeningQuestion?> = _currentQuestion.asStateFlow()
+
+    private val localeStateFlow = LocaleUtils.localeState
+    private val initialLocale = LocaleUtils.currentLocale().language.lowercase(Locale.US)
+
+    val localizedPrompt: StateFlow<String> = combine(_currentQuestion, localeStateFlow) { question, locale ->
+        val lang = locale.language.lowercase(Locale.US)
+        val translation = question?.translations?.get(lang).orEmpty()
+        val fallback = question?.translations
+            ?.entries
+            ?.firstOrNull { !it.value.isNullOrBlank() && it.key != lang }
+            ?.value
+            .orEmpty()
+
+        val resolved = when {
+            translation.isNotBlank() -> translation
+            fallback.isNotBlank() -> fallback
+            !question?.meaning.isNullOrBlank() -> question?.meaning.orEmpty()
+            else -> question?.phrase.orEmpty()
+        }
+
+        Log.d("ListeningViewModel", "Localized prompt update lang=$lang text=$resolved")
+        resolved
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = ""
+    )
+
+    val aiPrompt: StateFlow<String> = localeStateFlow
+        .map { locale ->
+            val lang = locale.language.lowercase(Locale.US)
+            val prompt = if (lang == "ja") {
+                "リスニング問題に集中し、ビサヤ語の意味を日本語で説明してください。"
+            } else {
+                "Translate to English: Focus on the listening question and explain the Bisaya phrase in English."
+            }
+            Log.d("ListeningViewModel", "AI prompt updated lang=${'$'}lang prompt=${'$'}prompt")
+            prompt
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = if (initialLocale == "ja") {
+                "リスニング問題に集中し、ビサヤ語の意味を日本語で説明してください。"
+            } else {
+                "Translate to English: Focus on the listening question and explain the Bisaya phrase in English."
+            }
+        )
+
+    val localizedQuestions: StateFlow<List<LocalizedPromptItem>> = combine(_session, localeStateFlow) { currentSession, locale ->
+        val lang = locale.language.lowercase(Locale.US)
+        val questions = currentSession?.questions.orEmpty()
+        Log.d("LessonData", "questions: $questions")
+
+        questions.map { question ->
+            val translation = question.translations[lang].orEmpty()
+            val fallback = question.translations
+                .filterKeys { it != lang }
+                .values
+                .firstOrNull { !it.isNullOrBlank() }
+                .orEmpty()
+
+            val resolved = when {
+                translation.isNotBlank() -> translation
+                fallback.isNotBlank() -> fallback
+                else -> question.phrase
+            }
+
+            Log.d("LessonData", "mapped question phrase=${question.phrase} translation=$resolved")
+            LocalizedPromptItem(
+                id = question.id,
+                text = resolved
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
 
     private val _selectedWords = MutableStateFlow<List<String>>(emptyList())
     val selectedWords: StateFlow<List<String>> = _selectedWords.asStateFlow()
@@ -121,6 +212,7 @@ class ListeningViewModel(
     private var retryCount = 0
     private var rewardTimeoutJob: Job? = null
     private var isRoleplaySession: Boolean = false
+    private var pendingLevelLoad: Int? = null
 
     fun setRoleplaySession(isRoleplay: Boolean) {
         isRoleplaySession = isRoleplay
@@ -133,6 +225,7 @@ class ListeningViewModel(
         private const val ORDERING_COUNT = 3
         private const val MAX_PANEL_COUNT = 8
         private const val MAX_VOICE_HINTS = 3
+        private const val MAX_LEVEL = 30
 
         // 称号連動型音声スピード設定
         private const val PITCH_FIXED = 0.8f // ピッチは固定
@@ -162,7 +255,7 @@ class ListeningViewModel(
         initTTS()
 
         // アプリ起動時のデータ完全同期（Migration）
-        performDataMigration()
+        ensureDataIntegrity()
 
         // アプリ起動時にリワード広告をプリロードのみ実行（二重初期化を防止）
         preloadRewardedAd()
@@ -327,6 +420,11 @@ class ListeningViewModel(
         _lessonResult.value = null
         _clearedLevel.value = null
         _session.value = _session.value?.copy(completed = false)
+
+        pendingLevelLoad?.let { levelToLoad ->
+            pendingLevelLoad = null
+            loadQuestions(levelToLoad)
+        }
     }
 
     fun forceHintPlaybackWithoutAds() {
@@ -337,6 +435,7 @@ class ListeningViewModel(
     }
 
     fun loadQuestions(level: Int) {
+        pendingLevelLoad = null
         viewModelScope.launch {
             Log.d("ListeningViewModel", "Loading questions for level $level")
             currentLevel = level
@@ -769,19 +868,21 @@ class ListeningViewModel(
             0
         }
         val passed = totalQuestions > 0 && correct >= requiredCorrect
-        val result = calculateLessonResult(correct, totalQuestions, passed)
         if (_lessonResult.value == null) {
-            _lessonResult.value = result
             viewModelScope.launch {
-                val currentLevel = usageRepository.getCurrentLevel().first()
-                usageRepository.addXP(result.xpEarned)
-                val clearedLevel = if (passed) {
-                    usageRepository.incrementLevel()
-                    currentLevel + 1
-                } else {
-                    null
+                val lessonsBefore = usageRepository.getTotalLessonsCompleted().first()
+                val progressBefore = HonorLevelManager.getProgress(lessonsBefore)
+
+                if (passed) {
+                    usageRepository.incrementTotalLessonsCompleted()
                 }
-                _clearedLevel.value = clearedLevel
+
+                val lessonsAfter = if (passed) lessonsBefore + 1 else lessonsBefore
+                val progressAfter = HonorLevelManager.getProgress(lessonsAfter)
+                val leveledUp = progressAfter.level > progressBefore.level
+                val result = calculateLessonResult(correct, totalQuestions, leveledUp)
+                _lessonResult.value = result
+                _clearedLevel.value = if (leveledUp) progressAfter.level else null
 
                 if (passed) {
                     val starsEarned = calculateStars(correct, totalQuestions)
@@ -791,25 +892,44 @@ class ListeningViewModel(
                     }
                 }
 
-                // レッスン完了時のフクロウ先生の音声再生
-                playCompletionSound(passed)
+                // レッスン完了時のフクロウ先生の音声再生（リザルト確定後に遅延再生）
+                playCompletionSound(result, passed)
+                scheduleNextLevelLoad(passed)
             }
         }
     }
 
-    private fun playCompletionSound(passed: Boolean) {
+    private fun scheduleNextLevelLoad(passed: Boolean) {
+        if (isRoleplaySession) return
+        val targetLevel = when {
+            passed && currentLevel < MAX_LEVEL -> currentLevel + 1
+            else -> currentLevel
+        }
+        pendingLevelLoad = targetLevel
+        Log.d("ListeningViewModel", "Queued next level load for level $targetLevel (passed=$passed)")
+    }
+
+    private fun playCompletionSound(result: LessonResult, passed: Boolean) {
+        Log.d("OwlAudio", "Playing owl sound for lesson result")
         if (!_ttsInitialized.value) {
-            Log.w("ListeningViewModel", "TTS not initialized yet, skipping completion sound")
+            Log.w("OwlAudio", "TTS not initialized yet, scheduling fallback")
+            viewModelScope.launch {
+                delay(2000)
+                if (_ttsInitialized.value) {
+                    playCompletionSound(result, passed)
+                } else {
+                    Log.e("OwlAudio", "Fallback TTS still not available")
+                }
+            }
             return
         }
-
-        val currentSession = _session.value
-        val totalQuestions = currentSession?.questions?.size ?: 0
-        val correctCount = currentSession?.score ?: 0
-        val percentage = if (totalQuestions > 0) (correctCount.toFloat() / totalQuestions * 100) else 0f
+        val totalQuestions = result.totalQuestions
+        val correctCount = result.correctCount
+        val percentage = if (totalQuestions > 0) (correctCount.toFloat() / totalQuestions * 100f) else 0f
 
         tts?.let {
             viewModelScope.launch {
+                delay(200) // リザルトUI描画を優先
                 // ユーザーレベルに応じた師匠メッセージを取得
                 val userLevel = try {
                     getUserLevelFromXp()
@@ -817,16 +937,36 @@ class ListeningViewModel(
                     1 // デフォルトレベル
                 }
 
+                val isJapanese = LocaleUtils.isJapanese(getApplication())
+                val mentorLine = getOwlMasterIntro(userLevel, isJapanese)
                 val message = if (passed) {
                     when {
-                        userLevel == 30 -> "見事じゃ！ジンベエザメと泳ぐ達人になったな！ここからが本番じゃ。プレミアムな世界を覗いてみるか？"
-                        percentage >= 100f -> getOwlMasterMessage(userLevel) + "見事じゃ！完璧な出来栄えじゃな！"
-                        percentage >= 80f -> getOwlMasterMessage(userLevel) + "おしいのう！あと少しで全問正解じゃったのに。"
-                        percentage >= 50f -> getOwlMasterMessage(userLevel) + "むぅ、もう少しでレベルアップじゃ！"
-                        else -> getOwlMasterMessage(userLevel) + "まだまだ修行が必要じゃな。"
+                        userLevel == 30 -> mentorLine + localText(isJapanese,
+                            "見事じゃ！ジンベエザメと泳ぐ達人になったな！ここからが本番じゃ。プレミアムな世界を覗いてみるか？",
+                            "Outstanding! You're a whale-shark-level master now. Ready to peek into the premium world?"
+                        )
+                        percentage >= 100f -> mentorLine + localText(isJapanese,
+                            "見事じゃ！完璧な出来栄えじゃな！",
+                            "Perfect! Flawless performance!"
+                        )
+                        percentage >= 80f -> mentorLine + localText(isJapanese,
+                            "おしいのう！あと少しで全問正解じゃったのに。",
+                            "So close! Just a little more for a perfect score."
+                        )
+                        percentage >= 50f -> mentorLine + localText(isJapanese,
+                            "むぅ、もう少しでレベルアップじゃ！",
+                            "Not bad. A bit more work and you'll level up."
+                        )
+                        else -> mentorLine + localText(isJapanese,
+                            "まだまだ修行が必要じゃな。",
+                            "More training is needed."
+                        )
                     }
                 } else {
-                    getOwlMasterMessage(userLevel) + "まだまだ修行が必要じゃな。しっかり復習して出直してくるのじゃ！"
+                    mentorLine + localText(isJapanese,
+                        "まだまだ修行が必要じゃな。しっかり復習して出直してくるのじゃ！",
+                        "You still need practice. Review carefully and come back!"
+                    )
                 }
 
                 val speechRate = getSpeechRateForLevel(userLevel)
@@ -835,26 +975,22 @@ class ListeningViewModel(
                 it.setPitch(PITCH_FIXED)
                 it.setSpeechRate(speechRate)
                 it.speak(message, TextToSpeech.QUEUE_FLUSH, null, "completion_sound")
-                Log.d("ListeningViewModel", "Playing completion sound with pitch $PITCH_FIXED, rate $speechRate (level $userLevel): $message")
+                Log.d("OwlAudio", "Playing completion sound with pitch $PITCH_FIXED, rate $speechRate (level $userLevel): $message")
             }
         } ?: run {
-            Log.w("ListeningViewModel", "TTS not available for completion sound")
+            Log.w("OwlAudio", "TTS not available for completion sound")
         }
     }
 
     private fun calculateLessonResult(
         correctCount: Int,
         totalQuestions: Int,
-        passed: Boolean
+        leveledUp: Boolean
     ): LessonResult {
-        val baseXp = correctCount * 10
-        val bonus = if (correctCount == totalQuestions && totalQuestions == QUESTIONS_PER_SESSION) 50 else 0
-        val xp = baseXp + bonus
         return LessonResult(
             correctCount = correctCount,
             totalQuestions = totalQuestions,
-            xpEarned = xp,
-            leveledUp = passed
+            leveledUp = leveledUp
         )
     }
 
@@ -874,51 +1010,25 @@ class ListeningViewModel(
         else -> DifficultyLevel.ADVANCED
     }
 
-    private fun Question.toListeningQuestion(): ListeningQuestion {
-        val tokens = sentence.split(" ").filter { token -> token.isNotBlank() }
-        return ListeningQuestion(
-            id = "db_$id",
-            phrase = sentence,
-            words = tokens,
-            correctOrder = tokens,
-            meaning = meaning,
-            type = when (type.uppercase()) {
-                "TRANSLATION" -> QuestionType.TRANSLATION
-                "ORDERING" -> QuestionType.ORDERING
-                else -> QuestionType.LISTENING
-            }
-        )
-    }
-
-    // データ同期関連
-    private fun performDataMigration() {
+    private fun ensureDataIntegrity() {
         viewModelScope.launch {
             try {
                 Log.d("ListeningViewModel", "Starting comprehensive data migration and synchronization")
 
-                // 1. 全端末共通：データベースの強制クレンジングと厳密照合
                 val wasReconstructed = performStrictDataValidation()
-
-                // 2. ユーザーデータの整合性チェック
-                val totalXp = usageRepository.getTotalXP().first()
+                val totalLessons = usageRepository.getTotalLessonsCompleted().first()
                 val userLevel = getUserLevelFromXp()
                 val expectedSpeechRate = getSpeechRateForLevel(userLevel)
 
-                Log.d("ListeningViewModel", "Current data - XP: $totalXp, Level: $userLevel, Expected Rate: $expectedSpeechRate, Reconstructed: $wasReconstructed")
+                Log.d(
+                    "ListeningViewModel",
+                    "Current data - Lessons: $totalLessons, Level: $userLevel, Expected Rate: $expectedSpeechRate, Reconstructed: $wasReconstructed"
+                )
 
-                // 3. 古い設定フラグのクリーンアップ
                 cleanupLegacySettings()
-
-                // 4. 音声設定の強制同期（再構築時は特に重要）
                 forceSyncAudioSettings(userLevel, expectedSpeechRate)
-
-                // 5. 広告状態のリセットと再初期化
                 resetAdStates()
 
-                // 6. ヒント回数の整合性チェック（リセットしない）
-                // validateHintCount() // 削除：ヒントをリセットしない
-
-                // 7. TTSエンジンの強制再初期化（再構築時または初回起動時）
                 if (wasReconstructed || !_ttsInitialized.value) {
                     forceTTSReinitialization()
                 }
@@ -930,44 +1040,35 @@ class ListeningViewModel(
         }
     }
 
+    private fun Question.toListeningQuestion(): ListeningQuestion {
+        val tokens = sentence.split(" ").filter { it.isNotBlank() }
+        val translations = buildMap<String, String> {
+            if (meaningJa.isNotBlank()) put("ja", meaningJa)
+            if (meaningEn.isNotBlank()) put("en", meaningEn)
+        }
+        val defaultMeaning = meaningJa.ifBlank { meaningEn }
+
+        return ListeningQuestion(
+            id = "db_${id}",
+            phrase = sentence,
+            words = tokens,
+            correctOrder = tokens,
+            meaning = defaultMeaning,
+            type = when (type.uppercase(Locale.US)) {
+                "TRANSLATION" -> QuestionType.TRANSLATION
+                "ORDERING" -> QuestionType.ORDERING
+                else -> QuestionType.LISTENING
+            },
+            translations = translations
+        )
+    }
+
     // ... 他の必要な関数を追加
 
     // レベルと称号関連
     private suspend fun getUserLevelFromXp(): Int {
-        val totalXp = usageRepository.getTotalXP().first()
-        return when {
-            totalXp >= 1000 -> 30
-            totalXp >= 900 -> 29
-            totalXp >= 800 -> 28
-            totalXp >= 700 -> 27
-            totalXp >= 600 -> 26
-            totalXp >= 550 -> 25
-            totalXp >= 500 -> 24
-            totalXp >= 450 -> 23
-            totalXp >= 400 -> 22
-            totalXp >= 350 -> 21
-            totalXp >= 300 -> 20
-            totalXp >= 280 -> 19
-            totalXp >= 260 -> 18
-            totalXp >= 240 -> 17
-            totalXp >= 220 -> 16
-            totalXp >= 200 -> 15
-            totalXp >= 180 -> 14
-            totalXp >= 160 -> 13
-            totalXp >= 140 -> 12
-            totalXp >= 120 -> 11
-            totalXp >= 100 -> 10
-            totalXp >= 90 -> 9
-            totalXp >= 80 -> 8
-            totalXp >= 70 -> 7
-            totalXp >= 60 -> 6
-            totalXp >= 50 -> 5
-            totalXp >= 40 -> 4
-            totalXp >= 30 -> 3
-            totalXp >= 20 -> 2
-            totalXp >= 10 -> 1
-            else -> 1
-        }
+        val totalLessons = usageRepository.getTotalLessonsCompleted().first()
+        return HonorLevelManager.levelForLessons(totalLessons)
     }
 
     private fun getSpeechRateForLevel(userLevel: Int): Float {
@@ -1014,41 +1115,44 @@ class ListeningViewModel(
         }
     }
 
-    private fun getOwlMasterMessage(userLevel: Int): String {
-        return when (userLevel) {
-            1 -> "ようこそ！まずは基本の挨拶からじゃ。"
-            2 -> "空港での出会いが大切じゃ。"
-            3 -> "マクタン島の歴史を学ぶのじゃ。"
-            4 -> "実践的な会話の時じゃ！"
-            5 -> "いよいよ上陸じゃ！"
-            6 -> "海辺での挨拶を覚えるのじゃ。"
-            7 -> "リゾートでの楽しみ方じゃ。"
-            8 -> "ビーチでの会話を学ぶのじゃ。"
-            9 -> "島の人々と交流じゃ。"
-            10 -> "サントニーニョ様に祈るのじゃ。"
-            11 -> "歴史ある街を歩くのじゃ。"
-            12 -> "教会での祈りを学ぶのじゃ。"
-            13 -> "サントニーニョの加護を！"
-            14 -> "セブの歴史を深く学ぶのじゃ。"
-            15 -> "ジプニーに乗って冒険じゃ！"
-            16 -> "市場での活きた会話じゃ。"
-            17 -> "街角での自然な挨拶じゃ。"
-            18 -> "交通手段をマスターするのじゃ。"
-            19 -> "新しい冒険の始まりじゃ！"
-            20 -> "コロン通りで買い物じゃ！"
-            21 -> "市場交渉術を学ぶのじゃ。"
-            22 -> "お土産選びの楽しみじゃ。"
-            23 -> "値段交渉のコツじゃ。"
-            24 -> "買い物上手になったな！"
-            25 -> "アイランドホッピングの始まりじゃ！"
-            26 -> "未開の島々を探検じゃ。"
-            27 -> "探検家としての心じゃ。"
-            28 -> "海の冒険者として成長じゃ。"
-            29 -> "島の達人への道じゃ！"
-            30 -> "ジンベエザメと泳ぐ達人じゃ！"
-            else -> "ビサヤの完全なるマスターじゃ！"
+    private fun getOwlMasterIntro(userLevel: Int, isJapanese: Boolean): String {
+        val pair = when (userLevel) {
+            1 -> "基本の挨拶を磨くのじゃ。" to "Keep polishing those basic greetings."
+            2 -> "旅の導線を覚えるのじゃ。" to "Learn the flow of travel encounters."
+            3 -> "歴史を味方につけるのじゃ。" to "Use history to your advantage."
+            4 -> "実戦会話で腕を試すのじゃ。" to "Test your skills with real conversations."
+            5 -> "島の空気を感じるのじゃ。" to "Feel the island breeze in your speech."
+            6 -> "海辺の挨拶を固めるのじゃ。" to "Lock in those seaside greetings."
+            7 -> "リゾート流の返答を磨くのじゃ。" to "Polish those resort-style replies."
+            8 -> "ビーチトークで主役になるのじゃ。" to "Own the beach conversations."
+            9 -> "島人との距離を縮めるのじゃ。" to "Get closer to the island folk."
+            10 -> "祈りと言葉を揃えるのじゃ。" to "Align your prayers and phrases."
+            11 -> "古都の言葉遣いを味わうのじゃ。" to "Savor the speech of the old city."
+            12 -> "教会での礼節を磨くのじゃ。" to "Refine your chapel etiquette."
+            13 -> "加護を信じて声を出すのじゃ。" to "Speak boldly with blessings."
+            14 -> "セブの物語を語れるようになるのじゃ。" to "Be ready to retell Cebu's stories."
+            15 -> "ジプニーでの切り返しを覚えるのじゃ。" to "Master the jeepney comebacks."
+            16 -> "市場言葉のスピードに慣れるのじゃ。" to "Match the market's pace."
+            17 -> "街角の挨拶を磨き続けるのじゃ。" to "Keep refining those street greetings."
+            18 -> "移動会話の幅を広げるのじゃ。" to "Expand your travel phrases."
+            19 -> "冒険心を言葉に乗せるのじゃ。" to "Let adventure fuel your words."
+            20 -> "買い物の極意を掴むのじゃ。" to "Grasp the art of shopping talk."
+            21 -> "交渉術を一段上げるのじゃ。" to "Level up your bargaining."
+            22 -> "お土産トークを磨き上げるのじゃ。" to "Sharpen your souvenir talk."
+            23 -> "値切りの決め台詞を習得するのじゃ。" to "Learn the perfect haggling line."
+            24 -> "賢い買い物言葉を定着させるのじゃ。" to "Solidify smart shopper phrases."
+            25 -> "アイランドホッピングの語彙を増やすのじゃ。" to "Grow your island-hopping vocab."
+            26 -> "未知の島でも落ち着いて話すのじゃ。" to "Stay composed on unknown islands."
+            27 -> "探検家の言葉遣いを身につけるのじゃ。" to "Adopt the tongue of explorers."
+            28 -> "海の冒険者らしい語り口にするのじゃ。" to "Speak like a sea adventurer."
+            29 -> "島の達人らしく締めるのじゃ。" to "Close like a master of the islands."
+            30 -> "ジンベエ級の落ち着きで話すのじゃ。" to "Speak with whale-shark composure."
+            else -> "ビサヤマスターとして堂々と話すのじゃ。" to "Speak boldly as a Bisaya master."
         }
+        return if (isJapanese) pair.first else pair.second
     }
+
+    private fun localText(isJapanese: Boolean, ja: String, en: String): String = if (isJapanese) ja else en
 
     // データ同期関連の残り関数
     private fun performStrictDataValidation(): Boolean {

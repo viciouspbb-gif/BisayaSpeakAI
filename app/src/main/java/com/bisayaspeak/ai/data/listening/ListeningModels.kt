@@ -17,7 +17,8 @@ data class ListeningQuestion(
     val meaning: String,
     val pronunciation: String? = null,
     val audioUrl: String? = null,
-    val type: QuestionType = QuestionType.LISTENING
+    val type: QuestionType = QuestionType.LISTENING,
+    val translations: Map<String, String> = emptyMap()
 )
 
 data class ListeningSession(
