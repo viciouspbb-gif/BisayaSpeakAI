@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey
 data class Question(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val sentence: String,
-    val meaning: String,
+    val meaningJa: String,
+    val meaningEn: String,
     val level: Int,
     val type: String
 )

@@ -2,6 +2,7 @@ package com.bisayaspeak.ai.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.model.TranslationDirection
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.PromptProvider
@@ -63,8 +64,9 @@ class AiTranslatorViewModel(
         viewModelScope.launch {
             _uiState.value = TranslatorUiState.Loading
             try {
-                val result = translateWithOpenAi(text, _direction.value)
-                _translatedText.value = result
+                val direction = _direction.value
+                val result = translateWithOpenAi(text, direction)
+                _translatedText.value = sanitizeTranslation(result, direction)
                 _uiState.value = TranslatorUiState.Success
             } catch (e: Exception) {
                 _uiState.value =
@@ -92,5 +94,43 @@ class AiTranslatorViewModel(
             userPrompt = text,
             temperature = temperature
         )
+    }
+
+    private fun sanitizeTranslation(
+        raw: String,
+        direction: TranslationDirection
+    ): String {
+        if (BuildConfig.DEBUG) return raw
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return trimmed
+
+        fun Char.isJapaneseChar(): Boolean {
+            val code = code
+            return (code in 0x3040..0x30FF) ||
+                (code in 0x3400..0x4DBF) ||
+                (code in 0x4E00..0x9FFF) ||
+                (code in 0xF900..0xFAFF)
+        }
+
+        return when (direction) {
+            TranslationDirection.JA_TO_CEB -> {
+                val firstJapaneseIndex = trimmed.indexOfFirst { it.isJapaneseChar() }
+                val bisayaOnly = if (firstJapaneseIndex >= 0) {
+                    trimmed.substring(0, firstJapaneseIndex).trim().trimEnd { it == '-' || it == '–' }
+                } else {
+                    trimmed
+                }
+                if (bisayaOnly.isNotBlank()) bisayaOnly else trimmed
+            }
+
+            TranslationDirection.CEB_TO_JA -> {
+                val firstJapaneseIndex = trimmed.indexOfFirst { it.isJapaneseChar() }
+                if (firstJapaneseIndex >= 0) {
+                    trimmed.substring(firstJapaneseIndex).trim()
+                } else {
+                    trimmed
+                }
+            }
+        }
     }
 }

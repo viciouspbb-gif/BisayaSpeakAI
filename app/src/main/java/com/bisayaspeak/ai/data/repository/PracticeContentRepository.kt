@@ -2,6 +2,7 @@ package com.bisayaspeak.ai.data.repository
 
 import android.content.Context
 import com.bisayaspeak.ai.data.model.PracticeItem
+import com.bisayaspeak.ai.util.LocaleUtils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.InputStreamReader
@@ -12,7 +13,7 @@ class PracticeContentRepository(
     private val gson: Gson = Gson()
 ) {
 
-    fun loadPracticeItemsV1(locale: Locale = Locale.getDefault()): List<PracticeItem> {
+    fun loadPracticeItemsV1(locale: Locale = LocaleUtils.resolveAppLocale(appContext)): List<PracticeItem> {
         val raw = readAssetText("content/practice_items_v1.json")
         val listType = object : TypeToken<List<PracticeItemAssetItem>>() {}.type
         val items: List<PracticeItemAssetItem> = gson.fromJson(raw, listType) ?: emptyList()
@@ -21,7 +22,7 @@ class PracticeContentRepository(
 
     fun getItemsByCategory(
         category: String,
-        locale: Locale = Locale.getDefault(),
+        locale: Locale = LocaleUtils.resolveAppLocale(appContext),
         includePremium: Boolean = false
     ): List<PracticeItem> {
         val items = loadPracticeItemsV1(locale)
@@ -34,7 +35,7 @@ class PracticeContentRepository(
     fun getRandomQuestions(
         category: String,
         count: Int = 5,
-        locale: Locale = Locale.getDefault()
+        locale: Locale = LocaleUtils.resolveAppLocale(appContext)
     ): List<PracticeItem> {
         val items = getItemsByCategory(category, locale, includePremium = false)
         return if (items.size <= count) items.shuffled() else items.shuffled().take(count)
@@ -75,13 +76,12 @@ private data class PracticeItemAssetItem(
             else -> description?.get("en") ?: description?.get("ja")
         }
 
-        val showJapanese = language == "ja"
         return PracticeItem(
             id = id,
             category = resolvedCategory,
             bisaya = ceb,
-            japanese = if (showJapanese) japaneseMeaning else "",
-            english = englishMeaning,
+            japanese = japaneseMeaning.ifBlank { englishMeaning },
+            english = englishMeaning.ifBlank { japaneseMeaning },
             pronunciation = pronunciation ?: "",
             difficulty = difficulty ?: 1,
             isPremium = isPremium ?: false,

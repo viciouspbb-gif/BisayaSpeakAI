@@ -185,16 +185,23 @@ object DatabaseInitializer {
                     val meaningKey = if (language == "ja") "ja" else "en"
                     
                     val questions = seedItems.map { seedDto ->
-                        val meaning = seedDto.translations
-                            ?.get(meaningKey)
-                            ?.meaning
-                            .orEmpty()
+                        val rawJa = seedDto.translations?.get("ja")?.meaning.orEmpty()
+                        val rawEn = seedDto.translations?.get("en")?.meaning.orEmpty()
+                        val fallbackMeaning = seedDto.native
+                        val meaningJa = rawJa.ifBlank { rawEn.ifBlank { fallbackMeaning } }
+                        val meaningEn = rawEn.ifBlank { rawJa.ifBlank { fallbackMeaning } }
+
                         Question(
                             sentence = seedDto.native,
-                            meaning = meaning,
+                            meaningJa = meaningJa,
+                            meaningEn = meaningEn,
                             level = seedDto.level,
                             type = "LISTENING"
                         )
+                    }
+
+                    questions.take(5).forEachIndexed { index, sample ->
+                        Log.d(TAG, "Seed sample[${'$'}index]: ${'$'}{sample.sentence} / JA=${'$'}{sample.meaningJa} / EN=${'$'}{sample.meaningEn}")
                     }
                     
                     // レベルごとの件数をログ出力

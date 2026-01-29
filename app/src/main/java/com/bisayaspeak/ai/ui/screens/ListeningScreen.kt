@@ -2,12 +2,8 @@ package com.bisayaspeak.ai.ui.screens
 
 import android.app.Activity
 import android.content.Context
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.speech.tts.TextToSpeech
 import android.util.Log
-import android.view.ViewGroup
-import android.widget.TextView
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -17,13 +13,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -31,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -41,7 +37,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import com.bisayaspeak.ai.GameDataManager
 import com.bisayaspeak.ai.LessonStatusManager
@@ -52,10 +47,8 @@ import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.ads.AdsPolicy
 import com.bisayaspeak.ai.ui.navigation.AppRoute
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
-import com.google.android.flexbox.FlexboxLayout
-import com.google.android.flexbox.FlexWrap
-import com.google.android.flexbox.JustifyContent
-import com.google.android.flexbox.AlignItems
+import com.bisayaspeak.ai.ui.viewmodel.LocalizedPromptItem
+import com.bisayaspeak.ai.util.LocaleUtils
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -67,7 +60,7 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
     // Universal rule: yellow = ready = play immediately
     if (rewardedAdLoaded) {
         Log.d("ListeningScreen", "Ad ready - executing immediate playback (universal rule)")
-        
+
         if (activity != null) {
             AdManager.showRewardAd(
                 activity = activity,
@@ -90,6 +83,58 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
 }
 
 @Composable
+private fun ResultOverlay(isCorrect: Boolean, showNext: Boolean, onNext: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xCC000000), RoundedCornerShape(16.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 24.dp)) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isCorrect) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                ),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.char_tarsier),
+                        contentDescription = null,
+                        modifier = Modifier.size(52.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = if (isCorrect) stringResource(R.string.listening_result_correct) else stringResource(R.string.listening_result_incorrect),
+                        color = if (isCorrect) Color(0xFF1B5E20) else MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            if (showNext) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onNext,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2))
+                ) {
+                    Text(text = stringResource(R.string.listening_next), color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
 fun ListeningScreen(
     navController: NavHostController,
     level: Int,
@@ -99,6 +144,7 @@ fun ListeningScreen(
     val activity = context as? Activity
     val session by viewModel.session.collectAsState()
     val currentQuestion by viewModel.currentQuestion.collectAsState()
+    val localizedPrompt by viewModel.localizedPrompt.collectAsState()
     val showResult by viewModel.showResult.collectAsState()
     val isCorrect by viewModel.isCorrect.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
@@ -111,6 +157,12 @@ fun ListeningScreen(
     val rewardedAdState by viewModel.rewardedAdState.collectAsState()
     val selectedWords by viewModel.selectedWords.collectAsState()
     val shuffledWords by viewModel.shuffledWords.collectAsState()
+    val locale by LocaleUtils.localeState.collectAsState()
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(locale.language) {
+        Log.d("ListeningScreen", "Locale changed to ${'$'}{locale.language}, re-rendering localized texts")
+    }
 
     var navigationTriggered by remember { mutableStateOf(false) }
 
@@ -175,7 +227,6 @@ fun ListeningScreen(
             val destinationRoute = AppRoute.LessonResult.route
                 .replace("{correctCount}", result.correctCount.toString())
                 .replace("{totalQuestions}", result.totalQuestions.toString())
-                .replace("{earnedXP}", result.xpEarned.toString())
                 .replace("{clearedLevel}", displayLevel.toString())
                 .replace("{leveledUp}", leveledUpFlag)
             val navigateToResult = {
@@ -244,163 +295,96 @@ fun ListeningScreen(
                 }
             } else if (currentQuestion != null && session != null) {
                 val question = currentQuestion
+                val promptText = remember(question?.id, locale.language) {
+                    val langCode = locale.language.lowercase()
+                    val localized = question?.translations?.get(langCode)
+                    val fallback = question?.translations
+                        ?.entries
+                        ?.firstOrNull { it.key != langCode && it.value.isNotBlank() }
+                        ?.value
+
+                    when {
+                        !localized.isNullOrBlank() -> localized
+                        !fallback.isNullOrBlank() -> fallback
+                        !question?.meaning.isNullOrBlank() -> question?.meaning.orEmpty()
+                        else -> question?.phrase.orEmpty()
+                    }
+                }
 
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(padding)
+                        .background(Color.Black),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Header
-                    Box(modifier = Modifier.fillMaxWidth().height(40.dp)) {
-                        IconButton(onClick = { handleBackNavigation() }, modifier = Modifier.align(Alignment.CenterStart)) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
-                        }
-                        if (comboCount > 0 && !showResult) {
-                            Text("🔥 ${comboCount} Combo!", color = Color(0xFFFFA726), fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterEnd))
-                        }
-                    }
-
-                    // Mascot & hint button
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.char_owl),
-                            contentDescription = "Owl coach",
-                            modifier = Modifier.size(56.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                        val adsEnabled = AdsPolicy.areAdsEnabled
-                        val hintButtonEnabled = !isPlaying && (
-                            voiceHintRemaining > 0 ||
-                                rewardedAdState == ListeningViewModel.RewardAdState.READY ||
-                                rewardedAdState == ListeningViewModel.RewardAdState.FAILED ||
-                                !adsEnabled
-                            )
-                        Button(
-                            onClick = {
-                                when {
-                                    voiceHintRemaining > 0 -> requestHintPlayback()
-                                    !adsEnabled -> viewModel.forceHintPlaybackWithoutAds()
-                                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> executeAdPlaybackIfReady(activity, context, viewModel, true)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> viewModel.forceHintPlaybackWithoutAds()
-                                    else -> Log.d("ListeningScreen", "Hint button pressed but ad still loading")
-                                }
-                            },
-                            enabled = hintButtonEnabled,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = when {
-                                    voiceHintRemaining > 0 -> Color(0xFF2D3246)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> Color(0xFFFFA726)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> Color(0xFF4E342E)
-                                    else -> Color(0xFF333333)
-                                },
-                                disabledContainerColor = Color(0xFF333333)
-                            ),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Icon(Icons.Default.VolumeUp, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = when {
-                                    voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining, voiceHintRemaining)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> stringResource(R.string.listening_hint_view)
-                                    else -> stringResource(R.string.listening_ad_loading)
-                                },
-                                color = Color.White,
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Prompt label
-                    Text(
-                        text = stringResource(R.string.listening_prompt_label),
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Prompt
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = question?.meaning?.ifBlank { question?.phrase } ?: "",
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Answer area
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(stringResource(R.string.listening_your_answer), color = Color.Gray, fontSize = 12.sp)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        AnswerSlots(
-                            slotCount = question?.correctOrder?.size ?: 0,
-                            selectedWords = selectedWords,
-                            onRemoveWord = { index -> viewModel.removeWordAt(index) }
-                        )
-                    }
-
-                    // Word selection & result card
-                    Box(
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxWidth()
-                            .padding(top = 24.dp),
-                        contentAlignment = Alignment.TopCenter
+                            .verticalScroll(scrollState)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column {
-                            AnimatedVisibility(
-                                visible = !showResult,
-                                enter = fadeIn(),
-                                exit = fadeOut()
-                            ) {
-                                FlexboxWordGrid(
-                                    words = shuffledWords,
-                                    selectedWords = selectedWords,
-                                    showResult = showResult,
-                                    onSelectWord = { word ->
-                                        viewModel.selectWord(word) // Audio feedback is handled in the ViewModel
-                                    }
-                                )
+                        // Header
+                        Box(modifier = Modifier.fillMaxWidth().height(40.dp)) {
+                            IconButton(onClick = { handleBackNavigation() }, modifier = Modifier.align(Alignment.CenterStart)) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                            }
+                            if (comboCount > 0 && !showResult) {
+                                Text("🔥 ${comboCount} Combo!", color = Color(0xFFFFA726), fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterEnd))
                             }
                         }
 
-                        Column {
-                            AnimatedVisibility(
-                                visible = showResult,
-                                enter = fadeIn(),
-                                exit = fadeOut()
-                            ) {
-                                ResultCard(
-                                    isCorrect = isCorrect
-                                )
-                            }
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            HintAndMascotRow(
+                                voiceHintRemaining = voiceHintRemaining,
+                                rewardedAdState = rewardedAdState,
+                                isPlaying = isPlaying,
+                                onStandardHint = { requestHintPlayback() },
+                                onForceHint = { viewModel.forceHintPlaybackWithoutAds() },
+                                onShowAd = {
+                                    executeAdPlaybackIfReady(activity, context, viewModel, rewardedAdState == ListeningViewModel.RewardAdState.READY)
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                            )
+
+                            Text(
+                                text = promptText,
+                                color = Color.White,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(horizontal = 24.dp)
+                            )
                         }
+
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
+
+                    AnswerAndWordPanel(
+                        slotCount = question?.correctOrder?.size ?: 0,
+                        selectedWords = selectedWords,
+                        showResult = showResult,
+                        isCorrect = isCorrect,
+                        shuffledWords = shuffledWords,
+                        sessionCompleted = session?.completed == true,
+                        onRemoveWord = { index -> viewModel.removeWordAt(index) },
+                        onSelectWord = { word -> viewModel.selectWord(word) },
+                        onNext = { viewModel.nextQuestion() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
                 }
             }
         }
@@ -460,6 +444,64 @@ fun ListeningScreen(
 }
 
 @Composable
+private fun AnswerAndWordPanel(
+    slotCount: Int,
+    selectedWords: List<String>,
+    showResult: Boolean,
+    isCorrect: Boolean,
+    shuffledWords: List<String>,
+    sessionCompleted: Boolean,
+    onRemoveWord: (Int) -> Unit,
+    onSelectWord: (String) -> Unit,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    BoxWithConstraints(
+        modifier = modifier
+            .background(Color.Black)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        val availableHeight = this@BoxWithConstraints.maxHeight
+        val chipPanelHeight = (availableHeight * 0.45f).coerceAtLeast(200.dp)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+        Text(text = stringResource(R.string.listening_your_answer), color = Color.Gray, fontSize = 12.sp)
+        Spacer(modifier = Modifier.height(4.dp))
+        AnswerSlots(
+            slotCount = slotCount,
+            selectedWords = selectedWords,
+            onRemoveWord = onRemoveWord
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(chipPanelHeight.coerceAtMost(availableHeight))
+        ) {
+            WordChipGrid(
+                words = shuffledWords,
+                selectedWords = selectedWords,
+                showResult = showResult,
+                onSelectWord = onSelectWord
+            )
+
+            if (showResult) {
+                ResultOverlay(
+                    isCorrect = isCorrect,
+                    showNext = !sessionCompleted,
+                    onNext = onNext
+                )
+            }
+        }
+        }
+    }
+}
+
+@Composable
 private fun ResultCard(isCorrect: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -493,37 +535,112 @@ private fun ResultCard(isCorrect: Boolean) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FlexboxWordGrid(words: List<String>, selectedWords: List<String>, showResult: Boolean, onSelectWord: (String) -> Unit) {
-    val density = LocalDensity.current
-    val horizontalPadding = with(density) { 16.dp.toPx().roundToInt() }
-    val verticalPadding = with(density) { 10.dp.toPx().roundToInt() }
-    val margin = with(density) { 6.dp.toPx().roundToInt() }
-    val selectionCounts = selectedWords.groupingBy { it }.eachCount().toMutableMap()
-    AndroidView(
+private fun WordChipGrid(
+    words: List<String>,
+    selectedWords: List<String>,
+    showResult: Boolean,
+    onSelectWord: (String) -> Unit
+) {
+    val remaining = selectedWords.groupingBy { it }.eachCount().toMutableMap()
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        factory = { context ->
-            FlexboxLayout(context).apply { flexWrap = FlexWrap.WRAP; justifyContent = JustifyContent.CENTER; alignItems = AlignItems.CENTER }
-        },
-        update = { flexbox ->
-            flexbox.removeAllViews()
-            words.forEach { word ->
-                val shouldHide = selectionCounts[word]?.let { it > 0 } == true
-                if (shouldHide) selectionCounts[word] = selectionCounts[word]!! - 1
-                val chipColor = if (shouldHide) Color.Transparent else Color(0xFFEDE4F3)
-                val textColor = if (shouldHide) Color.Transparent else Color.Black
-                val drawable = GradientDrawable().apply { shape = GradientDrawable.RECTANGLE; cornerRadius = with(density) { 16.dp.toPx() }; setColor(chipColor.toArgb()) }
-                val textView = TextView(flexbox.context).apply {
-                    text = word; typeface = Typeface.DEFAULT_BOLD; setTextColor(textColor.toArgb())
-                    setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
-                    background = drawable; isEnabled = !shouldHide && !showResult
-                    layoutParams = FlexboxLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(margin, margin, margin, margin) }
-                    setOnClickListener { if (!shouldHide && !showResult) onSelectWord(word) }
-                }
-                flexbox.addView(textView)
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        words.forEach { word ->
+            val consumed = remaining[word]?.let { it > 0 } == true
+            if (consumed) {
+                remaining[word] = remaining[word]!! - 1
+            }
+            val isEnabled = !consumed && !showResult
+            val chipColor = if (isEnabled) Color(0xFFEDE4F3) else Color(0xFF2B2B2D)
+            val textColor = if (isEnabled) Color.Black else Color(0xFF9E9EA4)
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = chipColor
+            ) {
+                Text(
+                    text = word,
+                    color = textColor,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable(enabled = isEnabled) { if (isEnabled) onSelectWord(word) }
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                )
             }
         }
-    )
+    }
+}
+
+@Composable
+private fun HintAndMascotRow(
+    voiceHintRemaining: Int,
+    rewardedAdState: ListeningViewModel.RewardAdState,
+    isPlaying: Boolean,
+    onStandardHint: () -> Unit,
+    onForceHint: () -> Unit,
+    onShowAd: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(60.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.char_owl),
+            contentDescription = "Owl coach",
+            modifier = Modifier.size(56.dp)
+        )
+
+        val adsEnabled = AdsPolicy.areAdsEnabled
+        val hintButtonEnabled = !isPlaying && (
+            voiceHintRemaining > 0 ||
+                rewardedAdState == ListeningViewModel.RewardAdState.READY ||
+                rewardedAdState == ListeningViewModel.RewardAdState.FAILED ||
+                !adsEnabled
+            )
+
+        Button(
+            onClick = {
+                when {
+                    voiceHintRemaining > 0 -> onStandardHint()
+                    !adsEnabled -> onForceHint()
+                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> onShowAd()
+                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> onForceHint()
+                    else -> Log.d("ListeningScreen", "Hint button pressed but ad still loading")
+                }
+            },
+            enabled = hintButtonEnabled,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = when {
+                    voiceHintRemaining > 0 -> Color(0xFF2D3246)
+                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> Color(0xFFFFA726)
+                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> Color(0xFF4E342E)
+                    else -> Color(0xFF333333)
+                },
+                disabledContainerColor = Color(0xFF333333)
+            ),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Icon(Icons.Default.VolumeUp, null, tint = Color.White, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = when {
+                    voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining, voiceHintRemaining)
+                    rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad)
+                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> stringResource(R.string.listening_hint_view)
+                    else -> stringResource(R.string.listening_ad_loading)
+                },
+                color = Color.White,
+                fontSize = 13.sp
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -548,11 +665,7 @@ private fun AnswerSlots(slotCount: Int, selectedWords: List<String>, onRemoveWor
 private fun ListeningBottomBar(showResult: Boolean, sessionCompleted: Boolean, onNext: () -> Unit) {
     Surface(color = Color(0xFF111111)) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            if (showResult && !sessionCompleted) {
-                Button(onClick = onNext, modifier = Modifier.fillMaxWidth().height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2))) {
-                    Text(stringResource(R.string.listening_next), color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            } else { Spacer(Modifier.height(8.dp)) }
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -563,3 +676,35 @@ private fun Modifier.dashedBorder(color: Color, strokeWidth: Dp, cornerRadius: D
         drawRoundRect(color = color, size = size, cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx()), style = stroke)
     }
 )
+
+@Composable
+private fun LocalizedQuestionList(questions: List<LocalizedPromptItem>) {
+    if (questions.isEmpty()) {
+        Log.w("ListeningScreen", "LocalizedQuestionList is empty")
+        return
+    }
+    Log.d("ListeningScreen", "LocalizedQuestionList size=${questions.size}")
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .background(Color(0x33FFFFFF), RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.listening_prompt_label),
+            color = Color.White,
+            style = MaterialTheme.typography.titleSmall
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        questions.take(3).forEach { prompt ->
+            Text(
+                text = "• ${'$'}{prompt.text}",
+                color = Color.White,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}

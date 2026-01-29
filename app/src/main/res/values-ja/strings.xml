@@ -12,6 +12,14 @@
     <string name="level_beginner_desc">基本的な単語とフレーズを学習</string>
     <string name="level_intermediate_desc">日常会話、市場、交通などの実用的なフレーズ</string>
     <string name="level_advanced_desc">複雑な会話と高度な表現</string>
+    <string name="level_section_1_title">第1章: 基礎とあいさつ</string>
+    <string name="level_section_2_title">第2章: 2語の意図表現</string>
+    <string name="level_section_3_title">第3章: 質問 &amp; 自己紹介</string>
+    <string name="level_section_4_title">第4章: 日常フレーズ</string>
+    <string name="level_section_5_title">第5章: 未来の予定</string>
+    <string name="level_section_6_title">第6章: 過去の出来事</string>
+    <string name="level_unlock_dialog_title">Lv.%1$d を解放しますか？</string>
+    <string name="level_unlock_dialog_message">短い動画広告を視聴してこのレッスンを解放しますか？</string>
     
     <!-- Practice Screen -->
     <string name="practice_title_format">%s - 練習</string>
@@ -78,6 +86,23 @@
     <string name="tips">ヒント</string>
     <string name="back_to_practice">練習に戻る</string>
     <string name="try_again_button">もう一度試す</string>
+    <string name="lesson_result_title">レッスン結果</string>
+    <string name="lesson_result_repeat_button">このレッスンをやり直す</string>
+    <string name="lesson_result_correct_label">正解数</string>
+    <string name="lesson_result_level_label">レベル %1$d</string>
+    <string name="lesson_result_earned_xp_label">完了したレッスン</string>
+    <string name="lesson_result_translation_passed">すごい！よくできました。</string>
+    <string name="lesson_result_translation_failed">あと少し！きっとできます！</string>
+    <string name="lesson_result_level_translation_passed">次のレベルを解放しました！</string>
+    <string name="lesson_result_level_translation_failed">レベルアップまであと少し！</string>
+    <string name="lesson_result_encourage_translation_passed">この調子で学習を続けましょう。</string>
+    <string name="lesson_result_encourage_translation_failed">レッスンを復習してもう一度練習しましょう！</string>
+    <string name="lesson_result_bisaya_passed">Linghod kaayo!</string>
+    <string name="lesson_result_bisaya_failed">Hapit na gyud!</string>
+    <string name="lesson_result_bisaya_level_passed">Naablihan na nimo ang sunod nga lebel!</string>
+    <string name="lesson_result_bisaya_level_failed">Gamaya na lang para mo-level up!</string>
+    <string name="lesson_result_bisaya_encourage_passed">Padayon lang sa pagtuon ha?</string>
+    <string name="lesson_result_bisaya_encourage_failed">Balika nato ang lesson ug praktis pa!</string>
     
     <!-- Listening Practice -->
     <string name="listening_practice">リスニング練習</string>
@@ -231,7 +256,7 @@
     <string name="home_honor_level_label">称号レベル Lv %1$d</string>
     <string name="home_honor_unlock_prompt">称号を解放しよう</string>
     <string name="home_honor_reached">最高称号に到達しました！</string>
-    <string name="home_honor_next_xp">次の称号まで残り %1$d XP</string>
+    <string name="home_honor_next_xp">次の称号まであと %1$d レッスン</string>
     <string name="home_honor_unlock_hint">レッスンを進めて称号を獲得しよう</string>
     <string name="home_start_learning_title">学習開始</string>
     <string name="home_start_learning_desc">今日のおすすめレッスンからスタートしよう</string>
@@ -424,11 +449,76 @@
     <string name="premium_test">プレミアムテスト</string>
     <string name="premium_test_desc">デバッグビルドのみ: プレミアム状態を強制切り替え</string>
     <string name="login">ログイン</string>
+    <string name="account_guest_nickname_default">ゲストユーザー</string>
     <string name="login_existing_account">ログイン / 既存アカウントでサインイン</string>
     <string name="create_account">アカウント作成</string>
     <string name="logout">ログアウト</string>
     <string name="premium_info">プレミアム情報</string>
-    
+
+    <!-- Honor Level Strings -->
+    <string name="honor_title_1">ビサヤ語の第一歩</string>
+    <string name="honor_nickname_1">冒険スタート！</string>
+    <string name="honor_title_2">空港でのあいさつ</string>
+    <string name="honor_nickname_2">入国の達人</string>
+    <string name="honor_title_3">マクタン島デビュー</string>
+    <string name="honor_nickname_3">島デビュー</string>
+    <string name="honor_title_4">初めての会話</string>
+    <string name="honor_nickname_4">ファーストステップ</string>
+    <string name="honor_title_5">マクタン着陸</string>
+    <string name="honor_nickname_5">ランディングチャレンジャー</string>
+    <string name="honor_title_6">ビーチでのあいさつ</string>
+    <string name="honor_nickname_6">ビーチフレンド</string>
+    <string name="honor_title_7">リゾート会話</string>
+    <string name="honor_nickname_7">リゾートガイド</string>
+    <string name="honor_title_8">ビーチではしゃごう</string>
+    <string name="honor_nickname_8">波のスピーカー</string>
+    <string name="honor_title_9">島人とのおしゃべり</string>
+    <string name="honor_nickname_9">アイランドメイト</string>
+    <string name="honor_title_10">サントニーニョ参拝</string>
+    <string name="honor_nickname_10">祈りの旅人</string>
+    <string name="honor_title_11">歴史の街並み</string>
+    <string name="honor_nickname_11">知識豊富な旅人</string>
+    <string name="honor_title_12">教会での祈り</string>
+    <string name="honor_nickname_12">静かな語り手</string>
+    <string name="honor_title_13">サントニーニョのご加護</string>
+    <string name="honor_nickname_13">祝福を授ける者</string>
+    <string name="honor_title_14">セブの歴史探訪</string>
+    <string name="honor_nickname_14">タイムトラベラー</string>
+    <string name="honor_title_15">ジプニー乗車</string>
+    <string name="honor_nickname_15">ストリートパイロット</string>
+    <string name="honor_title_16">市場トーク</string>
+    <string name="honor_nickname_16">マーケットマスター</string>
+    <string name="honor_title_17">街角のあいさつ</string>
+    <string name="honor_nickname_17">ストリートスマイル</string>
+    <string name="honor_title_18">移動術を学ぶ</string>
+    <string name="honor_nickname_18">モビリティガイド</string>
+    <string name="honor_title_19">冒険のはじまり</string>
+    <string name="honor_nickname_19">アドベンチャラー</string>
+    <string name="honor_title_20">コロン通りショッピング</string>
+    <string name="honor_nickname_20">ショッピングエキスパート</string>
+    <string name="honor_title_21">市場の値段交渉</string>
+    <string name="honor_nickname_21">プライスブレイカー</string>
+    <string name="honor_title_22">お土産選び</string>
+    <string name="honor_nickname_22">ギフトハンター</string>
+    <string name="honor_title_23">値切りトレーニング</string>
+    <string name="honor_nickname_23">スマートトーカー</string>
+    <string name="honor_title_24">ショッピング上級者</string>
+    <string name="honor_nickname_24">バーゲンキング</string>
+    <string name="honor_title_25">アイランドホッピング</string>
+    <string name="honor_nickname_25">島めぐり冒険家</string>
+    <string name="honor_title_26">未知の島々</string>
+    <string name="honor_nickname_26">フロンティアダイバー</string>
+    <string name="honor_title_27">探検者の心</string>
+    <string name="honor_nickname_27">トレイルブレイザー</string>
+    <string name="honor_title_28">海の冒険者</string>
+    <string name="honor_nickname_28">マリンレンジャー</string>
+    <string name="honor_title_29">アイランドマスター</string>
+    <string name="honor_nickname_29">セブ賢者</string>
+    <string name="honor_title_30">ジンベエザメと泳ぐ</string>
+    <string name="honor_nickname_30">セブマスター！</string>
+    <string name="honor_title_default">ビサヤ語マスター</string>
+    <string name="honor_nickname_default">言語冒険王</string>
+
     <!-- Dictionary Screen -->
     <string name="search_words">単語を検索...</string>
     <string name="play_audio">音声を再生</string>

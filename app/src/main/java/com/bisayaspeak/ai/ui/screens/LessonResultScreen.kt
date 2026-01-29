@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -66,7 +67,6 @@ import com.bisayaspeak.ai.voice.GeminiVoiceService
 fun LessonResultScreen(
     correctCount: Int,
     totalQuestions: Int,
-    earnedXP: Int,
     clearedLevel: Int,
     leveledUp: Boolean,
     onNavigateHome: () -> Unit,
@@ -96,10 +96,10 @@ fun LessonResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "レッスン結果", fontWeight = FontWeight.Bold) },
+                title = { Text(text = stringResource(R.string.lesson_result_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateHome) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "戻る")
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -124,7 +124,7 @@ fun LessonResultScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                 ) {
                     Text(
-                        text = "同じレッスンを再挑戦",
+                        text = stringResource(R.string.lesson_result_repeat_button),
                         modifier = Modifier.padding(vertical = 8.dp),
                         fontWeight = FontWeight.SemiBold
                     )
@@ -137,7 +137,7 @@ fun LessonResultScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text(
-                        text = "ホームに戻る",
+                        text = stringResource(R.string.back_to_home),
                         modifier = Modifier.padding(vertical = 8.dp),
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimary
@@ -189,8 +189,20 @@ fun LessonResultScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             InteractiveResultText(
-                                text = if (passed) "Linghod kaayo!" else "Hapit na gyud!",
-                                translation = if (passed) "素晴らしい！よくできました。" else "あと一歩でクリアです！",
+                                text = stringResource(
+                                    if (passed) {
+                                        R.string.lesson_result_bisaya_passed
+                                    } else {
+                                        R.string.lesson_result_bisaya_failed
+                                    }
+                                ),
+                                translation = stringResource(
+                                    if (passed) {
+                                        R.string.lesson_result_translation_passed
+                                    } else {
+                                        R.string.lesson_result_translation_failed
+                                    }
+                                ),
                                 voiceService = voiceService,
                                 modifier = Modifier.fillMaxWidth(),
                                 style = MaterialTheme.typography.headlineSmall.copy(
@@ -206,40 +218,14 @@ fun LessonResultScreen(
                                 modifier = Modifier.size(160.dp)
                             )
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(text = "正解数", style = MaterialTheme.typography.labelMedium)
+                                Text(text = stringResource(R.string.lesson_result_correct_label), style = MaterialTheme.typography.labelMedium)
                                 Text(
                                     text = "$correctCount / $totalQuestions",
                                     fontSize = 36.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Text(text = "レベル $clearedLevel")
+                                Text(text = stringResource(R.string.lesson_result_level_label, clearedLevel))
                             }
-                        }
-                    }
-                }
-
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
-                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(text = "獲得XP", fontWeight = FontWeight.SemiBold)
-                            Text(text = "+$earnedXP XP", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(16.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(Color(0xFFE3E3E3))
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(progress)
-                                    .height(16.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.primary,
-                                        RoundedCornerShape(50)
-                                    )
-                            )
                         }
                     }
                 }
@@ -271,8 +257,20 @@ fun LessonResultScreen(
                         }
                         Column {
                             InteractiveResultText(
-                                text = if (passed) "Naablihan na nimo ang sunod nga lebel!" else "Gamaya na lang para mo-level up!",
-                                translation = if (passed) "次のレベルが解放されました！" else "あと少しでレベルアップ！",
+                                text = stringResource(
+                                    if (passed) {
+                                        R.string.lesson_result_bisaya_level_passed
+                                    } else {
+                                        R.string.lesson_result_bisaya_level_failed
+                                    }
+                                ),
+                                translation = stringResource(
+                                    if (passed) {
+                                        R.string.lesson_result_level_translation_passed
+                                    } else {
+                                        R.string.lesson_result_level_translation_failed
+                                    }
+                                ),
                                 voiceService = voiceService,
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     color = MaterialTheme.colorScheme.onSurface,
@@ -280,8 +278,20 @@ fun LessonResultScreen(
                                 )
                             )
                             InteractiveResultText(
-                                text = if (passed) "Padayon lang sa pagtuon ha?" else "Balika nato ang lesson ug praktis pa!",
-                                translation = if (passed) "引き続き学習を続けましょう。" else "もう一度挑戦してみましょう。",
+                                text = stringResource(
+                                    if (passed) {
+                                        R.string.lesson_result_bisaya_encourage_passed
+                                    } else {
+                                        R.string.lesson_result_bisaya_encourage_failed
+                                    }
+                                ),
+                                translation = stringResource(
+                                    if (passed) {
+                                        R.string.lesson_result_encourage_translation_passed
+                                    } else {
+                                        R.string.lesson_result_encourage_translation_failed
+                                    }
+                                ),
                                 voiceService = voiceService,
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant

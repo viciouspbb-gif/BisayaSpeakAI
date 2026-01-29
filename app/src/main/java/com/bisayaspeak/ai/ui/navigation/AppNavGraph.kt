@@ -91,7 +91,7 @@ enum class AppRoute(val route: String) {
     SignUp("signup"),
     Feedback("feedback"),
     Upgrade("upgrade"),
-    LessonResult("result_screen/{correctCount}/{totalQuestions}/{earnedXP}/{clearedLevel}/{leveledUp}"),
+    LessonResult("result_screen/{correctCount}/{totalQuestions}/{clearedLevel}/{leveledUp}"),
     MissionScenarioSelect("mission/scenario"),
     MissionTalk("mission/talk/{missionId}"),
     AiTranslator("ai/translator"),
@@ -436,21 +436,18 @@ fun AppNavGraph(
             arguments = listOf(
                 navArgument("correctCount") { type = NavType.IntType },
                 navArgument("totalQuestions") { type = NavType.IntType },
-                navArgument("earnedXP") { type = NavType.IntType },
                 navArgument("clearedLevel") { type = NavType.IntType },
                 navArgument("leveledUp") { type = NavType.BoolType }
             )
         ) { backStackEntry ->
             val correctCount = backStackEntry.arguments?.getInt("correctCount") ?: 0
             val totalQuestions = backStackEntry.arguments?.getInt("totalQuestions") ?: 0
-            val earnedXP = backStackEntry.arguments?.getInt("earnedXP") ?: 0
             val clearedLevel = backStackEntry.arguments?.getInt("clearedLevel") ?: 1
             val leveledUp = backStackEntry.arguments?.getBoolean("leveledUp") ?: false
             val listeningViewModel: ListeningViewModel = viewModel(factory = listeningViewModelFactory)
             LessonResultScreen(
                 correctCount = correctCount,
                 totalQuestions = totalQuestions,
-                earnedXP = earnedXP,
                 clearedLevel = clearedLevel,
                 leveledUp = leveledUp,
                 onNavigateHome = {

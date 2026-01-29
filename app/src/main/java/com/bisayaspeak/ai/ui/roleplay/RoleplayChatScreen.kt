@@ -103,6 +103,7 @@ import com.bisayaspeak.ai.ui.roleplay.RoleplayThemeFlavor
 import com.bisayaspeak.ai.ui.roleplay.primarySpeechText
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
+import com.bisayaspeak.ai.util.LocaleUtils
 import com.bisayaspeak.ai.ui.roleplay.CompletionDialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -128,6 +129,7 @@ fun RoleplayChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val speakingMessageId by viewModel.speakingMessageId.collectAsState()
+    val locale by LocaleUtils.localeState.collectAsState()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val voiceService = remember { GeminiVoiceService(context) }
@@ -165,6 +167,10 @@ fun RoleplayChatScreen(
         pendingPermissionRequest = false
     }
     val ttsLogTag = remember { "RoleplayTTS" }
+
+    LaunchedEffect(locale.language) {
+        Log.d("RoleplayChatScreen", "Current locale: ${locale.language}")
+    }
 
     LaunchedEffect(Unit) {
         Log.d(ttsLogTag, "Screen entered -> stopping all previous GeminiVoiceService instances")
@@ -496,10 +502,10 @@ fun RoleplayChatScreen(
                         onHintPeek = { viewModel.markHintPeeked(it) },
                         onPreview = { text -> speakUserPreview(text) },
                         optionSpacing = optionSpacing,
-                        scale = textScaleFactor,
+                        scale = scaleFactor,
                         cardHorizontalPadding = cardHorizontalPadding,
                         cardVerticalPadding = cardVerticalPadding,
-                        showHint = uiState.showOptionTutorial
+                        isJapaneseLocale = locale.language.equals("ja", ignoreCase = true)
                     )
 
                     Spacer(modifier = Modifier.height(sectionSpacing))
@@ -771,7 +777,7 @@ private fun ResponsePanel(
     scale: Float,
     cardHorizontalPadding: Dp,
     cardVerticalPadding: Dp,
-    showHint: Boolean
+    isJapaneseLocale: Boolean
 ) {
     Surface(
         modifier = modifier.clip(RoundedCornerShape(36.dp * scale.coerceAtLeast(0.85f))),
@@ -824,7 +830,7 @@ private fun ResponsePanel(
                                 scale = scale,
                                 horizontalPadding = cardHorizontalPadding,
                                 verticalPadding = cardVerticalPadding,
-                                showHint = showHint
+                                isJapaneseLocale = isJapaneseLocale
                             )
                         }
                     }
@@ -845,11 +851,18 @@ private fun RoleplayOptionCard(
     scale: Float = 1f,
     horizontalPadding: Dp = 20.dp,
     verticalPadding: Dp = 18.dp,
-    showHint: Boolean
+    isJapaneseLocale: Boolean
 ) {
     var showTranslation by remember(option.id) { mutableStateOf(false) }
     var hasPeeked by remember(option.id) { mutableStateOf(false) }
-    val translationAvailable = !option.hint.isNullOrBlank()
+    val (primaryOptionText, inlineTranslation) = remember(option.id, option.text) {
+        splitInlineTranslation(option.text)
+    }
+    val translationText = remember(option.id, option.hint, inlineTranslation, isJapaneseLocale) {
+        option.hint ?: inlineTranslation ?: if (isJapaneseLocale) "訳はまだありません" else "Translation unavailable"
+    }
+    val translationAvailable = translationText.isNotBlank()
+    val displayText = primaryOptionText.ifBlank { option.text }
     val interactionSource = remember(option.id) { MutableInteractionSource() }
 
     LaunchedEffect(option.id, interactionSource) {
@@ -892,21 +905,12 @@ private fun RoleplayOptionCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = if (showTranslation && translationAvailable) option.hint!! else option.text,
+                text = if (showTranslation && translationAvailable) translationText else displayText,
                 color = Color(0xFFFFF176),
                 fontSize = 16.sp * scale,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
-            AnimatedVisibility(visible = showHint) {
-                Text(
-                    text = stringResource(R.string.roleplay_option_hint),
-                    color = Color(0xFFB6C5E0),
-                    fontSize = 11.sp * scale,
-                    modifier = Modifier.padding(top = 4.dp * scale.coerceAtLeast(0.85f)),
-                    textAlign = TextAlign.Center
-                )
-            }
         }
     }
 }

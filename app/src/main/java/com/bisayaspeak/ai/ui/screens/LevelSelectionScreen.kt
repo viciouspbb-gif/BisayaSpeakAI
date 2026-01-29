@@ -17,9 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bisayaspeak.ai.LessonStatusManager
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
@@ -35,12 +37,12 @@ fun LevelSelectionScreen(
     var refreshTrigger by remember { mutableStateOf(0) }
     var showAdDialogForLevel by remember { mutableStateOf<Int?>(null) }
     val sectionHeaders = listOf(
-        1 to "第1章：超基礎・挨拶",
-        6 to "第2章：2語文・意思表示",
-        11 to "第3章：疑問詞・自己紹介",
-        16 to "第4章：日常フレーズ",
-        21 to "第5章：未来の話・予定",
-        26 to "第6章：過去の話・完了"
+        1 to stringResource(R.string.level_section_1_title),
+        6 to stringResource(R.string.level_section_2_title),
+        11 to stringResource(R.string.level_section_3_title),
+        16 to stringResource(R.string.level_section_4_title),
+        21 to stringResource(R.string.level_section_5_title),
+        26 to stringResource(R.string.level_section_6_title)
     ).associate { it }
     val activity = context as? Activity
 
@@ -56,7 +58,7 @@ fun LevelSelectionScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("レッスン選択") })
+            TopAppBar(title = { Text(stringResource(R.string.level_selection_title)) })
         },
         bottomBar = {
             Column {
@@ -124,8 +126,8 @@ fun LevelSelectionScreen(
         val level = showAdDialogForLevel!!
         AlertDialog(
             onDismissRequest = { showAdDialogForLevel = null },
-            title = { Text(text = "LV.$level を解放") },
-            text = { Text(text = "短い動画広告を見て、このレッスンを解放しますか？") },
+            title = { Text(text = stringResource(R.string.level_unlock_dialog_title, level)) },
+            text = { Text(text = stringResource(R.string.level_unlock_dialog_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -141,12 +143,12 @@ fun LevelSelectionScreen(
                         )
                     }
                 ) {
-                    Text("見る (無料)")
+                    Text(stringResource(R.string.watch_ad))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showAdDialogForLevel = null }) {
-                    Text("キャンセル")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.ui.viewmodel.PracticeViewModel
 import com.bisayaspeak.ai.data.model.PracticeItem
+import com.bisayaspeak.ai.util.LocaleUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +86,13 @@ private fun PracticeItemCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isJapanese = LocaleUtils.isJapanese()
+    val translation = if (isJapanese) {
+        content.japanese.ifBlank { content.english }
+    } else {
+        content.english.ifBlank { content.japanese }
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -110,7 +118,7 @@ private fun PracticeItemCard(
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = content.japanese,
+                text = translation,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )

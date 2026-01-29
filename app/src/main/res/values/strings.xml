@@ -12,6 +12,14 @@
     <string name="level_beginner_desc">Learn basic words and phrases</string>
     <string name="level_intermediate_desc">Practical phrases for daily conversation, market, transportation, etc.</string>
     <string name="level_advanced_desc">Complex conversations and advanced expressions</string>
+    <string name="level_section_1_title">Chapter 1: Basics &amp; Greetings</string>
+    <string name="level_section_2_title">Chapter 2: Two-word Intents</string>
+    <string name="level_section_3_title">Chapter 3: Questions &amp; Self Intro</string>
+    <string name="level_section_4_title">Chapter 4: Daily Phrases</string>
+    <string name="level_section_5_title">Chapter 5: Future Plans</string>
+    <string name="level_section_6_title">Chapter 6: Past Stories</string>
+    <string name="level_unlock_dialog_title">Unlock Lv.%1$d?</string>
+    <string name="level_unlock_dialog_message">Watch a short video ad to unlock this lesson?</string>
     
     <!-- Practice Screen -->
     <string name="practice_title_format">%s - Practice</string>
@@ -78,6 +86,23 @@
     <string name="tips">Tips</string>
     <string name="back_to_practice">Back to Practice</string>
     <string name="try_again_button">Try Again</string>
+    <string name="lesson_result_title">Lesson Result</string>
+    <string name="lesson_result_repeat_button">Retry this lesson</string>
+    <string name="lesson_result_correct_label">Correct answers</string>
+    <string name="lesson_result_level_label">Level %1$d</string>
+    <string name="lesson_result_earned_xp_label">Lessons completed</string>
+    <string name="lesson_result_translation_passed">Amazing! Great job.</string>
+    <string name="lesson_result_translation_failed">Almost there! You can do it!</string>
+    <string name="lesson_result_level_translation_passed">You unlocked the next level!</string>
+    <string name="lesson_result_level_translation_failed">Just a bit more to level up!</string>
+    <string name="lesson_result_encourage_translation_passed">Keep up the learning momentum.</string>
+    <string name="lesson_result_encourage_translation_failed">Review the lesson and practice again!</string>
+    <string name="lesson_result_bisaya_passed">Linghod kaayo!</string>
+    <string name="lesson_result_bisaya_failed">Hapit na gyud!</string>
+    <string name="lesson_result_bisaya_level_passed">Naablihan na nimo ang sunod nga lebel!</string>
+    <string name="lesson_result_bisaya_level_failed">Gamaya na lang para mo-level up!</string>
+    <string name="lesson_result_bisaya_encourage_passed">Padayon lang sa pagtuon ha?</string>
+    <string name="lesson_result_bisaya_encourage_failed">Balika nato ang lesson ug praktis pa!</string>
     
     <!-- Listening Practice -->
     <string name="listening_practice">Listening Practice</string>
@@ -239,7 +264,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_honor_level_label">Honor Level Lv %1$d</string>
     <string name="home_honor_unlock_prompt">Unlock a new honor</string>
     <string name="home_honor_reached">You have reached the highest honor!</string>
-    <string name="home_honor_next_xp">Only %1$d XP to the next honor</string>
+    <string name="home_honor_next_xp">Only %1$d lessons to the next honor</string>
     <string name="home_honor_unlock_hint">Keep taking lessons to unlock new honors</string>
     <string name="home_start_learning_title">Start Learning</string>
     <string name="home_start_learning_desc">Start from todays recommended lesson</string>
@@ -259,6 +284,69 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_pro_dialog_title">Upgrade to PRO</string>
     <string name="home_pro_dialog_message">This feature is available in the PRO plan.</string>
     <string name="home_pro_feature_illustration_desc">Tari-sensei illustration</string>
+    <!-- Honor Level Strings -->
+    <string name="honor_title_1">First Bisaya</string>
+    <string name="honor_nickname_1">Journey Start!</string>
+    <string name="honor_title_2">Airport Greetings</string>
+    <string name="honor_nickname_2">Immigration Master</string>
+    <string name="honor_title_3">Mactan Island Intro</string>
+    <string name="honor_nickname_3">Island Debut</string>
+    <string name="honor_title_4">First Conversation</string>
+    <string name="honor_nickname_4">First Step</string>
+    <string name="honor_title_5">Mactan Landing</string>
+    <string name="honor_nickname_5">Landing Challenger</string>
+    <string name="honor_title_6">Beach Greetings</string>
+    <string name="honor_nickname_6">Beach Friend</string>
+    <string name="honor_title_7">Resort Conversation</string>
+    <string name="honor_nickname_7">Resort Guide</string>
+    <string name="honor_title_8">Beach Fun</string>
+    <string name="honor_nickname_8">Wave Speaker</string>
+    <string name="honor_title_9">Islander Chat</string>
+    <string name="honor_nickname_9">Island Mate</string>
+    <string name="honor_title_10">Santo Niño Visit</string>
+    <string name="honor_nickname_10">Prayer Traveler</string>
+    <string name="honor_title_11">Historic Streets</string>
+    <string name="honor_nickname_11">Knowledgeable Traveler</string>
+    <string name="honor_title_12">Church Prayers</string>
+    <string name="honor_nickname_12">Silent Storyteller</string>
+    <string name="honor_title_13">Santo Niño Blessing</string>
+    <string name="honor_nickname_13">Blessing Caster</string>
+    <string name="honor_title_14">Cebu History</string>
+    <string name="honor_nickname_14">Time Traveler</string>
+    <string name="honor_title_15">Jeepney Ride</string>
+    <string name="honor_nickname_15">Street Pilot</string>
+    <string name="honor_title_16">Market Talk</string>
+    <string name="honor_nickname_16">Market Master</string>
+    <string name="honor_title_17">Street Greetings</string>
+    <string name="honor_nickname_17">Street Smile</string>
+    <string name="honor_title_18">Transport Learning</string>
+    <string name="honor_nickname_18">Mobility Guide</string>
+    <string name="honor_title_19">Adventure Start</string>
+    <string name="honor_nickname_19">Adventurer</string>
+    <string name="honor_title_20">Colon Street Shopping</string>
+    <string name="honor_nickname_20">Shopping Expert</string>
+    <string name="honor_title_21">Market Negotiation</string>
+    <string name="honor_nickname_21">Price Breaker</string>
+    <string name="honor_title_22">Souvenir Selection</string>
+    <string name="honor_nickname_22">Gift Hunter</string>
+    <string name="honor_title_23">Price Haggling</string>
+    <string name="honor_nickname_23">Smart Talker</string>
+    <string name="honor_title_24">Shopping Pro</string>
+    <string name="honor_nickname_24">Bargain King</string>
+    <string name="honor_title_25">Island Hopping</string>
+    <string name="honor_nickname_25">Island Adventurer</string>
+    <string name="honor_title_26">Uncharted Islands</string>
+    <string name="honor_nickname_26">Frontier Diver</string>
+    <string name="honor_title_27">Explorer Heart</string>
+    <string name="honor_nickname_27">Trailblazer</string>
+    <string name="honor_title_28">Sea Adventurer</string>
+    <string name="honor_nickname_28">Marine Ranger</string>
+    <string name="honor_title_29">Island Master</string>
+    <string name="honor_nickname_29">Cebu Sage</string>
+    <string name="honor_title_30">Swim with Whale Shark</string>
+    <string name="honor_nickname_30">Cebu Master!</string>
+    <string name="honor_title_default">Bisaya Master</string>
+    <string name="honor_nickname_default">Language Adventure King</string>
     
     <!-- Translate Screen -->
     <string name="bisaya_translate">Bisaya Translate</string>
@@ -321,6 +409,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="account_lite_notice_desc">Current learning data stays on this device only.</string>
     <string name="account_guest_card_title">📱 Create an account</string>
     <string name="account_guest_card_desc">Register to save progress and sync across devices.</string>
+    <string name="account_guest_nickname_default">Guest user</string>
     <string name="account_login_button">Sign in / Log in</string>
     <string name="account_create_button">Create a new account</string>
     <string name="account_logout_button">Log out</string>
@@ -431,7 +520,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="dictionary_subtitle">Dictionary / Translation · Talk Mode</string>
     <string name="dictionary_mode_explore">Dictionary &amp; Translate</string>
     <string name="dictionary_mode_talk">Talk Mode</string>
-    <string name="dictionary_query_placeholder">Japanese or Bisaya text</string>
+    <string name="dictionary_query_placeholder">English or Bisaya text</string>
     <string name="dictionary_button_searching">Searching…</string>
     <string name="dictionary_button_explore">Explore</string>
     <string name="dictionary_play_bisaya_desc">Play Bisaya audio</string>
@@ -461,6 +550,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="dictionary_mic_sub_label_idle">Tap to record · tap again to translate &amp; play</string>
     <string name="dictionary_permission_title">Microphone permission required</string>
     <string name="dictionary_permission_button">Allow microphone access</string>
+    <string name="roleplay_mic_desc">Voice input</string>
     
     <!-- Favorites Screen -->
     <string name="no_favorites">No favorites yet</string>
@@ -574,6 +664,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="plan_premium_ai_description">No ads and full AI features. The coach will suggest a personalized training plan for you.</string>
     <string name="plan_premium_ai_price">JPY 4,980 / month</string>
     <string name="plan_premium_ai_trial_tagline">Try 7 days for free and experience special lessons.</string>
+    <string name="plan_premium_trial_tagline">Enjoy a special 7-day free lesson with Tarsier-sensei!</string>
     
     <!-- Features -->
     <string name="feature_pro_1">Unlimited practice sessions</string>
