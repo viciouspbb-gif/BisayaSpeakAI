@@ -10,5 +10,6 @@ data class Question(
     val meaningJa: String,
     val meaningEn: String,
     val level: Int,
-    val type: String
+    val type: String,
+    val translations: Map<String, String> = emptyMap()
 )

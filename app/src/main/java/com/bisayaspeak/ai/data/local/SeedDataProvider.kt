@@ -35,109 +35,14 @@ object SeedDataProvider {
     )
 
     suspend fun seed(questionDao: QuestionDao) {
+        // Legacy seeding disabled – JSON v2 assets now provide canonical data.
+        // This method intentionally does nothing to avoid inserting outdated dummy rows.
         if (questionDao.countQuestions() > 0) return
-        val questions = buildBaseQuestions() + buildGeneratedQuestions()
-        questionDao.insertQuestions(questions)
     }
 
-    private fun buildBaseQuestions(): List<Question> {
-        return listOf(
-            // Level 1
-            q("Maayong buntag", "おはようございます", 1, LISTENING),
-            q("Maayong gabii", "こんばんは", 1, LISTENING),
-            q("Kumusta ka", "お元気ですか？", 1, LISTENING),
-            q("Ako si Ricky", "私はリッキーです", 1, LISTENING),
-            q("Maayo man", "元気です。", 1, TRANSLATION),
-            q("Salamat", "ありがとう。", 1, TRANSLATION),
-            q("Oo", "はい。", 1, TRANSLATION),
-            q("Dili ko", "私は違います / いいえ", 1, ORDERING),
-            q("Ikaw si Ana", "あなたはアナです", 1, ORDERING),
-            q("Kinsa ka", "あなたは誰ですか？", 1, ORDERING),
+    private fun buildBaseQuestions(): List<Question> = emptyList()
 
-            // Level 2
-            q("Unsa kini", "これは何ですか？", 2, LISTENING),
-            q("Libro kini", "これは本です", 2, LISTENING),
-            q("Kani akong balay", "これは私の家です", 2, LISTENING),
-            q("Kana imong iro", "あれはあなたの犬です", 2, LISTENING),
-            q("Unsa kana", "それは何？", 2, TRANSLATION),
-            q("Tubig kini", "これは水です。", 2, TRANSLATION),
-            q("Iring kana", "あれは猫です。", 2, TRANSLATION),
-            q("Lami kini", "これは美味しい", 2, ORDERING),
-            q("Dili kana ako", "あれは私のではありません", 2, ORDERING),
-            q("Unsa to", "あれは何でしたか？", 2, ORDERING),
-
-            // Level 3
-            q("Mokaon ko", "私は食べます", 3, LISTENING),
-            q("Moinom ko", "私は飲みます", 3, LISTENING),
-            q("Molakaw ka", "あなたは行きますか？", 3, LISTENING),
-            q("Matulog na ko", "もう寝ます", 3, LISTENING),
-            q("Modagan ko", "私は走ります。", 3, TRANSLATION),
-            q("Mokaon og kan-on", "ご飯を食べる。", 3, TRANSLATION),
-            q("Moinom og tubig", "水を飲む。", 3, TRANSLATION),
-            q("Mopalit ko", "私は買います", 3, ORDERING),
-            q("Moambak siya", "彼はジャンプします", 3, ORDERING),
-            q("Milingkod sila", "彼らは座りました", 3, ORDERING),
-
-            // Level 4
-            q("Maayo kini", "これは良いです", 4, LISTENING),
-            q("Dako ang balay", "その家は大きいです", 4, LISTENING),
-            q("Gamay ang iro", "その犬は小さいです", 4, LISTENING),
-            q("Lami ang pagkaon", "その食事は美味しいです", 4, LISTENING),
-            q("Init karon", "暑いです。", 4, TRANSLATION),
-            q("Tugnaw", "寒いです。", 4, TRANSLATION),
-            q("Guwapa ka", "あなたは美しい。", 4, TRANSLATION),
-            q("Gwapo siya", "彼はハンサムです", 4, ORDERING),
-            q("Layua uy", "遠いなあ", 4, ORDERING),
-            q("Duol ra", "近いです", 4, ORDERING),
-
-            // Level 5
-            q("Asa ka", "どこにいるの？", 5, LISTENING),
-            q("Naa ko diri", "私はここにいます", 5, LISTENING),
-            q("Asa ang CR", "トイレはどこですか？", 5, LISTENING),
-            q("Naa sa layo", "遠くにあります", 5, LISTENING),
-            q("Asa ang balay", "家はどこ？", 5, TRANSLATION),
-            q("Naa sa Cebu", "セブにいます。", 5, TRANSLATION),
-            q("Naa sa eskwelahan", "学校にいます。", 5, TRANSLATION),
-            q("Wala diri", "ここにはない", 5, ORDERING),
-            q("Naa koy kwarta", "私はお金を持っています", 5, ORDERING),
-            q("Asa man dapita", "どの辺りですか？", 5, ORDERING)
-        )
-    }
-
-    private fun buildGeneratedQuestions(): List<Question> {
-        val generated = mutableListOf<Question>()
-        for (level in 6..30) {
-            val levelWord = numberToCebuano(level)
-            repeat(4) { index ->
-                val sampleWord = numberToCebuano(index + 1)
-                generated += q(
-                    sentence = "Level $levelWord Listening $sampleWord",
-                    meaningJa = "レベル$level リスニング サンプル${index + 1}",
-                    level = level,
-                    type = LISTENING
-                )
-            }
-            repeat(3) { index ->
-                val sampleWord = numberToCebuano(index + 1)
-                generated += q(
-                    sentence = "Level $levelWord Translation $sampleWord",
-                    meaningJa = "レベル$level 翻訳 サンプル${index + 1}",
-                    level = level,
-                    type = TRANSLATION
-                )
-            }
-            repeat(3) { index ->
-                val sampleWord = numberToCebuano(index + 1)
-                generated += q(
-                    sentence = "Level $levelWord Ordering $sampleWord",
-                    meaningJa = "レベル$level 並べ替え サンプル${index + 1}",
-                    level = level,
-                    type = ORDERING
-                )
-            }
-        }
-        return generated
-    }
+    private fun buildGeneratedQuestions(): List<Question> = emptyList()
 
     private fun numberToCebuano(number: Int): String {
         return cebuanoNumbers[number] ?: number.toString()

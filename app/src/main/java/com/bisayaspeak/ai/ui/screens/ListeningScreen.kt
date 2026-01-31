@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.GameDataManager
 import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.R
@@ -58,6 +59,7 @@ import com.google.android.flexbox.JustifyContent
 import com.google.android.flexbox.AlignItems
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 /**
@@ -111,6 +113,20 @@ fun ListeningScreen(
     val rewardedAdState by viewModel.rewardedAdState.collectAsState()
     val selectedWords by viewModel.selectedWords.collectAsState()
     val shuffledWords by viewModel.shuffledWords.collectAsState()
+
+    val showBilingual = BuildConfig.DEBUG
+    val deviceLocale = Locale.getDefault()
+    val preferJapanese = deviceLocale.language.equals("ja", ignoreCase = true)
+
+    fun localize(en: String, ja: String, preferJaFirst: Boolean = false): Pair<String, String?> {
+        return resolveLocalizedText(
+            showBilingual = showBilingual,
+            preferJapanese = preferJapanese,
+            english = en,
+            japanese = ja,
+            preferJapaneseOrder = preferJaFirst
+        )
+    }
 
     var navigationTriggered by remember { mutableStateOf(false) }
 
@@ -281,6 +297,19 @@ fun ListeningScreen(
                                         rewardedAdState == ListeningViewModel.RewardAdState.FAILED ||
                                         !adsEnabled
                                 )
+                        val hintLabelEn = when {
+                            voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining, voiceHintRemaining)
+                            rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad)
+                            rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> stringResource(R.string.listening_hint_view)
+                            else -> stringResource(R.string.listening_ad_loading)
+                        }
+                        val hintLabelJa = when {
+                            voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining_ja, voiceHintRemaining)
+                            rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad_ja)
+                            rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> stringResource(R.string.listening_hint_view_ja)
+                            else -> stringResource(R.string.listening_ad_loading_ja)
+                        }
+                        val (hintPrimaryText, hintSecondaryText) = localize(hintLabelEn, hintLabelJa, preferJapanese)
                         Button(
                             onClick = {
                                 when {
@@ -302,32 +331,27 @@ fun ListeningScreen(
                                 disabledContainerColor = Color(0xFF333333)
                             ),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Icon(Icons.Default.VolumeUp, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
+                        en = stringResource(R.string.listening_prompt_label),
+                        ja = stringResource(R.string.listening_prompt_label_ja),
+                        preferJaFirst = preferJapanese
+                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = promptLabelPrimary,
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        promptLabelSecondary?.let {
                             Text(
-                                text = when {
-                                    voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining, voiceHintRemaining)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> stringResource(R.string.listening_hint_view)
-                                    else -> stringResource(R.string.listening_ad_loading)
-                                },
-                                color = Color.White,
-                                fontSize = 13.sp
+                                text = it,
+                                color = Color(0xFFB0BEC5),
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Prompt label
-                    Text(
-                        text = stringResource(R.string.listening_prompt_label),
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -338,13 +362,34 @@ fun ListeningScreen(
                             .heightIn(min = 40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = question?.meaning?.ifBlank { question?.phrase } ?: "",
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
+                        val translations = question?.translations.orEmpty()
+                        val japaneseText = translations["ja"].orEmpty().ifBlank { question?.meaning.orEmpty() }
+                        val englishText = translations["en"].orEmpty()
+                        val (promptPrimaryText, promptSecondaryText) = localize(
+                            en = englishText,
+                            ja = japaneseText,
+                            preferJaFirst = preferJapanese
                         )
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = promptPrimaryText,
+                                color = Color.White,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+
+                            if (!promptSecondaryText.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = promptSecondaryText,
+                                    color = Color(0xFFB0BEC5),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -354,7 +399,17 @@ fun ListeningScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(stringResource(R.string.listening_your_answer), color = Color.Gray, fontSize = 12.sp)
+                        val (answerLabelPrimary, answerLabelSecondary) = localize(
+                            en = stringResource(R.string.listening_your_answer),
+                            ja = stringResource(R.string.listening_your_answer_ja),
+                            preferJaFirst = preferJapanese
+                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(answerLabelPrimary, color = Color.Gray, fontSize = 12.sp)
+                            answerLabelSecondary?.let {
+                                Text(it, color = Color.Gray, fontSize = 11.sp)
+                            }
+                        }
                         Spacer(modifier = Modifier.height(4.dp))
                         AnswerSlots(
                             slotCount = question?.correctOrder?.size ?: 0,
@@ -395,7 +450,8 @@ fun ListeningScreen(
                                 exit = fadeOut()
                             ) {
                                 ResultCard(
-                                    isCorrect = isCorrect
+                                    isCorrect = isCorrect,
+                                    localize = ::localize
                                 )
                             }
                         }
@@ -406,9 +462,38 @@ fun ListeningScreen(
     }
 
     if (showHintRecoveryDialog) {
+        val (dialogTitlePrimary, dialogTitleSecondary) = localize(
+            en = stringResource(R.string.listening_no_hints_title),
+            ja = stringResource(R.string.listening_no_hints_title_ja),
+            preferJaFirst = preferJapanese
+        )
+        val (dialogMessagePrimary, dialogMessageSecondary) = localize(
+            en = stringResource(R.string.listening_no_hints_message),
+            ja = stringResource(R.string.listening_no_hints_message_ja),
+            preferJaFirst = preferJapanese
+        )
+        val (dismissPrimary, dismissSecondary) = localize(
+            en = stringResource(R.string.close),
+            ja = stringResource(R.string.close_ja),
+            preferJaFirst = preferJapanese
+        )
+
         AlertDialog(
             onDismissRequest = { viewModel.dismissHintRecoveryDialog() },
             confirmButton = {
+                val (confirmPrimary, confirmSecondary) = localize(
+                    en = if (rewardedAdLoaded) {
+                        stringResource(R.string.listening_recover_hint_watch_video)
+                    } else {
+                        stringResource(R.string.listening_ad_loading)
+                    },
+                    ja = if (rewardedAdLoaded) {
+                        stringResource(R.string.listening_recover_hint_watch_video_ja)
+                    } else {
+                        stringResource(R.string.listening_ad_loading_ja)
+                    },
+                    preferJaFirst = preferJapanese
+                )
                 TextButton(onClick = {
                     if (activity != null) {
                         if (rewardedAdLoaded) {
@@ -438,28 +523,41 @@ fun ListeningScreen(
                         }
                     }
                 }) {
-                    Text(
-                        text = if (rewardedAdLoaded) {
-                            stringResource(R.string.listening_recover_hint_watch_video)
-                        } else {
-                            stringResource(R.string.listening_ad_loading)
-                        }
-                    )
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text(confirmPrimary)
+                        confirmSecondary?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissHintRecoveryDialog() }) {
-                    Text(stringResource(R.string.close))
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text(dismissPrimary)
+                        dismissSecondary?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    }
                 }
             },
-            title = { Text(stringResource(R.string.listening_no_hints_title)) },
-            text = { Text(stringResource(R.string.listening_no_hints_message)) }
+            title = {
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text(dialogTitlePrimary, style = MaterialTheme.typography.titleMedium)
+                    dialogTitleSecondary?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                }
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text(dialogMessagePrimary)
+                    dialogMessageSecondary?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                }
+            }
         )
     }
 }
 
 @Composable
-private fun ResultCard(isCorrect: Boolean) {
+private fun ResultCard(
+    isCorrect: Boolean,
+    localize: (String, String, Boolean) -> Pair<String, String?>
+) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         colors = CardDefaults.cardColors(containerColor = if (isCorrect) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)),
@@ -478,16 +576,34 @@ private fun ResultCard(isCorrect: Boolean) {
                 modifier = Modifier.size(52.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = if (isCorrect) {
+            val (resultPrimary, resultSecondary) = localize(
+                en = if (isCorrect) {
                     stringResource(R.string.listening_result_correct)
                 } else {
                     stringResource(R.string.listening_result_incorrect)
                 },
-                color = if (isCorrect) Color(0xFF1B5E20) else MaterialTheme.colorScheme.error,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp
+                ja = if (isCorrect) {
+                    stringResource(R.string.listening_result_correct_ja)
+                } else {
+                    stringResource(R.string.listening_result_incorrect_ja)
+                },
+                preferJaFirst = false
             )
+            Column {
+                Text(
+                    text = resultPrimary,
+                    color = if (isCorrect) Color(0xFF1B5E20) else MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp
+                )
+                resultSecondary?.let {
+                    Text(
+                        text = it,
+                        color = if (isCorrect) Color(0xFF1B5E20) else MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp
+                    )
+                }
+            }
         }
     }
 }
@@ -562,3 +678,26 @@ private fun Modifier.dashedBorder(color: Color, strokeWidth: Dp, cornerRadius: D
         drawRoundRect(color = color, size = size, cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx()), style = stroke)
     }
 )
+
+private fun resolveLocalizedText(
+    showBilingual: Boolean,
+    preferJapanese: Boolean,
+    english: String,
+    japanese: String,
+    preferJapaneseOrder: Boolean = false
+): Pair<String, String?> {
+    val fallbackEnglish = english.ifBlank { japanese }
+    val fallbackJapanese = japanese.ifBlank { english }
+    val resolvedEnglish = fallbackEnglish.ifBlank { "" }
+    val resolvedJapanese = fallbackJapanese.ifBlank { "" }
+
+    if (showBilingual) {
+        val primary = if (preferJapaneseOrder) resolvedJapanese else resolvedEnglish
+        val secondaryCandidate = if (preferJapaneseOrder) resolvedEnglish else resolvedJapanese
+        val secondary = secondaryCandidate.takeIf { it.isNotBlank() && it != primary }
+        return primary to secondary
+    }
+
+    val primary = if (preferJapanese) resolvedJapanese else resolvedEnglish
+    return primary to null
+}

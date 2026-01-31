@@ -3,6 +3,7 @@ package com.bisayaspeak.ai.data.local
 import android.content.Context
 import android.util.Log
 import androidx.room.Database
+import androidx.room.TypeConverters
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -10,7 +11,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@Database(entities = [Question::class, UserProgress::class], version = 3, exportSchema = false)
+@Database(entities = [Question::class, UserProgress::class], version = 4, exportSchema = false)
+@TypeConverters(AppTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun questionDao(): QuestionDao
     abstract fun userProgressDao(): UserProgressDao
