@@ -310,11 +310,8 @@ class ListeningViewModel(
 
     fun playAudio() {
         if (_voiceHintRemaining.value <= 0) {
-            // 広告ロードが完了していなくても即座にヒントを再生（暫定バイパス）
-            Log.w("ListeningViewModel", "Hints depleted - bypassing ad wait and playing immediately")
-            _showHintRecoveryDialog.value = false
-            performAudioPlayback()
-            // 裏で広告ロードは継続
+            Log.i("ListeningViewModel", "Hint limit reached – prompting recovery dialog")
+            _showHintRecoveryDialog.value = true
             startAdReloading()
             return
         }
@@ -512,8 +509,8 @@ class ListeningViewModel(
             _shouldShowAd.value = false
             _lessonResult.value = null
             _speechRate.value = 0.9f
-            _voiceHintRemaining.value = _voiceHintRemaining.value // Keep current value, don't reset
-            saveHintCount() // Save current value to SharedPreferences
+            _voiceHintRemaining.value = MAX_VOICE_HINTS
+            saveHintCount()
             _showHintRecoveryDialog.value = false
 
             // 各レッスン開始時にリワード広告をプリロード

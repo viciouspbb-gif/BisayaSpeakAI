@@ -130,6 +130,7 @@ class RoleplayChatViewModel(
 
     private companion object {
         private const val START_TOKEN = "[START_CONVERSATION]"
+        private const val TARI_SCENARIO_ID = "tari_infinite_mode"
         private const val COMPLETION_SCORE = 90
         private const val COMPLETION_THRESHOLD = 80
         private const val LOCKED_OPTION_HOLD_MS = 500L
@@ -313,7 +314,7 @@ class RoleplayChatViewModel(
         }
     }
 
-    private fun selectActiveTheme(scenario: RoleplayScenarioDefinition) {
+    private fun selectActiveTheme(scenario: RoleplayScenarioDefinition, forcedTurnLimit: Int? = null) {
         val flavor = if (scenario.level <= 3) {
             RoleplayThemeFlavor.CASUAL
         } else {
@@ -323,12 +324,12 @@ class RoleplayChatViewModel(
         activeTheme = theme
         activeFlavor = flavor
         isCasualTheme = flavor == RoleplayThemeFlavor.CASUAL
-        endingTurnTarget = if (isCasualTheme) {
+        endingTurnTarget = forcedTurnLimit ?: if (isCasualTheme) {
             random.nextInt(CASUAL_MIN_TURN, CASUAL_MAX_TURN + 1)
         } else {
             random.nextInt(SCENARIO_MIN_TURN, SCENARIO_MAX_TURN + 1)
         }
-        scriptedTurnsRemaining = endingTurnTarget
+        scriptedTurnsRemaining = forcedTurnLimit ?: endingTurnTarget
         inClosingPhase = false
     }
 
@@ -407,7 +408,8 @@ class RoleplayChatViewModel(
         pendingAutoExitHistory = null
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
         isProVersion = isProUser
-        selectActiveTheme(definition)
+        val forcedTurnLimit = if (scenario.id == TARI_SCENARIO_ID) 12 else null
+        selectActiveTheme(definition, forcedTurnLimit)
         scenarioClosingGuidance = definition.closingGuidance
         inClosingPhase = false
         refreshFarewellSignals(definition)
@@ -871,6 +873,7 @@ class RoleplayChatViewModel(
             translation = payload.aiTranslation.takeIf { it.isNotBlank() },
             voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
         )
+        val isTariScenario = _uiState.value.currentScenario?.id == TARI_SCENARIO_ID
         val options = payload.options
             .filter { it.text.isNotBlank() }
             .map {
@@ -882,16 +885,20 @@ class RoleplayChatViewModel(
             }.filterForAccess()
         val ensuredOptions = if (options.isNotEmpty()) options else buildFallbackOptions()
         val farewellDetected = containsFarewellCue(aiSpeech) || containsFarewellCue(payload.aiTranslation)
-        val sanitizedOptions = when {
-            farewellDetected -> emptyList()
-            inClosingPhase && scriptedTurnsRemaining <= 0 -> emptyList()
-            else -> ensuredOptions
-        }
 
         scriptedTurnsRemaining = (scriptedTurnsRemaining - 1).coerceAtLeast(0)
         if (!inClosingPhase && scriptedTurnsRemaining <= 2) {
             inClosingPhase = true
         }
+
+        val sanitizedOptions = when {
+            farewellDetected -> emptyList()
+            scriptedTurnsRemaining <= 0 -> emptyList()
+            inClosingPhase && scriptedTurnsRemaining <= 0 -> emptyList()
+            isTariScenario && scriptedTurnsRemaining <= 0 -> emptyList()
+            else -> ensuredOptions
+        }
+
         val aiClosedConversation = sanitizedOptions.isEmpty() || farewellDetected
 
         _uiState.update {
@@ -958,7 +965,7 @@ class RoleplayChatViewModel(
     }
 
     private fun queueCompletion(score: Int) {
-        val farewell = selectCompletionFarewell()
+        val farewell = forcedTariFarewell() ?: selectCompletionFarewell()
         inClosingPhase = false
         val farewellMessage = ChatMessage(
             id = UUID.randomUUID().toString(),
@@ -1196,6 +1203,10 @@ class RoleplayChatViewModel(
         }
         builder.append("- Guide the conversation to a natural goodbye within the next ${scriptedTurnsRemaining.coerceAtLeast(1)} AI turns while allowing the learner to reply.\n")
         builder.append("- Mention that Tari enjoyed the interaction and appreciates the learner's effort before the farewell.\n")
+        if (scenario?.id == TARI_SCENARIO_ID) {
+            builder.append("- Casually mention errands or curfew to hint that the walk is ending soon.\n")
+            builder.append("- If this is the final turn, promise clearly that you'll meet here again tomorrow and thank the learner warmly.\n")
+        }
         guidance?.resolutionReminders?.forEach { reminder ->
             builder.append("- Resolve: $reminder\n")
         }
@@ -1227,6 +1238,20 @@ class RoleplayChatViewModel(
             bisaya = cue.bisaya,
             translation = cue.translation,
             explanation = cue.explanation
+        )
+    }
+
+    private fun forcedTariFarewell(): FarewellLine? {
+        if (_uiState.value.currentScenario?.id != TARI_SCENARIO_ID) return null
+        val translation = if (translationLanguageState.value == TranslationLanguage.JAPANESE) {
+            "今日は本当に楽しかった！ありがとう。また明日ここで会おうね！"
+        } else {
+            "I had such a wonderful time with you today! Thank you, and let's meet right here again tomorrow!"
+        }
+        return FarewellLine(
+            bisaya = "Salamat kaayo sa imong kuyog karon. Lingaw kaayo ko nimo. Kita ta balik ugma diri ha!",
+            translation = translation,
+            explanation = "Tari Walk専用のフィナーレ：心からの感謝と『また明日ここで会おう』の約束を伝える。"
         )
     }
 

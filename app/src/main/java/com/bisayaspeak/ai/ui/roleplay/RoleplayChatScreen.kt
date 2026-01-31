@@ -425,6 +425,8 @@ fun RoleplayChatScreen(
             val voicePanelBottomSpace = if (condensedLayout) 32.dp else 48.dp
             val bottomContentSpacer = voicePanelBottomSpace + if (condensedLayout) 96.dp else 140.dp
 
+            val isJapaneseLocale = locale.language.equals("ja", ignoreCase = true)
+
             Column(
                 modifier = columnModifier,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -505,7 +507,7 @@ fun RoleplayChatScreen(
                         scale = scaleFactor,
                         cardHorizontalPadding = cardHorizontalPadding,
                         cardVerticalPadding = cardVerticalPadding,
-                        isJapaneseLocale = locale.language.equals("ja", ignoreCase = true)
+                        isJapaneseLocale = isJapaneseLocale
                     )
 
                     Spacer(modifier = Modifier.height(sectionSpacing))
@@ -579,24 +581,17 @@ private fun ExitReminderCard(
         tonalElevation = 4.dp,
         shadowElevation = 4.dp
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Button(
+            onClick = onNavigateTop,
+            enabled = enabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 18.dp)
         ) {
             Text(
-                text = stringResource(R.string.roleplay_session_finished),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                text = stringResource(R.string.roleplay_back_to_top),
+                fontWeight = FontWeight.SemiBold
             )
-            Button(
-                onClick = onNavigateTop,
-                enabled = enabled,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.roleplay_back_to_home))
-            }
         }
     }
 }
