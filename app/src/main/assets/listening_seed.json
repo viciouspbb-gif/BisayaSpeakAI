@@ -3,2366 +3,3849 @@
     "id": 1,
     "level": 1,
     "native": "Maayong buntag",
-    "translation": "おはよう",
     "words": [
       "Maayong",
       "buntag"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "おはよう"
+      },
+      "en": {
+        "meaning": "Good morning"
+      }
+    }
   },
   {
     "id": 2,
     "level": 1,
     "native": "Maayong adlaw",
-    "translation": "良い一日を",
     "words": [
       "Maayong",
       "adlaw"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "良い一日を"
+      },
+      "en": {
+        "meaning": "Have a nice day"
+      }
+    }
   },
   {
     "id": 3,
     "level": 1,
     "native": "Maayong hapon",
-    "translation": "こんにちは",
     "words": [
       "Maayong",
       "hapon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "こんにちは"
+      },
+      "en": {
+        "meaning": "Hello"
+      }
+    }
   },
   {
     "id": 4,
     "level": 1,
     "native": "Maayong gabii",
-    "translation": "こんばんは",
     "words": [
       "Maayong",
       "gabii"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "こんばんは"
+      },
+      "en": {
+        "meaning": "Good evening"
+      }
+    }
   },
   {
     "id": 5,
     "level": 1,
     "native": "Kumusta ka",
-    "translation": "元気ですか？",
     "words": [
       "Kumusta",
       "ka"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "元気ですか？"
+      },
+      "en": {
+        "meaning": "How are you?"
+      }
+    }
   },
   {
     "id": 6,
     "level": 1,
     "native": "Maayo ra ko",
-    "translation": "私は元気です",
     "words": [
       "Maayo",
       "ra",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私は元気です"
+      },
+      "en": {
+        "meaning": "I'm fine"
+      }
+    }
   },
   {
     "id": 7,
     "level": 1,
     "native": "Salamat",
-    "translation": "ありがとう",
     "words": [
       "Salamat"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ありがとう"
+      },
+      "en": {
+        "meaning": "Thank you"
+      }
+    }
   },
   {
     "id": 8,
     "level": 1,
     "native": "Walay sapayan",
-    "translation": "どういたしまして",
     "words": [
       "Walay",
       "sapayan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "どういたしまして"
+      },
+      "en": {
+        "meaning": "You're welcome"
+      }
+    }
   },
   {
     "id": 9,
     "level": 1,
     "native": "Amping ha",
-    "translation": "気をつけてね",
     "words": [
       "Amping",
       "ha"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "気をつけてね"
+      },
+      "en": {
+        "meaning": "Take care"
+      }
+    }
   },
   {
     "id": 10,
     "level": 1,
     "native": "Nalipay ko magkita nimo",
-    "translation": "会えて嬉しいです",
     "words": [
       "Nalipay",
       "ko",
       "magkita",
       "nimo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "会えて嬉しいです"
+      },
+      "en": {
+        "meaning": "I'm happy to see you"
+      }
+    }
   },
   {
     "id": 11,
     "level": 2,
     "native": "Oo",
-    "translation": "はい",
     "words": [
       "Oo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "はい"
+      },
+      "en": {
+        "meaning": "Yes"
+      }
+    }
   },
   {
     "id": 12,
     "level": 2,
     "native": "Dili",
-    "translation": "いいえ",
     "words": [
       "Dili"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いいえ"
+      },
+      "en": {
+        "meaning": "No"
+      }
+    }
   },
   {
     "id": 13,
     "level": 2,
     "native": "Wala",
-    "translation": "ありません",
     "words": [
       "Wala"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ありません"
+      },
+      "en": {
+        "meaning": "There isn't any"
+      }
+    }
   },
   {
     "id": 14,
     "level": 2,
     "native": "Sige",
-    "translation": "了解です",
     "words": [
       "Sige"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "了解です"
+      },
+      "en": {
+        "meaning": "Got it"
+      }
+    }
   },
   {
     "id": 15,
     "level": 2,
     "native": "Pwede",
-    "translation": "できます",
     "words": [
       "Pwede"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "できます"
+      },
+      "en": {
+        "meaning": "I can"
+      }
+    }
   },
   {
     "id": 16,
     "level": 2,
     "native": "Dili pwede",
-    "translation": "できません",
     "words": [
       "Dili",
       "pwede"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "できません"
+      },
+      "en": {
+        "meaning": "I can't"
+      }
+    }
   },
   {
     "id": 17,
     "level": 2,
     "native": "Basin siguro",
-    "translation": "たぶんそうです",
     "words": [
       "Basin",
       "siguro"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "たぶんそうです"
+      },
+      "en": {
+        "meaning": "Probably"
+      }
+    }
   },
   {
     "id": 18,
     "level": 2,
     "native": "Maayo ra",
-    "translation": "大丈夫です",
     "words": [
       "Maayo",
       "ra"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "大丈夫です"
+      },
+      "en": {
+        "meaning": "It's okay"
+      }
+    }
   },
   {
     "id": 19,
     "level": 2,
     "native": "Wala pa",
-    "translation": "まだです",
     "words": [
       "Wala",
       "pa"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "まだです"
+      },
+      "en": {
+        "meaning": "Not yet"
+      }
+    }
   },
   {
     "id": 20,
     "level": 2,
     "native": "Naa pa",
-    "translation": "まだあります",
     "words": [
       "Naa",
       "pa"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "まだあります"
+      },
+      "en": {
+        "meaning": "There's still some"
+      }
+    }
   },
   {
     "id": 21,
     "level": 3,
     "native": "Ako",
-    "translation": "私",
     "words": [
       "Ako"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私"
+      },
+      "en": {
+        "meaning": "I"
+      }
+    }
   },
   {
     "id": 22,
     "level": 3,
     "native": "Ikaw",
-    "translation": "あなた",
     "words": [
       "Ikaw"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなた"
+      },
+      "en": {
+        "meaning": "You"
+      }
+    }
   },
   {
     "id": 23,
     "level": 3,
     "native": "Siya",
-    "translation": "彼／彼女",
     "words": [
       "Siya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼／彼女"
+      },
+      "en": {
+        "meaning": "He or she"
+      }
+    }
   },
   {
     "id": 24,
     "level": 3,
     "native": "Kami ra",
-    "translation": "私たち（あなた抜き）",
     "words": [
       "Kami",
       "ra"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私たち（あなた抜き）"
+      },
+      "en": {
+        "meaning": "We (without you)"
+      }
+    }
   },
   {
     "id": 25,
     "level": 3,
     "native": "Kita tanan",
-    "translation": "私たち（あなた含む）",
     "words": [
       "Kita",
       "tanan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私たち（あなた含む）"
+      },
+      "en": {
+        "meaning": "We (including you)"
+      }
+    }
   },
   {
     "id": 26,
     "level": 3,
     "native": "Kamo tanan",
-    "translation": "あなたたち",
     "words": [
       "Kamo",
       "tanan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたたち"
+      },
+      "en": {
+        "meaning": "You all"
+      }
+    }
   },
   {
     "id": 27,
     "level": 3,
     "native": "Sila tanan",
-    "translation": "彼ら",
     "words": [
       "Sila",
       "tanan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼ら"
+      },
+      "en": {
+        "meaning": "They"
+      }
+    }
   },
   {
     "id": 28,
     "level": 3,
     "native": "Akong amigo",
-    "translation": "私の友達",
     "words": [
       "Akong",
       "amigo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私の友達"
+      },
+      "en": {
+        "meaning": "My friend"
+      }
+    }
   },
   {
     "id": 29,
     "level": 3,
     "native": "Imong pamilya",
-    "translation": "あなたの家族",
     "words": [
       "Imong",
       "pamilya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたの家族"
+      },
+      "en": {
+        "meaning": "Your family"
+      }
+    }
   },
   {
     "id": 30,
     "level": 3,
     "native": "Iyang trabaho",
-    "translation": "彼／彼女の仕事",
     "words": [
       "Iyang",
       "trabaho"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼／彼女の仕事"
+      },
+      "en": {
+        "meaning": "His or her job"
+      }
+    }
   },
   {
     "id": 31,
     "level": 4,
     "native": "Kaon ta karon",
-    "translation": "今食べよう",
     "words": [
       "Kaon",
       "ta",
       "karon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今食べよう"
+      },
+      "en": {
+        "meaning": "Let's eat now"
+      }
+    }
   },
   {
     "id": 32,
     "level": 4,
     "native": "Kaon ko ug pan",
-    "translation": "パンを食べます",
     "words": [
       "Kaon",
       "ko",
       "ug",
       "pan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "パンを食べます"
+      },
+      "en": {
+        "meaning": "I will eat bread"
+      }
+    }
   },
   {
     "id": 33,
     "level": 4,
     "native": "Inom ko tubig",
-    "translation": "水を飲みます",
     "words": [
       "Inom",
       "ko",
       "tubig"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "水を飲みます"
+      },
+      "en": {
+        "meaning": "I will drink water"
+      }
+    }
   },
   {
     "id": 34,
     "level": 4,
     "native": "Inom ta kape",
-    "translation": "コーヒーを飲もう",
     "words": [
       "Inom",
       "ta",
       "kape"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "コーヒーを飲もう"
+      },
+      "en": {
+        "meaning": "Let's drink coffee"
+      }
+    }
   },
   {
     "id": 35,
     "level": 4,
     "native": "Tulog na ko",
-    "translation": "もう寝ます",
     "words": [
       "Tulog",
       "na",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "もう寝ます"
+      },
+      "en": {
+        "meaning": "I'm going to sleep"
+      }
+    }
   },
   {
     "id": 36,
     "level": 4,
     "native": "Mata na palihug",
-    "translation": "起きてください",
     "words": [
       "Mata",
       "na",
       "palihug"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "起きてください"
+      },
+      "en": {
+        "meaning": "Please wake up"
+      }
+    }
   },
   {
     "id": 37,
     "level": 4,
     "native": "Laba ko sa sanina",
-    "translation": "服を洗います",
     "words": [
       "Laba",
       "ko",
       "sa",
       "sanina"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "服を洗います"
+      },
+      "en": {
+        "meaning": "I will wash the clothes"
+      }
+    }
   },
   {
     "id": 38,
     "level": 4,
     "native": "Ligo ta sa dagat",
-    "translation": "海で泳ごう",
     "words": [
       "Ligo",
       "ta",
       "sa",
       "dagat"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "海で泳ごう"
+      },
+      "en": {
+        "meaning": "Let's swim in the sea"
+      }
+    }
   },
   {
     "id": 39,
     "level": 4,
     "native": "Lakaw ta palihug",
-    "translation": "歩きましょう",
     "words": [
       "Lakaw",
       "ta",
       "palihug"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "歩きましょう"
+      },
+      "en": {
+        "meaning": "Let's walk"
+      }
+    }
   },
   {
     "id": 40,
     "level": 4,
     "native": "Balik ko unya",
-    "translation": "あとで戻ります",
     "words": [
       "Balik",
       "ko",
       "unya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あとで戻ります"
+      },
+      "en": {
+        "meaning": "I'll come back later"
+      }
+    }
   },
   {
     "id": 41,
     "level": 5,
     "native": "Init kaayo diri",
-    "translation": "ここはとても暑いです",
     "words": [
       "Init",
       "kaayo",
       "diri"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ここはとても暑いです"
+      },
+      "en": {
+        "meaning": "It's very hot here"
+      }
+    }
   },
   {
     "id": 42,
     "level": 5,
     "native": "Bugnaw ang tubig",
-    "translation": "水が冷たいです",
     "words": [
       "Bugnaw",
       "ang",
       "tubig"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "水が冷たいです"
+      },
+      "en": {
+        "meaning": "The water is cold"
+      }
+    }
   },
   {
     "id": 43,
     "level": 5,
     "native": "Dako kaayo ang balay",
-    "translation": "家が大きいです",
     "words": [
       "Dako",
       "kaayo",
       "ang",
       "balay"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "家が大きいです"
+      },
+      "en": {
+        "meaning": "The house is big"
+      }
+    }
   },
   {
     "id": 44,
     "level": 5,
     "native": "Gamay ra ang kwarto",
-    "translation": "部屋が小さいです",
     "words": [
       "Gamay",
       "ra",
       "ang",
       "kwarto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "部屋が小さいです"
+      },
+      "en": {
+        "meaning": "The room is small"
+      }
+    }
   },
   {
     "id": 45,
     "level": 5,
     "native": "Taas siya",
-    "translation": "彼／彼女は背が高いです",
     "words": [
       "Taas",
       "siya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼／彼女は背が高いです"
+      },
+      "en": {
+        "meaning": "He or she is tall"
+      }
+    }
   },
   {
     "id": 46,
     "level": 5,
     "native": "Mubo ko",
-    "translation": "私は背が低いです",
     "words": [
       "Mubo",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私は背が低いです"
+      },
+      "en": {
+        "meaning": "I'm short"
+      }
+    }
   },
   {
     "id": 47,
     "level": 5,
     "native": "Humok ang unlan",
-    "translation": "枕が柔らかいです",
     "words": [
       "Humok",
       "ang",
       "unlan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "枕が柔らかいです"
+      },
+      "en": {
+        "meaning": "The pillow is soft"
+      }
+    }
   },
   {
     "id": 48,
     "level": 5,
     "native": "Lig on ang lamesa",
-    "translation": "机が丈夫です",
     "words": [
       "Lig",
       "on",
       "ang",
       "lamesa"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "机が丈夫です"
+      },
+      "en": {
+        "meaning": "The table is sturdy"
+      }
+    }
   },
   {
     "id": 49,
     "level": 5,
     "native": "Baga kaayo ang libro",
-    "translation": "本がとても厚いです",
     "words": [
       "Baga",
       "kaayo",
       "ang",
       "libro"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "本がとても厚いです"
+      },
+      "en": {
+        "meaning": "The book is very thick"
+      }
+    }
   },
   {
     "id": 50,
     "level": 5,
     "native": "Hayag ang adlaw",
-    "translation": "陽射しが明るいです",
     "words": [
       "Hayag",
       "ang",
       "adlaw"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "陽射しが明るいです"
+      },
+      "en": {
+        "meaning": "The sunlight is bright"
+      }
+    }
   },
   {
     "id": 51,
     "level": 6,
     "native": "Gigutom ko",
-    "translation": "お腹が空きました",
     "words": [
       "Gigutom",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "お腹が空きました"
+      },
+      "en": {
+        "meaning": "I'm hungry"
+      }
+    }
   },
   {
     "id": 52,
     "level": 6,
     "native": "Gikapoy ko",
-    "translation": "疲れました",
     "words": [
       "Gikapoy",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "疲れました"
+      },
+      "en": {
+        "meaning": "I'm tired"
+      }
+    }
   },
   {
     "id": 53,
     "level": 6,
     "native": "Giuhaw ko",
-    "translation": "喉が渇きました",
     "words": [
       "Giuhaw",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "喉が渇きました"
+      },
+      "en": {
+        "meaning": "I'm thirsty"
+      }
+    }
   },
   {
     "id": 54,
     "level": 6,
     "native": "Nalipay ko",
-    "translation": "嬉しいです",
     "words": [
       "Nalipay",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "嬉しいです"
+      },
+      "en": {
+        "meaning": "I'm happy"
+      }
+    }
   },
   {
     "id": 55,
     "level": 6,
     "native": "Nagool ko",
-    "translation": "心配しています",
     "words": [
       "Nagool",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "心配しています"
+      },
+      "en": {
+        "meaning": "I'm worried"
+      }
+    }
   },
   {
     "id": 56,
     "level": 6,
     "native": "Nasuko ko",
-    "translation": "怒っています",
     "words": [
       "Nasuko",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "怒っています"
+      },
+      "en": {
+        "meaning": "I'm angry"
+      }
+    }
   },
   {
     "id": 57,
     "level": 6,
     "native": "Naglibog ko",
-    "translation": "混乱しています",
     "words": [
       "Naglibog",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "混乱しています"
+      },
+      "en": {
+        "meaning": "I'm confused"
+      }
+    }
   },
   {
     "id": 58,
     "level": 6,
     "native": "Nahadlok ko",
-    "translation": "怖いです",
     "words": [
       "Nahadlok",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "怖いです"
+      },
+      "en": {
+        "meaning": "I'm scared"
+      }
+    }
   },
   {
     "id": 59,
     "level": 6,
     "native": "Masakiton ko",
-    "translation": "体調が悪いです",
     "words": [
       "Masakiton",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "体調が悪いです"
+      },
+      "en": {
+        "meaning": "I'm not feeling well"
+      }
+    }
   },
   {
     "id": 60,
     "level": 6,
     "native": "Ganahan ko mopahuway",
-    "translation": "休みたいです",
     "words": [
       "Ganahan",
       "ko",
       "mopahuway"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "休みたいです"
+      },
+      "en": {
+        "meaning": "I want to rest"
+      }
+    }
   },
   {
     "id": 61,
     "level": 7,
     "native": "Asa ka",
-    "translation": "どこにいるの？",
     "words": [
       "Asa",
       "ka"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "どこにいるの？"
+      },
+      "en": {
+        "meaning": "Where are you?"
+      }
+    }
   },
   {
     "id": 62,
     "level": 7,
     "native": "Ania ko sa balay",
-    "translation": "家にいます",
     "words": [
       "Ania",
       "ko",
       "sa",
       "balay"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "家にいます"
+      },
+      "en": {
+        "meaning": "I'm at home"
+      }
+    }
   },
   {
     "id": 63,
     "level": 7,
     "native": "Ania ko sa opisina",
-    "translation": "オフィスにいます",
     "words": [
       "Ania",
       "ko",
       "sa",
       "opisina"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "オフィスにいます"
+      },
+      "en": {
+        "meaning": "I'm at the office"
+      }
+    }
   },
   {
     "id": 64,
     "level": 7,
     "native": "Asa sila karon",
-    "translation": "みんな今どこ？",
     "words": [
       "Asa",
       "sila",
       "karon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "みんな今どこ？"
+      },
+      "en": {
+        "meaning": "Where is everyone now?"
+      }
+    }
   },
   {
     "id": 65,
     "level": 7,
     "native": "Ania ra siya sa gawas",
-    "translation": "彼／彼女は外にいます",
     "words": [
       "Ania",
       "ra",
       "siya",
       "sa",
       "gawas"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼／彼女は外にいます"
+      },
+      "en": {
+        "meaning": "He or she is outside"
+      }
+    }
   },
   {
     "id": 66,
     "level": 7,
     "native": "Tua ko sa merkado",
-    "translation": "市場にいます",
     "words": [
       "Tua",
       "ko",
       "sa",
       "merkado"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "市場にいます"
+      },
+      "en": {
+        "meaning": "I'm at the market"
+      }
+    }
   },
   {
     "id": 67,
     "level": 7,
     "native": "Anhi diri palihug",
-    "translation": "こちらに来てください",
     "words": [
       "Anhi",
       "diri",
       "palihug"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "こちらに来てください"
+      },
+      "en": {
+        "meaning": "Please come here"
+      }
+    }
   },
   {
     "id": 68,
     "level": 7,
     "native": "Didto ko ganiha",
-    "translation": "さっきそこにいました",
     "words": [
       "Didto",
       "ko",
       "ganiha"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "さっきそこにいました"
+      },
+      "en": {
+        "meaning": "I was there earlier"
+      }
+    }
   },
   {
     "id": 69,
     "level": 7,
     "native": "Asa dapit ang terminal",
-    "translation": "ターミナルはどの辺ですか？",
     "words": [
       "Asa",
       "dapit",
       "ang",
       "terminal"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ターミナルはどの辺ですか？"
+      },
+      "en": {
+        "meaning": "Where is the terminal?"
+      }
+    }
   },
   {
     "id": 70,
     "level": 7,
     "native": "Ania ta sa klase",
-    "translation": "今授業にいます",
     "words": [
       "Ania",
       "ta",
       "sa",
       "klase"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今授業にいます"
+      },
+      "en": {
+        "meaning": "I'm in class now"
+      }
+    }
   },
   {
     "id": 71,
     "level": 8,
     "native": "Akoa kini",
-    "translation": "これは私のものです",
     "words": [
       "Akoa",
       "kini"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これは私のものです"
+      },
+      "en": {
+        "meaning": "This is mine"
+      }
+    }
   },
   {
     "id": 72,
     "level": 8,
     "native": "Imoha kana",
-    "translation": "それはあなたのものです",
     "words": [
       "Imoha",
       "kana"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "それはあなたのものです"
+      },
+      "en": {
+        "meaning": "That is yours"
+      }
+    }
   },
   {
     "id": 73,
     "level": 8,
     "native": "Iya ni Maria",
-    "translation": "これはマリアのものです",
     "words": [
       "Iya",
       "ni",
       "Maria"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これはマリアのものです"
+      },
+      "en": {
+        "meaning": "This belongs to Maria"
+      }
+    }
   },
   {
     "id": 74,
     "level": 8,
     "native": "Amuha ning balay",
-    "translation": "この家は私たちのものです",
     "words": [
       "Amuha",
       "ning",
       "balay"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "この家は私たちのものです"
+      },
+      "en": {
+        "meaning": "This house is ours"
+      }
+    }
   },
   {
     "id": 75,
     "level": 8,
     "native": "Inyong libro ni",
-    "translation": "これはあなたたちの本です",
     "words": [
       "Inyong",
       "libro",
       "ni"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これはあなたたちの本です"
+      },
+      "en": {
+        "meaning": "This is your book"
+      }
+    }
   },
   {
     "id": 76,
     "level": 8,
     "native": "Ilaha tong sakyanan",
-    "translation": "あの車は彼らのものです",
     "words": [
       "Ilaha",
       "tong",
       "sakyanan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あの車は彼らのものです"
+      },
+      "en": {
+        "meaning": "That car is theirs"
+      }
+    }
   },
   {
     "id": 77,
     "level": 8,
     "native": "Akong pitaka gikan Japan",
-    "translation": "私の財布は日本製です",
     "words": [
       "Akong",
       "pitaka",
       "gikan",
       "Japan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私の財布は日本製です"
+      },
+      "en": {
+        "meaning": "My wallet is made in Japan"
+      }
+    }
   },
   {
     "id": 78,
     "level": 8,
     "native": "Imong cellphone nindot",
-    "translation": "あなたの携帯は素敵ですね",
     "words": [
       "Imong",
       "cellphone",
       "nindot"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたの携帯は素敵ですね"
+      },
+      "en": {
+        "meaning": "Your phone is nice"
+      }
+    }
   },
   {
     "id": 79,
     "level": 8,
     "native": "Akoa ang trabaho karon",
-    "translation": "今の仕事は私の担当です",
     "words": [
       "Akoa",
       "ang",
       "trabaho",
       "karon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今の仕事は私の担当です"
+      },
+      "en": {
+        "meaning": "The current task is mine"
+      }
+    }
   },
   {
     "id": 80,
     "level": 8,
     "native": "Akoa ning plano",
-    "translation": "この計画は私のものです",
     "words": [
       "Akoa",
       "ning",
       "plano"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "この計画は私のものです"
+      },
+      "en": {
+        "meaning": "This plan is mine"
+      }
+    }
   },
   {
     "id": 81,
     "level": 9,
     "native": "Gusto ko mokaon ug sinugba",
-    "translation": "焼き魚を食べたいです",
     "words": [
       "Gusto",
       "ko",
       "mokaon",
       "ug",
       "sinugba"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "焼き魚を食べたいです"
+      },
+      "en": {
+        "meaning": "I want to eat grilled fish"
+      }
+    }
   },
   {
     "id": 82,
     "level": 9,
     "native": "Gusto ko moinom ug kape",
-    "translation": "コーヒーを飲みたいです",
     "words": [
       "Gusto",
       "ko",
       "moinom",
       "ug",
       "kape"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "コーヒーを飲みたいです"
+      },
+      "en": {
+        "meaning": "I want to drink coffee"
+      }
+    }
   },
   {
     "id": 83,
     "level": 9,
     "native": "Gusto ko moadto sa dagat",
-    "translation": "海に行きたいです",
     "words": [
       "Gusto",
       "ko",
       "moadto",
       "sa",
       "dagat"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "海に行きたいです"
+      },
+      "en": {
+        "meaning": "I want to go to the beach"
+      }
+    }
   },
   {
     "id": 84,
     "level": 9,
     "native": "Gusto ko motan aw sine",
-    "translation": "映画を観たいです",
     "words": [
       "Gusto",
       "ko",
       "motan",
       "aw",
       "sine"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "映画を観たいです"
+      },
+      "en": {
+        "meaning": "I want to watch a movie"
+      }
+    }
   },
   {
     "id": 85,
     "level": 9,
     "native": "Gusto ko magpahuway",
-    "translation": "休みたいです",
     "words": [
       "Gusto",
       "ko",
       "magpahuway"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "休みたいです"
+      },
+      "en": {
+        "meaning": "I want to rest"
+      }
+    }
   },
   {
     "id": 86,
     "level": 9,
     "native": "Gusto ko makakat-on og Binisaya",
-    "translation": "ビサヤ語を学びたいです",
     "words": [
       "Gusto",
       "ko",
       "makakat-on",
       "og",
       "Binisaya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ビサヤ語を学びたいです"
+      },
+      "en": {
+        "meaning": "I want to learn Bisaya"
+      }
+    }
   },
   {
     "id": 87,
     "level": 9,
     "native": "Gusto ko makigstorya nimo",
-    "translation": "あなたと話したいです",
     "words": [
       "Gusto",
       "ko",
       "makigstorya",
       "nimo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたと話したいです"
+      },
+      "en": {
+        "meaning": "I want to talk with you"
+      }
+    }
   },
   {
     "id": 88,
     "level": 9,
     "native": "Ganahan ko mokaon og mangga",
-    "translation": "マンゴーを食べたいです",
     "words": [
       "Ganahan",
       "ko",
       "mokaon",
       "og",
       "mangga"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "マンゴーを食べたいです"
+      },
+      "en": {
+        "meaning": "I want to eat mango"
+      }
+    }
   },
   {
     "id": 89,
     "level": 9,
     "native": "Ganahan ko muadto Japan",
-    "translation": "日本に行きたいです",
     "words": [
       "Ganahan",
       "ko",
       "muadto",
       "Japan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "日本に行きたいです"
+      },
+      "en": {
+        "meaning": "I want to go to Japan"
+      }
+    }
   },
   {
     "id": 90,
     "level": 9,
     "native": "Gusto ko makatulog sayo",
-    "translation": "早く寝たいです",
     "words": [
       "Gusto",
       "ko",
       "makatulog",
       "sayo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "早く寝たいです"
+      },
+      "en": {
+        "meaning": "I want to sleep early"
+      }
+    }
   },
   {
     "id": 91,
     "level": 10,
     "native": "Uli na ko",
-    "translation": "もう帰ります",
     "words": [
       "Uli",
       "na",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "もう帰ります"
+      },
+      "en": {
+        "meaning": "I'm going home now"
+      }
+    }
   },
   {
     "id": 92,
     "level": 10,
     "native": "Lakaw na ta",
-    "translation": "そろそろ行きましょう",
     "words": [
       "Lakaw",
       "na",
       "ta"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "そろそろ行きましょう"
+      },
+      "en": {
+        "meaning": "Let's get going"
+      }
+    }
   },
   {
     "id": 93,
     "level": 10,
     "native": "Balik ko unya",
-    "translation": "あとで戻ります",
     "words": [
       "Balik",
       "ko",
       "unya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あとで戻ります"
+      },
+      "en": {
+        "meaning": "I'll come back later"
+      }
+    }
   },
   {
     "id": 94,
     "level": 10,
     "native": "Moadto ko sa trabaho",
-    "translation": "仕事に行きます",
     "words": [
       "Moadto",
       "ko",
       "sa",
       "trabaho"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "仕事に行きます"
+      },
+      "en": {
+        "meaning": "I'm going to work"
+      }
+    }
   },
   {
     "id": 95,
     "level": 10,
     "native": "Moanha ko didto",
-    "translation": "あそこへ行きます",
     "words": [
       "Moanha",
       "ko",
       "didto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あそこへ行きます"
+      },
+      "en": {
+        "meaning": "I'm heading over there"
+      }
+    }
   },
   {
     "id": 96,
     "level": 10,
     "native": "Hulat sa ko diri",
-    "translation": "ここで待っています",
     "words": [
       "Hulat",
       "sa",
       "ko",
       "diri"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ここで待っています"
+      },
+      "en": {
+        "meaning": "I'll wait here"
+      }
+    }
   },
   {
     "id": 97,
     "level": 10,
     "native": "Sulod na mo",
-    "translation": "中に入ってください",
     "words": [
       "Sulod",
       "na",
       "mo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "中に入ってください"
+      },
+      "en": {
+        "meaning": "Please come inside"
+      }
+    }
   },
   {
     "id": 98,
     "level": 10,
     "native": "Gawas ta gamay",
-    "translation": "少し外に出ましょう",
     "words": [
       "Gawas",
       "ta",
       "gamay"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "少し外に出ましょう"
+      },
+      "en": {
+        "meaning": "Let's step outside"
+      }
+    }
   },
   {
     "id": 99,
     "level": 10,
     "native": "Dali na og sakay",
-    "translation": "早く乗ってください",
     "words": [
       "Dali",
       "na",
       "og",
       "sakay"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "早く乗ってください"
+      },
+      "en": {
+        "meaning": "Please get on quickly"
+      }
+    }
   },
   {
     "id": 100,
     "level": 10,
     "native": "Naug ko sa kanto",
-    "translation": "角で降ります",
     "words": [
       "Naug",
       "ko",
       "sa",
       "kanto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "角で降ります"
+      },
+      "en": {
+        "meaning": "I'll get off at the corner"
+      }
+    }
   },
   {
     "id": 101,
     "level": 11,
     "native": "Unsa kini",
-    "translation": "これは何ですか？",
     "words": [
       "Unsa",
       "kini"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これは何ですか？"
+      },
+      "en": {
+        "meaning": "What is this?"
+      }
+    }
   },
   {
     "id": 102,
     "level": 11,
     "native": "Unsa na imong dala",
-    "translation": "それは何を持っていますか？",
     "words": [
       "Unsa",
       "na",
       "imong",
       "dala"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "それは何を持っていますか？"
+      },
+      "en": {
+        "meaning": "What are you carrying?"
+      }
+    }
   },
   {
     "id": 103,
     "level": 11,
     "native": "Kinsa ka",
-    "translation": "あなたは誰ですか？",
     "words": [
       "Kinsa",
       "ka"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたは誰ですか？"
+      },
+      "en": {
+        "meaning": "Who are you?"
+      }
+    }
   },
   {
     "id": 104,
     "level": 11,
     "native": "Kinsa siya",
-    "translation": "彼／彼女は誰ですか？",
     "words": [
       "Kinsa",
       "siya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼／彼女は誰ですか？"
+      },
+      "en": {
+        "meaning": "Who is he or she?"
+      }
+    }
   },
   {
     "id": 105,
     "level": 11,
     "native": "Unsa imong pangalan",
-    "translation": "あなたの名前は？",
     "words": [
       "Unsa",
       "imong",
       "pangalan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたの名前は？"
+      },
+      "en": {
+        "meaning": "What's your name?"
+      }
+    }
   },
   {
     "id": 106,
     "level": 11,
     "native": "Unsa iyang trabaho",
-    "translation": "彼／彼女の仕事は？",
     "words": [
       "Unsa",
       "iyang",
       "trabaho"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼／彼女の仕事は？"
+      },
+      "en": {
+        "meaning": "What's his or her job?"
+      }
+    }
   },
   {
     "id": 107,
     "level": 11,
     "native": "Kinsa inyong maestro",
-    "translation": "先生は誰ですか？",
     "words": [
       "Kinsa",
       "inyong",
       "maestro"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "先生は誰ですか？"
+      },
+      "en": {
+        "meaning": "Who is your teacher?"
+      }
+    }
   },
   {
     "id": 108,
     "level": 11,
     "native": "Unsa ni nga tunog",
-    "translation": "これはどんな音ですか？",
     "words": [
       "Unsa",
       "ni",
       "nga",
       "tunog"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これはどんな音ですか？"
+      },
+      "en": {
+        "meaning": "What kind of sound is this?"
+      }
+    }
   },
   {
     "id": 109,
     "level": 11,
     "native": "Kinsa pa ang mouban",
-    "translation": "誰が一緒に行きますか？",
     "words": [
       "Kinsa",
       "pa",
       "ang",
       "mouban"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "誰が一緒に行きますか？"
+      },
+      "en": {
+        "meaning": "Who else is going?"
+      }
+    }
   },
   {
     "id": 110,
     "level": 11,
     "native": "Unsa imong plano",
-    "translation": "あなたの予定は？",
     "words": [
       "Unsa",
       "imong",
       "plano"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたの予定は？"
+      },
+      "en": {
+        "meaning": "What's your plan?"
+      }
+    }
   },
   {
     "id": 111,
     "level": 12,
     "native": "Asa dapit",
-    "translation": "どの辺ですか？",
     "words": [
       "Asa",
       "dapit"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "どの辺ですか？"
+      },
+      "en": {
+        "meaning": "Where is it located?"
+      }
+    }
   },
   {
     "id": 112,
     "level": 12,
     "native": "Asa ka moadto",
-    "translation": "どこへ行くのですか？",
     "words": [
       "Asa",
       "ka",
       "moadto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "どこへ行くのですか？"
+      },
+      "en": {
+        "meaning": "Where are you going?"
+      }
+    }
   },
   {
     "id": 113,
     "level": 12,
     "native": "Asa ang tindahan",
-    "translation": "店はどこですか？",
     "words": [
       "Asa",
       "ang",
       "tindahan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "店はどこですか？"
+      },
+      "en": {
+        "meaning": "Where is the shop?"
+      }
+    }
   },
   {
     "id": 114,
     "level": 12,
     "native": "Asa dapit ang hospital",
-    "translation": "病院はどの辺ですか？",
     "words": [
       "Asa",
       "dapit",
       "ang",
       "hospital"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "病院はどの辺ですか？"
+      },
+      "en": {
+        "meaning": "Where is the hospital?"
+      }
+    }
   },
   {
     "id": 115,
     "level": 12,
     "native": "Kanus a ka moabot",
-    "translation": "いつ到着しますか？",
     "words": [
       "Kanus",
       "a",
       "ka",
       "moabot"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつ到着しますか？"
+      },
+      "en": {
+        "meaning": "When will you arrive?"
+      }
+    }
   },
   {
     "id": 116,
     "level": 12,
     "native": "Kanus a ta magkita",
-    "translation": "いつ会いましょうか？",
     "words": [
       "Kanus",
       "a",
       "ta",
       "magkita"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつ会いましょうか？"
+      },
+      "en": {
+        "meaning": "When shall we meet?"
+      }
+    }
   },
   {
     "id": 117,
     "level": 12,
     "native": "Asa ka karon",
-    "translation": "今どこにいますか？",
     "words": [
       "Asa",
       "ka",
       "karon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今どこにいますか？"
+      },
+      "en": {
+        "meaning": "Where are you now?"
+      }
+    }
   },
   {
     "id": 118,
     "level": 12,
     "native": "Kanus a ang flight",
-    "translation": "フライトはいつですか？",
     "words": [
       "Kanus",
       "a",
       "ang",
       "flight"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "フライトはいつですか？"
+      },
+      "en": {
+        "meaning": "When is the flight?"
+      }
+    }
   },
   {
     "id": 119,
     "level": 12,
     "native": "Asa dapit ang park",
-    "translation": "公園はどの辺ですか？",
     "words": [
       "Asa",
       "dapit",
       "ang",
       "park"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "公園はどの辺ですか？"
+      },
+      "en": {
+        "meaning": "Where is the park located?"
+      }
+    }
   },
   {
     "id": 120,
     "level": 12,
     "native": "Kanus a ko mulakaw",
-    "translation": "いつ出発すればいいですか？",
     "words": [
       "Kanus",
       "a",
       "ko",
       "mulakaw"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつ出発すればいいですか？"
+      },
+      "en": {
+        "meaning": "When should I leave?"
+      }
+    }
   },
   {
     "id": 121,
     "level": 13,
     "native": "Tagpila kini",
-    "translation": "これはいくらですか？",
     "words": [
       "Tagpila",
       "kini"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これはいくらですか？"
+      },
+      "en": {
+        "meaning": "How much is this?"
+      }
+    }
   },
   {
     "id": 122,
     "level": 13,
     "native": "Tagpila ni tanan",
-    "translation": "全部でいくらですか？",
     "words": [
       "Tagpila",
       "ni",
       "tanan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "全部でいくらですか？"
+      },
+      "en": {
+        "meaning": "How much is it in total?"
+      }
+    }
   },
   {
     "id": 123,
     "level": 13,
     "native": "Tagpila ang isa",
-    "translation": "一ついくらですか？",
     "words": [
       "Tagpila",
       "ang",
       "isa"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "一ついくらですか？"
+      },
+      "en": {
+        "meaning": "How much is one?"
+      }
+    }
   },
   {
     "id": 124,
     "level": 13,
     "native": "Tagpila ang kilo",
-    "translation": "1キロいくらですか？",
     "words": [
       "Tagpila",
       "ang",
       "kilo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "1キロいくらですか？"
+      },
+      "en": {
+        "meaning": "How much per kilo?"
+      }
+    }
   },
   {
     "id": 125,
     "level": 13,
     "native": "Pwede pa mahangyo",
-    "translation": "値引きできますか？",
     "words": [
       "Pwede",
       "pa",
       "mahangyo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "値引きできますか？"
+      },
+      "en": {
+        "meaning": "Can you give me a discount?"
+      }
+    }
   },
   {
     "id": 126,
     "level": 13,
     "native": "Barato ra ni",
-    "translation": "これは安いですよ",
     "words": [
       "Barato",
       "ra",
       "ni"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これは安いですよ"
+      },
+      "en": {
+        "meaning": "This is cheap"
+      }
+    }
   },
   {
     "id": 127,
     "level": 13,
     "native": "Mahal kaayo ni",
-    "translation": "これは高すぎます",
     "words": [
       "Mahal",
       "kaayo",
       "ni"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これは高すぎます"
+      },
+      "en": {
+        "meaning": "This is too expensive"
+      }
+    }
   },
   {
     "id": 128,
     "level": 13,
     "native": "Tagpila ang plete",
-    "translation": "運賃はいくらですか？",
     "words": [
       "Tagpila",
       "ang",
       "plete"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "運賃はいくらですか？"
+      },
+      "en": {
+        "meaning": "How much is the fare?"
+      }
+    }
   },
   {
     "id": 129,
     "level": 13,
     "native": "Tagpila imong gusto",
-    "translation": "いくらを希望しますか？",
     "words": [
       "Tagpila",
       "imong",
       "gusto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いくらを希望しますか？"
+      },
+      "en": {
+        "meaning": "How much do you want?"
+      }
+    }
   },
   {
     "id": 130,
     "level": 13,
     "native": "Last price na",
-    "translation": "これが最終価格ですか？",
     "words": [
       "Last",
       "price",
       "na"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これが最終価格ですか？"
+      },
+      "en": {
+        "meaning": "Is this the final price?"
+      }
+    }
   },
   {
     "id": 131,
     "level": 14,
     "native": "Bayad palihug",
-    "translation": "支払いお願いします",
     "words": [
       "Bayad",
       "palihug"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "支払いお願いします"
+      },
+      "en": {
+        "meaning": "Please make the payment"
+      }
+    }
   },
   {
     "id": 132,
     "level": 14,
     "native": "Lugar lang",
-    "translation": "ここで止めてください",
     "words": [
       "Lugar",
       "lang"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ここで止めてください"
+      },
+      "en": {
+        "meaning": "Please stop here"
+      }
+    }
   },
   {
     "id": 133,
     "level": 14,
     "native": "Naog ko sa kanto",
-    "translation": "角で降ります",
     "words": [
       "Naog",
       "ko",
       "sa",
       "kanto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "角で降ります"
+      },
+      "en": {
+        "meaning": "I'll get off at the corner"
+      }
+    }
   },
   {
     "id": 134,
     "level": 14,
     "native": "Saka na ta",
-    "translation": "乗りましょう",
     "words": [
       "Saka",
       "na",
       "ta"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "乗りましょう"
+      },
+      "en": {
+        "meaning": "Let's get on"
+      }
+    }
   },
   {
     "id": 135,
     "level": 14,
     "native": "Hapit na ko musuod",
-    "translation": "もうすぐ乗ります",
     "words": [
       "Hapit",
       "na",
       "ko",
       "musuod"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "もうすぐ乗ります"
+      },
+      "en": {
+        "meaning": "I'll board soon"
+      }
+    }
   },
   {
     "id": 136,
     "level": 14,
     "native": "Ayaw kalimot og sukli",
-    "translation": "お釣りを忘れないで",
     "words": [
       "Ayaw",
       "kalimot",
       "og",
       "sukli"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "お釣りを忘れないで"
+      },
+      "en": {
+        "meaning": "Don't forget the change"
+      }
+    }
   },
   {
     "id": 137,
     "level": 14,
     "native": "Asa ang sakayan",
-    "translation": "乗り場はどこですか？",
     "words": [
       "Asa",
       "ang",
       "sakayan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "乗り場はどこですか？"
+      },
+      "en": {
+        "meaning": "Where is the boarding area?"
+      }
+    }
   },
   {
     "id": 138,
     "level": 14,
     "native": "Paabot ug jeep",
-    "translation": "ジープを待ってください",
     "words": [
       "Paabot",
       "ug",
       "jeep"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ジープを待ってください"
+      },
+      "en": {
+        "meaning": "Please wait for the jeepney"
+      }
+    }
   },
   {
     "id": 139,
     "level": 14,
     "native": "Lingkod sa likod",
-    "translation": "後ろに座ってください",
     "words": [
       "Lingkod",
       "sa",
       "likod"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "後ろに座ってください"
+      },
+      "en": {
+        "meaning": "Please sit in the back"
+      }
+    }
   },
   {
     "id": 140,
     "level": 14,
     "native": "Dali ra ang biyahe",
-    "translation": "すぐ到着します",
     "words": [
       "Dali",
       "ra",
       "ang",
       "biyahe"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "すぐ到着します"
+      },
+      "en": {
+        "meaning": "We'll arrive soon"
+      }
+    }
   },
   {
     "id": 141,
     "level": 15,
     "native": "Taga Japan ko",
-    "translation": "私は日本から来ました",
     "words": [
       "Taga",
       "Japan",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私は日本から来ました"
+      },
+      "en": {
+        "meaning": "I'm from Japan"
+      }
+    }
   },
   {
     "id": 142,
     "level": 15,
     "native": "Ako si Ken",
-    "translation": "私はケンです",
     "words": [
       "Ako",
       "si",
       "Ken"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私はケンです"
+      },
+      "en": {
+        "meaning": "I'm Ken"
+      }
+    }
   },
   {
     "id": 143,
     "level": 15,
     "native": "Puyo ko sa Cebu",
-    "translation": "セブに住んでいます",
     "words": [
       "Puyo",
       "ko",
       "sa",
       "Cebu"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "セブに住んでいます"
+      },
+      "en": {
+        "meaning": "I live in Cebu"
+      }
+    }
   },
   {
     "id": 144,
     "level": 15,
     "native": "Nagtrabaho ko sa IT",
-    "translation": "ITで働いています",
     "words": [
       "Nagtrabaho",
       "ko",
       "sa",
       "IT"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ITで働いています"
+      },
+      "en": {
+        "meaning": "I work in IT"
+      }
+    }
   },
   {
     "id": 145,
     "level": 15,
     "native": "Mahilig ko sa kanta",
-    "translation": "歌うのが好きです",
     "words": [
       "Mahilig",
       "ko",
       "sa",
       "kanta"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "歌うのが好きです"
+      },
+      "en": {
+        "meaning": "I like singing"
+      }
+    }
   },
   {
     "id": 146,
     "level": 15,
     "native": "Ganahan ko mag travel",
-    "translation": "旅行が好きです",
     "words": [
       "Ganahan",
       "ko",
       "mag",
       "travel"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "旅行が好きです"
+      },
+      "en": {
+        "meaning": "I like traveling"
+      }
+    }
   },
   {
     "id": 147,
     "level": 15,
     "native": "Nagtuon ko og",
-    "translation": "ビサヤ語を勉強中です",
     "words": [
       "Nagtuon",
       "ko",
       "og"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ビサヤ語を勉強中です"
+      },
+      "en": {
+        "meaning": "I'm studying Bisaya"
+      }
+    }
   },
   {
     "id": 148,
     "level": 15,
     "native": "Gusto ko makaila ninyo",
-    "translation": "皆さんと知り合いになりたいです",
     "words": [
       "Gusto",
       "ko",
       "makaila",
       "ninyo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "皆さんと知り合いになりたいです"
+      },
+      "en": {
+        "meaning": "I want to get to know everyone"
+      }
+    }
   },
   {
     "id": 149,
     "level": 15,
     "native": "Nalipay ko makigstorya",
-    "translation": "お話しできて嬉しいです",
     "words": [
       "Nalipay",
       "ko",
       "makigstorya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "お話しできて嬉しいです"
+      },
+      "en": {
+        "meaning": "I'm glad to talk with you"
+      }
+    }
   },
   {
     "id": 150,
     "level": 15,
     "native": "Palihug tabangi ko magpraktis",
-    "translation": "練習を手伝ってください",
     "words": [
       "Palihug",
       "tabangi",
       "ko",
       "magpraktis"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "練習を手伝ってください"
+      },
+      "en": {
+        "meaning": "Please help me practice"
+      }
+    }
   },
   {
     "id": 151,
     "level": 16,
     "native": "Lami kaayo",
-    "translation": "とても美味しいです",
     "words": [
       "Lami",
       "kaayo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "とても美味しいです"
+      },
+      "en": {
+        "meaning": "It's very delicious"
+      }
+    }
   },
   {
     "id": 152,
     "level": 16,
     "native": "Gutom na ko",
-    "translation": "お腹がすきました",
     "words": [
       "Gutom",
       "na",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "お腹がすきました"
+      },
+      "en": {
+        "meaning": "I'm hungry"
+      }
+    }
   },
   {
     "id": 153,
     "level": 16,
     "native": "Kaon ta sa carinderia",
-    "translation": "食堂で食べましょう",
     "words": [
       "Kaon",
       "ta",
       "sa",
       "carinderia"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "食堂で食べましょう"
+      },
+      "en": {
+        "meaning": "Let's eat at the eatery"
+      }
+    }
   },
   {
     "id": 154,
     "level": 16,
     "native": "Palihug og dugang sabaw",
-    "translation": "スープを追加してください",
     "words": [
       "Palihug",
       "og",
       "dugang",
       "sabaw"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "スープを追加してください"
+      },
+      "en": {
+        "meaning": "Please add more soup"
+      }
+    }
   },
   {
     "id": 155,
     "level": 16,
     "native": "Pakiluto pa gamay",
-    "translation": "もう少し火を通してください",
     "words": [
       "Pakiluto",
       "pa",
       "gamay"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "もう少し火を通してください"
+      },
+      "en": {
+        "meaning": "Cook it a bit longer please"
+      }
+    }
   },
   {
     "id": 156,
     "level": 16,
     "native": "Busog na ko",
-    "translation": "お腹いっぱいです",
     "words": [
       "Busog",
       "na",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "お腹いっぱいです"
+      },
+      "en": {
+        "meaning": "I'm full"
+      }
+    }
   },
   {
     "id": 157,
     "level": 16,
     "native": "Tilawi ni",
-    "translation": "これを味見してみて",
     "words": [
       "Tilawi",
       "ni"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これを味見してみて"
+      },
+      "en": {
+        "meaning": "Try tasting this"
+      }
+    }
   },
   {
     "id": 158,
     "level": 16,
     "native": "Palihug ihatag ang kutsara",
-    "translation": "スプーンを渡してください",
     "words": [
       "Palihug",
       "ihatag",
       "ang",
       "kutsara"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "スプーンを渡してください"
+      },
+      "en": {
+        "meaning": "Please pass the spoon"
+      }
+    }
   },
   {
     "id": 159,
     "level": 16,
     "native": "Timplahi gamayng asin",
-    "translation": "塩を少し加えてください",
     "words": [
       "Timplahi",
       "gamayng",
       "asin"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "塩を少し加えてください"
+      },
+      "en": {
+        "meaning": "Please add a little salt"
+      }
+    }
   },
   {
     "id": 160,
     "level": 16,
     "native": "Paborito nako ang sinugba",
-    "translation": "焼き料理が大好きです",
     "words": [
       "Paborito",
       "nako",
       "ang",
       "sinugba"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "焼き料理が大好きです"
+      },
+      "en": {
+        "meaning": "I love grilled dishes"
+      }
+    }
   },
   {
     "id": 161,
     "level": 17,
     "native": "Nalipay ko",
-    "translation": "嬉しいです",
     "words": [
       "Nalipay",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "嬉しいです"
+      },
+      "en": {
+        "meaning": "I'm happy"
+      }
+    }
   },
   {
     "id": 162,
     "level": 17,
     "native": "Nagool ko",
-    "translation": "心配しています",
     "words": [
       "Nagool",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "心配しています"
+      },
+      "en": {
+        "meaning": "I'm worried"
+      }
+    }
   },
   {
     "id": 163,
     "level": 17,
     "native": "Nasuko siya",
-    "translation": "彼は怒っています",
     "words": [
       "Nasuko",
       "siya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼は怒っています"
+      },
+      "en": {
+        "meaning": "He's angry"
+      }
+    }
   },
   {
     "id": 164,
     "level": 17,
     "native": "Nahadlok ko",
-    "translation": "怖いです",
     "words": [
       "Nahadlok",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "怖いです"
+      },
+      "en": {
+        "meaning": "I'm scared"
+      }
+    }
   },
   {
     "id": 165,
     "level": 17,
     "native": "Naglibog ko",
-    "translation": "混乱しています",
     "words": [
       "Naglibog",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "混乱しています"
+      },
+      "en": {
+        "meaning": "I'm confused"
+      }
+    }
   },
   {
     "id": 166,
     "level": 17,
     "native": "Nalingaw ko",
-    "translation": "楽しんでいます",
     "words": [
       "Nalingaw",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "楽しんでいます"
+      },
+      "en": {
+        "meaning": "I'm having fun"
+      }
+    }
   },
   {
     "id": 167,
     "level": 17,
     "native": "Naulaw ko",
-    "translation": "恥ずかしいです",
     "words": [
       "Naulaw",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "恥ずかしいです"
+      },
+      "en": {
+        "meaning": "I'm embarrassed"
+      }
+    }
   },
   {
     "id": 168,
     "level": 17,
     "native": "Naglagot ko sa trapik",
-    "translation": "渋滞にイライラしています",
     "words": [
       "Naglagot",
       "ko",
       "sa",
       "trapik"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "渋滞にイライラしています"
+      },
+      "en": {
+        "meaning": "I'm annoyed by the traffic"
+      }
+    }
   },
   {
     "id": 169,
     "level": 17,
     "native": "Nalipay ko nga naa ka",
-    "translation": "あなたがいて嬉しいです",
     "words": [
       "Nalipay",
       "ko",
       "nga",
       "naa",
       "ka"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたがいて嬉しいです"
+      },
+      "en": {
+        "meaning": "I'm glad you're here"
+      }
+    }
   },
   {
     "id": 170,
     "level": 17,
     "native": "Nagpahulay ko para dili kapoy",
-    "translation": "疲れないように休んでいます",
     "words": [
       "Nagpahulay",
       "ko",
       "para",
       "dili",
       "kapoy"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "疲れないように休んでいます"
+      },
+      "en": {
+        "meaning": "I'm resting so I won't get tired"
+      }
+    }
   },
   {
     "id": 171,
     "level": 18,
     "native": "Init kaayo karon",
-    "translation": "今日はとても暑い",
     "words": [
       "Init",
       "kaayo",
       "karon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今日はとても暑い"
+      },
+      "en": {
+        "meaning": "It's very hot today"
+      }
+    }
   },
   {
     "id": 172,
     "level": 18,
     "native": "Bugnaw ang hangin",
-    "translation": "風が涼しいです",
     "words": [
       "Bugnaw",
       "ang",
       "hangin"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "風が涼しいです"
+      },
+      "en": {
+        "meaning": "The breeze is cool"
+      }
+    }
   },
   {
     "id": 173,
     "level": 18,
     "native": "Nag uwan pag ayo",
-    "translation": "土砂降りです",
     "words": [
       "Nag",
       "uwan",
       "pag",
       "ayo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "土砂降りです"
+      },
+      "en": {
+        "meaning": "It's pouring rain"
+      }
+    }
   },
   {
     "id": 174,
     "level": 18,
     "native": "Walay adlaw karon",
-    "translation": "今日は日が出ていない",
     "words": [
       "Walay",
       "adlaw",
       "karon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今日は日が出ていない"
+      },
+      "en": {
+        "meaning": "There's no sun today"
+      }
+    }
   },
   {
     "id": 175,
     "level": 18,
     "native": "Kusog ang hangin",
-    "translation": "風が強い",
     "words": [
       "Kusog",
       "ang",
       "hangin"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "風が強い"
+      },
+      "en": {
+        "meaning": "The wind is strong"
+      }
+    }
   },
   {
     "id": 176,
     "level": 18,
     "native": "Mahangin sa buntag",
-    "translation": "朝は風が強い",
     "words": [
       "Mahangin",
       "sa",
       "buntag"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "朝は風が強い"
+      },
+      "en": {
+        "meaning": "It's windy in the morning"
+      }
+    }
   },
   {
     "id": 177,
     "level": 18,
     "native": "Ting init na",
-    "translation": "もう夏です",
     "words": [
       "Ting",
       "init",
       "na"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "もう夏です"
+      },
+      "en": {
+        "meaning": "It's already summer"
+      }
+    }
   },
   {
     "id": 178,
     "level": 18,
     "native": "Ting ulan na pud",
-    "translation": "また雨季になりました",
     "words": [
       "Ting",
       "ulan",
       "na",
       "pud"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "また雨季になりました"
+      },
+      "en": {
+        "meaning": "The rainy season has started again"
+      }
+    }
   },
   {
     "id": 179,
     "level": 18,
     "native": "Lapok ang dalan",
-    "translation": "道がぬかるんでいます",
     "words": [
       "Lapok",
       "ang",
       "dalan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "道がぬかるんでいます"
+      },
+      "en": {
+        "meaning": "The road is muddy"
+      }
+    }
   },
   {
     "id": 180,
     "level": 18,
     "native": "Humok ang panganod",
-    "translation": "雲が柔らかそうです",
     "words": [
       "Humok",
       "ang",
       "panganod"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "雲が柔らかそうです"
+      },
+      "en": {
+        "meaning": "The clouds look fluffy"
+      }
+    }
   },
   {
     "id": 181,
     "level": 19,
     "native": "Naa kay change",
-    "translation": "お釣りありますか？",
     "words": [
       "Naa",
       "kay",
       "change"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "お釣りありますか？"
+      },
+      "en": {
+        "meaning": "Do you have change?"
+      }
+    }
   },
   {
     "id": 182,
     "level": 19,
     "native": "Palihug og sukli",
-    "translation": "お釣りをください",
     "words": [
       "Palihug",
       "og",
       "sukli"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "お釣りをください"
+      },
+      "en": {
+        "meaning": "Please give me change"
+      }
+    }
   },
   {
     "id": 183,
     "level": 19,
     "native": "Pila tanan",
-    "translation": "全部でいくらですか？",
     "words": [
       "Pila",
       "tanan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "全部でいくらですか？"
+      },
+      "en": {
+        "meaning": "How much is it in total?"
+      }
+    }
   },
   {
     "id": 184,
     "level": 19,
     "native": "Pwede ko mobayad ug GCash",
-    "translation": "GCashで払ってもいいですか？",
     "words": [
       "Pwede",
       "ko",
       "mobayad",
       "ug",
       "GCash"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "GCashで払ってもいいですか？"
+      },
+      "en": {
+        "meaning": "Can I pay with GCash?"
+      }
+    }
   },
   {
     "id": 185,
     "level": 19,
     "native": "Asa ang cash register",
-    "translation": "レジはどこですか？",
     "words": [
       "Asa",
       "ang",
       "cash",
       "register"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "レジはどこですか？"
+      },
+      "en": {
+        "meaning": "Where is the cash register?"
+      }
+    }
   },
   {
     "id": 186,
     "level": 19,
     "native": "Palit ko ani duha",
-    "translation": "これを二つ買います",
     "words": [
       "Palit",
       "ko",
       "ani",
       "duha"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これを二つ買います"
+      },
+      "en": {
+        "meaning": "I'll buy two of these"
+      }
+    }
   },
   {
     "id": 187,
     "level": 19,
     "native": "Wala moy mas barato",
-    "translation": "もっと安いのはありますか？",
     "words": [
       "Wala",
       "moy",
       "mas",
       "barato"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "もっと安いのはありますか？"
+      },
+      "en": {
+        "meaning": "Do you have anything cheaper?"
+      }
+    }
   },
   {
     "id": 188,
     "level": 19,
     "native": "Testingan nako ni",
-    "translation": "これを試してみます",
     "words": [
       "Testingan",
       "nako",
       "ni"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これを試してみます"
+      },
+      "en": {
+        "meaning": "I'll try this"
+      }
+    }
   },
   {
     "id": 189,
     "level": 19,
     "native": "Salamat sa inyong serbisyo",
-    "translation": "サービスをありがとう",
     "words": [
       "Salamat",
       "sa",
       "inyong",
       "serbisyo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "サービスをありがとう"
+      },
+      "en": {
+        "meaning": "Thank you for your service"
+      }
+    }
   },
   {
     "id": 190,
     "level": 19,
     "native": "Balik ko ugma",
-    "translation": "また明日来ます",
     "words": [
       "Balik",
       "ko",
       "ugma"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "また明日来ます"
+      },
+      "en": {
+        "meaning": "I'll come again tomorrow"
+      }
+    }
   },
   {
     "id": 191,
     "level": 20,
     "native": "Magkita ta unya",
-    "translation": "また後で会いましょう",
     "words": [
       "Magkita",
       "ta",
       "unya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "また後で会いましょう"
+      },
+      "en": {
+        "meaning": "Let's meet again later"
+      }
+    }
   },
   {
     "id": 192,
     "level": 20,
     "native": "Amping sa biyahe",
-    "translation": "道中気をつけて",
     "words": [
       "Amping",
       "sa",
       "biyahe"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "道中気をつけて"
+      },
+      "en": {
+        "meaning": "Travel safely"
+      }
+    }
   },
   {
     "id": 193,
     "level": 20,
     "native": "Huwat ko sa imong chat",
-    "translation": "メッセージを待っています",
     "words": [
       "Huwat",
       "ko",
       "sa",
       "imong",
       "chat"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "メッセージを待っています"
+      },
+      "en": {
+        "meaning": "I'll wait for your message"
+      }
+    }
   },
   {
     "id": 194,
     "level": 20,
     "native": "Tawagi ko puhon",
-    "translation": "また電話してね",
     "words": [
       "Tawagi",
       "ko",
       "puhon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "また電話してね"
+      },
+      "en": {
+        "meaning": "Call me again"
+      }
+    }
   },
   {
     "id": 195,
     "level": 20,
     "native": "Mag amping kanunay",
-    "translation": "いつも気をつけてね",
     "words": [
       "Mag",
       "amping",
       "kanunay"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつも気をつけてね"
+      },
+      "en": {
+        "meaning": "Stay safe always"
+      }
+    }
   },
   {
     "id": 196,
     "level": 20,
     "native": "Kita kits",
-    "translation": "またね",
     "words": [
       "Kita",
       "kits"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "またね"
+      },
+      "en": {
+        "meaning": "See you later"
+      }
+    }
   },
   {
     "id": 197,
     "level": 20,
     "native": "Dali ra ta magbalik",
-    "translation": "すぐ戻ってきます",
     "words": [
       "Dali",
       "ra",
       "ta",
       "magbalik"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "すぐ戻ってきます"
+      },
+      "en": {
+        "meaning": "I'll be right back"
+      }
+    }
   },
   {
     "id": 198,
     "level": 20,
     "native": "Daghang salamat ug ayo ayo",
-    "translation": "本当にありがとう、元気でね",
     "words": [
       "Daghang",
       "salamat",
       "ug",
       "ayo",
       "ayo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "本当にありがとう、元気でね"
+      },
+      "en": {
+        "meaning": "Thanks a lot, stay well"
+      }
+    }
   },
   {
     "id": 199,
     "level": 20,
     "native": "Ayo ayo sa imong lakaw",
-    "translation": "行ってらっしゃい",
     "words": [
       "Ayo",
       "ayo",
       "sa",
       "imong",
       "lakaw"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "行ってらっしゃい"
+      },
+      "en": {
+        "meaning": "Have a good trip"
+      }
+    }
   },
   {
     "id": 200,
     "level": 20,
     "native": "Tan awa ta sunod semana",
-    "translation": "来週また会いましょう",
     "words": [
       "Tan",
       "awa",
       "ta",
       "sunod",
       "semana"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "来週また会いましょう"
+      },
+      "en": {
+        "meaning": "See you again next week"
+      }
+    }
   },
   {
     "id": 201,
     "level": 21,
     "native": "Magluto ko ug panihapon",
-    "translation": "夕食を作るつもりです",
     "words": [
       "Magluto",
       "ko",
       "ug",
       "panihapon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "夕食を作るつもりです"
+      },
+      "en": {
+        "meaning": "I'm going to cook dinner"
+      }
+    }
   },
   {
     "id": 202,
     "level": 21,
     "native": "Magtuon ko sa gabii",
-    "translation": "夜に勉強します",
     "words": [
       "Magtuon",
       "ko",
       "sa",
       "gabii"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "夜に勉強します"
+      },
+      "en": {
+        "meaning": "I'll study tonight"
+      }
+    }
   },
   {
     "id": 203,
     "level": 21,
     "native": "Magtrabaho ko ug maayo",
-    "translation": "しっかり働くつもりです",
     "words": [
       "Magtrabaho",
       "ko",
       "ug",
       "maayo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "しっかり働くつもりです"
+      },
+      "en": {
+        "meaning": "I'll work hard"
+      }
+    }
   },
   {
     "id": 204,
     "level": 21,
     "native": "Maglimpyo ko sa kwarto",
-    "translation": "部屋を掃除するつもりです",
     "words": [
       "Maglimpyo",
       "ko",
       "sa",
       "kwarto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "部屋を掃除するつもりです"
+      },
+      "en": {
+        "meaning": "I'm going to clean my room"
+      }
+    }
   },
   {
     "id": 205,
     "level": 21,
     "native": "Magpraktis ko og kanta",
-    "translation": "歌の練習をするつもりです",
     "words": [
       "Magpraktis",
       "ko",
       "og",
       "kanta"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "歌の練習をするつもりです"
+      },
+      "en": {
+        "meaning": "I'm going to practice singing"
+      }
+    }
   },
   {
     "id": 206,
     "level": 21,
     "native": "Magbasa ko ug libro",
-    "translation": "本を読むつもりです",
     "words": [
       "Magbasa",
       "ko",
       "ug",
       "libro"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "本を読むつもりです"
+      },
+      "en": {
+        "meaning": "I'm going to read a book"
+      }
+    }
   },
   {
     "id": 207,
     "level": 21,
     "native": "Magpahuway ko sa Domingo",
-    "translation": "日曜日に休むつもりです",
     "words": [
       "Magpahuway",
       "ko",
       "sa",
       "Domingo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "日曜日に休むつもりです"
+      },
+      "en": {
+        "meaning": "I'll rest on Sunday"
+      }
+    }
   },
   {
     "id": 208,
     "level": 21,
     "native": "Magbisita ko sa akong lola",
-    "translation": "祖母を訪ねるつもりです",
     "words": [
       "Magbisita",
       "ko",
       "sa",
       "akong",
       "lola"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "祖母を訪ねるつもりです"
+      },
+      "en": {
+        "meaning": "I'm going to visit my grandmother"
+      }
+    }
   },
   {
     "id": 209,
     "level": 21,
     "native": "Magdula ko ug badminton",
-    "translation": "バドミントンをするつもりです",
     "words": [
       "Magdula",
       "ko",
       "ug",
       "badminton"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "バドミントンをするつもりです"
+      },
+      "en": {
+        "meaning": "I'm going to play badminton"
+      }
+    }
   },
   {
     "id": 210,
     "level": 21,
     "native": "Magampo ko kada gabii",
-    "translation": "毎晩祈るつもりです",
     "words": [
       "Magampo",
       "ko",
       "kada",
       "gabii"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "毎晩祈るつもりです"
+      },
+      "en": {
+        "meaning": "I'll pray every night"
+      }
+    }
   },
   {
     "id": 211,
     "level": 22,
     "native": "Ugma puhon mag jogging ko",
-    "translation": "明日はジョギングします",
     "words": [
       "Ugma",
       "puhon",
       "mag",
       "jogging",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "明日はジョギングします"
+      },
+      "en": {
+        "meaning": "I'll go jogging tomorrow"
+      }
+    }
   },
   {
     "id": 212,
     "level": 22,
     "native": "Ugma sa buntag magluto ko",
-    "translation": "明日の朝料理します",
     "words": [
       "Ugma",
       "sa",
       "buntag",
       "magluto",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "明日の朝料理します"
+      },
+      "en": {
+        "meaning": "I'll cook tomorrow morning"
+      }
+    }
   },
   {
     "id": 213,
     "level": 22,
     "native": "Ugma sa hapon muadto ko sa mall",
-    "translation": "明日の午後モールへ行きます",
     "words": [
       "Ugma",
       "sa",
@@ -2371,26 +3854,40 @@
       "ko",
       "sa",
       "mall"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "明日の午後モールへ行きます"
+      },
+      "en": {
+        "meaning": "I'll go to the mall tomorrow afternoon"
+      }
+    }
   },
   {
     "id": 214,
     "level": 22,
     "native": "Sa sunod semana mouli ko",
-    "translation": "来週帰ります",
     "words": [
       "Sa",
       "sunod",
       "semana",
       "mouli",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "来週帰ります"
+      },
+      "en": {
+        "meaning": "I'll go back next week"
+      }
+    }
   },
   {
     "id": 215,
     "level": 22,
     "native": "Sa sunod adlaw mag haircut ko",
-    "translation": "明後日髪を切ります",
     "words": [
       "Sa",
       "sunod",
@@ -2398,13 +3895,20 @@
       "mag",
       "haircut",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "明後日髪を切ります"
+      },
+      "en": {
+        "meaning": "I'll get a haircut the day after tomorrow"
+      }
+    }
   },
   {
     "id": 216,
     "level": 22,
     "native": "Sa sunod bulan magsugod ang klase",
-    "translation": "来月授業が始まります",
     "words": [
       "Sa",
       "sunod",
@@ -2412,13 +3916,20 @@
       "magsugod",
       "ang",
       "klase"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "来月授業が始まります"
+      },
+      "en": {
+        "meaning": "Classes start next month"
+      }
+    }
   },
   {
     "id": 217,
     "level": 22,
     "native": "Sa sunod tuig mag travel ko",
-    "translation": "来年旅行します",
     "words": [
       "Sa",
       "sunod",
@@ -2426,26 +3937,40 @@
       "mag",
       "travel",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "来年旅行します"
+      },
+      "en": {
+        "meaning": "I'll travel next year"
+      }
+    }
   },
   {
     "id": 218,
     "level": 22,
     "native": "Ugma sa udto magkita ta",
-    "translation": "明日の昼会いましょう",
     "words": [
       "Ugma",
       "sa",
       "udto",
       "magkita",
       "ta"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "明日の昼会いましょう"
+      },
+      "en": {
+        "meaning": "Let's meet tomorrow at noon"
+      }
+    }
   },
   {
     "id": 219,
     "level": 22,
     "native": "Sa sunod weekend mag beach mi",
-    "translation": "次の週末海に行きます",
     "words": [
       "Sa",
       "sunod",
@@ -2453,13 +3978,20 @@
       "mag",
       "beach",
       "mi"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "次の週末海に行きます"
+      },
+      "en": {
+        "meaning": "I'll go to the beach next weekend"
+      }
+    }
   },
   {
     "id": 220,
     "level": 22,
     "native": "Ugma sa gabii magtan aw kog sine",
-    "translation": "明日の夜映画を観ます",
     "words": [
       "Ugma",
       "sa",
@@ -2468,158 +4000,249 @@
       "aw",
       "kog",
       "sine"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "明日の夜映画を観ます"
+      },
+      "en": {
+        "meaning": "I'll watch a movie tomorrow night"
+      }
+    }
   },
   {
     "id": 221,
     "level": 23,
     "native": "Mangaon ta sa karinderya",
-    "translation": "食堂で食べよう",
     "words": [
       "Mangaon",
       "ta",
       "sa",
       "karinderya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "食堂で食べよう"
+      },
+      "en": {
+        "meaning": "Let's eat at the canteen"
+      }
+    }
   },
   {
     "id": 222,
     "level": 23,
     "native": "Muli na ta",
-    "translation": "帰ろう",
     "words": [
       "Muli",
       "na",
       "ta"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "帰ろう"
+      },
+      "en": {
+        "meaning": "Let's go home"
+      }
+    }
   },
   {
     "id": 223,
     "level": 23,
     "native": "Manan aw ta og sine",
-    "translation": "映画を観に行こう",
     "words": [
       "Manan",
       "aw",
       "ta",
       "og",
       "sine"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "映画を観に行こう"
+      },
+      "en": {
+        "meaning": "Let's go watch a movie"
+      }
+    }
   },
   {
     "id": 224,
     "level": 23,
     "native": "Maglakaw ta sa baybayon",
-    "translation": "海辺を散歩しよう",
     "words": [
       "Maglakaw",
       "ta",
       "sa",
       "baybayon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "海辺を散歩しよう"
+      },
+      "en": {
+        "meaning": "Let's walk along the beach"
+      }
+    }
   },
   {
     "id": 225,
     "level": 23,
     "native": "Magduwa ta og cards",
-    "translation": "カードで遊ぼう",
     "words": [
       "Magduwa",
       "ta",
       "og",
       "cards"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "カードで遊ぼう"
+      },
+      "en": {
+        "meaning": "Let's play cards"
+      }
+    }
   },
   {
     "id": 226,
     "level": 23,
     "native": "Magkape ta ug istorya",
-    "translation": "コーヒー飲んで話そう",
     "words": [
       "Magkape",
       "ta",
       "ug",
       "istorya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "コーヒー飲んで話そう"
+      },
+      "en": {
+        "meaning": "Let's have coffee and chat"
+      }
+    }
   },
   {
     "id": 227,
     "level": 23,
     "native": "Mamasyal ta sa park",
-    "translation": "公園へ遊びに行こう",
     "words": [
       "Mamasyal",
       "ta",
       "sa",
       "park"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "公園へ遊びに行こう"
+      },
+      "en": {
+        "meaning": "Let's hang out at the park"
+      }
+    }
   },
   {
     "id": 228,
     "level": 23,
     "native": "Magshopping ta sa downtown",
-    "translation": "ダウンタウンで買い物しよう",
     "words": [
       "Magshopping",
       "ta",
       "sa",
       "downtown"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ダウンタウンで買い物しよう"
+      },
+      "en": {
+        "meaning": "Let's go shopping downtown"
+      }
+    }
   },
   {
     "id": 229,
     "level": 23,
     "native": "Magpraktis ta sa kanta",
-    "translation": "歌の練習をしよう",
     "words": [
       "Magpraktis",
       "ta",
       "sa",
       "kanta"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "歌の練習をしよう"
+      },
+      "en": {
+        "meaning": "Let's practice singing"
+      }
+    }
   },
   {
     "id": 230,
     "level": 23,
     "native": "Magadto ta sa museyo",
-    "translation": "博物館へ行こう",
     "words": [
       "Magadto",
       "ta",
       "sa",
       "museyo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "博物館へ行こう"
+      },
+      "en": {
+        "meaning": "Let's go to the museum"
+      }
+    }
   },
   {
     "id": 231,
     "level": 24,
     "native": "Dili ko moadto ugma",
-    "translation": "明日は行きません",
     "words": [
       "Dili",
       "ko",
       "moadto",
       "ugma"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "明日は行きません"
+      },
+      "en": {
+        "meaning": "I won't go tomorrow"
+      }
+    }
   },
   {
     "id": 232,
     "level": 24,
     "native": "Dili ko moinom ug kape",
-    "translation": "コーヒーを飲みません",
     "words": [
       "Dili",
       "ko",
       "moinom",
       "ug",
       "kape"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "コーヒーを飲みません"
+      },
+      "en": {
+        "meaning": "I won't drink coffee"
+      }
+    }
   },
   {
     "id": 233,
     "level": 24,
     "native": "Dili ko mokaon ug tam is",
-    "translation": "甘いものを食べません",
     "words": [
       "Dili",
       "ko",
@@ -2627,39 +4250,60 @@
       "ug",
       "tam",
       "is"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "甘いものを食べません"
+      },
+      "en": {
+        "meaning": "I won't eat sweets"
+      }
+    }
   },
   {
     "id": 234,
     "level": 24,
     "native": "Dili ko magasto daghang kwarta",
-    "translation": "お金をたくさん使いません",
     "words": [
       "Dili",
       "ko",
       "magasto",
       "daghang",
       "kwarta"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "お金をたくさん使いません"
+      },
+      "en": {
+        "meaning": "I won't spend much money"
+      }
+    }
   },
   {
     "id": 235,
     "level": 24,
     "native": "Dili ko mosayaw sa party",
-    "translation": "パーティーで踊りません",
     "words": [
       "Dili",
       "ko",
       "mosayaw",
       "sa",
       "party"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "パーティーで踊りません"
+      },
+      "en": {
+        "meaning": "I won't dance at the party"
+      }
+    }
   },
   {
     "id": 236,
     "level": 24,
     "native": "Dili ko mo travel karong bulan",
-    "translation": "今月は旅行しません",
     "words": [
       "Dili",
       "ko",
@@ -2667,138 +4311,215 @@
       "travel",
       "karong",
       "bulan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今月は旅行しません"
+      },
+      "en": {
+        "meaning": "I won't travel this month"
+      }
+    }
   },
   {
     "id": 237,
     "level": 24,
     "native": "Dili ko magbyahe kung ulan",
-    "translation": "雨のときは出かけません",
     "words": [
       "Dili",
       "ko",
       "magbyahe",
       "kung",
       "ulan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "雨のときは出かけません"
+      },
+      "en": {
+        "meaning": "I don't go out when it rains"
+      }
+    }
   },
   {
     "id": 238,
     "level": 24,
     "native": "Dili ko magdula karong gabii",
-    "translation": "今夜は遊びません",
     "words": [
       "Dili",
       "ko",
       "magdula",
       "karong",
       "gabii"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今夜は遊びません"
+      },
+      "en": {
+        "meaning": "I won't hang out tonight"
+      }
+    }
   },
   {
     "id": 239,
     "level": 24,
     "native": "Dili ko mosugot ana",
-    "translation": "それには同意しません",
     "words": [
       "Dili",
       "ko",
       "mosugot",
       "ana"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "それには同意しません"
+      },
+      "en": {
+        "meaning": "I don't agree with that"
+      }
+    }
   },
   {
     "id": 240,
     "level": 24,
     "native": "Dili ko molingkod kung hugaw",
-    "translation": "汚れているときは座りません",
     "words": [
       "Dili",
       "ko",
       "molingkod",
       "kung",
       "hugaw"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "汚れているときは座りません"
+      },
+      "en": {
+        "meaning": "I won't sit when it's dirty"
+      }
+    }
   },
   {
     "id": 241,
     "level": 25,
     "native": "Kanus a ka moabot",
-    "translation": "いつ着きますか？",
     "words": [
       "Kanus",
       "a",
       "ka",
       "moabot"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつ着きますか？"
+      },
+      "en": {
+        "meaning": "When will you arrive?"
+      }
+    }
   },
   {
     "id": 242,
     "level": 25,
     "native": "Kanus a ta magkita",
-    "translation": "いつ会いましょうか？",
     "words": [
       "Kanus",
       "a",
       "ta",
       "magkita"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつ会いましょうか？"
+      },
+      "en": {
+        "meaning": "When shall we meet?"
+      }
+    }
   },
   {
     "id": 243,
     "level": 25,
     "native": "Kanus a ang party magsugod",
-    "translation": "パーティーはいつ始まりますか？",
     "words": [
       "Kanus",
       "a",
       "ang",
       "party",
       "magsugod"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "パーティーはいつ始まりますか？"
+      },
+      "en": {
+        "meaning": "When does the party start?"
+      }
+    }
   },
   {
     "id": 244,
     "level": 25,
     "native": "Kanus a ka mouli",
-    "translation": "いつ帰りますか？",
     "words": [
       "Kanus",
       "a",
       "ka",
       "mouli"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつ帰りますか？"
+      },
+      "en": {
+        "meaning": "When will you go home?"
+      }
+    }
   },
   {
     "id": 245,
     "level": 25,
     "native": "Kanus a mahuman ang pelikula",
-    "translation": "映画はいつ終わりますか？",
     "words": [
       "Kanus",
       "a",
       "mahuman",
       "ang",
       "pelikula"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "映画はいつ終わりますか？"
+      },
+      "en": {
+        "meaning": "When does the movie end?"
+      }
+    }
   },
   {
     "id": 246,
     "level": 25,
     "native": "Kanus a ka mosugot",
-    "translation": "いつ同意しますか？",
     "words": [
       "Kanus",
       "a",
       "ka",
       "mosugot"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつ同意しますか？"
+      },
+      "en": {
+        "meaning": "When will you agree?"
+      }
+    }
   },
   {
     "id": 247,
     "level": 25,
     "native": "Kanus a mo open ang tindahan",
-    "translation": "店はいつ開きますか？",
     "words": [
       "Kanus",
       "a",
@@ -2806,13 +4527,20 @@
       "open",
       "ang",
       "tindahan"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "店はいつ開きますか？"
+      },
+      "en": {
+        "meaning": "When does the shop open?"
+      }
+    }
   },
   {
     "id": 248,
     "level": 25,
     "native": "Kanus a ka mosulod sa opisina",
-    "translation": "いつオフィスに来ますか？",
     "words": [
       "Kanus",
       "a",
@@ -2820,26 +4548,40 @@
       "mosulod",
       "sa",
       "opisina"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつオフィスに来ますか？"
+      },
+      "en": {
+        "meaning": "When will you come to the office?"
+      }
+    }
   },
   {
     "id": 249,
     "level": 25,
     "native": "Kanus a moabot ang jeep",
-    "translation": "ジープはいつ来ますか？",
     "words": [
       "Kanus",
       "a",
       "moabot",
       "ang",
       "jeep"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ジープはいつ来ますか？"
+      },
+      "en": {
+        "meaning": "When does the jeepney arrive?"
+      }
+    }
   },
   {
     "id": 250,
     "level": 25,
     "native": "Kanus a ka moadto sa Cebu",
-    "translation": "いつセブへ行きますか？",
     "words": [
       "Kanus",
       "a",
@@ -2847,132 +4589,209 @@
       "moadto",
       "sa",
       "Cebu"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "いつセブへ行きますか？"
+      },
+      "en": {
+        "meaning": "When will you go to Cebu?"
+      }
+    }
   },
   {
     "id": 251,
     "level": 26,
     "native": "Nikaon na ko",
-    "translation": "もう食べました",
     "words": [
       "Nikaon",
       "na",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "もう食べました"
+      },
+      "en": {
+        "meaning": "I've already eaten"
+      }
+    }
   },
   {
     "id": 252,
     "level": 26,
     "native": "Niabot na siya",
-    "translation": "彼は到着しました",
     "words": [
       "Niabot",
       "na",
       "siya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼は到着しました"
+      },
+      "en": {
+        "meaning": "He has arrived"
+      }
+    }
   },
   {
     "id": 253,
     "level": 26,
     "native": "Nipalit ko ug prutas gahapon",
-    "translation": "昨日果物を買いました",
     "words": [
       "Nipalit",
       "ko",
       "ug",
       "prutas",
       "gahapon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "昨日果物を買いました"
+      },
+      "en": {
+        "meaning": "I bought fruit yesterday"
+      }
+    }
   },
   {
     "id": 254,
     "level": 26,
     "native": "Nimisita sila sa amo",
-    "translation": "彼らは家に来ました",
     "words": [
       "Nimisita",
       "sila",
       "sa",
       "amo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼らは家に来ました"
+      },
+      "en": {
+        "meaning": "They came to our place"
+      }
+    }
   },
   {
     "id": 255,
     "level": 26,
     "native": "Nisulat ko og sulat",
-    "translation": "手紙を書きました",
     "words": [
       "Nisulat",
       "ko",
       "og",
       "sulat"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "手紙を書きました"
+      },
+      "en": {
+        "meaning": "I wrote a letter"
+      }
+    }
   },
   {
     "id": 256,
     "level": 26,
     "native": "Nibasa siya ug libro",
-    "translation": "彼女は本を読みました",
     "words": [
       "Nibasa",
       "siya",
       "ug",
       "libro"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼女は本を読みました"
+      },
+      "en": {
+        "meaning": "She read a book"
+      }
+    }
   },
   {
     "id": 257,
     "level": 26,
     "native": "Nidula mi og basketball",
-    "translation": "バスケをしました",
     "words": [
       "Nidula",
       "mi",
       "og",
       "basketball"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "バスケをしました"
+      },
+      "en": {
+        "meaning": "We played basketball"
+      }
+    }
   },
   {
     "id": 258,
     "level": 26,
     "native": "Nipaligo ko sa dagat",
-    "translation": "海で泳ぎました",
     "words": [
       "Nipaligo",
       "ko",
       "sa",
       "dagat"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "海で泳ぎました"
+      },
+      "en": {
+        "meaning": "I swam in the ocean"
+      }
+    }
   },
   {
     "id": 259,
     "level": 26,
     "native": "Nitukar siya og gitara",
-    "translation": "彼はギターを弾きました",
     "words": [
       "Nitukar",
       "siya",
       "og",
       "gitara"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼はギターを弾きました"
+      },
+      "en": {
+        "meaning": "He played the guitar"
+      }
+    }
   },
   {
     "id": 260,
     "level": 26,
     "native": "Nihimo ko og kape",
-    "translation": "コーヒーを作りました",
     "words": [
       "Nihimo",
       "ko",
       "og",
       "kape"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "コーヒーを作りました"
+      },
+      "en": {
+        "meaning": "I made coffee"
+      }
+    }
   },
   {
     "id": 261,
     "level": 27,
     "native": "Gahapon sa buntag nag jogging ko",
-    "translation": "昨日の朝ジョギングしました",
     "words": [
       "Gahapon",
       "sa",
@@ -2980,13 +4799,20 @@
       "nag",
       "jogging",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "昨日の朝ジョギングしました"
+      },
+      "en": {
+        "meaning": "I jogged yesterday morning"
+      }
+    }
   },
   {
     "id": 262,
     "level": 27,
     "native": "Gahapon sa hapon nag study ko",
-    "translation": "昨日の午後勉強しました",
     "words": [
       "Gahapon",
       "sa",
@@ -2994,51 +4820,79 @@
       "nag",
       "study",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "昨日の午後勉強しました"
+      },
+      "en": {
+        "meaning": "I studied yesterday afternoon"
+      }
+    }
   },
   {
     "id": 263,
     "level": 27,
     "native": "Gahapon gabii nag movie ko",
-    "translation": "昨夜映画を観ました",
     "words": [
       "Gahapon",
       "gabii",
       "nag",
       "movie",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "昨夜映画を観ました"
+      },
+      "en": {
+        "meaning": "I watched a movie last night"
+      }
+    }
   },
   {
     "id": 264,
     "level": 27,
     "native": "Ganina buntag nikaon ko",
-    "translation": "さっき朝食を食べました",
     "words": [
       "Ganina",
       "buntag",
       "nikaon",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "さっき朝食を食べました"
+      },
+      "en": {
+        "meaning": "I ate breakfast a moment ago"
+      }
+    }
   },
   {
     "id": 265,
     "level": 27,
     "native": "Ganina lang nahuman ang meeting",
-    "translation": "さっき会議が終わりました",
     "words": [
       "Ganina",
       "lang",
       "nahuman",
       "ang",
       "meeting"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "さっき会議が終わりました"
+      },
+      "en": {
+        "meaning": "The meeting just ended"
+      }
+    }
   },
   {
     "id": 266,
     "level": 27,
     "native": "Ganina sa udto nag lunch mi",
-    "translation": "さっき昼食を取りました",
     "words": [
       "Ganina",
       "sa",
@@ -3046,13 +4900,20 @@
       "nag",
       "lunch",
       "mi"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "さっき昼食を取りました"
+      },
+      "en": {
+        "meaning": "I just had lunch"
+      }
+    }
   },
   {
     "id": 267,
     "level": 27,
     "native": "Gahapon ngadto sa park naglakaw ko",
-    "translation": "昨日公園を散歩しました",
     "words": [
       "Gahapon",
       "ngadto",
@@ -3060,13 +4921,20 @@
       "park",
       "naglakaw",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "昨日公園を散歩しました"
+      },
+      "en": {
+        "meaning": "I walked in the park yesterday"
+      }
+    }
   },
   {
     "id": 268,
     "level": 27,
     "native": "Ganina sa opisina nag trabaho ko",
-    "translation": "さっきオフィスで働きました",
     "words": [
       "Ganina",
       "sa",
@@ -3074,97 +4942,153 @@
       "nag",
       "trabaho",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "さっきオフィスで働きました"
+      },
+      "en": {
+        "meaning": "I was just working at the office"
+      }
+    }
   },
   {
     "id": 269,
     "level": 27,
     "native": "Gahapon gabii nag guitar siya",
-    "translation": "昨夜彼はギターを弾きました",
     "words": [
       "Gahapon",
       "gabii",
       "nag",
       "guitar",
       "siya"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "昨夜彼はギターを弾きました"
+      },
+      "en": {
+        "meaning": "He played guitar last night"
+      }
+    }
   },
   {
     "id": 270,
     "level": 27,
     "native": "Ganina buntag nagtanom ko",
-    "translation": "今朝植木をしました",
     "words": [
       "Ganina",
       "buntag",
       "nagtanom",
       "ko"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "今朝植木をしました"
+      },
+      "en": {
+        "meaning": "I tended the plants this morning"
+      }
+    }
   },
   {
     "id": 271,
     "level": 28,
     "native": "Humana ko sa trabaho",
-    "translation": "仕事は終わりました",
     "words": [
       "Humana",
       "ko",
       "sa",
       "trabaho"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "仕事は終わりました"
+      },
+      "en": {
+        "meaning": "The work is finished"
+      }
+    }
   },
   {
     "id": 272,
     "level": 28,
     "native": "Humana na ang report",
-    "translation": "報告書は終わりました",
     "words": [
       "Humana",
       "na",
       "ang",
       "report"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "報告書は終わりました"
+      },
+      "en": {
+        "meaning": "The report is finished"
+      }
+    }
   },
   {
     "id": 273,
     "level": 28,
     "native": "Humana sila ug luto",
-    "translation": "彼らは料理を終えました",
     "words": [
       "Humana",
       "sila",
       "ug",
       "luto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼らは料理を終えました"
+      },
+      "en": {
+        "meaning": "They finished cooking"
+      }
+    }
   },
   {
     "id": 274,
     "level": 28,
     "native": "Humana ko og laba",
-    "translation": "洗濯を終えました",
     "words": [
       "Humana",
       "ko",
       "og",
       "laba"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "洗濯を終えました"
+      },
+      "en": {
+        "meaning": "I finished the laundry"
+      }
+    }
   },
   {
     "id": 275,
     "level": 28,
     "native": "Humana ang meeting",
-    "translation": "会議が終わりました",
     "words": [
       "Humana",
       "ang",
       "meeting"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "会議が終わりました"
+      },
+      "en": {
+        "meaning": "The meeting is over"
+      }
+    }
   },
   {
     "id": 276,
     "level": 28,
     "native": "Wala pa ko mahuman og basa",
-    "translation": "読み終えていません",
     "words": [
       "Wala",
       "pa",
@@ -3172,301 +5096,477 @@
       "mahuman",
       "og",
       "basa"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "読み終えていません"
+      },
+      "en": {
+        "meaning": "I haven't finished reading"
+      }
+    }
   },
   {
     "id": 277,
     "level": 28,
     "native": "Wala pa sila nakaabot",
-    "translation": "まだ到着していません",
     "words": [
       "Wala",
       "pa",
       "sila",
       "nakaabot"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "まだ到着していません"
+      },
+      "en": {
+        "meaning": "It hasn't arrived yet"
+      }
+    }
   },
   {
     "id": 278,
     "level": 28,
     "native": "Wala pa mi nakabayad",
-    "translation": "まだ支払っていません",
     "words": [
       "Wala",
       "pa",
       "mi",
       "nakabayad"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "まだ支払っていません"
+      },
+      "en": {
+        "meaning": "I haven't paid yet"
+      }
+    }
   },
   {
     "id": 279,
     "level": 28,
     "native": "Wala pa ko nakaluto",
-    "translation": "まだ料理していません",
     "words": [
       "Wala",
       "pa",
       "ko",
       "nakaluto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "まだ料理していません"
+      },
+      "en": {
+        "meaning": "I haven't cooked yet"
+      }
+    }
   },
   {
     "id": 280,
     "level": 28,
     "native": "Wala pa mahuman ang proyekto",
-    "translation": "プロジェクトはまだ終わっていません",
     "words": [
       "Wala",
       "pa",
       "mahuman",
       "ang",
       "proyekto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "プロジェクトはまだ終わっていません"
+      },
+      "en": {
+        "meaning": "The project isn't done yet"
+      }
+    }
   },
   {
     "id": 281,
     "level": 29,
     "native": "Wala ko kabalo",
-    "translation": "知りませんでした",
     "words": [
       "Wala",
       "ko",
       "kabalo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "知りませんでした"
+      },
+      "en": {
+        "meaning": "I didn't know"
+      }
+    }
   },
   {
     "id": 282,
     "level": 29,
     "native": "Wala ko nipalit",
-    "translation": "買いませんでした",
     "words": [
       "Wala",
       "ko",
       "nipalit"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "買いませんでした"
+      },
+      "en": {
+        "meaning": "I didn't buy it"
+      }
+    }
   },
   {
     "id": 283,
     "level": 29,
     "native": "Wala ko nakaadto",
-    "translation": "行きませんでした",
     "words": [
       "Wala",
       "ko",
       "nakaadto"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "行きませんでした"
+      },
+      "en": {
+        "meaning": "I didn't go"
+      }
+    }
   },
   {
     "id": 284,
     "level": 29,
     "native": "Wala siya miadto sa klase",
-    "translation": "彼は授業に行きませんでした",
     "words": [
       "Wala",
       "siya",
       "miadto",
       "sa",
       "klase"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼は授業に行きませんでした"
+      },
+      "en": {
+        "meaning": "He didn't go to class"
+      }
+    }
   },
   {
     "id": 285,
     "level": 29,
     "native": "Wala mi nakadawat sa sulat",
-    "translation": "手紙を受け取っていません",
     "words": [
       "Wala",
       "mi",
       "nakadawat",
       "sa",
       "sulat"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "手紙を受け取っていません"
+      },
+      "en": {
+        "meaning": "I haven't received the letter"
+      }
+    }
   },
   {
     "id": 286,
     "level": 29,
     "native": "Wala ko nakahinumdom",
-    "translation": "覚えていません",
     "words": [
       "Wala",
       "ko",
       "nakahinumdom"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "覚えていません"
+      },
+      "en": {
+        "meaning": "I don't remember"
+      }
+    }
   },
   {
     "id": 287,
     "level": 29,
     "native": "Wala ko nakainom ug tubig",
-    "translation": "水を飲んでいません",
     "words": [
       "Wala",
       "ko",
       "nakainom",
       "ug",
       "tubig"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "水を飲んでいません"
+      },
+      "en": {
+        "meaning": "I haven't drunk water"
+      }
+    }
   },
   {
     "id": 288,
     "level": 29,
     "native": "Wala ko natulog sayo",
-    "translation": "早く寝ませんでした",
     "words": [
       "Wala",
       "ko",
       "natulog",
       "sayo"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "早く寝ませんでした"
+      },
+      "en": {
+        "meaning": "I didn't sleep early"
+      }
+    }
   },
   {
     "id": 289,
     "level": 29,
     "native": "Wala siya nikaon sa panihapon",
-    "translation": "彼女は夕食を食べませんでした",
     "words": [
       "Wala",
       "siya",
       "nikaon",
       "sa",
       "panihapon"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼女は夕食を食べませんでした"
+      },
+      "en": {
+        "meaning": "She didn't eat dinner"
+      }
+    }
   },
   {
     "id": 290,
     "level": 29,
     "native": "Wala mi nakahuman sa dula",
-    "translation": "試合を最後までできませんでした",
     "words": [
       "Wala",
       "mi",
       "nakahuman",
       "sa",
       "dula"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "試合を最後までできませんでした"
+      },
+      "en": {
+        "meaning": "I couldn't finish the match"
+      }
+    }
   },
   {
     "id": 291,
     "level": 30,
     "native": "Nakaadto na ka sa Cebu",
-    "translation": "セブへ行ったことありますか？",
     "words": [
       "Nakaadto",
       "na",
       "ka",
       "sa",
       "Cebu"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "セブへ行ったことありますか？"
+      },
+      "en": {
+        "meaning": "Have you been to Cebu?"
+      }
+    }
   },
   {
     "id": 292,
     "level": 30,
     "native": "Nakaon na ka ug durian",
-    "translation": "ドリアンを食べたことありますか？",
     "words": [
       "Nakaon",
       "na",
       "ka",
       "ug",
       "durian"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ドリアンを食べたことありますか？"
+      },
+      "en": {
+        "meaning": "Have you eaten durian?"
+      }
+    }
   },
   {
     "id": 293,
     "level": 30,
     "native": "Nakasulay ka og zipline",
-    "translation": "ジップラインに乗ったことありますか？",
     "words": [
       "Nakasulay",
       "ka",
       "og",
       "zipline"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "ジップラインに乗ったことありますか？"
+      },
+      "en": {
+        "meaning": "Have you tried a zip line?"
+      }
+    }
   },
   {
     "id": 294,
     "level": 30,
     "native": "Nakakita ka sa Chocolate Hills",
-    "translation": "チョコレートヒルズを見たことありますか？",
     "words": [
       "Nakakita",
       "ka",
       "sa",
       "Chocolate",
       "Hills"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "チョコレートヒルズを見たことありますか？"
+      },
+      "en": {
+        "meaning": "Have you seen the Chocolate Hills?"
+      }
+    }
   },
   {
     "id": 295,
     "level": 30,
     "native": "Nakasuroy mi sa Bohol",
-    "translation": "私たちはボホールへ行ったことがあります",
     "words": [
       "Nakasuroy",
       "mi",
       "sa",
       "Bohol"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私たちはボホールへ行ったことがあります"
+      },
+      "en": {
+        "meaning": "We have been to Bohol"
+      }
+    }
   },
   {
     "id": 296,
     "level": 30,
     "native": "Nakaapil ko sa Sinulog",
-    "translation": "シヌログ祭に参加したことがあります",
     "words": [
       "Nakaapil",
       "ko",
       "sa",
       "Sinulog"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "シヌログ祭に参加したことがあります"
+      },
+      "en": {
+        "meaning": "I've joined the Sinulog festival"
+      }
+    }
   },
   {
     "id": 297,
     "level": 30,
     "native": "Nakaadto ko sa Camiguin",
-    "translation": "カミギンに行ったことがあります",
     "words": [
       "Nakaadto",
       "ko",
       "sa",
       "Camiguin"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "カミギンに行ったことがあります"
+      },
+      "en": {
+        "meaning": "I've been to Camiguin"
+      }
+    }
   },
   {
     "id": 298,
     "level": 30,
     "native": "Nakatrabaho siya sa gawas nasud",
-    "translation": "彼は海外で働いたことがあります",
     "words": [
       "Nakatrabaho",
       "siya",
       "sa",
       "gawas",
       "nasud"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼は海外で働いたことがあります"
+      },
+      "en": {
+        "meaning": "He has worked overseas"
+      }
+    }
   },
   {
     "id": 299,
     "level": 30,
     "native": "Nakadula sila og professional basketball",
-    "translation": "彼らはプロのバスケをしたことがあります",
     "words": [
       "Nakadula",
       "sila",
       "og",
       "professional",
       "basketball"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "彼らはプロのバスケをしたことがあります"
+      },
+      "en": {
+        "meaning": "They have played professional basketball"
+      }
+    }
   },
   {
     "id": 300,
     "level": 30,
     "native": "Nakatilaw ko ug kinilaw",
-    "translation": "キニラウを食べたことがあります",
     "words": [
       "Nakatilaw",
       "ko",
       "ug",
       "kinilaw"
-    ]
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "キニラウを食べたことがあります"
+      },
+      "en": {
+        "meaning": "I've eaten kinilaw"
+      }
+    }
   }
 ]

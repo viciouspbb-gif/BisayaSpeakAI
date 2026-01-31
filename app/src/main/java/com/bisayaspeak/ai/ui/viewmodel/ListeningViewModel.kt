@@ -1053,11 +1053,17 @@ class ListeningViewModel(
 
     private fun Question.toListeningQuestion(): ListeningQuestion {
         val tokens = sentence.split(" ").filter { it.isNotBlank() }
-        val translations = buildMap<String, String> {
-            if (meaningJa.isNotBlank()) put("ja", meaningJa)
-            if (meaningEn.isNotBlank()) put("en", meaningEn)
+        val normalizedTranslations = if (translations.isNotEmpty()) {
+            translations
+        } else {
+            buildMap {
+                if (meaningJa.isNotBlank()) put("ja", meaningJa)
+                if (meaningEn.isNotBlank()) put("en", meaningEn)
+            }
         }
-        val defaultMeaning = meaningJa.ifBlank { meaningEn }
+        val defaultMeaning = normalizedTranslations["ja"].orEmpty()
+            .ifBlank { normalizedTranslations["en"].orEmpty() }
+            .ifBlank { meaningJa.ifBlank { meaningEn.ifBlank { sentence } } }
 
         return ListeningQuestion(
             id = "db_${id}",
@@ -1070,7 +1076,7 @@ class ListeningViewModel(
                 "ORDERING" -> QuestionType.ORDERING
                 else -> QuestionType.LISTENING
             },
-            translations = translations
+            translations = normalizedTranslations
         )
     }
 
