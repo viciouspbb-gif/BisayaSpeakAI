@@ -181,6 +181,16 @@
 主な更新: バグ修正とUI改善</string>
     <string name="feedback_thank_you">フィードバックありがとうございます！</string>
     <string name="feedback_error">フィードバックの送信に失敗しました</string>
+    <string name="feedback_prompt_heading">ご意見・ご要望をお聞かせください</string>
+    <string name="feedback_prompt_description">アプリの改善にご協力ください。バグ報告や機能リクエストなど、どんなことでもお気軽にお送りください。</string>
+    <string name="feedback_input_label">フィードバック内容</string>
+    <string name="feedback_input_placeholder">ご意見やご要望を入力してください...</string>
+    <string name="feedback_snackbar_opened">ブラウザでフォームを開きました</string>
+    <string name="feedback_button_open_form">フォームを開く</string>
+    <string name="feedback_notice_title">📝 注意事項</string>
+    <string name="feedback_notice_body">• 個人情報は含めないでください
+• 返信が必要な場合はメールアドレスを記載してください
+• 送信後の編集はできません</string>
     
     <!-- AI Conversation Help Dialog -->
     <string name="ai_help_title">AI会話の使い方</string>
@@ -225,7 +235,8 @@
     <string name="roleplay_permission_title">マイク権限が必要です</string>
     <string name="roleplay_permission_message">録音を利用するには、アプリ設定からマイク権限を付与してください。</string>
     <string name="roleplay_session_finished">今日のレッスンは終了しました</string>
-    <string name="roleplay_back_to_home">TOPへ戻る</string>
+    <string name="roleplay_back_to_home">ホームに戻る</string>
+    <string name="roleplay_back_to_top">トップに戻る</string>
     <string name="roleplay_default_intro">Maayong buntag! はじめようかの？</string>
     <string name="roleplay_replay_desc">リプレイ</string>
     <string name="roleplay_teacher_desc">タルシエ先生</string>

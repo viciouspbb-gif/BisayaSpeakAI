@@ -37,10 +37,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bisayaspeak.ai.util.FeedbackManager
+import com.bisayaspeak.ai.R
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +56,7 @@ fun FeedbackScreen(
     val context = LocalContext.current
     val appContext = context.applicationContext ?: context
     val feedbackManager = remember(appContext) { FeedbackManager(appContext) }
+    val snackbarOpenedMessage = stringResource(R.string.feedback_snackbar_opened)
 
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
@@ -66,12 +69,12 @@ fun FeedbackScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("フィードバック送信") },
+                title = { Text(stringResource(R.string.send_feedback)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Outlined.ArrowBack,
-                            contentDescription = "戻る"
+                            contentDescription = stringResource(R.string.back_button)
                         )
                     }
                 },
@@ -92,7 +95,7 @@ fun FeedbackScreen(
                 .padding(20.dp)
         ) {
             Text(
-                text = "ご意見・ご要望をお聞かせください",
+                text = stringResource(R.string.feedback_prompt_heading),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF222222),
@@ -100,7 +103,7 @@ fun FeedbackScreen(
             )
 
             Text(
-                text = "アプリの改善にご協力ください。バグ報告や機能リクエストなど、どんなことでもお気軽にお送りください。",
+                text = stringResource(R.string.feedback_prompt_description),
                 fontSize = 14.sp,
                 color = Color(0xFF666666),
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -117,8 +120,8 @@ fun FeedbackScreen(
                 OutlinedTextField(
                     value = feedbackText,
                     onValueChange = { feedbackText = it },
-                    label = { Text("フィードバック内容") },
-                    placeholder = { Text("ご意見やご要望を入力してください...") },
+                    label = { Text(stringResource(R.string.feedback_input_label)) },
+                    placeholder = { Text(stringResource(R.string.feedback_input_placeholder)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp),
@@ -134,7 +137,7 @@ fun FeedbackScreen(
                             feedbackManager.openFeedbackForm()
                             feedbackText = ""
                             scope.launch {
-                                snackbarHostState.showSnackbar("ブラウザでフォームを開きました")
+                                snackbarHostState.showSnackbar(snackbarOpenedMessage)
                             }
                         }
                     },
@@ -152,7 +155,7 @@ fun FeedbackScreen(
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text(
-                        text = "フォームを開く",
+                        text = stringResource(R.string.feedback_button_open_form),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -170,14 +173,14 @@ fun FeedbackScreen(
                     .padding(20.dp)
             ) {
                 Text(
-                    text = "📝 注意事項",
+                    text = stringResource(R.string.feedback_notice_title),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF222222),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
-                    text = "• 個人情報は含めないでください\n• 返信が必要な場合はメールアドレスを記載してください\n• 送信後の編集はできません",
+                    text = stringResource(R.string.feedback_notice_body),
                     fontSize = 14.sp,
                     color = Color(0xFF666666),
                     lineHeight = 20.sp

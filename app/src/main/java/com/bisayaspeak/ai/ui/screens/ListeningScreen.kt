@@ -331,6 +331,27 @@ fun ListeningScreen(
                                 disabledContainerColor = Color(0xFF333333)
                             ),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Icon(Icons.Default.VolumeUp, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Column(horizontalAlignment = Alignment.Start) {
+                                Text(
+                                    text = hintPrimaryText,
+                                    color = Color.White,
+                                    fontSize = 13.sp
+                                )
+                                hintSecondaryText?.let {
+                                    Text(
+                                        text = it,
+                                        color = Color(0xFFCFD8DC),
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    val (promptLabelPrimary, promptLabelSecondary) = localize(
                         en = stringResource(R.string.listening_prompt_label),
                         ja = stringResource(R.string.listening_prompt_label_ja),
                         preferJaFirst = preferJapanese
@@ -576,18 +597,20 @@ private fun ResultCard(
                 modifier = Modifier.size(52.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
-            val (resultPrimary, resultSecondary) = localize(
-                en = if (isCorrect) {
+                    val (resultPrimary, resultSecondary) = localize(
+                if (isCorrect) {
                     stringResource(R.string.listening_result_correct)
                 } else {
                     stringResource(R.string.listening_result_incorrect)
                 },
-                ja = if (isCorrect) {
+
+                if (isCorrect) {
                     stringResource(R.string.listening_result_correct_ja)
                 } else {
                     stringResource(R.string.listening_result_incorrect_ja)
                 },
-                preferJaFirst = false
+
+                false
             )
             Column {
                 Text(

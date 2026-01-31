@@ -120,7 +120,8 @@ fun HomeScreen(
                     context.getString(R.string.home_new_feature_message),
                     Toast.LENGTH_SHORT
                 ).show()
-            }
+            },
+            isLiteRestricted = AdsPolicy.areAdsEnabled
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -324,7 +325,8 @@ fun ProFeaturesSection(
     onClickFeature: (FeatureId) -> Unit,
     onShowProDialog: () -> Unit,
     isTariComingSoon: Boolean,
-    onComingSoon: () -> Unit
+    onComingSoon: () -> Unit,
+    isLiteRestricted: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -338,7 +340,13 @@ fun ProFeaturesSection(
             subtitle = stringResource(R.string.home_feature_ai_translator_subtitle),
             icon = Icons.Default.Translate,
             color = Color(0xFFD4A017),
-            onClick = { onClickFeature(FeatureId.AI_TRANSLATOR) },
+            onClick = {
+                if (isLiteRestricted) {
+                    onShowProDialog()
+                } else {
+                    onClickFeature(FeatureId.AI_TRANSLATOR)
+                }
+            },
             modifier = Modifier.weight(1f)
         )
 
@@ -348,7 +356,13 @@ fun ProFeaturesSection(
             subtitle = stringResource(R.string.home_feature_tari_walk_subtitle),
             icon = Icons.Default.ViewList,
             color = MaterialTheme.colorScheme.primary,
-            onClick = { onClickFeature(FeatureId.ROLE_PLAY) },
+            onClick = {
+                if (isLiteRestricted) {
+                    onShowProDialog()
+                } else {
+                    onClickFeature(FeatureId.ROLE_PLAY)
+                }
+            },
             modifier = Modifier.weight(1f)
         )
 
