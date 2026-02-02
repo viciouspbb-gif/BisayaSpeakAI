@@ -1,0 +1,660 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LearnBisaya</string>
+    
+    <!-- Level Selection Screen -->
+    <string name="level_selection_title">レベル選択</string>
+    <string name="level_selection_subtitle">レベルを選択してください</string>
+    <string name="level_selection_description">レベルに応じた学習内容と評価基準が適用されます</string>
+    <string name="level_beginner">初級</string>
+    <string name="level_intermediate">中級</string>
+    <string name="level_advanced">上級</string>
+    <string name="level_beginner_desc">基本的な単語とフレーズを学習</string>
+    <string name="level_intermediate_desc">日常会話、市場、交通などの実用的なフレーズ</string>
+    <string name="level_advanced_desc">複雑な会話と高度な表現</string>
+    <string name="level_section_1_title">第1章: 基礎とあいさつ</string>
+    <string name="level_section_2_title">第2章: 2語の意図表現</string>
+    <string name="level_section_3_title">第3章: 質問 &amp; 自己紹介</string>
+    <string name="level_section_4_title">第4章: 日常フレーズ</string>
+    <string name="level_section_5_title">第5章: 未来の予定</string>
+    <string name="level_section_6_title">第6章: 過去の出来事</string>
+    <string name="level_unlock_dialog_title">Lv.%1$d を解放しますか？</string>
+    <string name="level_unlock_dialog_message">短い動画広告を視聴してこのレッスンを解放しますか？</string>
+    
+    <!-- Practice Screen -->
+    <string name="practice_title_format">%s - 練習</string>
+    <string name="server_status_checking">確認中</string>
+    <string name="server_status_online">サーバー接続済み</string>
+    <string name="server_status_offline">サーバー未接続</string>
+    <string name="server_offline_warning">サーバーに接続できません。発音診断が利用できない可能性があります。</string>
+    <string name="retry">再試行</string>
+    
+    <!-- Recording Screen -->
+    <string name="recording_title">発音練習</string>
+    <string name="back">戻る</string>
+    <string name="remaining_count">残り: %d回</string>
+    <string name="ad_watch_count">広告視聴: %d/3</string>
+    <string name="watch_ad_for_bonus">広告を見て+3回</string>
+    <string name="pronounce_this">この単語を発音してください</string>
+    <string name="pronunciation">発音</string>
+    <string name="japanese_translation">日本語</string>
+    <string name="english_translation">英語</string>
+    <string name="play_reference">お手本を再生</string>
+    <string name="stop_reference">停止</string>
+    <string name="recording_pronunciation_format">発音：%1$s</string>
+    <string name="recording_no_remaining">回数がありません</string>
+    
+    <!-- Recording Buttons -->
+    <string name="tap_to_record">タップして録音</string>
+    <string name="recording">録音中…</string>
+    <string name="recording_completed">録音完了</string>
+    <string name="stop_recording">停止</string>
+    <string name="play_recording">再生</string>
+    <string name="diagnose">診断する</string>
+    <string name="record_again">もう一度録音</string>
+    
+    <!-- Analyzing -->
+    <string name="analyzing">AIがあなたの発音を分析中...</string>
+    <string name="please_wait">お待ちください</string>
+    
+    <!-- AI Conversation -->
+    <string name="enter_bisaya">ビサヤ語を入力</string>
+    <string name="enter_japanese">日本語を入力</string>
+    <string name="send">送信</string>
+    <string name="speak_now">今話してください</string>
+    <string name="voice_input">音声入力</string>
+    <string name="translating">翻訳中...</string>
+    
+    <!-- Error -->
+    <string name="error_occurred">エラーが発生しました</string>
+    <string name="try_again">もう一度試す</string>
+    <string name="error_server_starting">サーバーが起動中です。\nもう一度お試しください。\n\n※初回アクセス時は時間がかかる場合があります。</string>
+    <string name="error_network">ネットワークエラーが発生しました。\nインターネット接続を確認してください。</string>
+    <string name="error_server_error">サーバーエラーが発生しました。\n後でもう一度お試しください。</string>
+    <string name="error_diagnosis">診断中にエラーが発生しました。\nもう一度お試しください。</string>
+    
+    <!-- Result Screen -->
+    <string name="result_title">診断結果</string>
+    <string name="your_score">あなたのスコア</string>
+    <string name="excellent">素晴らしい！</string>
+    <string name="good">良い！</string>
+    <string name="not_bad">悪くない</string>
+    <string name="needs_improvement">もう少し練習が必要</string>
+    <string name="keep_practicing">練習を続けましょう</string>
+    <string name="detailed_feedback">詳細なフィードバック</string>
+    <string name="detailed_analysis">詳細分析</string>
+    <string name="tips">ヒント</string>
+    <string name="back_to_practice">練習に戻る</string>
+    <string name="try_again_button">もう一度試す</string>
+    <string name="lesson_result_title">レッスン結果</string>
+    <string name="lesson_result_repeat_button">このレッスンをやり直す</string>
+    <string name="lesson_result_correct_label">正解数</string>
+    <string name="lesson_result_level_label">レベル %1$d</string>
+    <string name="lesson_result_earned_xp_label">完了したレッスン</string>
+    <string name="lesson_result_translation_passed">すごい！よくできました。</string>
+    <string name="lesson_result_translation_failed">あと少し！きっとできます！</string>
+    <string name="lesson_result_level_translation_passed">次のレベルを解放しました！</string>
+    <string name="lesson_result_level_translation_failed">レベルアップまであと少し！</string>
+    <string name="lesson_result_encourage_translation_passed">この調子で学習を続けましょう。</string>
+    <string name="lesson_result_encourage_translation_failed">レッスンを復習してもう一度練習しましょう！</string>
+    <string name="lesson_result_bisaya_passed">Linghod kaayo!</string>
+    <string name="lesson_result_bisaya_failed">Hapit na gyud!</string>
+    <string name="lesson_result_bisaya_level_passed">Naablihan na nimo ang sunod nga lebel!</string>
+    <string name="lesson_result_bisaya_level_failed">Gamaya na lang para mo-level up!</string>
+    <string name="lesson_result_bisaya_encourage_passed">Padayon lang sa pagtuon ha?</string>
+    <string name="lesson_result_bisaya_encourage_failed">Balika nato ang lesson ug praktis pa!</string>
+    
+    <!-- Listening Practice -->
+    <string name="listening_practice">リスニング練習</string>
+    <string name="question_format">問題 %1$d/%2$d</string>
+    <string name="score_format">スコア: %d</string>
+    <string name="tap_to_listen">タップして聞く</string>
+    <string name="playing">再生中...</string>
+    <string name="select_words">単語を選択</string>
+    <string name="correct">✅ 正解！</string>
+    <string name="incorrect">❌ 不正解</string>
+    <string name="correct_answer">正解: %s</string>
+    <string name="meaning">意味: %s</string>
+    <string name="next">次へ</string>
+    <string name="completed">完了！</string>
+    <string name="score_result">スコア</string>
+    <string name="accuracy">正解率: %d%%</string>
+    <string name="try_again_listening">もう一度試す</string>
+    <string name="back_button">戻る</string>
+    <string name="listening_hint_remaining">ヒント (%1$d)</string>
+    <string name="listening_hint_recover_by_ad">広告で回復</string>
+    <string name="listening_hint_view">ヒントを見る</string>
+    <string name="listening_ad_loading">広告準備中...</string>
+    <string name="listening_prompt_label">問題文</string>
+    <string name="listening_your_answer">あなたの回答</string>
+    <string name="listening_next">次へ →</string>
+    <string name="listening_recover_hint_watch_video">動画を見てヒントを回復</string>
+    <string name="listening_no_hints_title">ヒントがありません</string>
+    <string name="listening_no_hints_message">動画広告を見るとヒントが3回分回復します。</string>
+    <string name="listening_result_correct">正解！完璧だね！</string>
+    <string name="listening_result_incorrect">残念... ヒントを聞いてみて！</string>
+    <string name="mistakes_warning">❌ 2回間違えました</string>
+    <string name="watch_ad_reset">広告を見て間違い回数をリセットしますか？</string>
+    <string name="continue_after_reset">リセット後、続けてプレイできます！</string>
+    <string name="watch_ad">広告を見る</string>
+    <string name="later">後で</string>
+    
+    <!-- AI Conversation -->
+    <string name="ai_conversation">AI会話</string>
+    <string name="scenario_conversation">シナリオ会話</string>
+    <string name="topic_conversation">トピック会話</string>
+    <string name="end_conversation">終了</string>
+    <string name="type_message">メッセージを入力...</string>
+    <string name="conversation_ended">会話終了</string>
+    <string name="conversation_summary">会話のまとめ</string>
+    <string name="new_conversation">新しい会話</string>
+    
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">キャンセル</string>
+    <string name="close">閉じる</string>
+    
+    <!-- Level Selection Screen - Additional -->
+    <string name="premium_plan">⭐ プレミアムプラン</string>
+    <string name="unlimited_learning">制限なく学習</string>
+    <string name="ai_conversation_title">🤖 AI会話</string>
+    <string name="ai_conversation_desc">AIとビサヤ語で会話練習</string>
+    <string name="unlimited">✨ 無制限</string>
+    <string name="remaining_count_format">残り: %1$d/%2$d</string>
+    <string name="listening_practice_title">🎧 リスニング練習</string>
+    <string name="listening_practice_desc">聞いて単語を並べる</string>
+    <string name="pronunciation_practice">発音練習</string>
+    <string name="level_beginner_short">初級</string>
+    <string name="level_intermediate_short">中級</string>
+    <string name="level_advanced_short">上級</string>
+    <string name="level_intermediate_premium">中級 ⭐</string>
+    <string name="level_advanced_premium">上級 ⭐</string>
+    
+    <!-- Feedback Feature -->
+    <string name="feedback">フィードバック</string>
+    <string name="send_feedback">フィードバックを送信</string>
+    <string name="feedback_dialog_title">フィードバックを送信しますか？</string>
+    <string name="feedback_dialog_message">Googleフォームが開きます。ご意見をお聞かせください。</string>
+    <string name="feedback_form_url">https://docs.google.com/forms/d/e/1FAIpQLSfSADAbBjv_YKaIjwCoxICyPKHw0H2ESYfvlTGMP0FGqtmCSQ/viewform</string>
+    <string name="version_info_title">更新情報 / バージョン</string>
+    <string name="version_info_message">バージョン %1$s
+主な更新: バグ修正とUI改善</string>
+    <string name="feedback_thank_you">フィードバックありがとうございます！</string>
+    <string name="feedback_error">フィードバックの送信に失敗しました</string>
+    <string name="feedback_prompt_heading">ご意見・ご要望をお聞かせください</string>
+    <string name="feedback_prompt_description">アプリの改善にご協力ください。バグ報告や機能リクエストなど、どんなことでもお気軽にお送りください。</string>
+    <string name="feedback_input_label">フィードバック内容</string>
+    <string name="feedback_input_placeholder">ご意見やご要望を入力してください...</string>
+    <string name="feedback_snackbar_opened">ブラウザでフォームを開きました</string>
+    <string name="feedback_button_open_form">フォームを開く</string>
+    <string name="feedback_notice_title">📝 注意事項</string>
+    <string name="feedback_notice_body">• 個人情報は含めないでください
+• 返信が必要な場合はメールアドレスを記載してください
+• 送信後の編集はできません</string>
+    
+    <!-- AI Conversation Help Dialog -->
+    <string name="ai_help_title">AI会話の使い方</string>
+    <string name="ai_help_chat_title">💬 ビサヤ語でチャット</string>
+    <string name="ai_help_chat_desc">• メイン入力欄にビサヤ語を入力\n• クイックフレーズを使用</string>
+    <string name="ai_help_voice_title">🎤 簡単音声入力</string>
+    <string name="ai_help_voice_desc">• 「日本語から翻訳」を開く\n• マイクボタン🎤をタップ\n• 日本語/英語/タガログ語で話す\n• 自動的にビサヤ語に翻訳して送信</string>
+    <string name="ai_help_listen_title">🔊 音声を聞く</string>
+    <string name="ai_help_listen_desc">• AIメッセージの🔊ボタンをタップ\n• ビサヤ語で音声再生\n• 発音学習に役立ちます</string>
+    <string name="ai_help_tips_title">📖 学習のコツ</string>
+    <string name="ai_help_tips_desc">ビサヤ語がわからないときは、自分の言語で会話してみましょう。AIのビサヤ語と翻訳内容から学べます！</string>
+    <string name="ai_help_understood">わかりました</string>
+    
+    <!-- Playback Speed -->
+    <string name="speed_slow">遅い</string>
+    <string name="speed_normal">普通</string>
+    <string name="speed_fast">速い</string>
+    
+    <!-- Recording Screen -->
+    <string name="remaining_zero">残り: 0回</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">ビサヤ語学習 AI</string>
+    <string name="translation">翻訳</string>
+    <string name="translation_subtitle">日本語 ⇄ ビサヤ語</string>
+    <string name="practice">練習</string>
+    <string name="practice_subtitle">発音</string>
+    <string name="listening">リスニング</string>
+    <string name="listening_subtitle">聞き取り</string>
+    <string name="quiz">クイズ</string>
+    <string name="quiz_subtitle">AIクイズ</string>
+    <string name="roleplay">ロールプレイ</string>
+    <string name="roleplay_subtitle">会話</string>
+    <string name="roleplay_back_desc">戻る</string>
+    <string name="roleplay_immediate_exit">終了してTOP</string>
+    <string name="roleplay_tutorial_message">長押しで訳を表示、ダブルタップで決定できます。</string>
+    <string name="roleplay_tutorial_hint">OKを押すと次回から表示されません</string>
+    <string name="roleplay_tutorial_ok">OK</string>
+    <string name="roleplay_info_desc">操作ガイド</string>
+    <string name="roleplay_permission_open_settings">設定を開く</string>
+    <string name="roleplay_permission_close">閉じる</string>
+    <string name="roleplay_permission_title">マイク権限が必要です</string>
+    <string name="roleplay_permission_message">録音を利用するには、アプリ設定からマイク権限を付与してください。</string>
+    <string name="roleplay_session_finished">今日のレッスンは終了しました</string>
+    <string name="roleplay_back_to_home">ホームに戻る</string>
+    <string name="roleplay_back_to_top">トップに戻る</string>
+    <string name="roleplay_default_intro">Maayong buntag! はじめようかの？</string>
+    <string name="roleplay_replay_desc">リプレイ</string>
+    <string name="roleplay_teacher_desc">タルシエ先生</string>
+    <string name="roleplay_waiting_teacher">先生の返答を待っています…</string>
+    <string name="roleplay_voice_status_recording">録音中…タップで送信</string>
+    <string name="roleplay_voice_status_transcribing">音声テキスト化中…</string>
+    <string name="roleplay_voice_status_idle">自由に話しかけてOK！</string>
+    <string name="roleplay_voice_helper_recording">終わったらもう一度タップ。キャンセルも可能です。</string>
+    <string name="roleplay_voice_helper_transcribing">タリがビサヤ語に変換しています。少し待ってね。</string>
+    <string name="roleplay_voice_helper_idle">選択肢以外のアドリブ台詞も大歓迎。</string>
+    <string name="roleplay_voice_cancel_desc">録音を破棄</string>
+    <string name="roleplay_voice_cancel">キャンセル</string>
+    <string name="roleplay_voice_permission_hint">マイク権限が必要です。ボタンを押して許可すると録音できます。</string>
+    <string name="roleplay_voice_last_memo">前回の音声メモ</string>
+    <string name="roleplay_coming_soon_message">近日公開</string>
+    <string name="favorites">お気に入り</string>
+    <string name="favorites_subtitle">お気に入り</string>
+    <string name="dictionary">辞書</string>
+    <string name="account">アカウント</string>
+    <string name="account_subtitle">アカウント</string>
+    <string name="pro_feature_speaking">スピーキング</string>
+    <string name="pro_feature_quiz">クイズ</string>
+    <string name="pro_feature_roleplay">ロールプレイ</string>
+    <string name="pro_feature_section_title">PRO機能</string>
+    <string name="pro_feature_dialog_message">PRO版限定機能です（近日公開）</string>
+    <string name="home_header_tagline">今日もビサヤ語を磨こう</string>
+    <string name="home_profile_icon_desc">プロフィールを開く</string>
+    <string name="home_honor_level_label">称号レベル Lv %1$d</string>
+    <string name="home_honor_unlock_prompt">称号を解放しよう</string>
+    <string name="home_honor_reached">最高称号に到達しました！</string>
+    <string name="home_honor_next_xp">次の称号まであと %1$d レッスン</string>
+    <string name="home_honor_unlock_hint">レッスンを進めて称号を獲得しよう</string>
+    <string name="home_start_learning_title">学習開始</string>
+    <string name="home_start_learning_desc">今日のおすすめレッスンからスタートしよう</string>
+    <string name="home_start_learning_cta">今すぐ学ぶ</string>
+    <string name="home_new_feature_message">新機能を準備中です。もう少しお待ちください！</string>
+    <string name="home_feature_ai_translator_title">AI翻訳機</string>
+    <string name="home_feature_ai_translator_subtitle">ネイティブ翻訳</string>
+    <string name="home_feature_tari_walk_title">タリと散歩道</string>
+    <string name="home_feature_tari_walk_subtitle">自由な会話の旅</string>
+    <string name="home_feature_dojo_title_coming">カミングスーン</string>
+    <string name="home_feature_dojo_title_debug">タリ道場</string>
+    <string name="home_feature_dojo_subtitle_coming">特別トレーニング準備中</string>
+    <string name="home_feature_dojo_subtitle_debug">実践ボイス会話</string>
+    <string name="home_feature_dojo_badge">修行中</string>
+    <string name="home_owl_description">フクロウ先生のイラスト</string>
+    <string name="home_tarsier_description">タルシエのイラスト</string>
+    <string name="home_pro_dialog_title">PRO版にアップグレード</string>
+    <string name="home_pro_dialog_message">この機能はPRO版限定です。</string>
+    <string name="home_pro_feature_illustration_desc">タリ先生のイラスト</string>
+    
+    <!-- Translate Screen -->
+    <string name="bisaya_translate">ビサヤ語翻訳</string>
+    <string name="input_language">入力</string>
+    <string name="output_language">翻訳</string>
+    <string name="japanese">日本語</string>
+    <string name="english">英語</string>
+    <string name="bisaya">ビサヤ語</string>
+    <string name="enter_text">テキストを入力</string>
+    <string name="translate">翻訳</string>
+    <string name="translation_result">翻訳結果</string>
+    <string name="copy">コピー</string>
+    <string name="speak">話す</string>
+    <string name="conversation_mode_premium">会話モード（プレミアム）</string>
+    <string name="realtime_voice_translation">リアルタイム音声翻訳を開始</string>
+    <string name="unlock_premium_translation">プレミアムでリアルタイム翻訳を解除</string>
+    <string name="original_text">元のテキスト</string>
+    <string name="swap_languages">言語を入れ替え</string>
+    <string name="translator_top_subtitle">現地ネイティブのニュアンスで翻訳</string>
+    <string name="translator_input_label">入力テキスト</string>
+    <string name="translator_direction_ja_ceb">日本語 → ビサヤ語</string>
+    <string name="translator_direction_ceb_ja">ビサヤ語 → 日本語</string>
+    <string name="translator_clear_desc">クリア</string>
+    <string name="translator_mic_desc">音声入力</string>
+    <string name="translator_input_placeholder">ここに文章を入力するか、マイクで話してください</string>
+    <string name="translator_swap_label">言語切替</string>
+    <string name="translator_swap_desc">入力と言語の方向を入れ替える</string>
+    <string name="translator_translate_button">翻訳</string>
+    <string name="translator_result_label">翻訳結果</string>
+    <string name="translator_result_ja_ceb_sub">ビサヤ語（ネイティブ口語）</string>
+    <string name="translator_result_ceb_ja_sub">日本語（自然なニュアンス）</string>
+    <string name="translator_copy_desc">コピー</string>
+    <string name="translator_result_placeholder">ここに翻訳結果が表示されます</string>
+    <string name="translator_tap_to_play_bisaya">タップするとビサヤ語音声を再生</string>
+    <string name="translator_voice_prompt">自然な口語で話すと、ニュアンスごと翻訳されます</string>
+    
+    <!-- Account Screen -->
+    <string name="account_premium_test_title">プレミアムテストモード</string>
+    <string name="account_premium_test_desc">デバッグ専用：プレミアム状態を強制切替</string>
+    <string name="account_profile_saved_toast">プロフィールを保存しました</string>
+    <string name="account_title">アカウント情報</string>
+    <string name="account_lite_notice_title">Lite版ではアカウント機能は利用できません</string>
+    <string name="account_lite_notice_desc">現在の学習データはこのデバイス内でのみ管理されます。</string>
+    <string name="account_guest_card_title">📱 アカウント登録のおすすめ</string>
+    <string name="account_guest_card_desc">登録すると学習データが保存され、複数端末で同期できます。</string>
+    <string name="account_login_button">ログイン／既存アカウントでサインイン</string>
+    <string name="account_create_button">新規アカウント作成</string>
+    <string name="account_logout_button">ログアウト</string>
+    <string name="account_delete_dialog_title">アカウントの削除</string>
+    <string name="account_delete_dialog_message">この操作は取り消せません。学習履歴とサブスク情報が完全に削除されます。続行しますか？</string>
+    <string name="account_delete_confirm">削除する</string>
+    <string name="account_delete_cancel">キャンセル</string>
+    <string name="account_status_logged_in_guest">ゲストとしてログイン中</string>
+    <string name="account_status_logged_in_format">%1$sでログイン中</string>
+    <string name="account_email_label">メールアドレス：%1$s</string>
+    <string name="account_value_unset">未設定</string>
+    <string name="account_nickname_gender">ニックネーム：%1$s / 性別：%2$s</string>
+    <string name="account_status_plan_label">ステータス：%1$s</string>
+    <string name="account_status_plan_premium">プレミアム</string>
+    <string name="account_status_plan_free">無料プラン</string>
+    <string name="account_premium_cta_title_premium">いつもタリを応援してくれてありがとうございます</string>
+    <string name="account_premium_cta_title_free">タリ道場をフル開放するならプロ版へ</string>
+    <string name="account_premium_cta_current_plan">現在のプラン：プレミアム</string>
+    <string name="account_upgrade_button">プロ版へアップグレード</string>
+    <string name="account_restore_button">購入済みの方はこちら（復元）</string>
+    <string name="account_profile_title">プロフィール</string>
+    <string name="account_profile_subtitle_editing">タリに呼んでほしい名前を設定</string>
+    <string name="account_profile_subtitle_view">タップしてニックネームと性別を編集</string>
+    <string name="account_profile_edit_done">完了</string>
+    <string name="account_profile_edit">編集</string>
+    <string name="account_profile_display_nickname">ニックネーム：%1$s</string>
+    <string name="account_profile_display_gender">性別：%1$s</string>
+    <string name="account_profile_nickname_label">ニックネーム</string>
+    <string name="account_profile_nickname_placeholder">例：タリ先輩</string>
+    <string name="account_profile_gender_label">性別</string>
+    <string name="account_gender_male">男性</string>
+    <string name="account_gender_female">女性</string>
+    <string name="account_gender_unspecified">回答しない</string>
+    <string name="account_profile_save_button">プロフィールを保存</string>
+    <string name="account_profile_saving">保存中...</string>
+    <string name="account_benefit_hide_ads">広告の非表示</string>
+    <string name="account_benefit_unlimited_translator">AI翻訳機の無制限利用</string>
+    <string name="account_benefit_roleplay_mode">タリとの終わりのないマルチ散歩道モード</string>
+    <string name="account_benefit_section_title">特典</string>
+    <string name="account_legal_title">リーガル・サポート</string>
+    <string name="account_legal_description">利用規約・プライバシーポリシー・サポートガイドをブラウザで確認できます。</string>
+    <string name="account_legal_button">リーガル＆サポートを開く</string>
+    <string name="account_danger_title">アカウントの削除</string>
+    <string name="account_danger_description">削除すると購入履歴・学習データが完全に消去されます。</string>
+    <string name="account_danger_button">アカウントを削除</string>
+    <string name="account_open_browser_failed">ブラウザを開けませんでした</string>
+    <string name="account_delete_unavailable">アカウント削除は利用できません</string>
+    <string name="account_delete_success">アカウントを削除しました</string>
+    <string name="account_delete_failed">アカウント削除に失敗しました</string>
+    <string name="account_feedback_title">フィードバックを送る</string>
+    <string name="account_feedback_description">不具合報告・要望・感想などありましたらこちらから。</string>
+    <string name="account_login_type_guest">ゲスト</string>
+    <string name="account_login_type_email">メール</string>
+    <string name="account_login_type_google">Google</string>
+    <string name="account_login_type_apple">Apple</string>
+    
+    <!-- Practice Category Screen -->
+    <string name="category">カテゴリー</string>
+
+    <!-- Common -->
+    <string name="done">完了</string>
+    <string name="language_japanese">日本語</string>
+
+    <!-- Practice Quiz Screen -->
+    <string name="practice_quiz_question_progress">問題 %1$d / %2$d</string>
+    <string name="practice_quiz_judgment_mode">判定モード：%1$s</string>
+    <string name="practice_quiz_judgment_mode_strict">厳密</string>
+    <string name="practice_quiz_judgment_mode_lenient">甘め</string>
+    <string name="practice_quiz_play_sample_audio">サンプル音声を再生</string>
+    <string name="practice_quiz_recording_failed">録音に失敗しました</string>
+    <string name="practice_quiz_evaluation_failed">評価に失敗しました</string>
+    <string name="practice_quiz_error_generic">エラー: %1$s</string>
+    <string name="practice_quiz_recording_error">録音エラー: %1$s</string>
+    <string name="practice_quiz_status_analyzing">評価中...</string>
+    <string name="practice_quiz_status_recording">録音中...</string>
+    <string name="practice_quiz_status_try_again">もう一度録音してみましょう</string>
+    <string name="practice_quiz_status_tap_to_record">タップして録音</string>
+    <string name="practice_quiz_result_perfect">Perfect!</string>
+    <string name="practice_quiz_result_okay">Okay</string>
+    <string name="practice_quiz_result_try_again">Try Again</string>
+    <string name="practice_quiz_feedback_perfect">よくできました！</string>
+    <string name="practice_quiz_feedback_okay">良い発音です。あと少しで完璧！</string>
+    <string name="practice_quiz_ai_pronunciation_coach">AI発音コーチ</string>
+    <string name="practice_quiz_try_again_title">もう一度挑戦しましょう</string>
+    <string name="practice_quiz_try_again_subtitle">マイクボタンをタップして再録音</string>
+    <string name="practice_quiz_next_question">次の問題へ</string>
+    
+    <!-- Quiz Screen -->
+    <string name="quiz_completed">クイズ完了！</string>
+    <string name="questions_correct">%1$d / %2$d 正解</string>
+    <string name="back_to_home">ホームに戻る</string>
+    
+    <!-- AI Quiz Screen -->
+    <string name="ai_quiz_title">AIクイズ</string>
+    <string name="ai_quiz_question_hello">「こんにちは」をビサヤ語で何と言いますか？</string>
+    <string name="ai_quiz_question_gap">次の文の空欄に入る適切な単語は？\n「Ako ___ estudyante。」</string>
+    <string name="ai_quiz_question_thanks">「ありがとう」をビサヤ語で何と言いますか？</string>
+    <string name="ai_quiz_explanation_hello">「Kumusta」は一般的な挨拶で、「こんにちは」や「元気ですか？」の意味です。</string>
+    <string name="ai_quiz_explanation_gap">「usa」は「一つの」という意味で、「Ako usa ka estudyante」で「私は学生です」となります。</string>
+    <string name="ai_quiz_explanation_thanks">「Salamat」は「ありがとう」を意味します。</string>
+    <string name="ai_quiz_weak_point_grammar">文法の基礎</string>
+    <string name="ai_quiz_weak_point_vocab">語彙の強化</string>
+    <string name="ai_quiz_advice">基本的な挨拶や単語は理解できていますが、文法の理解を深めることで、より自然な会話ができるようになります。日常会話の練習を増やすことをおすすめします。</string>
+    <string name="ai_quiz_intro_title">AIが生成するパーソナライズドクイズ</string>
+    <string name="ai_quiz_intro_desc">あなたの学習履歴をもとに、AIが最適な問題を自動生成します。</string>
+    <string name="ai_quiz_intro_format_title">出題形式</string>
+    <string name="ai_quiz_intro_format_listening">・並べ替え問題（リスニング）</string>
+    <string name="ai_quiz_intro_format_grammar">・穴埋め問題（文法）</string>
+    <string name="ai_quiz_intro_format_pronunciation">・音声問題（発音）</string>
+    <string name="ai_quiz_intro_format_vocab">・選択式（語彙）</string>
+    <string name="ai_quiz_start_button">クイズを開始</string>
+    <string name="ai_quiz_question_progress">問題 %1$d / %2$d</string>
+    <string name="ai_quiz_feedback_correct">正解！</string>
+    <string name="ai_quiz_feedback_incorrect">不正解</string>
+    <string name="ai_quiz_next_question_button">次の問題</string>
+    <string name="ai_quiz_view_result_button">結果を見る</string>
+    <string name="ai_quiz_result_title">クイズ完了！</string>
+    <string name="ai_quiz_result_summary">%1$d / %2$d 問正解</string>
+    <string name="ai_quiz_result_score_value">%1$d点</string>
+    <string name="ai_quiz_result_weak_points_title">弱点分析</string>
+    <string name="ai_quiz_result_advice_title">AIからのアドバイス</string>
+    <string name="ai_quiz_done_button">完了</string>
+    
+    <!-- Account Screen -->
+    <string name="account_info">アカウント情報</string>
+    <string name="premium_test">プレミアムテスト</string>
+    <string name="premium_test_desc">デバッグビルドのみ: プレミアム状態を強制切り替え</string>
+    <string name="login">ログイン</string>
+    <string name="account_guest_nickname_default">ゲストユーザー</string>
+    <string name="login_existing_account">ログイン / 既存アカウントでサインイン</string>
+    <string name="create_account">アカウント作成</string>
+    <string name="logout">ログアウト</string>
+    <string name="premium_info">プレミアム情報</string>
+
+    <!-- Honor Level Strings -->
+    <string name="honor_title_1">ビサヤ語の第一歩</string>
+    <string name="honor_nickname_1">冒険スタート！</string>
+    <string name="honor_title_2">空港でのあいさつ</string>
+    <string name="honor_nickname_2">入国の達人</string>
+    <string name="honor_title_3">マクタン島デビュー</string>
+    <string name="honor_nickname_3">島デビュー</string>
+    <string name="honor_title_4">初めての会話</string>
+    <string name="honor_nickname_4">ファーストステップ</string>
+    <string name="honor_title_5">マクタン着陸</string>
+    <string name="honor_nickname_5">ランディングチャレンジャー</string>
+    <string name="honor_title_6">ビーチでのあいさつ</string>
+    <string name="honor_nickname_6">ビーチフレンド</string>
+    <string name="honor_title_7">リゾート会話</string>
+    <string name="honor_nickname_7">リゾートガイド</string>
+    <string name="honor_title_8">ビーチではしゃごう</string>
+    <string name="honor_nickname_8">波のスピーカー</string>
+    <string name="honor_title_9">島人とのおしゃべり</string>
+    <string name="honor_nickname_9">アイランドメイト</string>
+    <string name="honor_title_10">サントニーニョ参拝</string>
+    <string name="honor_nickname_10">祈りの旅人</string>
+    <string name="honor_title_11">歴史の街並み</string>
+    <string name="honor_nickname_11">知識豊富な旅人</string>
+    <string name="honor_title_12">教会での祈り</string>
+    <string name="honor_nickname_12">静かな語り手</string>
+    <string name="honor_title_13">サントニーニョのご加護</string>
+    <string name="honor_nickname_13">祝福を授ける者</string>
+    <string name="honor_title_14">セブの歴史探訪</string>
+    <string name="honor_nickname_14">タイムトラベラー</string>
+    <string name="honor_title_15">ジプニー乗車</string>
+    <string name="honor_nickname_15">ストリートパイロット</string>
+    <string name="honor_title_16">市場トーク</string>
+    <string name="honor_nickname_16">マーケットマスター</string>
+    <string name="honor_title_17">街角のあいさつ</string>
+    <string name="honor_nickname_17">ストリートスマイル</string>
+    <string name="honor_title_18">移動術を学ぶ</string>
+    <string name="honor_nickname_18">モビリティガイド</string>
+    <string name="honor_title_19">冒険のはじまり</string>
+    <string name="honor_nickname_19">アドベンチャラー</string>
+    <string name="honor_title_20">コロン通りショッピング</string>
+    <string name="honor_nickname_20">ショッピングエキスパート</string>
+    <string name="honor_title_21">市場の値段交渉</string>
+    <string name="honor_nickname_21">プライスブレイカー</string>
+    <string name="honor_title_22">お土産選び</string>
+    <string name="honor_nickname_22">ギフトハンター</string>
+    <string name="honor_title_23">値切りトレーニング</string>
+    <string name="honor_nickname_23">スマートトーカー</string>
+    <string name="honor_title_24">ショッピング上級者</string>
+    <string name="honor_nickname_24">バーゲンキング</string>
+    <string name="honor_title_25">アイランドホッピング</string>
+    <string name="honor_nickname_25">島めぐり冒険家</string>
+    <string name="honor_title_26">未知の島々</string>
+    <string name="honor_nickname_26">フロンティアダイバー</string>
+    <string name="honor_title_27">探検者の心</string>
+    <string name="honor_nickname_27">トレイルブレイザー</string>
+    <string name="honor_title_28">海の冒険者</string>
+    <string name="honor_nickname_28">マリンレンジャー</string>
+    <string name="honor_title_29">アイランドマスター</string>
+    <string name="honor_nickname_29">セブ賢者</string>
+    <string name="honor_title_30">ジンベエザメと泳ぐ</string>
+    <string name="honor_nickname_30">セブマスター！</string>
+    <string name="honor_title_default">ビサヤ語マスター</string>
+    <string name="honor_nickname_default">言語冒険王</string>
+
+    <!-- Dictionary Screen -->
+    <string name="search_words">単語を検索...</string>
+    <string name="play_audio">音声を再生</string>
+    <string name="add_to_favorites">お気に入りに追加</string>
+    <string name="dictionary_title">AI翻訳機</string>
+    <string name="dictionary_subtitle">辞書・翻訳 / トークモード</string>
+    <string name="dictionary_mode_explore">辞書・翻訳</string>
+    <string name="dictionary_mode_talk">トークモード</string>
+    <string name="dictionary_query_placeholder">日本語でもビサヤ語でもOK</string>
+    <string name="dictionary_button_searching">探索中…</string>
+    <string name="dictionary_button_explore">探索する</string>
+    <string name="dictionary_play_bisaya_desc">ビサヤ語を再生</string>
+    <string name="dictionary_politeness_label">丁寧度 %1$s</string>
+    <string name="dictionary_situation_label">シチュエーション: %1$s</string>
+    <string name="dictionary_explanation_title">タリのメモ</string>
+    <string name="dictionary_usage_title">使い方ヒント</string>
+    <string name="dictionary_related_title">関連表現</string>
+    <string name="dictionary_recent_talks">最近のトーク</string>
+    <string name="dictionary_status_idle_manual">録音待機</string>
+    <string name="dictionary_status_idle_tap">待機中 (タップで録音)</string>
+    <string name="dictionary_status_listening_manual">録音中 (タップで翻訳)</string>
+    <string name="dictionary_status_listening_auto">リスニング中</string>
+    <string name="dictionary_status_processing">翻訳中</string>
+    <string name="dictionary_status_speaking">翻訳テキストを再生中</string>
+    <string name="dictionary_detected_language">検知言語: %1$s</string>
+    <string name="dictionary_input_label">入力</string>
+    <string name="dictionary_translation_label">翻訳</string>
+    <string name="dictionary_explanation_label">解説</string>
+    <string name="dictionary_retranslate_button">この発話で再翻訳</string>
+    <string name="dictionary_language_unknown">未判定</string>
+    <string name="dictionary_mic_label_recording">録音中…タップで翻訳する</string>
+    <string name="dictionary_mic_label_busy">翻訳処理中</string>
+    <string name="dictionary_mic_label_idle">タップで録音開始</string>
+    <string name="dictionary_mic_sub_label_recording">話し終えたらもう一度タップ</string>
+    <string name="dictionary_mic_sub_label_busy">タリが処理しています</string>
+    <string name="dictionary_mic_sub_label_idle">タップ → 録音 / もう一度タップ → 訳＆読み上げ</string>
+    <string name="dictionary_permission_title">マイク権限が必要です</string>
+    <string name="dictionary_permission_button">マイク権限を許可する</string>
+    
+    <!-- Favorites Screen -->
+    <string name="no_favorites">お気に入りはまだありません</string>
+    <string name="add_favorites_hint">辞書から単語を追加</string>
+    
+    <!-- Role Play Screen -->
+    <string name="select_scenario">シナリオを選択</string>
+    <string name="start_conversation">会話を開始</string>
+    <string name="free_version">無料版</string>
+    <string name="premium_version">プレミアム版</string>
+    
+    <!-- Common UI -->
+    <string name="loading">読み込み中...</string>
+    <string name="error">エラー</string>
+    <string name="success">成功</string>
+    <string name="warning">警告</string>
+    <string name="confirm">確認</string>
+    <string name="delete">削除</string>
+    <string name="edit">編集</string>
+    <string name="save">保存</string>
+    <string name="search">検索</string>
+    <string name="filter">フィルター</string>
+    <string name="sort">並び替え</string>
+    <string name="settings">設定</string>
+    <string name="help">ヘルプ</string>
+    <string name="about">について</string>
+    <string name="version">バージョン</string>
+    <string name="update">更新</string>
+    <string name="share">共有</string>
+    <string name="rate">評価</string>
+    <string name="contact">お問い合わせ</string>
+    
+    <!-- Upgrade Screen -->
+    <string name="upgrade_title">アップグレード</string>
+    <string name="upgrade_subtitle">あなたの学習ニーズに合ったプランをお選びください</string>
+    <string name="upgrade_footer_note">すべてのプランに無料トライアル期間が含まれています。いつでもキャンセル可能です。</string>
+    <string name="upgrade_purchase_success_message">%1$s の購入が完了しました</string>
+    <string name="upgrade_paywall_title">Premium AI</string>
+    <string name="upgrade_paywall_tagline">AIレッスンを無制限で楽しもう</string>
+    <string name="upgrade_paywall_description">初回7日間は無料トライアル付き。いつでもキャンセルできます。</string>
+    <string name="upgrade_cta_try_free">まずは7日間無料で試す</string>
+    <string name="upgrade_plan_section_title">2つのプレミアムプラン</string>
+    <string name="upgrade_plan_monthly_title">月間プラン</string>
+    <string name="upgrade_plan_yearly_title">年間プラン</string>
+    <string name="upgrade_plan_trial_default">最初の7日間は無料</string>
+    <string name="upgrade_plan_badge_popular">定番</string>
+    <string name="upgrade_plan_badge_savings">2ヶ月分お得</string>
+    <string name="upgrade_plan_button_text">7日間無料で試す</string>
+    <string name="upgrade_loading_message">プラン情報を読み込み中…</string>
+    <string name="upgrade_restore_title">すでに登録済みですか？</string>
+    <string name="upgrade_restore_description">過去に購入したサブスクは「購入を復元」からすぐに回復できます。</string>
+    <string name="upgrade_restore_button">購入を復元</string>
+    
+    <!-- Plans -->
+    <string name="plan_pro_title">Pro解放</string>
+    <string name="plan_pro_description">すべての練習モードと機能を解放</string>
+    <string name="plan_pro_price">¥500/月</string>
+    
+    <string name="plan_premium_ai_title">Premium AI</string>
+    <string name="plan_premium_ai_description">学習を加速させる高度なAI機能</string>
+    <string name="plan_premium_ai_price">¥1,000/月</string>
+    
+    <!-- Features -->
+    <string name="feature_pro_1">無制限の練習セッション</string>
+    <string name="feature_pro_2">すべての難易度レベルへのアクセス</string>
+    <string name="feature_pro_3">広告なし</string>
+    <string name="feature_pro_4">オフラインモード対応</string>
+    
+    <string name="feature_premium_ai_1">Proのすべての機能を含む</string>
+    <string name="feature_premium_ai_2">AI会話練習</string>
+    <string name="feature_premium_ai_3">パーソナライズされたフィードバック</string>
+    <string name="feature_premium_ai_4">高度な発音分析</string>
+    <string name="feature_premium_ai_5">優先サポート</string>
+    
+    <!-- Buttons -->
+    <string name="purchase_now">今すぐ購入</string>
+    <string name="plan_active">有効</string>
+    <string name="recommended">おすすめ</string>
+    
+    <!-- Monetization -->
+    <string name="unlock_pro_btn">Proで広告なし・無制限</string>
+    <string name="premium_monthly_btn">Premium（月額）</string>
+    <string name="premium_yearly_btn">Premium（年額）</string>
+    <string name="locked_toast_pro">Pro購入で利用できます</string>
+    <string name="locked_toast_premium">Premium加入で利用できます</string>
+    <string name="upgrade_suggestion_title">プレミアムにアップグレードしますか？</string>
+    <string name="upgrade_suggestion_message">すべての機能を解放して広告を削除</string>
+    <string name="upgrade_now">今すぐアップグレード</string>
+    <string name="maybe_later">後で</string>
+</resources>
