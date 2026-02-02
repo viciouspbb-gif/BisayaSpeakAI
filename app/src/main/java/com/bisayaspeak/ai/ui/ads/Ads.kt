@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import com.bisayaspeak.ai.BuildConfig
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -25,30 +26,22 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
  * Releaseビルド時は本番IDを使用します。
  */
 object AdUnitIds {
-    private const val USE_TEST_ADS = true
-    private val FORCE_PROD = !USE_TEST_ADS
-    private val IS_DEBUG = com.bisayaspeak.ai.BuildConfig.DEBUG
-    
-    // Google公式テストID
     private const val TEST_BANNER = "ca-app-pub-3940256099942544/6300978111"
     private const val TEST_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
     private const val TEST_REWARDED = "ca-app-pub-3940256099942544/5224354917"
-    
-    // 本番ID
-    private const val PROD_BANNER = "ca-app-pub-2676999942952051/3507292281"
-    private const val PROD_INTERSTITIAL = "ca-app-pub-2676999942952051/2023179674"
-    private const val PROD_REWARDED = "ca-app-pub-2676999942952051/7383317569"
-    
-    private fun shouldUseTestAds(): Boolean = IS_DEBUG && !FORCE_PROD
-    
+
+    private fun resolve(value: String?, fallback: String): String {
+        return value?.takeIf { it.isNotBlank() } ?: fallback
+    }
+
     // バナー（ホーム／アカウント／共通）
-    val BANNER_MAIN = if (shouldUseTestAds()) TEST_BANNER else PROD_BANNER
+    val BANNER_MAIN: String = resolve(BuildConfig.BANNER_AD_UNIT_ID, TEST_BANNER)
 
     // インタースティシャル（クイズ開始など）
-    val INTERSTITIAL_MAIN = if (shouldUseTestAds()) TEST_INTERSTITIAL else PROD_INTERSTITIAL
+    val INTERSTITIAL_MAIN: String = resolve(BuildConfig.INTERSTITIAL_AD_UNIT_ID, TEST_INTERSTITIAL)
 
     // リワード（クイズ終了／発音／リスニング／ロールプレイなど）
-    val REWARDED_MAIN = if (shouldUseTestAds()) TEST_REWARDED else PROD_REWARDED
+    val REWARDED_MAIN: String = resolve(BuildConfig.REWARDED_AD_UNIT_ID, TEST_REWARDED)
 }
 
 /**

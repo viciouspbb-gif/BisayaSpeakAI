@@ -101,18 +101,27 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // PRO機能セクション
-        Text(
-            text = stringResource(R.string.pro_feature_section_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.pro_feature_section_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            TextButton(onClick = { showProDialog = true }) {
+                Text(text = stringResource(R.string.home_pro_dialog_action))
+            }
+        }
 
         // PRO機能リスト
         ProFeaturesSection(
-            context = context,
             onClickFeature = onClickFeature,
-            onShowProDialog = { showProDialog = true },
+            onRequireUpgrade = { onClickFeature(FeatureId.UPGRADE) },
             isTariComingSoon = isTariComingSoon,
             onComingSoon = {
                 Toast.makeText(
@@ -135,7 +144,13 @@ fun HomeScreen(
     }
 
     if (showProDialog) {
-        ProDialog(onDismiss = { showProDialog = false })
+        ProDialog(
+            onDismiss = { showProDialog = false },
+            onViewPlans = {
+                showProDialog = false
+                onClickFeature(FeatureId.UPGRADE)
+            }
+        )
     }
 }
 
@@ -321,9 +336,8 @@ fun LearningSection(
 
 @Composable
 fun ProFeaturesSection(
-    context: android.content.Context,
     onClickFeature: (FeatureId) -> Unit,
-    onShowProDialog: () -> Unit,
+    onRequireUpgrade: () -> Unit,
     isTariComingSoon: Boolean,
     onComingSoon: () -> Unit,
     isLiteRestricted: Boolean
@@ -342,7 +356,7 @@ fun ProFeaturesSection(
             color = Color(0xFFD4A017),
             onClick = {
                 if (isLiteRestricted) {
-                    onShowProDialog()
+                    onRequireUpgrade()
                 } else {
                     onClickFeature(FeatureId.AI_TRANSLATOR)
                 }
@@ -358,7 +372,7 @@ fun ProFeaturesSection(
             color = MaterialTheme.colorScheme.primary,
             onClick = {
                 if (isLiteRestricted) {
-                    onShowProDialog()
+                    onRequireUpgrade()
                 } else {
                     onClickFeature(FeatureId.ROLE_PLAY)
                 }
@@ -473,13 +487,23 @@ fun ProFeatureItem(
 }
 
 @Composable
-fun ProDialog(onDismiss: () -> Unit) {
+fun ProDialog(
+    onDismiss: () -> Unit,
+    onViewPlans: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.home_pro_dialog_title)) },
         text = { Text(stringResource(R.string.home_pro_dialog_message)) },
         confirmButton = {
-            Button(onClick = onDismiss) { Text(stringResource(R.string.ok)) }
+            Button(onClick = onViewPlans) {
+                Text(stringResource(R.string.home_pro_dialog_action))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
         }
     )
 }

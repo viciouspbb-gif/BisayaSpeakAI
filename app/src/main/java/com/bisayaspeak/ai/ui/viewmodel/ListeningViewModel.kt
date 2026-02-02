@@ -9,6 +9,7 @@ import android.util.Log
 import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.bisayaspeak.ai.BisayaSpeakApp
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.model.LearningContent
 import com.bisayaspeak.ai.data.model.LearningLevel
@@ -51,6 +52,8 @@ class ListeningViewModel(
     private val questionRepository: QuestionRepository,
     private val userProgressRepository: UserProgressRepository
 ) : AndroidViewModel(application) {
+
+    private val bisayaSpeakApp = application as BisayaSpeakApp
 
     // UI State
     private val _session = MutableStateFlow<ListeningSession?>(null)
@@ -172,6 +175,9 @@ class ListeningViewModel(
     private val _voiceHintRemaining = MutableStateFlow(3)
     val voiceHintRemaining: StateFlow<Int> = _voiceHintRemaining.asStateFlow()
 
+    private val _isProUser = MutableStateFlow(bisayaSpeakApp.isProVersion)
+    val isProUser: StateFlow<Boolean> = _isProUser.asStateFlow()
+
     private val _showHintRecoveryDialog = MutableStateFlow(false)
     val showHintRecoveryDialog: StateFlow<Boolean> = _showHintRecoveryDialog.asStateFlow()
 
@@ -242,6 +248,15 @@ class ListeningViewModel(
         // Load saved hint count from SharedPreferences
         loadHintCount()
 
+        viewModelScope.launch {
+            bisayaSpeakApp.proVersionState.collect { isPro ->
+                _isProUser.value = isPro
+                if (isPro) {
+                    _showHintRecoveryDialog.value = false
+                }
+            }
+        }
+
         soundPool = SoundPool.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -309,14 +324,18 @@ class ListeningViewModel(
     }
 
     fun playAudio() {
-        if (_voiceHintRemaining.value <= 0) {
-            Log.i("ListeningViewModel", "Hint limit reached – prompting recovery dialog")
-            _showHintRecoveryDialog.value = true
-            startAdReloading()
-            return
+        if (!_isProUser.value) {
+            if (_voiceHintRemaining.value <= 0) {
+                Log.i("ListeningViewModel", "Hint limit reached – prompting recovery dialog")
+                _showHintRecoveryDialog.value = true
+                startAdReloading()
+                return
+            }
+            _voiceHintRemaining.value = (_voiceHintRemaining.value - 1).coerceAtLeast(0)
+            saveHintCount() // Save to SharedPreferences after consumption
+        } else {
+            _showHintRecoveryDialog.value = false
         }
-        _voiceHintRemaining.value = (_voiceHintRemaining.value - 1).coerceAtLeast(0)
-        saveHintCount() // Save to SharedPreferences after consumption
         performAudioPlayback()
     }
 
@@ -509,8 +528,10 @@ class ListeningViewModel(
             _shouldShowAd.value = false
             _lessonResult.value = null
             _speechRate.value = 0.9f
-            _voiceHintRemaining.value = MAX_VOICE_HINTS
-            saveHintCount()
+            if (!_isProUser.value) {
+                _voiceHintRemaining.value = MAX_VOICE_HINTS
+                saveHintCount()
+            }
             _showHintRecoveryDialog.value = false
 
             // 各レッスン開始時にリワード広告をプリロード
@@ -914,6 +935,9 @@ class ListeningViewModel(
     }
 
     private fun playCompletionSound(result: LessonResult, passed: Boolean) {
+        Log.d("OwlAudio", "Completion sound suppressed temporarily for UX adjustments")
+        // TODO: Reintroduce a calmer completion sound (e.g., subtle chime) once new asset is approved
+        return
         Log.d("OwlAudio", "Playing owl sound for lesson result")
         if (!_ttsInitialized.value) {
             Log.w("OwlAudio", "TTS not initialized yet, scheduling fallback")

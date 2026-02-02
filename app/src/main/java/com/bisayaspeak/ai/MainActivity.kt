@@ -94,7 +94,8 @@ class MainActivity : ComponentActivity() {
 
                 val isDebugWhitelistedUser = BuildConfig.DEBUG &&
                     currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
-                val effectivePro = hasPurchasedPro || isDebugWhitelistedUser
+                val isProDebugBuild = BuildConfig.DEBUG && BuildConfig.FLAVOR.equals("pro", ignoreCase = true)
+                val effectivePro = hasPurchasedPro || isDebugWhitelistedUser || isProDebugBuild
 
                 androidx.compose.runtime.LaunchedEffect(effectivePro) {
                     app.isProVersion = effectivePro

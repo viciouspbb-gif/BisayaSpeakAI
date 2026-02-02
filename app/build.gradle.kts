@@ -5,12 +5,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
-}
-
-// LITEビルド（タスク名に "Lite" を含む）では google-services プラグインを適用しない
-val isLiteBuildRequested = gradle.startParameter.taskNames.any { it.contains("Lite", ignoreCase = true) }
-if (!isLiteBuildRequested) {
-    apply(plugin = "com.google.gms.google-services")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -21,8 +16,8 @@ android {
         applicationId = "com.bisayaspeak.ai"
         minSdk = 24
         targetSdk = 35
-        versionCode = 42
-        versionName = "1.0.42"
+        versionCode = 43
+        versionName = "1.0.43"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -45,6 +40,13 @@ android {
         val serverBaseUrl = properties.getProperty("SERVER_BASE_URL")
             ?: "https://bisaya-speak-ai-server-1.onrender.com"
         buildConfigField("String", "SERVER_BASE_URL", "\"$serverBaseUrl\"")
+
+        // デフォルトのAdMob App ID / 広告ユニットID（ビルドタイプで上書き）
+        buildConfigField("String", "ADMOB_APP_ID", "\"\"")
+        buildConfigField("String", "AD_UNIT_ID", "\"\"")
+        buildConfigField("String", "BANNER_AD_UNIT_ID", "\"\"")
+        buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"\"")
+        buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"\"")
     }
 
     signingConfigs {
@@ -57,6 +59,15 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-3940256099942544~3347511713"
+            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
+            buildConfigField("String", "AD_UNIT_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
+            buildConfigField("String", "BANNER_AD_UNIT_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
+            buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+            buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -64,6 +75,13 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+
+            manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-2676999942952051~8841279040"
+            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-2676999942952051~8841279040\"")
+            buildConfigField("String", "AD_UNIT_ID", "\"ca-app-pub-2676999942952051/3507292281\"")
+            buildConfigField("String", "BANNER_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/3507292281\"")
+            buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/2023179674\"")
+            buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/7383317569\"")
         }
     }
 

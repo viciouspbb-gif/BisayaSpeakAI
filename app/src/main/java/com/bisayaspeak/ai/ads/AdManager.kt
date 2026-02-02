@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.ads.AdsPolicy
 
@@ -58,6 +59,14 @@ object AdManager {
             Log.e("AdManager", "Ads disabled, skipping reward load")
             return
         }
+
+        if (!BuildConfig.DEBUG && BuildConfig.IS_LITE_BUILD) {
+            Log.w(
+                "AdManager",
+                "Lite release build detected. Register test devices before manual ad clicks to avoid policy violations."
+            )
+        }
+
         scope.launch {
             loadRewardInternal(context.applicationContext)
         }
@@ -136,28 +145,38 @@ object AdManager {
 
     private suspend fun loadRewardInternal(context: Context) {
         Log.e("AdManager", "★★★ loadRewardInternal CALLED ★★★")
+        val adUnitId = AD_UNIT_ID_REWARD
+        if (adUnitId.isBlank()) {
+            Log.e("AdManager", "Rewarded ad unit id is blank. Falling back to retry.")
+            scheduleRewardRetry(context)
+            return
+        }
         try {
             withContext(Dispatchers.Main) {
-                Log.e("AdManager", "Loading rewarded ad...")
+                Log.e("AdManager", "Loading rewarded ad... (unit=$adUnitId)")
                 val adRequest = AdRequest.Builder().build()
                 RewardedAd.load(
                     context,
-                    AD_UNIT_ID_REWARD,
+                    adUnitId,
                     adRequest,
                     object : RewardedAdLoadCallback() {
                         override fun onAdLoaded(ad: RewardedAd) {
-                            Log.e("AdManager", "★★★ onAdLoaded (rewarded) CALLED ★★★")
                             rewardedAd = ad
                             rewardRetryDelayMs = MIN_BACKOFF_MS
                             adLoadCallback?.invoke(true)
-                            Log.e("AdManager", "Rewarded ad loaded: responseInfo=${ad.responseInfo}")
+                            Log.d(
+                                "AdManager",
+                                "Rewarded ad loaded: format=${ad.responseInfo?.loadedAdapterResponseInfo?.adError?.message ?: "n/a"}, response=${ad.responseInfo}"
+                            )
                         }
 
                         override fun onAdFailedToLoad(adError: LoadAdError) {
-                            Log.e("AdManager", "★★★ onAdFailedToLoad (rewarded) CALLED ★★★")
                             rewardedAd = null
                             adLoadCallback?.invoke(false)
-                            Log.e("AdManager", "Rewarded load failed: code=${adError.code}, message=${adError.message}, response=${adError.responseInfo}")
+                            Log.e(
+                                "AdManager",
+                                "Rewarded load failed (unit=$adUnitId): code=${adError.code}, message=${adError.message}, response=${adError.responseInfo}"
+                            )
                             scheduleRewardRetry(context)
                         }
                     })
@@ -293,9 +312,10 @@ object AdManager {
         try {
             val ad = interstitialAd
             if (ad == null) {
-                Log.e("AdManager", "★★★ NO AD AVAILABLE ★★★, skipping ad and forcing navigation")
-                Log.e("DEBUG_ADS", "[AdManager] interstitialAd == null -> タイムアウト待ちでnavigate予定")
+                Log.e("AdManager", "★★★ NO AD AVAILABLE ★★★, forcing navigation immediately")
+                Log.e("DEBUG_ADS", "[AdManager] interstitialAd == null -> 即座にonAdClosed")
                 loadInterstitial(activity.applicationContext)
+                finish("interstitial_not_ready_before_show")
                 return
             }
 

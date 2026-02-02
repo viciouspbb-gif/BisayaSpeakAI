@@ -284,8 +284,9 @@
     <string name="home_feature_dojo_badge">修行中</string>
     <string name="home_owl_description">フクロウ先生のイラスト</string>
     <string name="home_tarsier_description">タルシエのイラスト</string>
-    <string name="home_pro_dialog_title">PRO版にアップグレード</string>
-    <string name="home_pro_dialog_message">この機能はPRO版限定です。</string>
+    <string name="home_pro_dialog_title">PROプランへアップグレード</string>
+    <string name="home_pro_dialog_message">この機能はPROプラン専用です。すべての機能を制限なしで楽しみましょう！</string>
+    <string name="home_pro_dialog_action">プランを見る</string>
     <string name="home_pro_feature_illustration_desc">タリ先生のイラスト</string>
     
     <!-- Translate Screen -->

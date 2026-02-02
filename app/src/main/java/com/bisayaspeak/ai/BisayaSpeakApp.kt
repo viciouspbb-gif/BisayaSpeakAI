@@ -5,6 +5,7 @@ import android.util.Log
 import com.bisayaspeak.ai.data.local.AppDatabase
 import com.bisayaspeak.ai.data.repository.QuestionRepository
 import com.bisayaspeak.ai.data.repository.UserProgressRepository
+import com.bisayaspeak.ai.feature.ProFeatureGate
 import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +28,7 @@ class BisayaSpeakApp : Application() {
     val proVersionState: StateFlow<Boolean> = _proVersionState.asStateFlow()
 
     var isProVersion: Boolean
-        get() = _proVersionState.value
+        get() = ProFeatureGate.isProFeatureEnabled(_proVersionState.value)
         set(value) {
             if (_proVersionState.value != value) {
                 _proVersionState.value = value

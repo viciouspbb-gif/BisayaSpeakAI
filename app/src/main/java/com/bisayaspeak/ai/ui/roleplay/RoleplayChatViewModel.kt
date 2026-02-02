@@ -388,7 +388,7 @@ class RoleplayChatViewModel(
                 userCallSign = callSignLabel
                 calloutBisaya = baseBisaya
                 calloutEnglish = baseEnglish
-                userNickname = null
+                userNickname = profile.nickname.takeIf { it.isNotBlank() }
             }
         }
     }
@@ -1022,11 +1022,20 @@ class RoleplayChatViewModel(
             UserGender.OTHER -> "non-binary / undisclosed"
         }
         val nicknameLine = userNickname?.let {
-            "- The learner’s preferred nickname is \"$it\". Blend it with the affectionate titles when you call out to them."
-        } ?: "- The learner has not set a nickname. Use the affectionate titles as-is."
+            "- The learner’s preferred nickname is \"$it\". Begin each new scene by greeting them with this name together with the affectionate Bisaya title, then reuse it naturally during heartfelt lines." }
+            ?: "- The learner has not set a nickname. Use the affectionate titles as-is, and if they later share a name, adopt it immediately."
+        val directNameInstruction = userNickname?.let {
+            "- Every time you transition into a new topic, gently call them \"$it\" at least once before moving on."
+        } ?: "- If the learner mentions a name during the chat, store it mentally and start addressing them with it from that moment."
         val translationInstructionLine = when (translationLanguage) {
             TranslationLanguage.JAPANESE -> "- Provide a separate Japanese translation ONLY inside the dedicated translation field."
             TranslationLanguage.ENGLISH -> "- Provide a separate English translation ONLY inside the dedicated translation field."
+        }
+
+        val genderToneInstruction = when (currentUserGender) {
+            UserGender.MALE -> "- The learner identifies as male. Offer slightly adventurous or confident topics (sports, travel, business wins) and praise him with masculine-coded compliments such as \"gwapo kaayo\" when appropriate."
+            UserGender.FEMALE -> "- The learner identifies as female. Highlight warm, cozy, or cute topics (cafés, fashion, self-care) and praise her with feminine-coded compliments such as \"gwapa kaayo ka\" when it fits the scene."
+            UserGender.OTHER -> "- The learner prefers a gender-neutral tone. Keep topics inclusive, avoid gendered compliments, and use friendly expressions like \"bestie\" or \"amiga\" depending on the context."
         }
 
         val genderInstruction = """
@@ -1039,6 +1048,8 @@ class RoleplayChatViewModel(
             - If you notice a Tagalog syllable sneaking into your output, immediately restate that sentence in Cebuano within the same response and continue in Bisaya only.
             - The learner is $learnerGenderLabel. Address them affectionately as "$calloutBisaya" (Bisaya) or "$calloutEnglish" (English) during greetings/farewells only; avoid repeating names every line.
             $nicknameLine
+            $directNameInstruction
+            $genderToneInstruction
             - Mention these affectionate titles only during greetings, farewells, when praising the learner, or when double-checking their understanding/feelings. Avoid repeating the name on every line so the flow feels natural.
             - These affectionate callouts are for Tari's speech bubbles only. Never include them inside the suggested learner reply options or translations.
             - Stay affectionate, supportive, and slightly mischievous, but never break character.

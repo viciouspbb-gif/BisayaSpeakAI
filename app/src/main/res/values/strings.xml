@@ -315,7 +315,8 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_owl_description">Owl mentor illustration</string>
     <string name="home_tarsier_description">Tarsier illustration</string>
     <string name="home_pro_dialog_title">Upgrade to PRO</string>
-    <string name="home_pro_dialog_message">Unlock all features with PRO. Enjoy Tari Walk conversations and the powerful AI Translator to dive deeper into Bisaya!</string>
+    <string name="home_pro_dialog_message">This feature is available in the PRO plan. Enjoy unlimited access to all features!</string>
+    <string name="home_pro_dialog_action">View Plans</string>
     <string name="home_pro_feature_illustration_desc">Tari-sensei illustration</string>
     <!-- Honor Level Strings -->
     <string name="honor_title_1">First Bisaya</string>
