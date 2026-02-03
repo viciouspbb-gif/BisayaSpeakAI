@@ -167,13 +167,34 @@ class BillingManager(private val context: Context) {
      */
     private fun queryProducts() {
         val client = billingClient ?: return
-        val productList = listOf(
-            // Pro Unlock (買い切り)
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(PRO_UNLOCK_SKU)
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build(),
-            // Premium AI (サブスク)
+        val combinedProducts = mutableListOf<ProductDetails>()
+
+        fun queryByType(
+            products: List<QueryProductDetailsParams.Product>,
+            typeLabel: String,
+            onComplete: () -> Unit
+        ) {
+            if (products.isEmpty()) {
+                onComplete()
+                return
+            }
+
+            val params = QueryProductDetailsParams.newBuilder()
+                .setProductList(products)
+                .build()
+
+            client.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    combinedProducts.addAll(productDetailsList)
+                    Log.d(TAG, "$typeLabel products loaded: ${productDetailsList.size}")
+                } else {
+                    Log.e(TAG, "Failed to query $typeLabel products: ${billingResult.debugMessage}")
+                }
+                onComplete()
+            }
+        }
+
+        val subsProducts = listOf(
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(PREMIUM_AI_MONTHLY_SKU)
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -182,7 +203,6 @@ class BillingManager(private val context: Context) {
                 .setProductId(PREMIUM_AI_YEARLY_SKU)
                 .setProductType(BillingClient.ProductType.SUBS)
                 .build(),
-            // 旧商品ID（互換性）
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(PREMIUM_MONTHLY_SKU)
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -192,17 +212,18 @@ class BillingManager(private val context: Context) {
                 .setProductType(BillingClient.ProductType.SUBS)
                 .build()
         )
-        
-        val params = QueryProductDetailsParams.newBuilder()
-            .setProductList(productList)
-            .build()
-        
-        client.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                _products.value = productDetailsList
-                Log.d(TAG, "Products loaded: ${productDetailsList.size}")
-            } else {
-                Log.e(TAG, "Failed to query products: ${billingResult.debugMessage}")
+
+        val inAppProducts = listOf(
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(PRO_UNLOCK_SKU)
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        )
+
+        queryByType(subsProducts, "SUBS") {
+            queryByType(inAppProducts, "INAPP") {
+                _products.value = combinedProducts
+                Log.d(TAG, "Total products loaded: ${combinedProducts.size}")
             }
         }
     }

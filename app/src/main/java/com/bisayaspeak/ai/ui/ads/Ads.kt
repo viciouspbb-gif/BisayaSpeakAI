@@ -84,8 +84,12 @@ object AdMobManager {
 
         // テストデバイスIDを設定（Debug版のみ）
         if (com.bisayaspeak.ai.BuildConfig.DEBUG) {
+            val testDevices = listOf(
+                "65517BD99C066A9E4BEE9A493FAC483A",
+                "291CB5608093463AF469685B760A6C61"
+            )
             val requestConfiguration = RequestConfiguration.Builder()
-                .setTestDeviceIds(listOf("65517BD99C066A9E4BEE9A493FAC483A"))
+                .setTestDeviceIds(testDevices)
                 .build()
             MobileAds.setRequestConfiguration(requestConfiguration)
         }

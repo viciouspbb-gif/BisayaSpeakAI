@@ -267,7 +267,7 @@
     <string name="home_honor_level_label">称号レベル Lv %1$d</string>
     <string name="home_honor_unlock_prompt">称号を解放しよう</string>
     <string name="home_honor_reached">最高称号に到達しました！</string>
-    <string name="home_honor_next_xp">次の称号まであと %1$d レッスン</string>
+    <string name="home_honor_next_xp">高得点で次のレベルを開放しよう</string>
     <string name="home_honor_unlock_hint">レッスンを進めて称号を獲得しよう</string>
     <string name="home_start_learning_title">学習開始</string>
     <string name="home_start_learning_desc">今日のおすすめレッスンからスタートしよう</string>

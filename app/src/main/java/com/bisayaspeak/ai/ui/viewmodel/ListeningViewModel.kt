@@ -529,10 +529,7 @@ class ListeningViewModel(
             _shouldShowAd.value = false
             _lessonResult.value = null
             _speechRate.value = 0.9f
-            if (!_isProUser.value) {
-                _voiceHintRemaining.value = MAX_VOICE_HINTS
-                saveHintCount()
-            }
+            loadHintCount()
             _showHintRecoveryDialog.value = false
 
             // 各レッスン開始時にリワード広告をプリロード

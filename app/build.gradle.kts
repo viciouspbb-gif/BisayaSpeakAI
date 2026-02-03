@@ -84,7 +84,7 @@ android {
             buildConfigField("String", "AD_UNIT_ID", "\"ca-app-pub-2676999942952051/3507292281\"")
             buildConfigField("String", "BANNER_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/3507292281\"")
             buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/2023179674\"")
-            buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/7383317569\"")
+            buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/7348562506\"")
         }
     }
 
