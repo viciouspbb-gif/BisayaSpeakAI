@@ -2,26 +2,61 @@ package com.bisayaspeak.ai.ui.screens
 
 import android.app.Activity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.billingclient.api.ProductDetails
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.billing.BillingManager
+import com.bisayaspeak.ai.billing.recurringPriceLabel
+import com.bisayaspeak.ai.billing.trialDuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +120,7 @@ fun PremiumScreen(
                 
                 // プラン選択
                 Text(
-                    text = "プランを選択",
+                    text = stringResource(id = R.string.upgrade_plan_section_title),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFFD700)
@@ -94,43 +129,23 @@ fun PremiumScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 if (products.isEmpty()) {
-                    // 商品が読み込まれていない場合
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF3E2723)
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator(color = Color(0xFFFFD700))
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "プランを読み込み中...",
-                                color = Color.White,
-                                fontSize = 16.sp
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Google Play Consoleで商品IDを設定してください",
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 14.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
+                    LoadingCard(onRetry = { billingManager.reloadProducts() })
                 } else {
                     products.forEach { product ->
                         PremiumPlanCard(
                             product = product,
                             onPurchase = {
+                                val basePlanId = BillingManager.basePlanIdFor(product.productId)
+                                val offerTag = if (product.productId.contains("yearly")) {
+                                    BillingManager.YEARLY_TRIAL_TAG
+                                } else {
+                                    BillingManager.MONTHLY_TRIAL_TAG
+                                }
                                 billingManager.launchPurchaseFlow(
                                     context as Activity,
-                                    product
+                                    product,
+                                    basePlanId,
+                                    offerTag
                                 )
                             }
                         )
@@ -260,19 +275,20 @@ fun PremiumBenefitItem(
 }
 
 @Composable
-fun PremiumPlanCard(
+private fun PremiumPlanCard(
     product: ProductDetails,
     onPurchase: () -> Unit
 ) {
-    val offerDetails = product.subscriptionOfferDetails?.firstOrNull()
-    val pricingPhase = offerDetails?.pricingPhases?.pricingPhaseList?.firstOrNull()
-    val price = pricingPhase?.formattedPrice ?: ""
-    val billingPeriod = pricingPhase?.billingPeriod ?: ""
-    
+    val basePlanId = BillingManager.basePlanIdFor(product.productId)
     val isYearly = product.productId.contains("yearly")
-    val planName = if (isYearly) "年間プラン" else "月間プラン"
-    val savings = if (isYearly) "2ヶ月分お得！" else ""
-    
+    val planName = if (isYearly) stringResource(id = R.string.upgrade_plan_yearly_title) else stringResource(id = R.string.upgrade_plan_monthly_title)
+    val savings = if (isYearly) stringResource(id = R.string.upgrade_plan_badge_savings) else ""
+    val offerTag = if (isYearly) BillingManager.YEARLY_TRIAL_TAG else BillingManager.MONTHLY_TRIAL_TAG
+    val price = product.recurringPriceLabel(basePlanId, offerTag)
+    val trial = product.trialDuration(basePlanId, offerTag)?.let { duration ->
+        stringResource(id = R.string.upgrade_plan_trial_prefix, duration)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -306,17 +322,24 @@ fun PremiumPlanCard(
                         )
                     }
                 }
-                
-                Text(
-                    text = price,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+
+                price?.let {
+                    Text(
+                        text = it,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
-            
+
+            trial?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = it, color = Color.White.copy(alpha = 0.9f))
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Button(
                 onClick = onPurchase,
                 modifier = Modifier.fillMaxWidth(),
@@ -337,6 +360,39 @@ fun PremiumPlanCard(
     }
 }
 
+@Composable
+private fun LoadingCard(onRetry: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF3E2723)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CircularProgressIndicator(color = Color(0xFFFFD700))
+            Text(
+                text = stringResource(id = R.string.upgrade_loading_message),
+                color = Color.White,
+                fontSize = 16.sp
+            )
+            Text(
+                text = stringResource(id = R.string.upgrade_loading_retry_message),
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
+            Button(onClick = onRetry) {
+                Text(text = stringResource(id = R.string.upgrade_reload_button))
+            }
+        }
+    }
+}
 @Composable
 fun PremiumActiveCard() {
     Card(

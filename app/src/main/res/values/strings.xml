@@ -684,7 +684,10 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="upgrade_plan_badge_popular">Popular</string>
     <string name="upgrade_plan_badge_savings">2 months free</string>
     <string name="upgrade_plan_button_text">Try for 7 days free</string>
+    <string name="upgrade_plan_trial_prefix">First %1$s is free</string>
     <string name="upgrade_loading_message">Loading plan information...</string>
+    <string name="upgrade_loading_retry_message">通信に失敗しました。少し待ってから再読み込みしてください。</string>
+    <string name="upgrade_reload_button">再読み込み</string>
     <string name="upgrade_restore_title">Already subscribed?</string>
     <string name="upgrade_restore_description">Restore your previous subscription purchases instantly.</string>
     <string name="upgrade_restore_button">Restore purchases</string>

@@ -398,6 +398,19 @@ Start learning Bisaya today!
 - [ ] リリースノート作成
 - [ ] 公開ボタンをクリック
 
+---
+
+## 🧾 開発備忘録（署名関連）
+
+1. **署名ファイルの正解パス**  
+   `C:\Bisaya_Final\bisaya-speak-ai.jks`
+
+2. **パスワードの法則**  
+   すべて `Bisaya2025` を使用（`storePassword` / `keyPassword` 共通）。変更する場合は必ず `local.properties` を更新し、コードへ直書きしない。
+
+3. **ビルド時の注意**  
+   `./gradlew assembleLiteRelease` を実行する前に、`local.properties` の署名情報（`RELEASE_STORE_FILE` / `RELEASE_STORE_PASSWORD` / `RELEASE_KEY_ALIAS` / `RELEASE_KEY_PASSWORD`）が最新であることを確認する。
+
 ### リリース後
 - [ ] 審査状況確認
 - [ ] 公開確認

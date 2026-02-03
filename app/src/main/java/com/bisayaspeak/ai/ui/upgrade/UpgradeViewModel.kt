@@ -129,6 +129,10 @@ class UpgradeViewModel(application: Application) : AndroidViewModel(application)
             syncPurchaseStatus()
         }
     }
+
+    fun reloadProducts() {
+        billingManager.reloadProducts()
+    }
     
     /**
      * 購入成功メッセージをクリア

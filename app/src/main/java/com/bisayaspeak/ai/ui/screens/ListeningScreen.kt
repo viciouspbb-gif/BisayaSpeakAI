@@ -202,9 +202,6 @@ fun ListeningScreen(
                     viewModel.clearLessonCompletion()
                 }
             }
-            if (result.leveledUp) {
-                LessonStatusManager.setLessonCleared(context, level)
-            }
             if (activity != null) {
                 Log.e("DEBUG_ADS", "[ListeningScreen] Starting interstitial (LaunchedEffect)")
                 AdManager.showInterstitialWithTimeout(

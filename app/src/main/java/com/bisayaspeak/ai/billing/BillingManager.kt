@@ -28,8 +28,11 @@ class BillingManager(private val context: Context) {
         
         // 商品ID
         const val PRO_UNLOCK_SKU = "pro_unlock"
-        const val PREMIUM_AI_MONTHLY_SKU = "premium_ai_monthly_sub"
+        const val PREMIUM_AI_MONTHLY_SKU = "premium_ai_monthly"
         const val PREMIUM_AI_YEARLY_SKU = "premium_ai_yearly"
+
+        const val PREMIUM_AI_MONTHLY_BASE_PLAN_ID = "premium_ai_monthly_sub"
+        const val PREMIUM_AI_YEARLY_BASE_PLAN_ID = "premium_ai_yearly_sub"
 
         const val MONTHLY_TRIAL_TAG = "monthly-trial"
         const val YEARLY_TRIAL_TAG = "yearly-trial"
@@ -37,6 +40,12 @@ class BillingManager(private val context: Context) {
         // 旧商品ID（互換性のため）
         const val PREMIUM_MONTHLY_SKU = "premium_monthly"
         const val PREMIUM_YEARLY_SKU = "premium_yearly"
+        
+        fun basePlanIdFor(productId: String): String? = when (productId) {
+            PREMIUM_AI_MONTHLY_SKU -> PREMIUM_AI_MONTHLY_BASE_PLAN_ID
+            PREMIUM_AI_YEARLY_SKU -> PREMIUM_AI_YEARLY_BASE_PLAN_ID
+            else -> null
+        }
         
         // 開発者アカウント（常にプレミアム扱い）
         private val DEVELOPER_EMAILS = setOf(
@@ -251,7 +260,12 @@ class BillingManager(private val context: Context) {
     /**
      * 購入フローを開始
      */
-    fun launchPurchaseFlow(activity: Activity, productDetails: ProductDetails, offerTag: String? = null) {
+    fun launchPurchaseFlow(
+        activity: Activity,
+        productDetails: ProductDetails,
+        basePlanId: String? = null,
+        offerTag: String? = null
+    ) {
         val client = billingClient ?: return
         if (!isClientReady) {
             Log.w(TAG, "BillingClient not ready. Ignoring purchase flow launch")
@@ -261,17 +275,20 @@ class BillingManager(private val context: Context) {
         val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(productDetails)
 
-        val targetOffer = productDetails.subscriptionOfferDetails?.let { offers ->
-            offerTag?.let { tag -> offers.firstOrNull { it.offerTags.contains(tag) } } ?: offers.firstOrNull()
-        }
+        val targetOffer = productDetails.findOffer(basePlanId, offerTag)
 
         val offerToken = targetOffer?.offerToken
         if (offerToken != null) {
             productDetailsParamsBuilder.setOfferToken(offerToken)
+        } else {
+            Log.w(
+                TAG,
+                "Offer token not found for product=${productDetails.productId}, basePlanId=$basePlanId, offerTag=$offerTag"
+            )
         }
-        
+
         val productDetailsParamsList = listOf(productDetailsParamsBuilder.build())
-        
+
         val billingFlowParams = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(productDetailsParamsList)
             .build()
@@ -286,7 +303,7 @@ class BillingManager(private val context: Context) {
     fun launchPurchaseFlowByProductId(activity: Activity, productId: String, offerTag: String? = null) {
         val product = _products.value.find { it.productId == productId }
         if (product != null) {
-            launchPurchaseFlow(activity, product, offerTag)
+            launchPurchaseFlow(activity, product, basePlanIdFor(product.productId), offerTag)
         } else {
             Log.e(TAG, "Product not found: $productId")
             // まだ商品情報が取得できていない場合は再取得を試みる
@@ -358,6 +375,10 @@ class BillingManager(private val context: Context) {
         onComplete(_isPremium.value)
     }
     
+    fun reloadProducts() {
+        queryProducts()
+    }
+
     /**
      * リソースを解放
      */

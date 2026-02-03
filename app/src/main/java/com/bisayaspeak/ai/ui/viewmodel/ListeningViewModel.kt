@@ -9,6 +9,7 @@ import android.util.Log
 import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.BisayaSpeakApp
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.model.LearningContent
@@ -39,7 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.Locale
-import kotlin.math.ceil
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 data class LocalizedPromptItem(
@@ -240,7 +241,7 @@ class ListeningViewModel(
         private const val RATE_ADVANCED = 1.1f // Lv.20〜30（上級者）
 
         private const val CORRECT_STREAK_FOR_SPEEDUP = 3 // 連続正解数（現在は未使用）
-        private const val PASSING_RATE = 0.8f
+        private const val LEVEL_UNLOCK_THRESHOLD = 8
         private const val AD_SHOW_INTERVAL = 2 // 強制広告表示間隔（2回に1回）
     }
 
@@ -885,13 +886,12 @@ class ListeningViewModel(
         val totalQuestions = currentSession.questions.size
         if (totalQuestions == 0) return
         val correct = currentSession.score
-        val requiredCorrect = if (totalQuestions > 0) {
-            ceil(totalQuestions * PASSING_RATE).toInt().coerceAtMost(totalQuestions)
+        val passingScore = if (totalQuestions > 0) {
+            min(LEVEL_UNLOCK_THRESHOLD, totalQuestions)
         } else {
             0
         }
-        val passed = totalQuestions > 0 && correct >= requiredCorrect
-        val reachedEightyPercent = totalQuestions > 0 && correct >= (totalQuestions * 0.8f).roundToInt()
+        val passed = totalQuestions > 0 && correct >= passingScore
         if (_lessonResult.value == null) {
             viewModelScope.launch {
                 val lessonsBefore = usageRepository.getTotalLessonsCompleted().first()
@@ -910,11 +910,8 @@ class ListeningViewModel(
                 if (passed) {
                     val starsEarned = calculateStars(correct, totalQuestions)
                     userProgressRepository.markLevelCompleted(this@ListeningViewModel.currentLevel, starsEarned)
-                    if (starsEarned > 0 || reachedEightyPercent) {
-                        userProgressRepository.unlockLevel(this@ListeningViewModel.currentLevel + 1)
-                    }
-                } else if (reachedEightyPercent) {
                     userProgressRepository.unlockLevel(this@ListeningViewModel.currentLevel + 1)
+                    LessonStatusManager.setLessonCleared(getApplication(), this@ListeningViewModel.currentLevel)
                 }
 
                 // レッスン完了時のフクロウ先生の音声再生（リザルト確定後に遅延再生）

@@ -51,6 +51,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.billingclient.api.ProductDetails
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.billing.BillingManager
+import com.bisayaspeak.ai.billing.recurringPriceLabel
+import com.bisayaspeak.ai.billing.trialDuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,7 +129,8 @@ fun UpgradeScreen(
                 yearlyPlan = yearlyPlan,
                 activity = activity,
                 onMonthly = { viewModel.purchasePremiumAIMonthly(it) },
-                onYearly = { viewModel.purchasePremiumAIYearly(it) }
+                onYearly = { viewModel.purchasePremiumAIYearly(it) },
+                onReload = { viewModel.reloadProducts() }
             )
 
             RestoreNote(
@@ -188,7 +191,8 @@ private fun SubscriptionPlanSection(
     yearlyPlan: ProductDetails?,
     activity: Activity?,
     onMonthly: (Activity) -> Unit,
-    onYearly: (Activity) -> Unit
+    onYearly: (Activity) -> Unit,
+    onReload: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
@@ -199,16 +203,23 @@ private fun SubscriptionPlanSection(
         )
 
         if (monthlyPlan == null && yearlyPlan == null) {
-            LoadingCard()
+            LoadingCard(onReload = onReload)
             return
         }
 
         monthlyPlan?.let { plan ->
+            val priceLabel = plan.recurringPriceLabel(
+                basePlanId = BillingManager.PREMIUM_AI_MONTHLY_BASE_PLAN_ID,
+                offerTag = BillingManager.MONTHLY_TRIAL_TAG
+            )
+            val trialLabel = plan.trialDuration(
+                basePlanId = BillingManager.PREMIUM_AI_MONTHLY_BASE_PLAN_ID,
+                offerTag = BillingManager.MONTHLY_TRIAL_TAG
+            )?.let { duration -> "最初の${duration}は無料" }
             SubscriptionPlanCard(
                 title = stringResource(R.string.upgrade_plan_monthly_title),
-                priceLabel = plan.priceLabel(BillingManager.MONTHLY_TRIAL_TAG),
-                trialLabel = plan.trialLabel(BillingManager.MONTHLY_TRIAL_TAG)
-                    ?: stringResource(R.string.upgrade_plan_trial_default),
+                priceLabel = priceLabel,
+                trialLabel = trialLabel ?: stringResource(R.string.upgrade_plan_trial_default),
                 badge = stringResource(R.string.upgrade_plan_badge_popular),
                 highlight = true,
                 onClick = { activity?.let(onMonthly) }
@@ -216,11 +227,18 @@ private fun SubscriptionPlanSection(
         }
 
         yearlyPlan?.let { plan ->
+            val priceLabel = plan.recurringPriceLabel(
+                basePlanId = BillingManager.PREMIUM_AI_YEARLY_BASE_PLAN_ID,
+                offerTag = BillingManager.YEARLY_TRIAL_TAG
+            )
+            val trialLabel = plan.trialDuration(
+                basePlanId = BillingManager.PREMIUM_AI_YEARLY_BASE_PLAN_ID,
+                offerTag = BillingManager.YEARLY_TRIAL_TAG
+            )?.let { duration -> "最初の${duration}は無料" }
             SubscriptionPlanCard(
                 title = stringResource(R.string.upgrade_plan_yearly_title),
-                priceLabel = plan.priceLabel(BillingManager.YEARLY_TRIAL_TAG),
-                trialLabel = plan.trialLabel(BillingManager.YEARLY_TRIAL_TAG)
-                    ?: stringResource(R.string.upgrade_plan_trial_default),
+                priceLabel = priceLabel,
+                trialLabel = trialLabel ?: stringResource(R.string.upgrade_plan_trial_default),
                 badge = stringResource(R.string.upgrade_plan_badge_savings),
                 highlight = false,
                 onClick = { activity?.let(onYearly) }
@@ -233,7 +251,7 @@ private fun SubscriptionPlanSection(
 private fun SubscriptionPlanCard(
     title: String,
     priceLabel: String?,
-    trialLabel: String,
+    trialLabel: String?,
     badge: String,
     highlight: Boolean,
     onClick: () -> Unit
@@ -271,7 +289,9 @@ private fun SubscriptionPlanCard(
                 )
             }
 
-            Text(text = trialLabel, color = Color.White.copy(alpha = 0.9f))
+            trialLabel?.let {
+                Text(text = it, color = Color.White.copy(alpha = 0.9f))
+            }
 
             Button(
                 onClick = onClick,
@@ -289,7 +309,7 @@ private fun SubscriptionPlanCard(
 }
 
 @Composable
-private fun LoadingCard() {
+private fun LoadingCard(onReload: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2937))
@@ -303,6 +323,14 @@ private fun LoadingCard() {
         ) {
             CircularProgressIndicator(color = Color.White)
             Text(stringResource(R.string.upgrade_loading_message), color = Color.White)
+            Text(
+                text = stringResource(R.string.upgrade_loading_retry_message),
+                color = Color.White.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
+            )
+            Button(onClick = onReload) {
+                Text(stringResource(R.string.upgrade_reload_button))
+            }
         }
     }
 }
@@ -330,32 +358,5 @@ private fun RestoreNote(onRestore: () -> Unit) {
                 Text(stringResource(R.string.upgrade_restore_button))
             }
         }
-    }
-}
-
-private fun ProductDetails.priceLabel(offerTag: String): String? {
-    val offer = subscriptionOfferDetails?.firstOrNull { it.offerTags.contains(offerTag) }
-        ?: subscriptionOfferDetails?.firstOrNull()
-    val recurringPhase = offer?.pricingPhases?.pricingPhaseList?.lastOrNull { it.priceAmountMicros > 0 }
-    return recurringPhase?.formattedPrice
-}
-
-private fun ProductDetails.trialLabel(offerTag: String): String? {
-    val offer = subscriptionOfferDetails?.firstOrNull { it.offerTags.contains(offerTag) }
-        ?: subscriptionOfferDetails?.firstOrNull()
-    val trialPhase = offer?.pricingPhases?.pricingPhaseList?.firstOrNull { it.priceAmountMicros == 0L }
-    return trialPhase?.let { phase ->
-        val duration = formatPeriod(phase.billingPeriod)
-        "最初の${duration}は無料"
-    }
-}
-
-private fun formatPeriod(period: String): String {
-    return when {
-        period.contains("P7D") -> "7日間"
-        period.contains("P1M") -> "1か月"
-        period.contains("P1Y") -> "1年間"
-        period.contains("P1W") -> "1週間"
-        else -> period
     }
 }

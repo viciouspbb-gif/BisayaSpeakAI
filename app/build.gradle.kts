@@ -1,6 +1,13 @@
 import java.util.Properties
 import java.io.FileInputStream
 
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        FileInputStream(localPropertiesFile).use { load(it) }
+    }
+}
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -25,19 +32,13 @@ android {
         }
         
         // APIキーをBuildConfigに追加
-        val localPropertiesFile = rootProject.file("local.properties")
-        val properties = Properties()
-        if (localPropertiesFile.exists()) {
-            properties.load(FileInputStream(localPropertiesFile))
-        }
-        
-        val geminiApiKey = properties.getProperty("GEMINI_API_KEY") ?: ""
+        val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
 
-        val openAiApiKey = properties.getProperty("OPENAI_API_KEY") ?: ""
+        val openAiApiKey = localProperties.getProperty("OPENAI_API_KEY") ?: ""
         buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
 
-        val serverBaseUrl = properties.getProperty("SERVER_BASE_URL")
+        val serverBaseUrl = localProperties.getProperty("SERVER_BASE_URL")
             ?: "https://bisaya-speak-ai-server-1.onrender.com"
         buildConfigField("String", "SERVER_BASE_URL", "\"$serverBaseUrl\"")
 
@@ -51,10 +52,12 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("D:/BisayaSpeakAI/bisaya-speak-ai.jks")
-            storePassword = "Bisaya2025"
-            keyAlias = "bisaya-speak-ai"
-            keyPassword = "Bisaya2025"
+            val keystorePath = localProperties.getProperty("RELEASE_STORE_FILE")
+                ?: "C:/BisayaSpeakAI/bisaya-speak-ai.jks"
+            storeFile = file(keystorePath)
+            storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD") ?: ""
+            keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS") ?: "bisaya-speak-ai"
+            keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD") ?: ""
         }
     }
 
