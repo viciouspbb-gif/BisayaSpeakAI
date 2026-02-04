@@ -187,7 +187,7 @@ fun AppNavGraph(
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
                             FeatureId.ROLE_PLAY -> {
                                 if (isProVersion) {
-                                    val defaultScenario = "rp_tarsier_morning"
+                                    val defaultScenario = "tari_infinite_mode"
                                     navController.navigate(
                                         AppRoute.RolePlayChat.route.replace("{scenarioId}", defaultScenario)
                                     )

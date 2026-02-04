@@ -24,6 +24,8 @@ import com.bisayaspeak.ai.voice.VoiceInputRecorder
 import java.io.File
 import java.util.Locale
 import java.util.UUID
+import kotlin.random.Random
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,7 +38,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
-import kotlin.random.Random
 import kotlin.text.RegexOption
 
 data class RoleplayOption(
@@ -75,7 +76,7 @@ data class RoleplayUiState(
     val successfulTurns: Int = 0,
     val showCompletionDialog: Boolean = false,
     val showOptionTutorial: Boolean = true,
-    val completionScore: Int = 0,
+    val completionScore: Int = 100,
     val pendingUnlockLevel: Int? = null,
     val pendingResult: RoleplayResultPayload? = null,
     val lockedOption: RoleplayOption? = null,
@@ -108,7 +109,12 @@ data class RoleplayUiState(
     val tutorialMessage: String = "",
     val tutorialHint: String = "",
     val translationDirective: String = "",
-    val translationLanguage: TranslationLanguage = TranslationLanguage.JAPANESE
+    val translationLanguage: TranslationLanguage = TranslationLanguage.JAPANESE,
+    val activeSceneLabel: String = "",
+    val activeSceneDescription: String = "",
+    val activeSceneIntroLine: String = "",
+    val autoExitArmed: Boolean = false,
+    val autoExitCountdownMs: Long = 0L
 )
 
 enum class TranslationLanguage { JAPANESE, ENGLISH }
@@ -117,17 +123,6 @@ class RoleplayChatViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val chatRepository: OpenAiChatRepository = OpenAiChatRepository(promptProvider = PromptProvider(application))
-    private val whisperRepository: WhisperRepository = WhisperRepository()
-    private val historyRepository: RoleplayHistoryRepository = RoleplayHistoryRepository(application)
-    private val voiceRecorder: VoiceInputRecorder = VoiceInputRecorder(application.applicationContext)
-    private val userPreferencesRepository: UserPreferencesRepository = UserPreferencesRepository(application)
-    private val usageRepository: UsageRepository = UsageRepository(application)
-    private val scenarioRepository: ScenarioRepository = ScenarioRepository(application)
-    private val promptProvider: PromptProvider = PromptProvider(application)
-    private val random = Random(System.currentTimeMillis())
-    private val themeManager = RoleplayThemeManager(random)
-
     private companion object {
         private const val START_TOKEN = "[START_CONVERSATION]"
         private const val TARI_SCENARIO_ID = "tari_infinite_mode"
@@ -135,12 +130,15 @@ class RoleplayChatViewModel(
         private const val COMPLETION_THRESHOLD = 80
         private const val LOCKED_OPTION_HOLD_MS = 500L
         private const val POST_CLEAR_SILENCE_MS = 1000L
+        private const val SCENARIO_LOG_TAG = "ScenarioGenerator"
         private const val CASUAL_MIN_TURN = 9
         private const val CASUAL_MAX_TURN = 11
         private const val SCENARIO_MIN_TURN = 11
-        private const val SCENARIO_MAX_TURN = 13
-        private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*:\\s*", RegexOption.IGNORE_CASE)
+        private const val SCENARIO_MAX_TURN = 15
+        private const val TARI_FORCED_TURNS = 15
+        private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*: \\s*", RegexOption.IGNORE_CASE)
         private const val OPTION_TUTORIAL_VERSION = 2
+        private val SITUATION_TAG_REGEX = Regex("\\[Situation:[^]]*]")
         private val DEFAULT_FAREWELL_KEYWORDS = setOf(
             "babay",
             "sige, una",
@@ -210,6 +208,19 @@ class RoleplayChatViewModel(
         )
     }
 
+    private val chatRepository: OpenAiChatRepository = OpenAiChatRepository(promptProvider = PromptProvider(application))
+    private val whisperRepository: WhisperRepository = WhisperRepository()
+    private val historyRepository: RoleplayHistoryRepository = RoleplayHistoryRepository(application)
+    private val voiceRecorder: VoiceInputRecorder = VoiceInputRecorder(application.applicationContext)
+    private val userPreferencesRepository: UserPreferencesRepository = UserPreferencesRepository(application)
+    private val usageRepository: UsageRepository = UsageRepository(application)
+    private val scenarioRepository: ScenarioRepository = ScenarioRepository(application)
+    private val promptProvider: PromptProvider = PromptProvider(application)
+    private val random = Random(System.currentTimeMillis())
+    private val themeManager = RoleplayThemeManager(random)
+    private val scenarioGenerator = ScenarioGenerator(random)
+
+
     private val _uiState = MutableStateFlow(RoleplayUiState())
     val uiState: StateFlow<RoleplayUiState> = _uiState.asStateFlow()
 
@@ -240,6 +251,8 @@ class RoleplayChatViewModel(
     private var lastSceneSeed: String? = null
     private var optionTutorialVisible: Boolean = true
     private var isJapaneseLocale: Boolean = true
+    private var activeDynamicScenario: DynamicScenarioTemplate? = null
+    private var autoExitJob: Job? = null
 
     private val localeState: StateFlow<Locale> = LocaleUtils.localeState
     private val translationLanguageState: StateFlow<TranslationLanguage> = localeState
@@ -312,6 +325,64 @@ class RoleplayChatViewModel(
                 }
             }
         }
+    }
+
+    private fun loadInfiniteTariMode(isProUser: Boolean) {
+        val fallbackScenario = scenarioRepository.getScenarioById(TARI_SCENARIO_ID)
+        if (fallbackScenario == null) {
+            Log.e("RoleplayChatViewModel", "Infinite mode base scenario missing")
+            _uiState.update { it.copy(isLoading = false, systemPrompt = "", options = emptyList()) }
+            return
+        }
+
+        resetAutoExitState()
+        val definition = convertToRoleplayScenarioDefinition(fallbackScenario)
+        history.clear()
+        branchFacts.clear()
+        pendingAutoExitHistory = null
+        scriptedRuntime = null
+        activeDynamicScenario = null
+        isProVersion = isProUser
+        selectActiveTheme(definition, forcedTurnLimit = TARI_FORCED_TURNS)
+        scenarioClosingGuidance = definition.closingGuidance
+        inClosingPhase = false
+        refreshFarewellSignals(definition)
+
+        _uiState.value = RoleplayUiState(
+            currentScenario = definition.copy(id = TARI_SCENARIO_ID),
+            missionGoal = definition.goal,
+            aiCharacterName = definition.aiRole,
+            systemPrompt = promptProvider.getRoleplaySystemPrompt(TARI_SCENARIO_ID),
+            messages = emptyList(),
+            isLoading = true,
+            isProUser = isProVersion,
+            userGender = currentUserGender,
+            activeThemeTitle = definition.title,
+            activeThemeDescription = definition.description,
+            activeThemePersona = definition.aiRole,
+            activeThemeGoal = definition.goal,
+            activeThemeFlavor = activeTheme.flavor,
+            activeThemeIntroLine = "",
+            activeThemeFarewellBisaya = activeTheme.closingCue.bisaya,
+            activeThemeFarewellTranslation = activeTheme.closingCue.translation,
+            activeThemeFarewellExplanation = activeTheme.closingCue.explanation,
+            activeSceneLabel = "",
+            activeSceneDescription = "",
+            activeSceneIntroLine = "",
+            turnsTarget = endingTurnTarget,
+            isClosingPhase = inClosingPhase,
+            scenarioClosingGuidance = scenarioClosingGuidance,
+            showOptionTutorial = optionTutorialVisible,
+            translationDirective = translationDirective.value
+        )
+
+        if (isJapaneseLocale) {
+            injectThemeIntroLine()
+        }
+        requestAiTurn(
+            scenario = definition.copy(id = TARI_SCENARIO_ID),
+            userMessage = START_TOKEN
+        )
     }
 
     private fun selectActiveTheme(scenario: RoleplayScenarioDefinition, forcedTurnLimit: Int? = null) {
@@ -394,6 +465,11 @@ class RoleplayChatViewModel(
     }
 
     fun loadScenario(scenarioId: String, isProUser: Boolean = isProVersion) {
+        if (scenarioId == TARI_SCENARIO_ID) {
+            loadInfiniteTariMode(isProUser)
+            return
+        }
+
         val scenario = scenarioRepository.getScenarioById(scenarioId)
         if (scenario == null) {
             Log.e("RoleplayChatViewModel", "Scenario not found: $scenarioId")
@@ -407,8 +483,9 @@ class RoleplayChatViewModel(
         branchFacts.clear()
         pendingAutoExitHistory = null
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
+        activeDynamicScenario = null
         isProVersion = isProUser
-        val forcedTurnLimit = if (scenario.id == TARI_SCENARIO_ID) 13 else null
+        val forcedTurnLimit = if (scenario.id == TARI_SCENARIO_ID) TARI_FORCED_TURNS else null
         selectActiveTheme(definition, forcedTurnLimit)
         scenarioClosingGuidance = definition.closingGuidance
         inClosingPhase = false
@@ -442,6 +519,9 @@ class RoleplayChatViewModel(
             activeThemeFarewellBisaya = closingCue.bisaya,
             activeThemeFarewellTranslation = localizedFarewellTranslation,
             activeThemeFarewellExplanation = localizedFarewellExplanation,
+            activeSceneLabel = localizedThemeTitle,
+            activeSceneDescription = localizedThemeDescription,
+            activeSceneIntroLine = localizedIntroLine.ifBlank { definition.initialMessage },
             turnsTarget = endingTurnTarget,
             isClosingPhase = inClosingPhase,
             scenarioClosingGuidance = scenarioClosingGuidance,
@@ -486,6 +566,7 @@ class RoleplayChatViewModel(
     }
 
     private fun injectThemeIntroLine() {
+        if (_uiState.value.currentScenario?.id == TARI_SCENARIO_ID) return
         val introLine = activeTheme.introLine.takeIf { it.isNotBlank() } ?: return
         val introMessage = ChatMessage(
             id = UUID.randomUUID().toString(),
@@ -503,6 +584,7 @@ class RoleplayChatViewModel(
     }
 
     fun selectOption(optionId: String) {
+        if (_uiState.value.isEndingSession) return
         val option = _uiState.value.options.find { it.id == optionId } ?: return
         if (!_uiState.value.isProUser && option.requiresPro) return
         if (_uiState.value.isLoading && scriptedRuntime == null) return
@@ -545,6 +627,7 @@ class RoleplayChatViewModel(
 
     fun submitFreeFormMessage(inputText: String) {
         val scenario = _uiState.value.currentScenario ?: return
+        if (_uiState.value.isEndingSession) return
         val trimmed = inputText.trim()
         if (trimmed.isEmpty()) return
         if (_uiState.value.isLoading) return
@@ -569,7 +652,9 @@ class RoleplayChatViewModel(
                 isClosingPhase = it.isClosingPhase || farewellDetected,
                 pendingExitHistory = null,
                 isEndingSession = false,
-                finalFarewellMessageId = null
+                finalFarewellMessageId = null,
+                completedTurns = it.completedTurns + 1,
+                successfulTurns = it.successfulTurns + 1
             )
         }
 
@@ -579,6 +664,7 @@ class RoleplayChatViewModel(
     }
 
     fun startVoiceRecording() {
+        if (_uiState.value.isEndingSession) return
         if (_uiState.value.isVoiceRecording || _uiState.value.isVoiceTranscribing || _uiState.value.isLoading) return
         try {
             val file = voiceRecorder.startRecording()
@@ -614,6 +700,7 @@ class RoleplayChatViewModel(
     }
 
     fun stopVoiceRecordingAndSend() {
+        if (_uiState.value.isEndingSession) return
         if (!_uiState.value.isVoiceRecording) return
         val recordedFile = try {
             voiceRecorder.stopRecording()
@@ -729,13 +816,17 @@ class RoleplayChatViewModel(
     }
 
     fun consumePendingExitHistory() {
-        _uiState.update { it.copy(pendingExitHistory = null) }
+        _uiState.update { it.copy(pendingExitHistory = null, autoExitArmed = false) }
     }
 
-    fun prepareImmediateExit(): List<MissionHistoryMessage> {
+    fun prepareImmediateExit(autoTriggered: Boolean = false): List<MissionHistoryMessage> {
+        if (!autoTriggered) {
+            cancelAutoExitCountdown()
+        }
         val snapshot = history.toList()
         pendingAutoExitHistory = null
         _uiState.update {
+            val keepAutoExit = autoTriggered && it.autoExitArmed
             it.copy(
                 pendingExitHistory = snapshot,
                 options = emptyList(),
@@ -743,7 +834,9 @@ class RoleplayChatViewModel(
                 lockedOption = null,
                 showCompletionDialog = true,
                 isEndingSession = true,
-                finalFarewellMessageId = null
+                finalFarewellMessageId = null,
+                autoExitCountdownMs = 0L,
+                autoExitArmed = keepAutoExit
             )
         }
         return snapshot
@@ -812,12 +905,12 @@ class RoleplayChatViewModel(
     }
 
     fun forceCompleteScenario() {
-        queueCompletion(calculateScore())
+        queueCompletion()
     }
 
     private fun finalizeScriptedScenario() {
         scriptedRuntime = null
-        queueCompletion(calculateScore())
+        queueCompletion()
     }
 
     private fun triggerAutoExit(historySnapshot: List<MissionHistoryMessage>) {
@@ -829,6 +922,22 @@ class RoleplayChatViewModel(
                 lockedOption = null,
                 finalFarewellMessageId = null
             )
+        }
+    }
+
+    private fun scheduleAutoExit() {
+        autoExitJob?.cancel()
+        autoExitJob = viewModelScope.launch {
+            val delayMs = 3000L
+            _uiState.update { it.copy(autoExitCountdownMs = delayMs, autoExitArmed = true) }
+            var remaining = delayMs
+            while (remaining > 0) {
+                delay(1000L)
+                remaining -= 1000L
+                val snapshot = remaining.coerceAtLeast(0L)
+                _uiState.update { it.copy(autoExitCountdownMs = snapshot) }
+            }
+            prepareImmediateExit(autoTriggered = true)
         }
     }
 
@@ -864,27 +973,33 @@ class RoleplayChatViewModel(
     }
 
     private fun applyAiPayload(payload: RoleplayAiResponsePayload) {
-        val aiSpeech = payload.aiSpeech.ifBlank { "..." }
+        val rawAiSpeech = payload.aiSpeech.ifBlank { "..." }
+        val finishDetected = rawAiSpeech.contains("[FINISH]")
+        val aiSpeech = sanitizeSystemTags(rawAiSpeech.replace("[FINISH]", "").trim()).ifBlank { "..." }
+        val aiTranslation = sanitizeSystemTags(payload.aiTranslation.replace("[FINISH]", "").trim())
+
         history.add(MissionHistoryMessage(aiSpeech, isUser = false))
         val aiMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
             text = aiSpeech,
             isUser = false,
-            translation = payload.aiTranslation.takeIf { it.isNotBlank() },
+            translation = aiTranslation.takeIf { it.isNotBlank() },
             voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
         )
         val isTariScenario = _uiState.value.currentScenario?.id == TARI_SCENARIO_ID
         val options = payload.options
             .filter { it.text.isNotBlank() }
             .map {
+                val optionText = stripLearnerNames(sanitizeSystemTags(it.text))
+                val optionHint = if (isProVersion) stripLearnerNames(sanitizeSystemTags(it.translation)) else null
                 RoleplayOption(
-                    text = it.text,
-                    hint = if (isProVersion) it.translation else null,
+                    text = optionText,
+                    hint = optionHint,
                     tone = it.tone
                 )
             }.filterForAccess()
         val ensuredOptions = if (options.isNotEmpty()) options else buildFallbackOptions()
-        val farewellDetected = containsFarewellCue(aiSpeech) || containsFarewellCue(payload.aiTranslation)
+        val farewellDetected = finishDetected || containsFarewellCue(aiSpeech) || containsFarewellCue(aiTranslation)
 
         scriptedTurnsRemaining = (scriptedTurnsRemaining - 1).coerceAtLeast(0)
         if (!inClosingPhase && scriptedTurnsRemaining <= 2) {
@@ -892,6 +1007,7 @@ class RoleplayChatViewModel(
         }
 
         val sanitizedOptions = when {
+            finishDetected -> emptyList()
             farewellDetected -> emptyList()
             scriptedTurnsRemaining <= 0 -> emptyList()
             inClosingPhase && scriptedTurnsRemaining <= 0 -> emptyList()
@@ -900,6 +1016,10 @@ class RoleplayChatViewModel(
         }
 
         val aiClosedConversation = sanitizedOptions.isEmpty() || farewellDetected
+
+        if (finishDetected) {
+            cancelVoiceRecording()
+        }
 
         _uiState.update {
             it.copy(
@@ -910,15 +1030,15 @@ class RoleplayChatViewModel(
                 lockedOption = null,
                 turnsTarget = scriptedTurnsRemaining.coerceAtLeast(0),
                 isClosingPhase = inClosingPhase,
-                isEndingSession = aiClosedConversation && sanitizedOptions.isEmpty(),
+                isEndingSession = finishDetected || (aiClosedConversation && sanitizedOptions.isEmpty()),
                 finalFarewellMessageId = if (aiClosedConversation && sanitizedOptions.isEmpty()) aiMsg.id else null,
                 pendingExitHistory = if (aiClosedConversation && sanitizedOptions.isEmpty()) it.pendingExitHistory else null
             )
         }
 
-        val shouldComplete = (inClosingPhase && aiClosedConversation) || (scriptedTurnsRemaining <= 0 && aiClosedConversation)
+        val shouldComplete = finishDetected || (inClosingPhase && aiClosedConversation) || (scriptedTurnsRemaining <= 0 && aiClosedConversation)
         if (shouldComplete) {
-            queueCompletion(calculateScore())
+            queueCompletion()
         }
     }
 
@@ -950,6 +1070,57 @@ class RoleplayChatViewModel(
         }
     }
 
+    private fun ensureTariScenarioLocked(userMessage: String?): DynamicScenarioTemplate? {
+        if (activeDynamicScenario != null) {
+            return activeDynamicScenario
+        }
+        val selected = scenarioGenerator.selectScenario(userMessage, null)
+        activeDynamicScenario = selected
+        selected?.let { template ->
+            val label = template.label.resolve(isJapaneseLocale)
+            Log.d(SCENARIO_LOG_TAG, "Chosen Scenario: $label (id=${template.id})")
+            _uiState.update { state ->
+                state.copy(
+                    activeSceneLabel = label,
+                    activeSceneDescription = template.description.resolve(isJapaneseLocale),
+                    activeSceneIntroLine = buildDynamicSceneIntroLine(template)
+                )
+            }
+        }
+        return selected
+    }
+
+    private fun sanitizeSystemTags(text: String?): String {
+        if (text.isNullOrBlank()) return text.orEmpty()
+        return SITUATION_TAG_REGEX.replace(text, "").replace("  ", " ").trim()
+    }
+
+    private fun stripLearnerNames(text: String?): String {
+        if (text.isNullOrBlank()) return ""
+        val names = buildList {
+            userNickname?.takeIf { it.isNotBlank() }?.let { add(it) }
+            calloutBisaya.takeIf { it.isNotBlank() }?.let { add(it) }
+            calloutEnglish.takeIf { it.isNotBlank() }?.let { add(it) }
+        }
+        if (names.isEmpty()) return text
+        var result: String = text
+        names.forEach { name ->
+            val pattern = Regex("(?i)\\b${Regex.escape(name.trim())}\\b[,:\\-\\s]*")
+            result = result.replace(pattern, "")
+        }
+        return result.replace("  ", " ").trim()
+    }
+
+    private fun buildDynamicSceneIntroLine(template: DynamicScenarioTemplate): String {
+        val label = template.label.resolve(isJapaneseLocale)
+        val description = template.description.resolve(isJapaneseLocale)
+        return if (isJapaneseLocale) {
+            "今日は『$label』のシチュエーションで練習しよう。$description"
+        } else {
+            "Let's practice the '$label' scenario today. $description"
+        }
+    }
+
     private fun drawSceneSeed(): String {
         val candidate = buildString {
             append("場所: ${SCENE_LOCATIONS.random(random)} / ")
@@ -964,7 +1135,7 @@ class RoleplayChatViewModel(
         return candidate
     }
 
-    private fun queueCompletion(score: Int) {
+    private fun queueCompletion() {
         val farewell = forcedTariFarewell() ?: selectCompletionFarewell()
         inClosingPhase = false
         val farewellMessage = ChatMessage(
@@ -980,7 +1151,7 @@ class RoleplayChatViewModel(
         _uiState.update {
             it.copy(
                 showCompletionDialog = true,
-                completionScore = score.coerceIn(0, 100),
+                completionScore = 100,
                 messages = it.messages + farewellMessage,
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
@@ -993,19 +1164,35 @@ class RoleplayChatViewModel(
                 pendingExitHistory = historySnapshot
             )
         }
-    }
-
-    private fun calculateScore(): Int {
-        val state = _uiState.value
-        if (state.completedTurns == 0) return 100
-        val ratio = state.successfulTurns.toFloat() / state.completedTurns.toFloat()
-        return (ratio * 100).toInt().coerceIn(0, 100)
+        scheduleAutoExit()
     }
 
     private fun buildRoleplayPrompt(
         scenario: RoleplayScenarioDefinition,
         userMessage: String
     ): String {
+        val isTariScenario = scenario.id == TARI_SCENARIO_ID
+        val sanitizedUserMessage = userMessage.takeUnless { it == START_TOKEN }
+        val dynamicScenario = if (isTariScenario) {
+            ensureTariScenarioLocked(sanitizedUserMessage)
+        } else null
+        if (!isTariScenario) {
+            activeDynamicScenario = null
+        }
+
+        val totalTurnBudget = if (isTariScenario) TARI_FORCED_TURNS else endingTurnTarget.coerceAtLeast(1)
+        val turnsCompleted = (totalTurnBudget - scriptedTurnsRemaining).coerceAtLeast(0)
+        val currentTurnNumber = (turnsCompleted + 1).coerceAtMost(totalTurnBudget)
+        val turnStatusLine = "現在のターン数：$currentTurnNumber / $totalTurnBudget"
+        val sceneLabelForPrompt = dynamicScenario?.label?.resolve(isJapaneseLocale)?.ifBlank { scenario.title }
+            ?: scenario.title
+        val sceneDescriptionForPrompt = dynamicScenario?.description?.resolve(isJapaneseLocale)?.ifBlank { scenario.description }
+            ?: scenario.description
+        val tariRoleForPrompt = dynamicScenario?.tariRole?.resolve(isJapaneseLocale)?.ifBlank { scenario.aiRole }
+            ?: scenario.aiRole
+        val learnerRoleForPrompt = dynamicScenario?.userRole?.resolve(isJapaneseLocale)?.ifBlank { "Learner" }
+            ?: "Learner"
+
         val translationLanguage = translationLanguageState.value
         val historyText = history.joinToString(separator = "\n") { entry ->
             val speaker = if (entry.isUser) "USER" else "AI"
@@ -1070,22 +1257,80 @@ class RoleplayChatViewModel(
 
         val closingDirective = buildClosingDirective()
         val sceneSeed = drawSceneSeed()
+        val dynamicScenarioBlock = dynamicScenario?.let {
+            val label = it.label.resolve(isJapaneseLocale)
+            val description = it.description.resolve(isJapaneseLocale)
+            val tariRole = it.tariRole.resolve(isJapaneseLocale)
+            val learnerRole = it.userRole.resolve(isJapaneseLocale)
+            val guidance = it.guidance.resolve(isJapaneseLocale)
+            """
+                [DYNAMIC_SCENARIO]
+                - Situation label: $label
+                - Situation description: $description
+                - Tari role: $tariRole
+                - Learner role: $learnerRole
+                - Guidance: $guidance
+                - Opening cue: Begin your next response by naturally describing this situation in Bisaya (no bracketed tags).
+                - Context lock: You are physically at "$label". Never invent other locations or switch to unrelated small talk (e.g.,散歩,植物,旅行). If the learner strays, gently remind them that you are still at "$label" and steer them back.
+                - Reminder: Mention the learner's name or nickname only inside Tari's own dialogue. Never include it inside suggested learner responses.
+            """.trimIndent()
+        }
+
+        val scenarioCandidates: List<String> = if (isTariScenario) {
+            scenarioGenerator.shuffledTemplates().mapIndexed { index, template ->
+                val candidateLabel = template.label.resolve(isJapaneseLocale)
+                val candidateDescription = template.description.resolve(isJapaneseLocale)
+                val candidateTariRole = template.tariRole.resolve(isJapaneseLocale)
+                val candidateLearnerRole = template.userRole.resolve(isJapaneseLocale)
+                "${index + 1}. $candidateLabel / $candidateDescription / Tari=$candidateTariRole / Learner=$candidateLearnerRole"
+            }
+        } else emptyList()
 
         val systemPromptWithGender = buildString {
+            append(turnStatusLine)
+            append("\n")
             append(basePrompt)
+            append("\n\n現在の舞台: $sceneLabelForPrompt")
+            append("\n- 場所説明: $sceneDescriptionForPrompt")
+            append("\n- Tariの役割: $tariRoleForPrompt")
+            append("\n- Learnerの役割/視点: $learnerRoleForPrompt")
+            append("\n- 絶対厳守: この舞台以外のトピックや場所（植物、散歩、別の建物など）を持ち込まない。ユーザーが脱線しても丁寧に現在地へ戻す。")
+            append("\n- Location lock reminder: 今も $sceneLabelForPrompt にいる。会話の途中でも必ずこの場所の描写とタスクに沿って進行する。")
+            append("\n- Opening rule: START_TOKEN やシーン開始時は、最初の1文で現在地と役割を描写し、そこから会話を始める。")
+            if (isTariScenario) {
+                append("\n\n指示: 下記のシチュエーション候補は毎回シャッフルされます。今から提示する複数のシチュエーションの中から必ず1つをランダムに選び、その役になりきって開始してください。前回までの内容や散歩の設定はすべて忘れてリセットしなさい。")
+                append("\n[DYNAMIC_SCENARIO_CANDIDATES]")
+                scenarioCandidates.forEach { candidate -> append("\n$candidate") }
+                append("\n必ず1つを即座に選び、その設定だけを使って会話を進めてください。")
+                append("\nUIにシチュエーション名が表示されるため、セリフ内では[Situation: ...]のようなタグは使わず、自然な導入で状況を説明しなさい。")
+                append("\n起承転結ガイドライン: 15ターンで小さなドラマを完結させなさい。")
+                append("\n- 起 (ターン1〜4): シチュエーションを描写し、関係性と課題を丁寧に提示する。")
+                append("\n- 承 (ターン5〜8): ユーザーの感情や要望を深掘りし、話題を広げて親密さを高める。")
+                append("\n- 転 (ターン11〜13): 予想外の出来事や感情の揺れを起こしながらも、新しい話題を追加せず既存テーマを掘り下げなさい。ユーザーが質問を重ねても、『それはまた${sceneLabelForPrompt}の続きをしながら話そうね』『次はあそこのスポットで聞かせて』のように優しく次のタイミングに繋ぎ、突き放さないこと。")
+                append("\n- 結 (ターン12〜15): 13〜15ターン目で必ず物語を収束させ、Tari自ら状況に基づく別れの理由を創作して[FINISH]へ導く。")
+                append("\n段階的プロンプト: 現在のターン番号を常に意識し、9ターン目までは自由に話題を展開して良いが、10ターン目以降は新規トピックを避けて結末に向けた会話へ移行すること。")
+                append("\n- 終盤移行: 10ターン目以降は${sceneLabelForPrompt}の現場タスク（診察案内・チェックイン完了・目標距離の達成など）を具体的に描写し、終わりの準備を進める。")
+                append("\n入力一貫性: ユーザーがパネル連打や音声入力を選んでも、あなたはこの起承転結マップを厳守し、会話が早く進んだ場合でも13〜15ターン目で必ず完結させる。")
+                append("\n終わりの理由バリエーション: [FINISH] 直前には、${sceneLabelForPrompt}の状況に合った具体的な『席を外す理由』を毎回変えて伝える（ジョギング=足が疲れた/ベンチで休む、ホテル=チェックインが終わった/荷物を部屋に置く など）。")
+                append("\n禁止フレーズ: 「また明日」「明日ね」などの定型文だけで会話を切り上げることは絶対にしない。必ず状況描写と行動理由を添える。")
+                append("\n15ターン目では、感謝・学び・次回への期待・状況理由・[FINISH] をまとめて必ず終了し、延長を許さない。")
+                append("\nシーン終幕ルール: ${sceneLabelForPrompt} (${sceneDescriptionForPrompt}) に沿った体の動きやタスクを理由に会話を締めること." +
+                        "例: 「目標距離に達したから水分補給しよう」「チェックインが終わったから部屋に荷物を置きに行く」など。")
+            }
             append("\n\n現在のテーマ: ${activeTheme.title} — ${activeTheme.description}。")
             append("\nタリの役柄: ${activeTheme.persona}")
             append("\n今回の目的: ${activeTheme.goalStatement}")
             append("\nテーマ演技ノート: ${activeTheme.instruction}")
             append("\n属性パネル例:")
-            activeTheme.attributePanels.forEach { panel ->
-                append("\n- $panel")
-            }
+            activeTheme.attributePanels.forEach { panel -> append("\n- $panel") }
             append("\nランダム設定: $sceneSeed")
             append("\n\n毎回シチュエーションが少しずつ変化するように、場所・時間帯・突発的な出来事（天気変化、サプライズ、ちょっとしたトラブル）を即興で1-2個追加。")
             append("\n例: ビーチ沿い、通学路、ナイトマーケット、突然のスコール、タクシーの料金交渉、忘れ物、友人とのバッタリ遭遇など。")
-            append("\n同じテーマでもディテールを必ず変え、季節感や混み具合、音・匂いなど感覚情報を織り込みなさい。描写文にもタガログ語を入れないこと。")
-            append("\nLANGUAGE FILTER: 設定描写・状況説明・メタ情報も必ずビサヤ語で書き、日本語訳以外にタガログ語を含めないこと。")
+            append("\n同じテーマでもディテールを必ず変え、季節感や混み具合、音・匂いなど感覚情報を織り込みなさい。描写文にもタガログ語を含めないこと。")
+            dynamicScenarioBlock?.let { block ->
+                append("\n\n")
+                append(block)
+            }
             append("\n\nあなたは${calloutBisaya}と呼ぶ相手に優しく寄り添いながら会話するタリです。")
             append("\n相手の呼び方: ${calloutBisaya} / ${calloutEnglish}。ユーザー性別: ${currentUserGender.name}。")
             append("\n\n")
@@ -1199,6 +1444,8 @@ class RoleplayChatViewModel(
         if (!inClosingPhase) return ""
         val scenario = _uiState.value.currentScenario
         val guidance = scenarioClosingGuidance
+        val activeSceneLabel = _uiState.value.activeSceneLabel.ifBlank { scenario?.title.orEmpty() }
+        val activeSceneDescription = _uiState.value.activeSceneDescription.ifBlank { scenario?.description.orEmpty() }
         val builder = StringBuilder()
         builder.append("CLOSING PHASE DIRECTIVES:\n")
         builder.append("- ABSOLUTE RULE: Do NOT introduce brand-new questions or tasks.\n")
@@ -1208,8 +1455,10 @@ class RoleplayChatViewModel(
         builder.append("- After the farewell, do not ask or imply any follow-up question. Keep learner options empty or limited to a single acknowledgement if absolutely necessary.\n")
         builder.append("- フェアウェル後は新規の問いかけをせず、必要なら『Salamat kaayo, mag-uban ta napud.』のような余韻のみ提示してください。\n")
         builder.append("- Even while closing, never switch to Tagalog; maintain 100% Cebuano vocabulary.\n")
+        builder.append("- Reference the current situation (${activeSceneLabel.ifBlank { scenario?.title.orEmpty() }}) and tie loose ends before ending.\n")
+        builder.append("- 直前の会話で扱ったシーン描写（${activeSceneDescription.ifBlank { scenario?.description.orEmpty() }})を呼び戻し、『ベンチで休む』『フロントで呼ばれた』などの具体的な理由を述べて終了する。\n")
+        builder.append("- 禁止: 『また明日ね』『とりあえず今日はここまで』のように状況に触れない汎用的な文だけで終了しない。\n")
         scenario?.let {
-            builder.append("- Reference the current situation (e.g., ${it.description}) and tie loose ends before ending.\n")
             builder.append("- Make the learner feel the mission \"${it.goal}\" was accomplished.\n")
         }
         builder.append("- Guide the conversation to a natural goodbye within the next ${scriptedTurnsRemaining.coerceAtLeast(1)} AI turns while allowing the learner to reply.\n")
@@ -1288,6 +1537,16 @@ class RoleplayChatViewModel(
     override fun onCleared() {
         super.onCleared()
         cancelVoiceRecording()
+    }
+
+    private fun cancelAutoExitCountdown() {
+        autoExitJob?.cancel()
+        autoExitJob = null
+    }
+
+    private fun resetAutoExitState() {
+        cancelAutoExitCountdown()
+        _uiState.update { it.copy(autoExitCountdownMs = 0L, autoExitArmed = false, pendingExitHistory = null) }
     }
 }
 

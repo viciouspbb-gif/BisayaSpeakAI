@@ -250,8 +250,9 @@
     <string name="roleplay_voice_cancel_desc">録音を破棄</string>
     <string name="roleplay_voice_cancel">キャンセル</string>
     <string name="roleplay_voice_permission_hint">マイク権限が必要です。ボタンを押して許可すると録音できます。</string>
-    <string name="roleplay_voice_last_memo">前回の音声メモ</string>
-    <string name="roleplay_coming_soon_message">近日公開</string>
+    <string name="roleplay_voice_last_memo">前回のメモ</string>
+    <string name="roleplay_voice_last_memo_quote">%1$s</string>
+    <string name="roleplay_finish_message">お疲れ様でした！%1$s が完了しました。</string>
     <string name="favorites">お気に入り</string>
     <string name="favorites_subtitle">お気に入り</string>
     <string name="dictionary">辞書</string>

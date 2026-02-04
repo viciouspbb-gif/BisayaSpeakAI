@@ -48,6 +48,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
@@ -258,10 +259,21 @@ fun RoleplayChatScreen(
     }
 
     val latestAiLine: ChatMessage? = uiState.messages.lastOrNull { !it.isUser }
-    val introLine = remember(uiState.activeThemeIntroLine, uiState.currentScenario?.initialMessage) {
-        uiState.activeThemeIntroLine.takeIf { it.isNotBlank() }
+    val introLine = remember(
+        uiState.activeSceneIntroLine,
+        uiState.activeThemeIntroLine,
+        uiState.currentScenario?.initialMessage
+    ) {
+        uiState.activeSceneIntroLine.takeIf { it.isNotBlank() }
+            ?: uiState.activeThemeIntroLine.takeIf { it.isNotBlank() }
             ?: uiState.currentScenario?.initialMessage?.takeIf { !it.isNullOrBlank() }?.trim()
     }
+    val scenarioLabel = uiState.activeThemeTitle
+        .ifBlank { uiState.currentScenario?.title.orEmpty() }
+        .ifBlank { stringResource(id = R.string.roleplay) }
+    val completionMessage = if (uiState.isEndingSession) {
+        stringResource(R.string.roleplay_finish_message, scenarioLabel)
+    } else null
 
     LaunchedEffect(latestAiLine?.id) {
         latestAiLine?.let { message ->
@@ -351,7 +363,7 @@ fun RoleplayChatScreen(
         )
     }
 
-    val themeTitle = uiState.activeThemeTitle.ifBlank { "Tari" }
+    val themeTitle = uiState.activeSceneLabel.ifBlank { uiState.activeThemeTitle.ifBlank { "Tari" } }
 
     Scaffold(
         topBar = {
@@ -446,10 +458,12 @@ fun RoleplayChatScreen(
                         .fillMaxWidth()
                         .wrapContentHeight(),
                     scale = stageScale,
-                    textScale = textScaleFactor
+                    textScale = textScaleFactor,
+                    isEndingSession = uiState.isEndingSession,
+                    completionMessage = completionMessage
                 )
 
-                Spacer(modifier = Modifier.height(sectionSpacing / 2))
+                Spacer(modifier = Modifier.height(sectionSpacing))
 
                 AnimatedVisibility(visible = uiState.showOptionTutorial) {
                     Surface(
@@ -545,7 +559,6 @@ fun RoleplayChatScreen(
             }
         }
     }
-
     if (showPermissionDialog) {
         AlertDialog(
             onDismissRequest = { showPermissionDialog = false },
@@ -621,8 +634,61 @@ private fun StageSection(
     onReplayRequest: () -> Unit,
     modifier: Modifier = Modifier,
     scale: Float = 1f,
-    textScale: Float = 1f
+    textScale: Float = 1f,
+    isEndingSession: Boolean,
+    completionMessage: String?
 ) {
+    if (isEndingSession && !completionMessage.isNullOrBlank()) {
+        Row(
+            modifier = modifier
+                .clip(RoundedCornerShape(32.dp))
+                .background(
+                    brush = Brush.verticalGradient(
+                        listOf(Color(0xFF0F172A), Color(0xFF1D2B55))
+                    )
+                )
+                .padding(horizontal = 16.dp * scale, vertical = 12.dp * scale),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp * scale)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.char_tarsier),
+                contentDescription = stringResource(R.string.roleplay_teacher_desc),
+                modifier = Modifier
+                    .size(110.dp * scale)
+                    .padding(end = 4.dp * scale),
+                contentScale = ContentScale.Fit
+            )
+            Surface(
+                modifier = Modifier.weight(1f),
+                color = Color(0xFFFFF4DB),
+                shape = RoundedCornerShape(32.dp),
+                tonalElevation = 6.dp,
+                shadowElevation = 8.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 20.dp * scale, vertical = 18.dp * scale),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp * scale)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = stringResource(R.string.roleplay_back_to_home),
+                        tint = Color(0xFF22C55E),
+                        modifier = Modifier.size(32.dp * scale)
+                    )
+                    Text(
+                        text = completionMessage,
+                        color = Color(0xFF154231),
+                        fontSize = 18.sp * scale * textScale,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+        return
+    }
+
     val bubbleKey = latestAiLine?.id ?: "initial"
     val defaultIntro = stringResource(R.string.roleplay_default_intro)
     val fullDisplayText = latestAiLine?.text ?: initialLine ?: defaultIntro

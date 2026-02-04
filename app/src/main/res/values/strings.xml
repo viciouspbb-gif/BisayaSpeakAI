@@ -281,6 +281,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="roleplay_voice_permission_hint">Microphone permission is needed. Grant it to start recording.</string>
     <string name="roleplay_voice_last_memo">Previous voice memo</string>
     <string name="roleplay_voice_last_memo_quote">%1$s</string>
+    <string name="roleplay_finish_message">Great job! %1$s is now complete.</string>
     <string name="roleplay_coming_soon_message">Coming soon</string>
     <string name="favorites">Favorites</string>
     <string name="favorites_subtitle">Favorites</string>
