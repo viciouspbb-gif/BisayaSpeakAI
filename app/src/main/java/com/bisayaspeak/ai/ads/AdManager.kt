@@ -14,11 +14,13 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.google.android.gms.ads.initialization.InitializationStatus
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +32,21 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 object AdManager {
+
+    private const val TAG = "AdManager"
+    private const val DEBUG_TAG = "DEBUG_ADS"
+
+    private inline fun logDebug(message: () -> String) {
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, message())
+        }
+    }
+
+    private inline fun logFlow(message: () -> String) {
+        if (BuildConfig.DEBUG) {
+            Log.d(DEBUG_TAG, message())
+        }
+    }
 
     // テスト用ID
     const val BANNER_TEST_ID = "ca-app-pub-3940256099942544/6300978111"
@@ -53,10 +70,19 @@ object AdManager {
     // ViewModel連携用コールバック
     private var adLoadCallback: ((Boolean) -> Unit)? = null
 
-    fun initialize(context: Context) {
-        Log.e("AdManager", "★★★ initialize CALLED ★★★")
+    fun initialize(
+        context: Context,
+        initializationStatus: InitializationStatus? = null,
+        requestConfiguration: RequestConfiguration? = null
+    ) {
+        logDebug { "initialize() invoked" }
         if (!AdsPolicy.areAdsEnabled) {
-            Log.e("AdManager", "Ads disabled, skipping reward load")
+            Log.i(TAG, "Ads disabled, skipping initialization")
+            return
+        }
+
+        if (isInitialized) {
+            Log.w("AdManager", "Already initialized. Skipping duplicate call.")
             return
         }
 
@@ -67,32 +93,37 @@ object AdManager {
             )
         }
 
-        scope.launch {
-            loadRewardInternal(context.applicationContext)
-        }
         initializationJob = scope.launch {
             try {
-                Log.e("AdManager", "Starting initialization with delay ${INIT_DELAY_MS}ms")
+                logDebug { "Marking AdMob as initialized (adapters=${initializationStatus?.adapterStatusMap?.keys})" }
                 delay(INIT_DELAY_MS)
-                withContext(Dispatchers.Main) {
-                    Log.e("AdManager", "Calling MobileAds.initialize...")
-                    MobileAds.initialize(context.applicationContext) {
-                        Log.e("AdManager", "MobileAds.initialize completed: adapters=${it.adapterStatusMap.keys}")
-                        isInitialized = true
-                        scope.launch { loadInterstitialInternal(context.applicationContext) }
-                        scope.launch { loadRewardInternal(context.applicationContext) }
+
+                requestConfiguration?.let { config ->
+                    try {
+                        MobileAds.setRequestConfiguration(config)
+                    } catch (configError: Exception) {
+                        Log.e("AdManager", "Failed to set request configuration: ${configError.message}", configError)
                     }
                 }
+                isInitialized = true
+                val appContext = context.applicationContext
+                scope.launch { loadInterstitialInternal(appContext) }
+                scope.launch { loadRewardInternal(appContext) }
             } catch (e: Exception) {
-                Log.e("AdManager", "Ad initialization failed: ${e.message}", e)
+                Log.e("AdManager", "Ad initialization marking failed: ${e.message}", e)
             }
         }
     }
 
     fun loadInterstitial(context: Context) {
-        Log.e("AdManager", "★★★ loadInterstitial CALLED ★★★")
+        logDebug { "loadInterstitial()" }
         if (!AdsPolicy.areAdsEnabled) {
-            Log.e("AdManager", "Ads disabled, skipping interstitial load")
+            Log.i(TAG, "Ads disabled, skipping interstitial load")
+            return
+        }
+
+        if (!isInitialized) {
+            Log.w("AdManager", "AdMob not initialized yet. Skipping interstitial load request.")
             return
         }
         scope.launch {
@@ -101,9 +132,14 @@ object AdManager {
     }
 
     fun loadReward(context: Context) {
-        Log.e("AdManager", "★★★ loadReward CALLED ★★★")
+        logDebug { "loadReward()" }
         if (!AdsPolicy.areAdsEnabled) {
-            Log.e("AdManager", "Ads disabled, skipping reward load")
+            Log.i(TAG, "Ads disabled, skipping reward load")
+            return
+        }
+
+        if (!isInitialized) {
+            Log.w("AdManager", "AdMob not initialized yet. Skipping reward load request.")
             return
         }
         scope.launch {
@@ -112,27 +148,27 @@ object AdManager {
     }
 
     private suspend fun loadInterstitialInternal(context: Context) {
-        Log.e("AdManager", "★★★ loadInterstitialInternal CALLED ★★★")
+        logDebug { "loadInterstitialInternal()" }
         try {
             withContext(Dispatchers.Main) {
-                Log.e("AdManager", "Loading interstitial ad...")
+                logDebug { "Loading interstitial ad" }
                 val adRequest = AdRequest.Builder().build()
+
                 InterstitialAd.load(
                     context,
                     AD_UNIT_ID_INTERSTITIAL,
                     adRequest,
                     object : InterstitialAdLoadCallback() {
                         override fun onAdLoaded(ad: InterstitialAd) {
-                            Log.e("AdManager", "★★★ onAdLoaded CALLED ★★★")
+                            logDebug { "Interstitial onAdLoaded" }
                             interstitialAd = ad
                             interstitialRetryDelayMs = MIN_BACKOFF_MS
-                            Log.e("AdManager", "Interstitial ad loaded: responseInfo=${ad.responseInfo}")
+                            logDebug { "Interstitial loaded: responseInfo=${ad.responseInfo}" }
                         }
 
                         override fun onAdFailedToLoad(adError: LoadAdError) {
-                            Log.e("AdManager", "★★★ onAdFailedToLoad CALLED ★★★")
+                            Log.w(TAG, "Interstitial failed: code=${adError.code}, message=${adError.message}")
                             interstitialAd = null
-                            Log.e("AdManager", "Interstitial load failed: code=${adError.code}, message=${adError.message}, response=${adError.responseInfo}")
                             scheduleInterstitialRetry(context)
                         }
                     })
@@ -144,8 +180,9 @@ object AdManager {
     }
 
     private suspend fun loadRewardInternal(context: Context) {
-        Log.e("AdManager", "★★★ loadRewardInternal CALLED ★★★")
+        logDebug { "loadRewardInternal()" }
         val adUnitId = AD_UNIT_ID_REWARD
+
         if (adUnitId.isBlank()) {
             Log.e("AdManager", "Rewarded ad unit id is blank. Falling back to retry.")
             scheduleRewardRetry(context)
@@ -153,8 +190,9 @@ object AdManager {
         }
         try {
             withContext(Dispatchers.Main) {
-                Log.e("AdManager", "Loading rewarded ad... (unit=$adUnitId)")
+                logDebug { "Loading rewarded ad (unit=$adUnitId)" }
                 val adRequest = AdRequest.Builder().build()
+
                 RewardedAd.load(
                     context,
                     adUnitId,
@@ -164,18 +202,17 @@ object AdManager {
                             rewardedAd = ad
                             rewardRetryDelayMs = MIN_BACKOFF_MS
                             adLoadCallback?.invoke(true)
-                            Log.d(
-                                "AdManager",
+                            logDebug {
                                 "Rewarded ad loaded: format=${ad.responseInfo?.loadedAdapterResponseInfo?.adError?.message ?: "n/a"}, response=${ad.responseInfo}"
-                            )
+                            }
                         }
 
                         override fun onAdFailedToLoad(adError: LoadAdError) {
                             rewardedAd = null
                             adLoadCallback?.invoke(false)
-                            Log.e(
-                                "AdManager",
-                                "Rewarded load failed (unit=$adUnitId): code=${adError.code}, message=${adError.message}, response=${adError.responseInfo}"
+                            Log.w(
+                                TAG,
+                                "Rewarded load failed (unit=$adUnitId): code=${adError.code}, message=${adError.message}"
                             )
                             scheduleRewardRetry(context)
                         }
@@ -192,7 +229,8 @@ object AdManager {
         if (!AdsPolicy.areAdsEnabled) return
         val delayMs = interstitialRetryDelayMs
         interstitialRetryDelayMs = (interstitialRetryDelayMs * 2).coerceAtMost(MAX_BACKOFF_MS)
-        Log.e("AdManager", "Scheduling interstitial retry in $delayMs ms")
+        logDebug { "Scheduling interstitial retry in $delayMs ms" }
+
         scope.launch {
             delay(delayMs)
             loadInterstitialInternal(context)
@@ -203,7 +241,8 @@ object AdManager {
         if (!AdsPolicy.areAdsEnabled) return
         val delayMs = rewardRetryDelayMs
         rewardRetryDelayMs = (rewardRetryDelayMs * 2).coerceAtMost(MAX_BACKOFF_MS)
-        Log.e("AdManager", "Scheduling reward retry in $delayMs ms")
+        logDebug { "Scheduling reward retry in $delayMs ms" }
+
         scope.launch {
             delay(delayMs)
             loadRewardInternal(context)
@@ -226,50 +265,56 @@ object AdManager {
     }
 
     fun showInterstitialNow(activity: Activity, onAdClosed: () -> Unit) {
-        Log.e("AdManager", "★★★ showInterstitialNow CALLED ★★★")
+        logDebug { "showInterstitialNow()" }
         if (!AdsPolicy.areAdsEnabled) {
-            Log.e("AdManager", "Ads disabled, calling onAdClosed immediately")
+            Log.i(TAG, "Ads disabled, calling onAdClosed immediately")
+            onAdClosed.safeInvoke()
+            return
+        }
+
+        if (!isInitialized) {
+            Log.w("AdManager", "Interstitial requested before initialization. Ignoring show request.")
             onAdClosed.safeInvoke()
             return
         }
         try {
             val ad = interstitialAd
             if (ad == null) {
-                Log.e("AdManager", "★★★ NO AD AVAILABLE ★★★, skipping ad and forcing navigation")
+                Log.w(TAG, "Interstitial not ready, skipping show request")
                 loadInterstitial(activity.applicationContext)
+
                 onAdClosed.safeInvoke()
                 return
             }
 
-            Log.e("AdManager", "★★★ SHOWING INTERSTITIAL AD ★★★")
+            logDebug { "Showing interstitial ad" }
             activity.runOnUiThread {
                 try {
                     ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                         override fun onAdDismissedFullScreenContent() {
-                            Log.e("AdManager", "★★★ onAdDismissedFullScreenContent CALLED ★★★")
+                            logDebug { "Interstitial dismissed" }
                             interstitialAd = null
                             loadInterstitial(activity.applicationContext)
                             onAdClosed.safeInvoke()
                         }
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            Log.e("AdManager", "★★★ onAdFailedToShowFullScreenContent CALLED ★★★: ${adError.message}")
+                            Log.e(TAG, "Interstitial show failed: ${adError.message}")
                             interstitialAd = null
-                            Log.e("AdManager", "Interstitial show failed: ${adError.message}")
                             loadInterstitial(activity.applicationContext)
                             onAdClosed.safeInvoke()
                         }
                     }
                     ad.show(activity)
                 } catch (e: Exception) {
-                    Log.e("AdManager", "★★★ EXCEPTION IN SHOW AD ★★★: ${e.message}", e)
+                    Log.e(TAG, "Exception while showing interstitial: ${e.message}", e)
                     interstitialAd = null
                     loadInterstitial(activity.applicationContext)
                     onAdClosed.safeInvoke()
                 }
             }
         } catch (e: Exception) {
-            Log.e("AdManager", "★★★ EXCEPTION IN showInterstitialNow ★★★: ${e.message}", e)
+            Log.e(TAG, "showInterstitialNow failed: ${e.message}", e)
             onAdClosed.safeInvoke()
         }
     }
@@ -279,22 +324,27 @@ object AdManager {
         timeoutMs: Long = 2_000L,
         onAdClosed: () -> Unit
     ) {
-        Log.e("AdManager", "★★★ showInterstitialWithTimeout CALLED ★★★ timeoutMs=$timeoutMs")
-        Log.e("DEBUG_ADS", "[AdManager] showInterstitialWithTimeout 呼び出し (timeoutMs=$timeoutMs)")
+        logDebug { "showInterstitialWithTimeout(timeoutMs=$timeoutMs)" }
+        logFlow { "showInterstitialWithTimeout 呼び出し (timeoutMs=$timeoutMs)" }
         if (!AdsPolicy.areAdsEnabled) {
-            Log.e("AdManager", "Ads disabled, calling onAdClosed immediately")
-            Log.e("DEBUG_ADS", "[AdManager] Ads無効のため即座にonAdClosed")
+            Log.i(TAG, "Ads disabled, calling onAdClosed immediately")
+            logFlow { "Ads無効のため即座にonAdClosed" }
+            onAdClosed.safeInvoke()
+            return
+        }
+        if (!isInitialized) {
+            Log.w(TAG, "Interstitial timeout show requested before initialization. Skipping.")
             onAdClosed.safeInvoke()
             return
         }
 
         val finished = AtomicBoolean(false)
         val handler = Handler(Looper.getMainLooper())
-        Log.e("DEBUG_ADS", "[AdManager] 2秒タイマー作動開始")
+        logFlow { "2秒タイマー作動開始" }
         val timeoutRunnable = Runnable {
-            Log.e("DEBUG_ADS", "[AdManager] タイムアウト発生 -> navigateToResult 強制呼び出し")
+            logFlow { "タイムアウト発生 -> navigateToResult 強制呼び出し" }
             if (finished.compareAndSet(false, true)) {
-                Log.e("AdManager", "★★★ TIMEOUT REACHED ★★★ ($timeoutMs ms), forcing navigation")
+                Log.w(TAG, "Interstitial timeout reached ($timeoutMs ms)")
                 onAdClosed.safeInvoke()
             }
         }
@@ -302,8 +352,8 @@ object AdManager {
 
         fun finish(reason: String) {
             if (finished.compareAndSet(false, true)) {
-                Log.e("DEBUG_ADS", "[AdManager] finish 呼び出し reason=$reason -> onAdClosed 実行")
-                Log.e("AdManager", "★★★ FINISH CALLED ★★★")
+                logFlow { "finish 呼び出し reason=$reason -> onAdClosed 実行" }
+                logDebug { "showInterstitialWithTimeout finished ($reason)" }
                 handler.removeCallbacks(timeoutRunnable)
                 onAdClosed.safeInvoke()
             }
@@ -312,57 +362,63 @@ object AdManager {
         try {
             val ad = interstitialAd
             if (ad == null) {
-                Log.e("AdManager", "★★★ NO AD AVAILABLE ★★★, forcing navigation immediately")
-                Log.e("DEBUG_ADS", "[AdManager] interstitialAd == null -> 即座にonAdClosed")
+                Log.w(TAG, "Interstitial not ready before timeout show")
+                logFlow { "interstitialAd == null -> 即座にonAdClosed" }
                 loadInterstitial(activity.applicationContext)
                 finish("interstitial_not_ready_before_show")
                 return
             }
 
-            Log.e("AdManager", "★★★ SHOWING INTERSTITIAL AD ★★★")
-            Log.e("DEBUG_ADS", "[AdManager] interstitialAd.show() 実行 (メインスレッドへpost)")
+            logDebug { "Showing interstitial with timeout" }
+            logFlow { "interstitialAd.show() 実行 (メインスレッドへpost)" }
             activity.runOnUiThread {
                 try {
                     ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                         override fun onAdDismissedFullScreenContent() {
-                            Log.e("AdManager", "★★★ onAdDismissedFullScreenContent CALLED ★★★")
+                            logDebug { "Interstitial dismissed (timeout variant)" }
                             interstitialAd = null
                             loadInterstitial(activity.applicationContext)
                             finish("onAdDismissedFullScreenContent")
                         }
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            Log.e("AdManager", "★★★ onAdFailedToShowFullScreenContent CALLED ★★★: ${adError.message}")
+                            Log.e(TAG, "Interstitial timeout show failed: ${adError.message}")
                             interstitialAd = null
-                            Log.e("AdManager", "Interstitial timeout show failed: ${adError.message}")
                             loadInterstitial(activity.applicationContext)
                             finish("onAdFailedToShowFullScreenContent")
                         }
                     }
                     ad.show(activity)
                 } catch (e: Exception) {
-                    Log.e("AdManager", "★★★ EXCEPTION IN SHOW AD ★★★: ${e.message}", e)
+                    Log.e(TAG, "Exception while showing interstitial with timeout: ${e.message}", e)
                     interstitialAd = null
                     loadInterstitial(activity.applicationContext)
                     finish("exception_in_runOnUiThread")
                 }
             }
         } catch (e: Exception) {
-            Log.e("AdManager", "★★★ EXCEPTION IN showInterstitialWithTimeout ★★★: ${e.message}", e)
+            Log.e(TAG, "showInterstitialWithTimeout failed: ${e.message}", e)
             finish("exception_before_show")
         }
     }
 
     fun checkAndShowInterstitial(activity: Activity, onAdClosed: () -> Unit) {
-        Log.e("AdManager", "★★★ checkAndShowInterstitial CALLED ★★★")
+        logDebug { "checkAndShowInterstitial()" }
         if (!AdsPolicy.areAdsEnabled) {
-            Log.e("AdManager", "Ads disabled, calling onAdClosed immediately")
+            Log.i(TAG, "Ads disabled, calling onAdClosed immediately")
+            onAdClosed.safeInvoke()
+            return
+        }
+
+        if (!isInitialized) {
+            Log.w("AdManager", "checkAndShowInterstitial invoked before initialization. Skipping.")
             onAdClosed.safeInvoke()
             return
         }
         try {
             playCounter++
             if (playCounter % 2 != 0) {
+
                 onAdClosed.safeInvoke()
                 return
             }
@@ -370,6 +426,7 @@ object AdManager {
             val ad = interstitialAd
             if (ad == null) {
                 loadInterstitial(activity.applicationContext)
+
                 onAdClosed.safeInvoke()
                 return
             }
@@ -385,7 +442,7 @@ object AdManager {
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                             interstitialAd = null
-                            Log.e("AdManager", "Interstitial show failed: ${adError.message}")
+                            Log.e(TAG, "Interstitial show failed: ${adError.message}")
                             loadInterstitial(activity.applicationContext)
                             onAdClosed.safeInvoke()
                         }
@@ -393,12 +450,12 @@ object AdManager {
                     ad.show(activity)
                 } catch (e: Exception) {
                     interstitialAd = null
-                    Log.e("AdManager", "Error showing interstitial: ${e.message}", e)
+                    Log.e(TAG, "Error showing interstitial: ${e.message}", e)
                     onAdClosed.safeInvoke()
                 }
             }
         } catch (e: Exception) {
-            Log.e("AdManager", "checkAndShowInterstitial failed: ${e.message}", e)
+            Log.e(TAG, "checkAndShowInterstitial failed: ${e.message}", e)
             onAdClosed.safeInvoke()
         }
     }
@@ -408,11 +465,16 @@ object AdManager {
             onAdClosed.safeInvoke()
             return
         }
+        if (!isInitialized) {
+            Log.w("AdManager", "Reward ad requested before initialization. Skipping show.")
+            onAdClosed.safeInvoke()
+            return
+        }
 
         try {
             val ad = rewardedAd
             if (ad == null) {
-                Log.w("AdManager", "Rewarded ad not ready")
+                Log.w(TAG, "Rewarded ad not ready")
                 loadReward(activity.applicationContext)
                 onAdClosed.safeInvoke()
                 return
@@ -429,12 +491,13 @@ object AdManager {
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                             rewardedAd = null
-                            Log.e("AdManager", "Rewarded show failed: ${adError.message}")
+                            Log.e(TAG, "Rewarded show failed: ${adError.message}")
                             loadReward(activity.applicationContext)
                             onAdClosed.safeInvoke()
                         }
                     }
                     ad.show(activity) { _ ->
+
                         try {
                             onRewardEarned()
                         } catch (callbackError: Exception) {
@@ -443,13 +506,13 @@ object AdManager {
                     }
                 } catch (e: Exception) {
                     rewardedAd = null
-                    Log.e("AdManager", "Error showing rewarded ad: ${e.message}", e)
+                    Log.e(TAG, "Error showing rewarded ad: ${e.message}", e)
                     loadReward(activity.applicationContext)
                     onAdClosed.safeInvoke()
                 }
             }
         } catch (e: Exception) {
-            Log.e("AdManager", "showRewardAd failed: ${e.message}", e)
+            Log.e(TAG, "showRewardAd failed: ${e.message}", e)
             onAdClosed.safeInvoke()
         }
     }
@@ -458,7 +521,7 @@ object AdManager {
         try {
             this()
         } catch (e: Exception) {
-            Log.e("AdManager", "Callback execution failed: ${e.message}", e)
+            Log.e(TAG, "Callback execution failed: ${e.message}", e)
         }
     }
 }

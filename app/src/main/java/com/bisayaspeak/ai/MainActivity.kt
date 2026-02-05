@@ -1,6 +1,7 @@
 package com.bisayaspeak.ai
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.AlertDialog
@@ -12,11 +13,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.rememberNavController
 import com.bisayaspeak.ai.ads.AdManager
-import androidx.activity.viewModels
-import com.bisayaspeak.ai.auth.AuthManager
 import com.bisayaspeak.ai.billing.BillingManager
 import com.bisayaspeak.ai.data.PurchaseStore
 import com.bisayaspeak.ai.data.model.UserPlan
@@ -25,6 +24,12 @@ import com.bisayaspeak.ai.ui.theme.BisayaSpeakAITheme
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 import com.bisayaspeak.ai.update.UpdateCheckResult
 import com.bisayaspeak.ai.update.UpdateManager
+import com.google.android.gms.ads.MobileAds
+import com.google.android.ump.ConsentDebugSettings
+import com.google.android.ump.ConsentInformation
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.FormError
+import com.google.android.ump.UserMessagingPlatform
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -35,6 +40,12 @@ class MainActivity : ComponentActivity() {
     private lateinit var purchaseStore: PurchaseStore
     private var updateManager: UpdateManager? = null
     private val isInAppUpdateSupported: Boolean by lazy { isInstalledFromPlayStore() }
+    private var adsInitializationTriggered = false
+
+    companion object {
+        private const val TAG = "MainActivity"
+        private const val CONSENT_TEST_DEVICE_HASH = ""
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +54,7 @@ class MainActivity : ComponentActivity() {
             FirebaseApp.initializeApp(this)
         }
 
-        AdManager.initialize(this)
+        requestUserConsentAndInitializeAds()
         
         // Billing初期化と購入リストア
         billingManager = BillingManager(this)
@@ -114,6 +125,65 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
+        }
+    }
+
+    private fun requestUserConsentAndInitializeAds() {
+        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        val consentParamsBuilder = ConsentRequestParameters.Builder()
+            .setTagForUnderAgeOfConsent(false)
+
+        if (BuildConfig.DEBUG) {
+            val debugSettingsBuilder = ConsentDebugSettings.Builder(this)
+                .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+            if (CONSENT_TEST_DEVICE_HASH.isNotBlank()) {
+                debugSettingsBuilder.addTestDeviceHashedId(CONSENT_TEST_DEVICE_HASH)
+            }
+            consentParamsBuilder.setConsentDebugSettings(debugSettingsBuilder.build())
+        }
+
+        val consentParams = consentParamsBuilder.build()
+
+        consentInformation.requestConsentInfoUpdate(
+            this,
+            consentParams,
+            {
+                loadAndShowConsentFormIfNeeded(consentInformation)
+            },
+            { requestError ->
+                Log.w(TAG, "Consent info update failed: ${requestError.message}")
+                startAdsAfterConsentIfAllowed(consentInformation)
+            }
+        )
+    }
+
+    private fun loadAndShowConsentFormIfNeeded(consentInformation: ConsentInformation) {
+        if (consentInformation.canRequestAds()) {
+            startAdsAfterConsentIfAllowed(consentInformation)
+            return
+        }
+
+        UserMessagingPlatform.loadAndShowConsentFormIfRequired(this) { formError: FormError? ->
+            formError?.let {
+                Log.w(TAG, "Consent form error: ${it.message}")
+            }
+            startAdsAfterConsentIfAllowed(consentInformation)
+        }
+    }
+
+    private fun startAdsAfterConsentIfAllowed(consentInformation: ConsentInformation) {
+        if (!consentInformation.canRequestAds()) {
+            Log.w(TAG, "Consent not granted yet. Skipping AdMob initialization.")
+            return
+        }
+        startAdsAfterConsent()
+    }
+
+    private fun startAdsAfterConsent() {
+        if (adsInitializationTriggered) return
+        adsInitializationTriggered = true
+        MobileAds.initialize(this) { initializationStatus ->
+            AdManager.initialize(this, initializationStatus)
         }
     }
     

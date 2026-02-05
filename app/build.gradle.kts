@@ -23,8 +23,8 @@ android {
         applicationId = "com.bisayaspeak.ai"
         minSdk = 24
         targetSdk = 35
-        versionCode = 48
-        versionName = "1.0.48"
+        versionCode = 49
+        versionName = "1.0.49"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -188,7 +188,8 @@ dependencies {
     
     // AdMob
     implementation("com.google.android.gms:play-services-ads:23.6.0")
-    
+    implementation("com.google.android.ump:user-messaging-platform:3.1.0")
+
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-auth-ktx")
