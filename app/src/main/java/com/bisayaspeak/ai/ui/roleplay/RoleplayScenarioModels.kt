@@ -31,6 +31,7 @@ data class RoleplayScenarioDefinition(
     val situation: String,
     val aiRole: String,
     val goal: String,
+    val targetGoal: String = goal,
     val iconEmoji: String,
     val initialMessage: String,
     val systemPrompt: String,

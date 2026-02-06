@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -62,6 +63,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -100,7 +102,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
-import com.bisayaspeak.ai.ui.roleplay.RoleplayThemeFlavor
+import com.bisayaspeak.ai.ui.roleplay.RoleplayChatViewModel
+import com.bisayaspeak.ai.ui.roleplay.RoleplayMode
 import com.bisayaspeak.ai.ui.roleplay.primarySpeechText
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
@@ -222,7 +225,7 @@ fun RoleplayChatScreen(
 
     val userPreviewCue = remember(uiState.userGender) {
         when (uiState.userGender) {
-            UserGender.MALE -> GeminiVoiceCue.TALK_LOW
+            UserGender.MALE -> GeminiVoiceCue.TALK_HIGH
             UserGender.FEMALE -> GeminiVoiceCue.TALK_HIGH
             UserGender.OTHER -> GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
         }
@@ -439,123 +442,155 @@ fun RoleplayChatScreen(
 
             val isJapaneseLocale = locale.language.equals("ja", ignoreCase = true)
 
-            Column(
-                modifier = columnModifier,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                StageSection(
-                    latestAiLine = latestAiLine,
-                    speakingMessageId = speakingMessageId,
-                    initialLine = introLine,
-                    onReplayRequest = {
-                        latestAiLine?.let { message ->
-                            speakAiLine(message.text, message.voiceCue, message.id)
-                        } ?: introLine?.let { intro ->
-                            speakAiLine(intro, GeminiVoiceCue.ROLEPLAY_NOVA_CUTE, null)
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    scale = stageScale,
-                    textScale = textScaleFactor,
-                    isEndingSession = uiState.isEndingSession,
-                    completionMessage = completionMessage
-                )
-
-                Spacer(modifier = Modifier.height(sectionSpacing))
-
-                AnimatedVisibility(visible = uiState.showOptionTutorial) {
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0x3322C55E),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF22C55E)),
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = columnModifier,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    StageSection(
+                        latestAiLine = latestAiLine,
+                        speakingMessageId = speakingMessageId,
+                        initialLine = introLine,
+                        onReplayRequest = {
+                            latestAiLine?.let { message ->
+                                speakAiLine(message.text, message.voiceCue, message.id)
+                            } ?: introLine?.let { intro ->
+                                speakAiLine(intro, GeminiVoiceCue.ROLEPLAY_NOVA_CUTE, null)
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 4.dp)
-                    ) {
-                        Row(
+                            .wrapContentHeight(),
+                        scale = stageScale,
+                        textScale = textScaleFactor,
+                        isEndingSession = uiState.isEndingSession,
+                        completionMessage = completionMessage,
+                        roleplayMode = uiState.roleplayMode
+                    )
+
+                    Spacer(modifier = Modifier.height(sectionSpacing))
+
+                    AnimatedVisibility(visible = uiState.showOptionTutorial) {
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = Color(0x3322C55E),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF22C55E)),
                             modifier = Modifier
-                                .padding(horizontal = 16.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = stringResource(R.string.roleplay_info_desc),
-                                tint = Color(0xFF22C55E)
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.roleplay_tutorial_message),
-                                    color = Color.White,
-                                    fontSize = 13.sp * textScaleFactor
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = stringResource(R.string.roleplay_info_desc),
+                                    tint = Color(0xFF22C55E)
                                 )
-                                Text(
-                                    text = stringResource(R.string.roleplay_tutorial_hint),
-                                    color = Color(0xFF9FB4D3),
-                                    fontSize = 11.sp * textScaleFactor,
-                                    modifier = Modifier.padding(top = 2.dp)
-                                )
-                            }
-                            TextButton(onClick = { viewModel.dismissOptionTutorial() }) {
-                                Text(stringResource(R.string.roleplay_tutorial_ok), color = Color(0xFF22C55E))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.roleplay_tutorial_message),
+                                        color = Color.White,
+                                        fontSize = 13.sp * textScaleFactor
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.roleplay_tutorial_hint),
+                                        color = Color(0xFF9FB4D3),
+                                        fontSize = 11.sp * textScaleFactor,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+                                TextButton(onClick = { viewModel.dismissOptionTutorial() }) {
+                                    Text(stringResource(R.string.roleplay_tutorial_ok), color = Color(0xFF22C55E))
+                                }
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(sectionSpacing))
+                    Spacer(modifier = Modifier.height(sectionSpacing))
+
+                    if (!uiState.isEndingSession) {
+                        ResponsePanel(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            isLoading = uiState.isLoading,
+                            options = uiState.options,
+                            peekedHintIds = uiState.peekedHintOptionIds,
+                            onSelect = { viewModel.selectOption(it) },
+                            onHintPeek = { viewModel.markHintPeeked(it) },
+                            onPreview = { text -> speakUserPreview(text) },
+                            optionSpacing = optionSpacing,
+                            scale = scaleFactor,
+                            cardHorizontalPadding = cardHorizontalPadding,
+                            cardVerticalPadding = cardVerticalPadding,
+                            isJapaneseLocale = isJapaneseLocale
+                        )
+
+                        Spacer(modifier = Modifier.height(sectionSpacing))
+                    }
+
+                    Spacer(modifier = Modifier.height(bottomContentSpacer))
+                }
 
                 if (!uiState.isEndingSession) {
-                    ResponsePanel(
+                    VoiceInputPanel(
                         modifier = Modifier
-                            .fillMaxWidth(),
-                        isLoading = uiState.isLoading,
-                        options = uiState.options,
-                        peekedHintIds = uiState.peekedHintOptionIds,
-                        onSelect = { viewModel.selectOption(it) },
-                        onHintPeek = { viewModel.markHintPeeked(it) },
-                        onPreview = { text -> speakUserPreview(text) },
-                        optionSpacing = optionSpacing,
-                        scale = scaleFactor,
-                        cardHorizontalPadding = cardHorizontalPadding,
-                        cardVerticalPadding = cardVerticalPadding,
-                        isJapaneseLocale = isJapaneseLocale
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .padding(horizontal = 20.dp, vertical = voicePanelVerticalPadding)
+                            .padding(bottom = voicePanelBottomSpace)
+                            .navigationBarsPadding(),
+                        isRecording = uiState.isVoiceRecording,
+                        isTranscribing = uiState.isVoiceTranscribing,
+                        permissionGranted = audioPermissionGranted,
+                        lastTranscribedText = uiState.lastTranscribedText,
+                        errorMessage = uiState.voiceErrorMessage,
+                        onMicClick = micButtonAction,
+                        onCancelRecording = { viewModel.cancelVoiceRecording() },
+                        scale = voicePanelScale,
+                        onPanelClick = { micButtonAction() }
                     )
-
-                    Spacer(modifier = Modifier.height(sectionSpacing))
-                } else {
-                    ExitReminderCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = exitEnabled,
-                        onNavigateTop = handleExitClick
-                    )
-
-                    Spacer(modifier = Modifier.height(sectionSpacing))
                 }
 
-                Spacer(modifier = Modifier.height(bottomContentSpacer))
-            }
+                if (uiState.isSessionEnded) {
+                    val finaleText = uiState.finalMessage.ifBlank {
+                        stringResource(R.string.roleplay_finish_message, scenarioLabel)
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.7f))
+                            .align(Alignment.Center)
+                            .padding(horizontal = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = finaleText,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(24.dp)
+                        )
 
-            if (!uiState.isEndingSession) {
-                VoiceInputPanel(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .padding(horizontal = 20.dp, vertical = voicePanelVerticalPadding)
-                        .padding(bottom = voicePanelBottomSpace)
-                        .navigationBarsPadding(),
-                    isRecording = uiState.isVoiceRecording,
-                    isTranscribing = uiState.isVoiceTranscribing,
-                    permissionGranted = audioPermissionGranted,
-                    lastTranscribedText = uiState.lastTranscribedText,
-                    errorMessage = uiState.voiceErrorMessage,
-                    onMicClick = micButtonAction,
-                    onCancelRecording = { viewModel.cancelVoiceRecording() },
-                    scale = voicePanelScale,
-                    onPanelClick = { micButtonAction() }
-                )
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        Button(
+                            onClick = handleImmediateExit,
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.roleplay_back_to_top),
+                                color = Color.Black,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -578,34 +613,6 @@ fun RoleplayChatScreen(
             title = { Text(stringResource(R.string.roleplay_permission_title)) },
             text = { Text(stringResource(R.string.roleplay_permission_message)) }
         )
-    }
-}
-
-@Composable
-private fun ExitReminderCard(
-    modifier: Modifier = Modifier,
-    enabled: Boolean,
-    onNavigateTop: () -> Unit
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(32.dp),
-        color = Color(0xFF111B33),
-        tonalElevation = 4.dp,
-        shadowElevation = 4.dp
-    ) {
-        Button(
-            onClick = onNavigateTop,
-            enabled = enabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.roleplay_back_to_top),
-                fontWeight = FontWeight.SemiBold
-            )
-        }
     }
 }
 
@@ -636,8 +643,14 @@ private fun StageSection(
     scale: Float = 1f,
     textScale: Float = 1f,
     isEndingSession: Boolean,
-    completionMessage: String?
+    completionMessage: String?,
+    roleplayMode: RoleplayMode
 ) {
+    val characterImageRes = if (roleplayMode == RoleplayMode.DOJO) {
+        R.drawable.taridoujo
+    } else {
+        R.drawable.char_tarsier
+    }
     if (isEndingSession && !completionMessage.isNullOrBlank()) {
         Row(
             modifier = modifier
@@ -652,7 +665,7 @@ private fun StageSection(
             horizontalArrangement = Arrangement.spacedBy(14.dp * scale)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.char_tarsier),
+                painter = painterResource(id = characterImageRes),
                 contentDescription = stringResource(R.string.roleplay_teacher_desc),
                 modifier = Modifier
                     .size(110.dp * scale)
@@ -726,7 +739,7 @@ private fun StageSection(
         horizontalArrangement = Arrangement.spacedBy(14.dp * scale)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.char_tarsier),
+            painter = painterResource(id = characterImageRes),
             contentDescription = stringResource(R.string.roleplay_teacher_desc),
             modifier = Modifier
                 .size(110.dp * scale)

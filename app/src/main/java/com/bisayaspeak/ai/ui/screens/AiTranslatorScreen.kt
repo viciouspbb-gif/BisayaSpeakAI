@@ -6,7 +6,9 @@ import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -76,7 +79,7 @@ import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AiTranslatorScreen(
     onBack: () -> Unit,
@@ -397,6 +400,7 @@ private fun ActionButtons(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ResultCard(
     text: String,
@@ -457,17 +461,31 @@ private fun ResultCard(
                     .fillMaxWidth()
                     .heightIn(min = 140.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .clickable(enabled = isSpeakEnabled) { onSpeak() },
+                    .combinedClickable(
+                        enabled = text.isNotBlank() || isSpeakEnabled,
+                        onClick = {
+                            if (isSpeakEnabled) {
+                                onSpeak()
+                            }
+                        },
+                        onLongClick = {
+                            if (text.isNotBlank()) {
+                                onCopy()
+                            }
+                        }
+                    ),
                 color = Color(0xFF16253C),
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = if (text.isBlank()) stringResource(R.string.translator_result_placeholder) else text,
-                        color = if (text.isBlank()) Color.White.copy(alpha = 0.4f) else Color.White,
-                        fontSize = 18.sp,
-                        lineHeight = 26.sp
-                    )
+                    SelectionContainer {
+                        Text(
+                            text = if (text.isBlank()) stringResource(R.string.translator_result_placeholder) else text,
+                            color = if (text.isBlank()) Color.White.copy(alpha = 0.4f) else Color.White,
+                            fontSize = 18.sp,
+                            lineHeight = 26.sp
+                        )
+                    }
                 }
             }
             if (isSpeakEnabled) {

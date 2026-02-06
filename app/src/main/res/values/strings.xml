@@ -262,7 +262,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="roleplay_permission_message">Grant microphone access from app settings to use voice recording.</string>
     <string name="roleplay_session_finished">Todays session is complete</string>
     <string name="roleplay_back_to_home">Return to Home</string>
-    <string name="roleplay_back_to_top">Back to Top</string>
+    <string name="roleplay_back_to_top">TOPへ戻る</string>
     <string name="roleplay_default_intro">Maayong buntag! Ready to begin?</string>
     <string name="roleplay_replay_desc">Replay line</string>
     <string name="roleplay_teacher_desc">Tarsier Sensei illustration</string>

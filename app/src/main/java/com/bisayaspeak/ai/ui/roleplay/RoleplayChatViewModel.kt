@@ -66,6 +66,7 @@ data class RoleplayResultPayload(
 data class RoleplayUiState(
     val currentScenario: RoleplayScenarioDefinition? = null,
     val missionGoal: String = "",
+    val targetGoal: String = "",
     val aiCharacterName: String = "",
     val messages: List<ChatMessage> = emptyList(),
     val systemPrompt: String = "",
@@ -101,9 +102,7 @@ data class RoleplayUiState(
     val activeThemeFarewellBisaya: String = "",
     val activeThemeFarewellTranslation: String = "",
     val activeThemeFarewellExplanation: String = "",
-    val turnsTarget: Int = 0,
-    val isClosingPhase: Boolean = false,
-    val scenarioClosingGuidance: ScenarioClosingGuidance? = null,
+    val goalAchieved: Boolean = false,
     val userLevel: Int = 1,
     val totalLessonsCompleted: Int = 0,
     val tutorialMessage: String = "",
@@ -114,10 +113,19 @@ data class RoleplayUiState(
     val activeSceneDescription: String = "",
     val activeSceneIntroLine: String = "",
     val autoExitArmed: Boolean = false,
-    val autoExitCountdownMs: Long = 0L
+    val autoExitCountdownMs: Long = 0L,
+    val isSessionEnded: Boolean = false,
+    val finalMessage: String = "",
+    val showFeedbackCard: Boolean = true,
+    val roleplayMode: RoleplayMode = RoleplayMode.SANPO
 )
 
 enum class TranslationLanguage { JAPANESE, ENGLISH }
+
+private enum class RelationshipMode {
+    FORMAL_UNKNOWN,
+    INTIMATE_KNOWN
+}
 
 class RoleplayChatViewModel(
     application: Application
@@ -131,11 +139,8 @@ class RoleplayChatViewModel(
         private const val LOCKED_OPTION_HOLD_MS = 500L
         private const val POST_CLEAR_SILENCE_MS = 1000L
         private const val SCENARIO_LOG_TAG = "ScenarioGenerator"
-        private const val CASUAL_MIN_TURN = 9
-        private const val CASUAL_MAX_TURN = 11
-        private const val SCENARIO_MIN_TURN = 11
-        private const val SCENARIO_MAX_TURN = 15
-        private const val TARI_FORCED_TURNS = 15
+        private const val FORCED_EXIT_TURN_THRESHOLD = 6
+        private const val FORCED_FAREWELL_OPTION_ID = "forced-farewell-option"
         private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*: \\s*", RegexOption.IGNORE_CASE)
         private const val OPTION_TUTORIAL_VERSION = 2
         private val SITUATION_TAG_REGEX = Regex("\\[Situation:[^]]*]")
@@ -161,14 +166,62 @@ class RoleplayChatViewModel(
             "じゃあね",
             "もう行くね",
             "またあとで",
-            "おやすみ"
+            "おやすみ",
+            "see you",
+            "see ya",
+            "see you soon",
+            "see you later",
+            "goodbye",
+            "good bye",
+            "gotta go",
+            "g2g",
+            "time to go",
+            "catch you later",
+            "talk to you later",
+            "また今度",
+            "じゃあまた",
+            "おつかれ",
+            "お疲れ",
+            "そろそろ行く",
+            "帰るね"
         ).map { it.lowercase() }.toSet()
+        private val INTIMATE_KEYWORDS = listOf(
+            "tari",
+            "walk",
+            "friend",
+            "friends",
+            "buddy",
+            "barkada",
+            "lover",
+            "girlfriend",
+            "boyfriend",
+            "partner",
+            "family",
+            "hangout",
+            "date",
+            "talk",
+            "雑談",
+            "友達",
+            "恋人",
+            "親友",
+            "散歩",
+            "デート",
+            "タリ"
+        )
         private val GENERIC_FALLBACK_HINTS = listOf(
             HintPhrase("Oo, maayo kaayo na!", "いいね、やってみよう！"),
             HintPhrase("Pwede nimo ikuwento gamay pa?", "もう少し教えて！"),
             HintPhrase("Salamat kaayo, unsay sunod natong buhaton?", "ありがとう、次はどうする？"),
             HintPhrase("Gusto ko mosuway ana.", "それを試してみたいな"),
             HintPhrase("Pwede ko mangayo og tabang gamay?", "少し助けてもらえる？")
+        )
+        private val NAME_UNLOCK_PATTERNS = listOf(
+            Regex("(?i)(?:my name is|i am|i'm|this is|call me)\\s+([A-Za-z][A-Za-z\\-'\\s]{1,40})"),
+            Regex("(?i)(?:ako\\s+si|ako\\s+kay|ako\\s+ni|ang pangalan ko kay|ang pangalan nako kay|pangalan ko si|pangalan ko kay|pangalan nako)\\s+([A-Za-z][A-Za-z\\-'\\s]{1,40})"),
+            Regex("私の名前は\\s*([\\p{InHiragana}\\p{InKatakana}\\p{IsHan}A-Za-zー\\s]{1,20})"),
+            Regex("僕の名前は\\s*([\\p{InHiragana}\\p{InKatakana}\\p{IsHan}A-Za-zー\\s]{1,20})"),
+            Regex("俺の名前は\\s*([\\p{InHiragana}\\p{InKatakana}\\p{IsHan}A-Za-zー\\s]{1,20})"),
+            Regex("私は\\s*([\\p{InHiragana}\\p{InKatakana}\\p{IsHan}A-Za-zー\\s]{1,20})です")
         )
         private val SCENE_LOCATIONS = listOf(
             "オスメニャ・サークル周辺",
@@ -219,6 +272,10 @@ class RoleplayChatViewModel(
     private val random = Random(System.currentTimeMillis())
     private val themeManager = RoleplayThemeManager(random)
     private val scenarioGenerator = ScenarioGenerator(random)
+    private val logicProcessor = RoleplayLogicProcessor()
+    private val promptManager = RoleplayPromptManager()
+    private var currentMode: RoleplayMode = RoleplayMode.SANPO
+    private var turnCount = 0
 
 
     private val _uiState = MutableStateFlow(RoleplayUiState())
@@ -242,17 +299,48 @@ class RoleplayChatViewModel(
     private var activeFlavor: RoleplayThemeFlavor = RoleplayThemeFlavor.CASUAL
     private var currentUserLevel: Int = 1
     private var lastRandomThemeId: String? = null
-    private var endingTurnTarget: Int = SCENARIO_MAX_TURN
-    private var isCasualTheme: Boolean = true
-    private var scriptedTurnsRemaining: Int = SCENARIO_MAX_TURN
-    private var scenarioClosingGuidance: ScenarioClosingGuidance? = null
-    private var inClosingPhase: Boolean = false
-    private var farewellSignals: Set<String> = DEFAULT_FAREWELL_KEYWORDS
     private var lastSceneSeed: String? = null
     private var optionTutorialVisible: Boolean = true
     private var isJapaneseLocale: Boolean = true
     private var activeDynamicScenario: DynamicScenarioTemplate? = null
     private var autoExitJob: Job? = null
+    private var currentScenarioClosingGuidance: ScenarioClosingGuidance? = null
+    private var farewellSignals: Set<String> = DEFAULT_FAREWELL_KEYWORDS
+    private var currentRelationshipMode: RelationshipMode = RelationshipMode.FORMAL_UNKNOWN
+    private var knownLearnerName: String? = null
+    private var isLearnerIdentified: Boolean = false
+
+    private fun resolveUserDisplayName(): String {
+        return knownLearnerName?.takeIf { it.isNotBlank() }
+            ?: userNickname?.takeIf { it.isNotBlank() }
+            ?: calloutEnglish.takeIf { it.isNotBlank() }
+            ?: "User"
+    }
+
+    private fun buildModeAwareSystemPrompt(details: String = ""): String {
+        val userNameForPrompt = if (currentMode == RoleplayMode.DOJO) {
+            "stranger"
+        } else {
+            resolveUserDisplayName()
+        }
+        val scenarioDetails = when {
+            details.isNotBlank() -> details
+            currentMode == RoleplayMode.SANPO -> "Cebu daily life"
+            else -> ""
+        }
+        return promptManager.getSystemPrompt(
+            mode = currentMode,
+            userName = userNameForPrompt,
+            details = scenarioDetails
+        )
+    }
+
+    private fun switchMode(newMode: RoleplayMode) {
+        currentMode = newMode
+        turnCount = 0
+        history.clear()
+        _uiState.update { it.copy(messages = emptyList()) }
+    }
 
     private val localeState: StateFlow<Locale> = LocaleUtils.localeState
     private val translationLanguageState: StateFlow<TranslationLanguage> = localeState
@@ -327,6 +415,28 @@ class RoleplayChatViewModel(
         }
     }
 
+    fun handleSessionEnd(isMissionComplete: Boolean = false) {
+        val finalLine = if (currentMode == RoleplayMode.DOJO) {
+            if (isMissionComplete) {
+                "ごゆっくりお過ごしください（ミッション達成）"
+            } else {
+                "また練習しよう！"
+            }
+        } else {
+            "今日はよくしゃべったね、また明日！"
+        }
+        _uiState.update {
+            it.copy(
+                isSessionEnded = true,
+                finalMessage = finalLine,
+                showFeedbackCard = false,
+                isEndingSession = true,
+                options = emptyList(),
+                isLoading = false
+            )
+        }
+    }
+
     private fun loadInfiniteTariMode(isProUser: Boolean) {
         val fallbackScenario = scenarioRepository.getScenarioById(TARI_SCENARIO_ID)
         if (fallbackScenario == null) {
@@ -336,6 +446,7 @@ class RoleplayChatViewModel(
         }
 
         resetAutoExitState()
+        switchMode(RoleplayMode.SANPO)
         val definition = convertToRoleplayScenarioDefinition(fallbackScenario)
         history.clear()
         branchFacts.clear()
@@ -343,16 +454,20 @@ class RoleplayChatViewModel(
         scriptedRuntime = null
         activeDynamicScenario = null
         isProVersion = isProUser
-        selectActiveTheme(definition, forcedTurnLimit = TARI_FORCED_TURNS)
-        scenarioClosingGuidance = definition.closingGuidance
-        inClosingPhase = false
+        currentScenarioClosingGuidance = definition.closingGuidance
         refreshFarewellSignals(definition)
+        selectActiveTheme(definition)
+        currentRelationshipMode = RelationshipMode.INTIMATE_KNOWN
+        knownLearnerName = userNickname?.takeIf { it.isNotBlank() }
+        isLearnerIdentified = knownLearnerName != null
+        val scenarioDetails = definition.description.ifBlank { definition.situation }
+        val systemPrompt = buildModeAwareSystemPrompt(scenarioDetails)
 
         _uiState.value = RoleplayUiState(
             currentScenario = definition.copy(id = TARI_SCENARIO_ID),
             missionGoal = definition.goal,
             aiCharacterName = definition.aiRole,
-            systemPrompt = promptProvider.getRoleplaySystemPrompt(TARI_SCENARIO_ID),
+            systemPrompt = systemPrompt,
             messages = emptyList(),
             isLoading = true,
             isProUser = isProVersion,
@@ -369,11 +484,11 @@ class RoleplayChatViewModel(
             activeSceneLabel = "",
             activeSceneDescription = "",
             activeSceneIntroLine = "",
-            turnsTarget = endingTurnTarget,
-            isClosingPhase = inClosingPhase,
-            scenarioClosingGuidance = scenarioClosingGuidance,
             showOptionTutorial = optionTutorialVisible,
-            translationDirective = translationDirective.value
+            translationDirective = translationDirective.value,
+            goalAchieved = false,
+            isEndingSession = false,
+            roleplayMode = RoleplayMode.SANPO
         )
 
         if (isJapaneseLocale) {
@@ -385,7 +500,7 @@ class RoleplayChatViewModel(
         )
     }
 
-    private fun selectActiveTheme(scenario: RoleplayScenarioDefinition, forcedTurnLimit: Int? = null) {
+    private fun selectActiveTheme(scenario: RoleplayScenarioDefinition) {
         val flavor = if (scenario.level <= 3) {
             RoleplayThemeFlavor.CASUAL
         } else {
@@ -394,14 +509,6 @@ class RoleplayChatViewModel(
         val theme = themeManager.drawTheme(currentUserLevel, flavor)
         activeTheme = theme
         activeFlavor = flavor
-        isCasualTheme = flavor == RoleplayThemeFlavor.CASUAL
-        endingTurnTarget = forcedTurnLimit ?: if (isCasualTheme) {
-            random.nextInt(CASUAL_MIN_TURN, CASUAL_MAX_TURN + 1)
-        } else {
-            random.nextInt(SCENARIO_MIN_TURN, SCENARIO_MAX_TURN + 1)
-        }
-        scriptedTurnsRemaining = forcedTurnLimit ?: endingTurnTarget
-        inClosingPhase = false
     }
 
     private fun observeUserProgress() {
@@ -478,6 +585,7 @@ class RoleplayChatViewModel(
         }
         Log.d("RoleplayChatViewModel", "Loading scenario=${scenario.id} title=${scenario.title}")
         
+        switchMode(RoleplayMode.DOJO)
         val definition = convertToRoleplayScenarioDefinition(scenario)
         history.clear()
         branchFacts.clear()
@@ -485,11 +593,18 @@ class RoleplayChatViewModel(
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
         activeDynamicScenario = null
         isProVersion = isProUser
-        val forcedTurnLimit = if (scenario.id == TARI_SCENARIO_ID) TARI_FORCED_TURNS else null
-        selectActiveTheme(definition, forcedTurnLimit)
-        scenarioClosingGuidance = definition.closingGuidance
-        inClosingPhase = false
+        currentScenarioClosingGuidance = definition.closingGuidance
         refreshFarewellSignals(definition)
+        selectActiveTheme(definition)
+        val relationshipMode = determineRelationshipMode(definition, null)
+        currentRelationshipMode = relationshipMode
+        if (relationshipMode == RelationshipMode.INTIMATE_KNOWN) {
+            knownLearnerName = userNickname?.takeIf { it.isNotBlank() }
+            isLearnerIdentified = knownLearnerName != null
+        } else {
+            knownLearnerName = null
+            isLearnerIdentified = false
+        }
 
         val cleanThemeTitle = levelPrefixRegex.replace(activeTheme.title, "").trim().ifBlank { activeTheme.title }
         val closingCue = activeTheme.closingCue
@@ -500,12 +615,14 @@ class RoleplayChatViewModel(
         val localizedIntroLine = if (isJapaneseLocale) activeTheme.introLine else ""
         val localizedFarewellTranslation = if (isJapaneseLocale) closingCue.translation else definition.description
         val localizedFarewellExplanation = if (isJapaneseLocale) closingCue.explanation else definition.goal
+        val scenarioDetails = definition.situation.ifBlank { definition.description }
+        val systemPrompt = buildModeAwareSystemPrompt(scenarioDetails)
 
         _uiState.value = RoleplayUiState(
             currentScenario = definition,
             missionGoal = definition.goal,
             aiCharacterName = definition.aiRole,
-            systemPrompt = promptProvider.getRoleplaySystemPrompt(scenarioId),
+            systemPrompt = systemPrompt,
             messages = emptyList(),
             isLoading = scriptedRuntime == null,
             isProUser = isProVersion,
@@ -522,11 +639,11 @@ class RoleplayChatViewModel(
             activeSceneLabel = localizedThemeTitle,
             activeSceneDescription = localizedThemeDescription,
             activeSceneIntroLine = localizedIntroLine.ifBlank { definition.initialMessage },
-            turnsTarget = endingTurnTarget,
-            isClosingPhase = inClosingPhase,
-            scenarioClosingGuidance = scenarioClosingGuidance,
             showOptionTutorial = optionTutorialVisible,
-            translationDirective = translationDirective.value
+            translationDirective = translationDirective.value,
+            goalAchieved = false,
+            isEndingSession = false,
+            roleplayMode = RoleplayMode.DOJO
         )
 
         if (scriptedRuntime == null) {
@@ -596,6 +713,7 @@ class RoleplayChatViewModel(
             translation = option.hint
         )
         history.add(MissionHistoryMessage(option.text, isUser = true))
+        processUserUtteranceForNameUnlock(option.text)
         _uiState.update {
             it.copy(
                 messages = it.messages + userMsg,
@@ -632,14 +750,13 @@ class RoleplayChatViewModel(
         if (trimmed.isEmpty()) return
         if (_uiState.value.isLoading) return
 
-        val farewellDetected = containsFarewellCue(trimmed)
-
         val userMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
             text = trimmed,
             isUser = true
         )
         history.add(MissionHistoryMessage(trimmed, isUser = true))
+        processUserUtteranceForNameUnlock(trimmed)
         scriptedRuntime = null
 
         _uiState.update {
@@ -649,7 +766,6 @@ class RoleplayChatViewModel(
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
                 lockedOption = null,
-                isClosingPhase = it.isClosingPhase || farewellDetected,
                 pendingExitHistory = null,
                 isEndingSession = false,
                 finalFarewellMessageId = null,
@@ -974,24 +1090,48 @@ class RoleplayChatViewModel(
 
     private fun applyAiPayload(payload: RoleplayAiResponsePayload) {
         val rawAiSpeech = payload.aiSpeech.ifBlank { "..." }
-        val finishDetected = rawAiSpeech.contains("[FINISH]")
-        val aiSpeech = sanitizeSystemTags(rawAiSpeech.replace("[FINISH]", "").trim()).ifBlank { "..." }
-        val aiTranslation = sanitizeSystemTags(payload.aiTranslation.replace("[FINISH]", "").trim())
+        val completionTagDetected = rawAiSpeech.contains("[COMPLETE]")
+        val sanitizedAiSpeech = sanitizeSystemTags(
+            rawAiSpeech
+                .replace("[FINISH]", "")
+                .replace("[COMPLETE]", "")
+                .trim()
+        ).ifBlank { "..." }
+        val aiTranslation = sanitizeSystemTags(
+            payload.aiTranslation
+                .replace("[FINISH]", "")
+                .replace("[COMPLETE]", "")
+                .trim()
+        )
+        turnCount++
+        val shouldForceEndByTurnLimit = currentMode == RoleplayMode.SANPO && turnCount >= 12
+        val finishDetected = rawAiSpeech.contains("[FINISH]") || completionTagDetected || shouldForceEndByTurnLimit
+        val hasCompleteTag = completionTagDetected || shouldForceEndByTurnLimit
+        val finalAiSpeech = if (shouldForceEndByTurnLimit) {
+            "今日はたくさん話したね、また明日！"
+        } else {
+            sanitizedAiSpeech
+        }
+        val finalAiTranslation = if (shouldForceEndByTurnLimit) {
+            "今日はたくさん話したね、また明日！"
+        } else {
+            aiTranslation
+        }
 
-        history.add(MissionHistoryMessage(aiSpeech, isUser = false))
+        history.add(MissionHistoryMessage(finalAiSpeech, isUser = false))
         val aiMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
-            text = aiSpeech,
+            text = finalAiSpeech,
             isUser = false,
-            translation = aiTranslation.takeIf { it.isNotBlank() },
+            translation = finalAiTranslation.takeIf { it.isNotBlank() },
             voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
         )
         val isTariScenario = _uiState.value.currentScenario?.id == TARI_SCENARIO_ID
         val options = payload.options
             .filter { it.text.isNotBlank() }
             .map {
-                val optionText = stripLearnerNames(sanitizeSystemTags(it.text))
-                val optionHint = if (isProVersion) stripLearnerNames(sanitizeSystemTags(it.translation)) else null
+                val optionText = maybeStripLearnerNames(sanitizeSystemTags(it.text))
+                val optionHint = if (isProVersion) maybeStripLearnerNames(sanitizeSystemTags(it.translation)) else null
                 RoleplayOption(
                     text = optionText,
                     hint = optionHint,
@@ -999,23 +1139,13 @@ class RoleplayChatViewModel(
                 )
             }.filterForAccess()
         val ensuredOptions = if (options.isNotEmpty()) options else buildFallbackOptions()
-        val farewellDetected = finishDetected || containsFarewellCue(aiSpeech) || containsFarewellCue(aiTranslation)
+        val optionsWithForcedFarewell = maybeInjectFarewellOption(ensuredOptions, _uiState.value.completedTurns)
+        val farewellDetected = containsFarewellCue(finalAiSpeech) || containsFarewellCue(finalAiTranslation)
+        val shouldForceEnd = finishDetected || farewellDetected
 
-        scriptedTurnsRemaining = (scriptedTurnsRemaining - 1).coerceAtLeast(0)
-        if (!inClosingPhase && scriptedTurnsRemaining <= 2) {
-            inClosingPhase = true
-        }
+        val sanitizedOptions = if (shouldForceEnd) emptyList() else optionsWithForcedFarewell
 
-        val sanitizedOptions = when {
-            finishDetected -> emptyList()
-            farewellDetected -> emptyList()
-            scriptedTurnsRemaining <= 0 -> emptyList()
-            inClosingPhase && scriptedTurnsRemaining <= 0 -> emptyList()
-            isTariScenario && scriptedTurnsRemaining <= 0 -> emptyList()
-            else -> ensuredOptions
-        }
-
-        val aiClosedConversation = sanitizedOptions.isEmpty() || farewellDetected
+        val aiClosedConversation = shouldForceEnd || sanitizedOptions.isEmpty()
 
         if (finishDetected) {
             cancelVoiceRecording()
@@ -1028,18 +1158,59 @@ class RoleplayChatViewModel(
                 options = sanitizedOptions,
                 peekedHintOptionIds = emptySet(),
                 lockedOption = null,
-                turnsTarget = scriptedTurnsRemaining.coerceAtLeast(0),
-                isClosingPhase = inClosingPhase,
-                isEndingSession = finishDetected || (aiClosedConversation && sanitizedOptions.isEmpty()),
-                finalFarewellMessageId = if (aiClosedConversation && sanitizedOptions.isEmpty()) aiMsg.id else null,
-                pendingExitHistory = if (aiClosedConversation && sanitizedOptions.isEmpty()) it.pendingExitHistory else null
+                isEndingSession = shouldForceEnd || (aiClosedConversation && sanitizedOptions.isEmpty()),
+                finalFarewellMessageId = if (aiClosedConversation) aiMsg.id else null,
+                pendingExitHistory = if (aiClosedConversation) it.pendingExitHistory else null
             )
         }
 
-        val shouldComplete = finishDetected || (inClosingPhase && aiClosedConversation) || (scriptedTurnsRemaining <= 0 && aiClosedConversation)
-        if (shouldComplete) {
-            queueCompletion()
+        if (aiClosedConversation) {
+            val emitFarewellMessage = !(finishDetected || farewellDetected)
+            val shouldComplete = finishDetected || aiClosedConversation
+            if (shouldComplete) {
+                queueCompletion(
+                    emitFarewellMessage = !finishDetected,
+                    closingReference = if (finishDetected) aiMsg else null
+                )
+            }
         }
+
+        if (hasCompleteTag) {
+            handleSessionEnd(isMissionComplete = currentMode == RoleplayMode.DOJO)
+        }
+    }
+
+    private fun buildFallbackOptions(): List<RoleplayOption> {
+        val picks = GENERIC_FALLBACK_HINTS.shuffled(random).take(3)
+        return picks.map { phrase ->
+            RoleplayOption(
+                text = phrase.nativeText,
+                hint = if (isProVersion) phrase.translation else null
+            )
+        }
+    }
+
+    private fun maybeInjectFarewellOption(
+        options: List<RoleplayOption>,
+        completedTurns: Int
+    ): List<RoleplayOption> {
+        if (completedTurns < FORCED_EXIT_TURN_THRESHOLD) return options
+        val alreadyHasFarewell = options.any { option ->
+            option.id == FORCED_FAREWELL_OPTION_ID || containsFarewellCue(option.text)
+        }
+        if (alreadyHasFarewell) return options
+
+        val translation = when (translationLanguageState.value) {
+            TranslationLanguage.JAPANESE -> "じゃあ、もう行くね！また話そうね。"
+            TranslationLanguage.ENGLISH -> "Alright, I'll head out now—talk soon!"
+        }
+        val farewellOption = RoleplayOption(
+            id = FORCED_FAREWELL_OPTION_ID,
+            text = "Sige sa ko ha, mularga na ko. Kita ta napud!",
+            hint = if (isProVersion) translation else null,
+            tone = "farewell"
+        )
+        return options + farewellOption
     }
 
     private fun refreshFarewellSignals(definition: RoleplayScenarioDefinition) {
@@ -1057,16 +1228,6 @@ class RoleplayChatViewModel(
         val normalized = text.lowercase()
         return farewellSignals.any { signal ->
             signal.isNotBlank() && normalized.contains(signal)
-        }
-    }
-
-    private fun buildFallbackOptions(): List<RoleplayOption> {
-        val picks = GENERIC_FALLBACK_HINTS.shuffled(random).take(3)
-        return picks.map { phrase ->
-            RoleplayOption(
-                text = phrase.nativeText,
-                hint = if (isProVersion) phrase.translation else null
-            )
         }
     }
 
@@ -1098,6 +1259,7 @@ class RoleplayChatViewModel(
     private fun stripLearnerNames(text: String?): String {
         if (text.isNullOrBlank()) return ""
         val names = buildList {
+            knownLearnerName?.takeIf { it.isNotBlank() }?.let { add(it) }
             userNickname?.takeIf { it.isNotBlank() }?.let { add(it) }
             calloutBisaya.takeIf { it.isNotBlank() }?.let { add(it) }
             calloutEnglish.takeIf { it.isNotBlank() }?.let { add(it) }
@@ -1109,6 +1271,46 @@ class RoleplayChatViewModel(
             result = result.replace(pattern, "")
         }
         return result.replace("  ", " ").trim()
+    }
+
+    private fun maybeStripLearnerNames(text: String?): String {
+        if (text.isNullOrBlank()) return ""
+        return if (currentMode == RoleplayMode.SANPO) {
+            stripLearnerNames(text)
+        } else {
+            text.trim()
+        }
+    }
+
+    private fun processUserUtteranceForNameUnlock(message: String) {
+        if (currentRelationshipMode == RelationshipMode.INTIMATE_KNOWN || isLearnerIdentified) return
+        val extracted = extractLearnerName(message)
+        if (!extracted.isNullOrBlank()) {
+            knownLearnerName = extracted
+            isLearnerIdentified = true
+            Log.d("RoleplayChatViewModel", "Learner name unlocked: $extracted")
+        }
+    }
+
+    private fun extractLearnerName(message: String): String? {
+        if (message.isBlank()) return null
+        NAME_UNLOCK_PATTERNS.forEach { pattern ->
+            val match = pattern.find(message)
+            if (match != null && match.groupValues.size > 1) {
+                sanitizeLearnerName(match.groupValues[1])?.let { return it }
+            }
+        }
+        val profileName = userNickname
+        if (!profileName.isNullOrBlank() && message.contains(profileName, ignoreCase = true)) {
+            return profileName
+        }
+        return null
+    }
+
+    private fun sanitizeLearnerName(raw: String?): String? {
+        val trimmed = raw?.trim()?.trimStart(',', ':', '、')?.trimEnd('.', ',', '!', '?', '。', '！', '？')
+        val primary = trimmed?.split(Regex("[、,。！!？?]")).orEmpty().firstOrNull()?.trim()
+        return primary?.takeIf { it.length in 2..32 }
     }
 
     private fun buildDynamicSceneIntroLine(template: DynamicScenarioTemplate): String {
@@ -1135,32 +1337,63 @@ class RoleplayChatViewModel(
         return candidate
     }
 
-    private fun queueCompletion() {
-        val farewell = forcedTariFarewell() ?: selectCompletionFarewell()
-        inClosingPhase = false
-        val farewellMessage = ChatMessage(
-            id = UUID.randomUUID().toString(),
-            text = farewell.bisaya,
-            isUser = false,
-            translation = farewell.translation,
-            voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
-        )
-        history.add(MissionHistoryMessage(farewell.bisaya, isUser = false))
+    private fun determineRelationshipMode(
+        scenario: RoleplayScenarioDefinition,
+        dynamicScenario: DynamicScenarioTemplate?
+    ): RelationshipMode {
+        if (scenario.id == TARI_SCENARIO_ID) {
+            return RelationshipMode.INTIMATE_KNOWN
+        }
+        val locale = LocaleUtils.resolveAppLocale(getApplication())
+        val aggregateText = listOfNotNull(
+            scenario.situation,
+            scenario.description,
+            scenario.aiRole,
+            dynamicScenario?.label?.resolve(isJapaneseLocale),
+            dynamicScenario?.description?.resolve(isJapaneseLocale),
+            dynamicScenario?.tariRole?.resolve(isJapaneseLocale)
+        ).joinToString(" ").lowercase(locale)
+        return if (INTIMATE_KEYWORDS.any { aggregateText.contains(it) }) {
+            RelationshipMode.INTIMATE_KNOWN
+        } else {
+            RelationshipMode.FORMAL_UNKNOWN
+        }
+    }
+
+    private fun queueCompletion(
+        emitFarewellMessage: Boolean = true,
+        closingReference: ChatMessage? = null
+    ) {
+        val farewellMessage = if (emitFarewellMessage) {
+            val farewell = forcedTariFarewell() ?: selectCompletionFarewell()
+            history.add(MissionHistoryMessage(farewell.bisaya, isUser = false))
+            ChatMessage(
+                id = UUID.randomUUID().toString(),
+                text = farewell.bisaya,
+                isUser = false,
+                translation = farewell.translation,
+                voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
+            ) to farewell
+        } else null
+
         val historySnapshot = history.toList()
         pendingAutoExitHistory = historySnapshot
+        val (messageToAppend, farewellLine) = farewellMessage ?: (null to null)
+        val referenceMessage = closingReference ?: messageToAppend
+
         _uiState.update {
             it.copy(
                 showCompletionDialog = true,
                 completionScore = 100,
-                messages = it.messages + farewellMessage,
+                messages = messageToAppend?.let { msg -> it.messages + msg } ?: it.messages,
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
-                activeThemeFarewellBisaya = farewell.bisaya,
-                activeThemeFarewellTranslation = farewell.translation,
-                activeThemeFarewellExplanation = farewell.explanation,
-                isClosingPhase = false,
+                activeThemeFarewellBisaya = referenceMessage?.text ?: farewellLine?.bisaya ?: "",
+                activeThemeFarewellTranslation = referenceMessage?.translation
+                    ?: farewellLine?.translation ?: "",
+                activeThemeFarewellExplanation = farewellLine?.explanation ?: it.activeThemeFarewellExplanation,
                 isEndingSession = true,
-                finalFarewellMessageId = farewellMessage.id,
+                finalFarewellMessageId = referenceMessage?.id ?: it.finalFarewellMessageId,
                 pendingExitHistory = historySnapshot
             )
         }
@@ -1179,19 +1412,17 @@ class RoleplayChatViewModel(
         if (!isTariScenario) {
             activeDynamicScenario = null
         }
+        val relationshipMode = determineRelationshipMode(scenario, dynamicScenario)
+        currentRelationshipMode = relationshipMode
 
-        val totalTurnBudget = if (isTariScenario) TARI_FORCED_TURNS else endingTurnTarget.coerceAtLeast(1)
-        val turnsCompleted = (totalTurnBudget - scriptedTurnsRemaining).coerceAtLeast(0)
-        val currentTurnNumber = (turnsCompleted + 1).coerceAtMost(totalTurnBudget)
-        val turnStatusLine = "現在のターン数：$currentTurnNumber / $totalTurnBudget"
-        val sceneLabelForPrompt = dynamicScenario?.label?.resolve(isJapaneseLocale)?.ifBlank { scenario.title }
-            ?: scenario.title
-        val sceneDescriptionForPrompt = dynamicScenario?.description?.resolve(isJapaneseLocale)?.ifBlank { scenario.description }
-            ?: scenario.description
-        val tariRoleForPrompt = dynamicScenario?.tariRole?.resolve(isJapaneseLocale)?.ifBlank { scenario.aiRole }
-            ?: scenario.aiRole
-        val learnerRoleForPrompt = dynamicScenario?.userRole?.resolve(isJapaneseLocale)?.ifBlank { "Learner" }
-            ?: "Learner"
+        val sceneLabelForPrompt = (dynamicScenario?.label?.resolve(isJapaneseLocale)
+            ?: scenario.title).ifBlank { activeTheme.title }.ifBlank { "Cebu Daily Life" }
+        val sceneDescriptionForPrompt = (dynamicScenario?.description?.resolve(isJapaneseLocale)
+            ?: scenario.description).ifBlank { activeTheme.description }
+        val tariRoleForPrompt = (dynamicScenario?.tariRole?.resolve(isJapaneseLocale)
+            ?: scenario.aiRole).ifBlank { activeTheme.persona }
+        val learnerRoleForPrompt = (dynamicScenario?.userRole?.resolve(isJapaneseLocale)
+            ?: "Learner" )
 
         val translationLanguage = translationLanguageState.value
         val historyText = history.joinToString(separator = "\n") { entry ->
@@ -1199,150 +1430,164 @@ class RoleplayChatViewModel(
             "$speaker: ${entry.text}"
         }.ifBlank { "No previous messages." }
 
+        val latestLearnerMessage = if (userMessage == START_TOKEN) {
+            "SYSTEM: Conversation is starting. Open with a warm Cebuano greeting that anchors the scene."
+        } else userMessage
+
         val hints = scenario.hintPhrases.joinToString(separator = "\n") {
             "- ${it.nativeText} (${it.translation})"
         }.ifBlank { "- (none)" }
 
+        val missionGoal = scenario.goal.ifBlank { "Guide the learner through real Cebu life." }
+        val targetGoal = scenario.targetGoal.ifBlank { missionGoal }
         val learnerGenderLabel = when (currentUserGender) {
             UserGender.MALE -> "male (男性)"
             UserGender.FEMALE -> "female (女性)"
             UserGender.OTHER -> "non-binary / undisclosed"
         }
-        val nicknameLine = userNickname?.let {
-            "- The learner’s preferred nickname is \"$it\". Begin each new scene by greeting them with this name together with the affectionate Bisaya title, then reuse it naturally during heartfelt lines." }
-            ?: "- The learner has not set a nickname. Use the affectionate titles as-is, and if they later share a name, adopt it immediately."
-        val directNameInstruction = userNickname?.let {
-            "- Every time you transition into a new topic, gently call them \"$it\" at least once before moving on."
-        } ?: "- If the learner mentions a name during the chat, store it mentally and start addressing them with it from that moment."
+        val honorificFallback = when (currentUserGender) {
+            UserGender.MALE -> "Sir for formal tone, Kuya for warm-yet-polite tone"
+            UserGender.FEMALE -> "Ma'am for formal tone, Ate for warm-yet-polite tone"
+            UserGender.OTHER -> "Friend / Amigo / Amiga"
+        }
+        val unlockedLearnerName = when {
+            relationshipMode == RelationshipMode.INTIMATE_KNOWN -> {
+                if (!isLearnerIdentified) {
+                    knownLearnerName = knownLearnerName ?: userNickname?.takeIf { it.isNotBlank() }
+                    isLearnerIdentified = knownLearnerName != null
+                }
+                knownLearnerName ?: userNickname
+            }
+            isLearnerIdentified -> knownLearnerName
+            else -> null
+        }?.takeIf { it.isNotBlank() }
+
+        val nicknameLine = when (relationshipMode) {
+            RelationshipMode.INTIMATE_KNOWN -> {
+                unlockedLearnerName?.let {
+                    "- Known nickname: \"$it\". It is already unlocked for this intimate scenario—use it warmly from the very first aiSpeech line."
+                } ?: "- No saved nickname, so treat '$calloutBisaya'/'$calloutEnglish' as the affectionate default and use it from line one because this is a close relationship."
+            }
+            RelationshipMode.FORMAL_UNKNOWN -> "- Nickname data: even if the system stores a nickname, it is LOCKED until the learner self-introduces. Do not reveal or guess any name until they say it aloud."
+        }
+        val directNameInstruction = when (relationshipMode) {
+            RelationshipMode.FORMAL_UNKNOWN -> "- Recognition event: the instant the learner states their name (or booking reference), acknowledge it and combine the provided name with Sir/Ma'am/Kuya/Ate for the rest of the scene."
+            RelationshipMode.INTIMATE_KNOWN -> "- If the learner offers a new nickname or corrects how they want to be called, adopt it immediately and keep using it affectionately—never revert to Sir/Ma'am."
+        }
+        val honorificGuidanceLine = when (relationshipMode) {
+            RelationshipMode.FORMAL_UNKNOWN -> "- Name etiquette: until the learner explicitly says their name in this scene, assume you don't know it and address them using $honorificFallback based on how formal the situation feels."
+            RelationshipMode.INTIMATE_KNOWN -> "- Name etiquette: this is a personal scenario—skip Sir/Ma'am entirely and rely on the unlocked nickname or affectionate callouts even when giving instructions."
+        }
+        val nameRecognitionProfile = when (relationshipMode) {
+            RelationshipMode.FORMAL_UNKNOWN -> "- Relationship profile: Public/first-time. Start with nameKnown=FALSE and call the learner only Sir/Ma'am/Kuya/Ate. Flip nameKnown=TRUE only after they state their name, then use 'Sir [Name]' or 'Ma'am [Name]' in Tari's dialogue."
+            RelationshipMode.INTIMATE_KNOWN -> "- Relationship profile: Close friend/lover/family. Start with nameKnown=TRUE and speak to them by nickname right away—no honorific buffer needed."
+        }
+        val nameAmnesiaLine = when (relationshipMode) {
+            RelationshipMode.FORMAL_UNKNOWN -> "- Memory wall: You do NOT know the learner's name yet. Treat them like a stranger until they personally reveal it."
+            RelationshipMode.INTIMATE_KNOWN -> "- Memory wall: This scenario is intimate—the nickname is already known and should stay active unless the learner corrects it."
+        }
+        val learnerNameUsageLine = unlockedLearnerName?.let {
+            if (relationshipMode == RelationshipMode.FORMAL_UNKNOWN) {
+                "- Learner provided name: \"$it\". Pair it with Sir/Ma'am/Kuya/Ate every time (e.g., 'Sir $it, complete ni nato ha?')."
+            } else {
+                "- Learner nickname active: \"$it\". Use it lovingly in Tari's own dialogue but never inside learner option text."
+            }
+        } ?: "- Learner name remains UNKNOWN. Never invent or reuse profile data until the learner explicitly introduces themselves in-scene."
         val translationInstructionLine = when (translationLanguage) {
             TranslationLanguage.JAPANESE -> "- Provide a separate Japanese translation ONLY inside the dedicated translation field."
             TranslationLanguage.ENGLISH -> "- Provide a separate English translation ONLY inside the dedicated translation field."
         }
+        val particleGuidanceLine = "- Express politeness using Bisaya particles like 'man', 'na', 'ba', 'lagi', not Tagalog 'po/opo'."
 
         val genderToneInstruction = when (currentUserGender) {
-            UserGender.MALE -> "- The learner identifies as male. Offer slightly adventurous or confident topics (sports, travel, business wins) and praise him with masculine-coded compliments such as \"gwapo kaayo\" when appropriate."
-            UserGender.FEMALE -> "- The learner identifies as female. Highlight warm, cozy, or cute topics (cafés, fashion, self-care) and praise her with feminine-coded compliments such as \"gwapa kaayo ka\" when it fits the scene."
-            UserGender.OTHER -> "- The learner prefers a gender-neutral tone. Keep topics inclusive, avoid gendered compliments, and use friendly expressions like \"bestie\" or \"amiga\" depending on the context."
+            UserGender.MALE -> "- Lean into confident, slightly adventurous banter (sports, business wins, protective gestures) and praise him with Cebuano compliments such as \"gwapo kaayo ka karon\" when it feels natural."
+            UserGender.FEMALE -> "- Highlight warm, caring, or stylish angles (cafés, self-care, celebrations) and praise her with Cebuano compliments such as \"gwapa kaayo ka\"."
+            UserGender.OTHER -> "- Keep the tone inclusive and gender-neutral. Use friendly Cebuano like \"bestie\", \"amiga\", or \"partner\" instead of gendered compliments."
         }
 
-        val genderInstruction = """
-            SYSTEM DIRECTIVE:
-            - You are Tari, a real Cebuana woman living in Cebu.
-            - You must always speak Bisaya (Cebuano) in your dialogue. Never mix Japanese or English into your speech field.
-            $translationInstructionLine
-            - Tagalog / Filipino words (e.g., "masarap", "mahal", "po", "opo") are strictly forbidden. Use pure Cebuano alternatives such as "lami" (おいしい), "mahal kaayo" (高い), "salamat" (ありがとう) with NO "po" suffix.
-            - ABSOLUTE RULE: 100% Cebuano vocabulary in every aiSpeech line and suggested option. If the learner uses Tagalog, interpret it but respond with Bisaya expressions only.
-            - If you notice a Tagalog syllable sneaking into your output, immediately restate that sentence in Cebuano within the same response and continue in Bisaya only.
-            - The learner is $learnerGenderLabel. Address them affectionately as "$calloutBisaya" (Bisaya) or "$calloutEnglish" (English) during greetings/farewells only; avoid repeating names every line.
-            $nicknameLine
-            $directNameInstruction
-            $genderToneInstruction
-            - Mention these affectionate titles only during greetings, farewells, when praising the learner, or when double-checking their understanding/feelings. Avoid repeating the name on every line so the flow feels natural.
-            - These affectionate callouts are for Tari's speech bubbles only. Never include them inside the suggested learner reply options or translations.
-            - Stay affectionate, supportive, and slightly mischievous, but never break character.
-            - The learner can submit free-form voice transcriptions or typed input beyond the suggested options. Interpret any Japanese/English phrases they use, convert their intent into Bisaya context, and continue the mission naturally.
-            - Never reject or scold the learner for ad-lib input. Absorb it into the story, react with empathy, and keep the pacing lively.
-            - If the learner introduces new plot ideas or feelings, weave them into the narrative and adjust your guidance accordingly while staying aligned with the scenario goal.
-            - Double-check every word you output to ensure it is Cebuano only. If you accidentally think of a Tagalog term, immediately replace it with its Cebuano equivalent.
-            - Before finalizing each JSON payload, run an internal "LANGUAGE CHECK" and confirm there are zero Tagalog terms. If any are detected, regenerate the line entirely in Cebuano.
-        """.trimIndent()
-
-        val basePrompt = if (scenario.systemPrompt.isBlank()) {
-            """
-            You are ${scenario.aiRole}.
-            Situation: ${scenario.situation}
-            Goal: ${scenario.goal}
-            """.trimIndent()
-        } else scenario.systemPrompt
-
-        val closingDirective = buildClosingDirective()
         val sceneSeed = drawSceneSeed()
-        val dynamicScenarioBlock = dynamicScenario?.let {
-            val label = it.label.resolve(isJapaneseLocale)
-            val description = it.description.resolve(isJapaneseLocale)
-            val tariRole = it.tariRole.resolve(isJapaneseLocale)
-            val learnerRole = it.userRole.resolve(isJapaneseLocale)
-            val guidance = it.guidance.resolve(isJapaneseLocale)
-            """
-                [DYNAMIC_SCENARIO]
-                - Situation label: $label
-                - Situation description: $description
-                - Tari role: $tariRole
-                - Learner role: $learnerRole
-                - Guidance: $guidance
-                - Opening cue: Begin your next response by naturally describing this situation in Bisaya (no bracketed tags).
-                - Context lock: You are physically at "$label". Never invent other locations or switch to unrelated small talk (e.g.,散歩,植物,旅行). If the learner strays, gently remind them that you are still at "$label" and steer them back.
-                - Reminder: Mention the learner's name or nickname only inside Tari's own dialogue. Never include it inside suggested learner responses.
-            """.trimIndent()
+        val dynamicScenarioGuidance = dynamicScenario?.let {
+            "- Dynamic guidance today: ${it.guidance.resolve(isJapaneseLocale)}"
         }
 
-        val scenarioCandidates: List<String> = if (isTariScenario) {
-            scenarioGenerator.shuffledTemplates().mapIndexed { index, template ->
-                val candidateLabel = template.label.resolve(isJapaneseLocale)
-                val candidateDescription = template.description.resolve(isJapaneseLocale)
-                val candidateTariRole = template.tariRole.resolve(isJapaneseLocale)
-                val candidateLearnerRole = template.userRole.resolve(isJapaneseLocale)
-                "${index + 1}. $candidateLabel / $candidateDescription / Tari=$candidateTariRole / Learner=$candidateLearnerRole"
-            }
-        } else emptyList()
+        val systemPromptWithIdentity = buildString {
+            appendLine("[ROLELOCK]")
+            appendLine("- You are Tari, a real Cebuana woman living in Cebu and the learner's closest Filipino friend/partner.")
+            appendLine("- Speak 100% Cebuano in every aiSpeech line. No Tagalog words, suffixes, or mixed languages.")
+            appendLine(particleGuidanceLine)
+            appendLine(translationInstructionLine)
+            appendLine("- If the learner uses Tagalog/Japanese/English, interpret it and respond in Cebuano while keeping the story moving.")
+            appendLine("- Lead every exchange proactively—never toss decisions back with 'What do you want to do?'")
+            appendLine("- The learner is $learnerGenderLabel. Address them affectionately as '$calloutBisaya' (Bisaya) or '$calloutEnglish' (English) only inside Tari's dialogue when greeting, praising, or saying goodbye.")
+            appendLine(nameAmnesiaLine)
+            appendLine(honorificGuidanceLine)
+            appendLine("- Whatever the learner says, NEVER drop the assigned in-world role (clerk, driver, receptionist, barista, etc.). React as that person every second.")
+            appendLine(nicknameLine)
+            appendLine(directNameInstruction)
+            appendLine(nameRecognitionProfile)
+            appendLine(learnerNameUsageLine)
+            appendLine(genderToneInstruction)
+            appendLine("- These affectionate callouts never appear inside the suggested learner reply options or translations.")
+            appendLine("- Stay loving, supportive, a little mischievous, yet anchored in reality—and keep every exchange tight, high-energy, and purposeful.")
+            appendLine()
 
-        val systemPromptWithGender = buildString {
-            append(turnStatusLine)
-            append("\n")
-            append(basePrompt)
-            append("\n\n現在の舞台: $sceneLabelForPrompt")
-            append("\n- 場所説明: $sceneDescriptionForPrompt")
-            append("\n- Tariの役割: $tariRoleForPrompt")
-            append("\n- Learnerの役割/視点: $learnerRoleForPrompt")
-            append("\n- 絶対厳守: この舞台以外のトピックや場所（植物、散歩、別の建物など）を持ち込まない。ユーザーが脱線しても丁寧に現在地へ戻す。")
-            append("\n- Location lock reminder: 今も $sceneLabelForPrompt にいる。会話の途中でも必ずこの場所の描写とタスクに沿って進行する。")
-            append("\n- Opening rule: START_TOKEN やシーン開始時は、最初の1文で現在地と役割を描写し、そこから会話を始める。")
-            if (isTariScenario) {
-                append("\n\n指示: 下記のシチュエーション候補は毎回シャッフルされます。今から提示する複数のシチュエーションの中から必ず1つをランダムに選び、その役になりきって開始してください。前回までの内容や散歩の設定はすべて忘れてリセットしなさい。")
-                append("\n[DYNAMIC_SCENARIO_CANDIDATES]")
-                scenarioCandidates.forEach { candidate -> append("\n$candidate") }
-                append("\n必ず1つを即座に選び、その設定だけを使って会話を進めてください。")
-                append("\nUIにシチュエーション名が表示されるため、セリフ内では[Situation: ...]のようなタグは使わず、自然な導入で状況を説明しなさい。")
-                append("\n起承転結ガイドライン: 15ターンで小さなドラマを完結させなさい。")
-                append("\n- 起 (ターン1〜4): シチュエーションを描写し、関係性と課題を丁寧に提示する。")
-                append("\n- 承 (ターン5〜8): ユーザーの感情や要望を深掘りし、話題を広げて親密さを高める。")
-                append("\n- 転 (ターン11〜13): 予想外の出来事や感情の揺れを起こしながらも、新しい話題を追加せず既存テーマを掘り下げなさい。ユーザーが質問を重ねても、『それはまた${sceneLabelForPrompt}の続きをしながら話そうね』『次はあそこのスポットで聞かせて』のように優しく次のタイミングに繋ぎ、突き放さないこと。")
-                append("\n- 結 (ターン12〜15): 13〜15ターン目で必ず物語を収束させ、Tari自ら状況に基づく別れの理由を創作して[FINISH]へ導く。")
-                append("\n段階的プロンプト: 現在のターン番号を常に意識し、9ターン目までは自由に話題を展開して良いが、10ターン目以降は新規トピックを避けて結末に向けた会話へ移行すること。")
-                append("\n- 終盤移行: 10ターン目以降は${sceneLabelForPrompt}の現場タスク（診察案内・チェックイン完了・目標距離の達成など）を具体的に描写し、終わりの準備を進める。")
-                append("\n入力一貫性: ユーザーがパネル連打や音声入力を選んでも、あなたはこの起承転結マップを厳守し、会話が早く進んだ場合でも13〜15ターン目で必ず完結させる。")
-                append("\n終わりの理由バリエーション: [FINISH] 直前には、${sceneLabelForPrompt}の状況に合った具体的な『席を外す理由』を毎回変えて伝える（ジョギング=足が疲れた/ベンチで休む、ホテル=チェックインが終わった/荷物を部屋に置く など）。")
-                append("\n禁止フレーズ: 「また明日」「明日ね」などの定型文だけで会話を切り上げることは絶対にしない。必ず状況描写と行動理由を添える。")
-                append("\n15ターン目では、感謝・学び・次回への期待・状況理由・[FINISH] をまとめて必ず終了し、延長を許さない。")
-                append("\nシーン終幕ルール: ${sceneLabelForPrompt} (${sceneDescriptionForPrompt}) に沿った体の動きやタスクを理由に会話を締めること." +
-                        "例: 「目標距離に達したから水分補給しよう」「チェックインが終わったから部屋に荷物を置きに行く」など。")
+            appendLine("[SCENARIO SNAPSHOT]")
+            appendLine("- Location label: $sceneLabelForPrompt")
+            appendLine("- Situation detail: $sceneDescriptionForPrompt")
+            appendLine("- Tari role: $tariRoleForPrompt")
+            appendLine("- Learner POV: $learnerRoleForPrompt")
+            appendLine("- Mission statement: $missionGoal")
+            appendLine("- Target goal (must be physically achieved before ending): $targetGoal")
+            dynamicScenarioGuidance?.let { appendLine(it) }
+            appendLine("- Theme persona flavor: ${activeTheme.persona}")
+            appendLine("- Theme goal cue: ${activeTheme.goalStatement}")
+            appendLine("- Filipino sensory cue today: $sceneSeed")
+            appendLine()
+
+            appendLine("[GOAL PLAYBOOK]")
+            appendLine("- Warm up with at most 2 short Cebuano lines of small talk tied to Filipino life, then immediately guide the learner back toward the mission.")
+            appendLine("- Every turn must push the learner toward '$targetGoal' with concrete, real-world actions (approach the guard, give the booking name, pay the jeepney fare, etc.).")
+            appendLine("- Apply the 'one step forward' rule: each response must introduce a NEW forward action or detail. Repeating the same explanation counts as failure.")
+            appendLine("- Phase irreversibility: once a detail is confirmed (name stated, symptoms given, payment done), never circle back to that topic unless the learner explicitly undoes it.")
+            appendLine("- Respect the 3–5 exchange contract: wrap the mission in 3 to 5 total back-and-forths (AI+Learner pairs). If you reach the third exchange with momentum, finish immediately on the next decisive action.")
+            appendLine("- Termination mandate: the moment the learner's goal is satisfied or they hint that they must leave, stop offering new tasks, deliver one warm goodbye, and end the scene.")
+            appendLine("- Explicitly reference progress (e.g., 'naa na ta sa counter', 'hapit na nato makompleto ang papeles').")
+            appendLine("- If the learner hesitates or derails, gently redirect them with a precise next step and cultural context (traffic, barangay rules, Filipino etiquette) without adding extra small talk.")
+            appendLine("- Never introduce brand-new side quests or random topics. Everything must reinforce the mission.")
+            appendLine("- Use randomness only as a spice—tiny sensory observations or playful lines that never slow the mission clock.")
+            appendLine()
+
+            appendLine("[FINISH PROTOCOL]")
+            appendLine("- Output '[FINISH]' ONLY after '$targetGoal' is undeniably accomplished in-world (documents handed over, destination reached, promise fulfilled).")
+            appendLine("- On that final turn describe the physical resolution, celebrate warmly, append ' [FINISH]' to aiSpeech, and return an empty options array.")
+            appendLine("- If the learner has already completed the required actions yet the scene risks stalling, Tari must decisively wrap up: confirm completion ('ok human na ang admission, lingkod sa waiting area ha?') and immediately emit '[FINISH]'.")
+            appendLine("- Never let a promised action linger for more than one additional turn. If you say you'll hand over a ticket, do it in the very next message and then close.")
+            appendLine("- Before completion, do NOT hint at ending, do NOT say goodbye, and keep options actionable—but once the mission locks or the learner says goodbye, end briskly so the learner feels satisfied yet eager for another run.")
+            appendLine("- Farewell discipline: if the learner initiates a goodbye or shows farewell cues, reciprocate once, append '[FINISH]', and do not generate any further options.")
+            val closingHookInstruction = when (relationshipMode) {
+                RelationshipMode.FORMAL_UNKNOWN -> "- Closure hook: after confirming success, thank them in a courteous service tone and invite them back soon (e.g., 'Daghang salamat, balik lang anytime ha', '本日はありがとうございました。また何かあればいつでもどうぞ。')."
+                RelationshipMode.INTIMATE_KNOWN -> "- Closure hook: after celebrating success, drop a playful future promise (e.g., 'Kita-kits ta napud', 'Sige, puhon! Sunod napud ha?') so they crave the next hangout."
             }
-            append("\n\n現在のテーマ: ${activeTheme.title} — ${activeTheme.description}。")
-            append("\nタリの役柄: ${activeTheme.persona}")
-            append("\n今回の目的: ${activeTheme.goalStatement}")
-            append("\nテーマ演技ノート: ${activeTheme.instruction}")
-            append("\n属性パネル例:")
-            activeTheme.attributePanels.forEach { panel -> append("\n- $panel") }
-            append("\nランダム設定: $sceneSeed")
-            append("\n\n毎回シチュエーションが少しずつ変化するように、場所・時間帯・突発的な出来事（天気変化、サプライズ、ちょっとしたトラブル）を即興で1-2個追加。")
-            append("\n例: ビーチ沿い、通学路、ナイトマーケット、突然のスコール、タクシーの料金交渉、忘れ物、友人とのバッタリ遭遇など。")
-            append("\n同じテーマでもディテールを必ず変え、季節感や混み具合、音・匂いなど感覚情報を織り込みなさい。描写文にもタガログ語を含めないこと。")
-            dynamicScenarioBlock?.let { block ->
-                append("\n\n")
-                append(block)
-            }
-            append("\n\nあなたは${calloutBisaya}と呼ぶ相手に優しく寄り添いながら会話するタリです。")
-            append("\n相手の呼び方: ${calloutBisaya} / ${calloutEnglish}。ユーザー性別: ${currentUserGender.name}。")
-            append("\n\n")
-            append(genderInstruction)
-            if (closingDirective.isNotBlank()) {
-                append("\n\n")
-                append(closingDirective)
-            }
+            appendLine(closingHookInstruction)
+            appendLine("- The moment you deliver that hook line, append '[FINISH]' immediately and end the turn—never wait for another learner reply.")
+            appendLine()
+
+            appendLine("[OPTION RULES]")
+            appendLine("- Provide 2-3 Bisaya-only options that keep momentum (confirming next step, reacting with confidence, asking for clarification about the current action).")
+            appendLine("- Each option must be an imperative or decisive statement—not vague questions like 'unsa man sunod?'.")
+            appendLine("- Options must be anchored to the immediate physical situation (serve the coffee, pay the fare, sign the clipboard) and never fall back to generic chit-chat.")
+            appendLine("- Never include the learner's nickname/call sign inside options. Use the translation field (${translationLanguage.name}) separately.")
+            appendLine()
+
+            appendLine("[REALISM & LOOP GUARD]")
+            appendLine("- Pepper sensory details of Cebu life: humidity, jeepney bells, sari-sari smells, security guards, traffic, fiesta music, etc.")
+            appendLine("- Absolutely forbid filler like '他に聞きたいことは？' , 'Anything else?', or 'What do you want to do next?'.")
+            appendLine("- If you drift into irrelevant banter for more than 2 lines, snap back to the mission with a decisive action cue.")
+            appendLine("- Emulate Filipino closure etiquette: once the task is done, cheerfully cut the chat ('Sige ha, naa ra ko dri') instead of lingering questions.")
         }.trim()
 
         val localizedPrompt = """
-            $systemPromptWithGender
+            $systemPromptWithIdentity
 
             Helpful hint phrases:
             $hints
@@ -1350,31 +1595,32 @@ class RoleplayChatViewModel(
             Conversation history:
             $historyText
 
-            Latest learner message: $userMessage
+            Latest learner message: $latestLearnerMessage
 
             Respond strictly in JSON with exactly these fields and no extras:
             {
-              "aiSpeech": "Assistant reply in Bisaya ONLY. Do not include Japanese, English, or Tagalog.",
-              "aiTranslation": "Japanese translation of aiSpeech ONLY.",
+              "aiSpeech": "Assistant reply in Bisaya ONLY. Do not include Japanese, English, or Tagalog. Append ' [FINISH]' only when the target goal is achieved.",
+              "aiTranslation": "${if (translationLanguage == TranslationLanguage.JAPANESE) "Japanese" else "English"} translation of aiSpeech ONLY.",
               "options": [
                 {
-                  "text": "Suggested learner reply in Bisaya ONLY (no Tagalog words).",
-                  "translation": "Japanese translation of that option ONLY.",
+                  "text": "Suggested learner reply in Bisaya ONLY (no Tagalog words, no nickname).",
+                  "translation": "${if (translationLanguage == TranslationLanguage.JAPANESE) "Japanese" else "English"} translation of that option ONLY.",
                   "tone": "Short descriptor in Japanese (optional)."
                 }
               ]
             }
-            Output 2-3 concise options that build upon the learner's most recent intent. Never include markdown or explanations outside JSON.
+            - Output 2-3 concise options unless you already ended with [FINISH], in which case options must be an empty array.
+            - Never include markdown, commentary, or explanations outside the JSON object.
         """.trimIndent()
 
         val prompt = when (translationLanguage) {
             TranslationLanguage.JAPANESE -> localizedPrompt
-            TranslationLanguage.ENGLISH -> "Translate to English: \n$localizedPrompt"
+            TranslationLanguage.ENGLISH -> "Translate to English:\n$localizedPrompt"
         }
 
         Log.d(
             "RoleplayChatViewModel",
-            "Prompt generated lang=${'$'}translationLanguage userMsg='${'$'}{userMessage.take(40)}'"
+            "Prompt generated lang=$translationLanguage userMsg='${userMessage.take(40)}'"
         )
         return prompt
     }
@@ -1440,64 +1686,8 @@ class RoleplayChatViewModel(
         return this.filterNot { it.requiresPro }
     }
 
-    private fun buildClosingDirective(): String {
-        if (!inClosingPhase) return ""
-        val scenario = _uiState.value.currentScenario
-        val guidance = scenarioClosingGuidance
-        val activeSceneLabel = _uiState.value.activeSceneLabel.ifBlank { scenario?.title.orEmpty() }
-        val activeSceneDescription = _uiState.value.activeSceneDescription.ifBlank { scenario?.description.orEmpty() }
-        val builder = StringBuilder()
-        builder.append("CLOSING PHASE DIRECTIVES:\n")
-        builder.append("- ABSOLUTE RULE: Do NOT introduce brand-new questions or tasks.\n")
-        builder.append("- 絶対に新しい質問をしないで、これまでの会話をまとめてください。\n")
-        builder.append("- Deliver one clear farewell sentence in Bisaya (e.g., \"Sige, una sa ko\", \"Babay\", \"Kita ta napud\") that explicitly ends the chat.\n")
-        builder.append("- 別れのビサヤ語フレーズ（Sige, una na ko / Babay / Kita ta napud 等）を必ず述べ、会話の終わりを明確にしてください。\n")
-        builder.append("- After the farewell, do not ask or imply any follow-up question. Keep learner options empty or limited to a single acknowledgement if absolutely necessary.\n")
-        builder.append("- フェアウェル後は新規の問いかけをせず、必要なら『Salamat kaayo, mag-uban ta napud.』のような余韻のみ提示してください。\n")
-        builder.append("- Even while closing, never switch to Tagalog; maintain 100% Cebuano vocabulary.\n")
-        builder.append("- Reference the current situation (${activeSceneLabel.ifBlank { scenario?.title.orEmpty() }}) and tie loose ends before ending.\n")
-        builder.append("- 直前の会話で扱ったシーン描写（${activeSceneDescription.ifBlank { scenario?.description.orEmpty() }})を呼び戻し、『ベンチで休む』『フロントで呼ばれた』などの具体的な理由を述べて終了する。\n")
-        builder.append("- 禁止: 『また明日ね』『とりあえず今日はここまで』のように状況に触れない汎用的な文だけで終了しない。\n")
-        scenario?.let {
-            builder.append("- Make the learner feel the mission \"${it.goal}\" was accomplished.\n")
-        }
-        builder.append("- Guide the conversation to a natural goodbye within the next ${scriptedTurnsRemaining.coerceAtLeast(1)} AI turns while allowing the learner to reply.\n")
-        builder.append("- Mention that Tari enjoyed the interaction and appreciates the learner's effort before the farewell.\n")
-        if (scenario?.id == TARI_SCENARIO_ID) {
-            when (scriptedTurnsRemaining) {
-                2 -> {
-                    builder.append("- Offer a gentle wrap-up hint (errands, curfew) but end with a QUESTION inviting one more short reply.\n")
-                    builder.append("- Example prompt: 'Maayo kaayo karon! Pwede pa ko mangutana usa ka butang bag-o ko molakaw?'\n")
-                }
-                1 -> {
-                    builder.append("- Respond to the learner's final reply, then deliver the heartfelt farewell (" +
-                        "thank them, promise to meet tomorrow) without asking further questions.\n")
-                }
-                else -> {
-                    builder.append("- Casually mention errands or curfew to hint that the walk is ending soon.\n")
-                }
-            }
-            builder.append("- If this is the final turn, promise clearly that you'll meet here again tomorrow and thank the learner warmly.\n")
-        }
-        guidance?.resolutionReminders?.forEach { reminder ->
-            builder.append("- Resolve: $reminder\n")
-        }
-        guidance?.appreciationPhrases?.takeIf { it.isNotEmpty() }?.let {
-            builder.append("- Consider lines like ${it.joinToString()} when praising the learner.\n")
-        }
-        guidance?.followUpSuggestions?.forEach { suggestion ->
-            builder.append("- Prompt: $suggestion\n")
-        }
-        guidance?.farewellExamples?.takeIf { it.isNotEmpty() }?.let {
-            builder.append("- Sample farewells: ${it.joinToString { sample -> sample.bisaya }}\n")
-        }
-        builder.append("- Offer 1-2 gentle follow-up options (e.g., a reflective reply or a final thank-you) rather than new mission tasks.\n")
-        builder.append("- Keep tone warm and scenario-appropriate (hospital, hotel, taxi, etc.).\n")
-        return builder.toString()
-    }
-
     private fun selectCompletionFarewell(): FarewellLine {
-        scenarioClosingGuidance?.farewellExamples?.takeIf { it.isNotEmpty() }?.let { examples ->
+        currentScenarioClosingGuidance?.farewellExamples?.takeIf { it.isNotEmpty() }?.let { examples ->
             val pick = examples[random.nextInt(examples.size)]
             return FarewellLine(
                 bisaya = pick.bisaya,

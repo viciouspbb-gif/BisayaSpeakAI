@@ -53,6 +53,7 @@ import com.bisayaspeak.ai.ui.missions.MissionScenarioSelectScreen
 import com.bisayaspeak.ai.ui.missions.MissionTalkScreen
 import com.bisayaspeak.ai.ui.roleplay.RoleplayChatScreen
 import com.bisayaspeak.ai.ui.roleplay.RoleplayChatViewModel
+import com.bisayaspeak.ai.ui.roleplay.RoleplayListScreen
 import com.bisayaspeak.ai.ui.screens.AiTranslatorScreen
 import com.bisayaspeak.ai.ui.screens.FeedbackScreen
 import com.bisayaspeak.ai.ui.screens.FlashcardScreen
@@ -86,6 +87,7 @@ enum class AppRoute(val route: String) {
     PracticeWord("practice/word/{id}"),
     Listening("listening/{level}"),
     RolePlayChat("roleplay_chat/{scenarioId}"),
+    RolePlayList("roleplay_list"),
     Account("account"),
     SignIn("signin"),
     SignUp("signup"),
@@ -157,14 +159,8 @@ fun AppNavGraph(
                     onClickFeature = { feature ->
                         when (feature) {
                             FeatureId.AI_CHAT -> {
-                                if (!BuildConfig.DEBUG) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.roleplay_coming_soon_message),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else if (isProVersion) {
-                                    navController.navigate(AppRoute.TariDojo.route)
+                                if (isProVersion) {
+                                    navController.navigate(AppRoute.RolePlayList.route)
                                 } else {
                                     navController.navigate(AppRoute.Upgrade.route)
                                 }
@@ -319,17 +315,28 @@ fun AppNavGraph(
             )
         }
 
+        composable(AppRoute.RolePlayList.route) {
+            val scenarioId = "tari_infinite_mode"
+            RoleplayChatScreen(
+                scenarioId = scenarioId,
+                onBackClick = { navController.popBackStack() },
+                isProVersion = isProVersion,
+                onSaveAndExit = { history ->
+                    navController.popBackStack(AppRoute.Home.route, false)
+                }
+            )
+        }
+
         composable(AppRoute.TariDojo.route) {
-            if (BuildConfig.DEBUG) {
-                TariDojoScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            } else {
-                ComingSoonScreen(
-                    message = stringResource(R.string.roleplay_coming_soon_message),
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+            val scenarioId = "tari_dojo_mission"
+            RoleplayChatScreen(
+                scenarioId = scenarioId,
+                onBackClick = { navController.popBackStack() },
+                isProVersion = isProVersion,
+                onSaveAndExit = { history ->
+                    navController.popBackStack(AppRoute.Home.route, false)
+                }
+            )
         }
 
         composable(AppRoute.Dictionary.route) {
