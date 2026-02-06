@@ -324,9 +324,12 @@ class RoleplayChatViewModel(
             resolveUserDisplayName()
         }
         val scenarioDetails = when {
+            currentMode == RoleplayMode.DOJO -> {
+                val base = details.takeIf { it.isNotBlank() } ?: "指定シチュエーション"
+                "$base / 相手を個人として認識せず、与えられた役に徹してミッション処理だけを行うこと"
+            }
             details.isNotBlank() -> details
-            currentMode == RoleplayMode.SANPO -> "Cebu daily life"
-            else -> ""
+            else -> "Cebu daily life"
         }
         return promptManager.getSystemPrompt(
             mode = currentMode,
@@ -339,6 +342,7 @@ class RoleplayChatViewModel(
         currentMode = newMode
         turnCount = 0
         history.clear()
+        branchFacts.clear()
         _uiState.update { it.copy(messages = emptyList()) }
     }
 
@@ -448,8 +452,6 @@ class RoleplayChatViewModel(
         resetAutoExitState()
         switchMode(RoleplayMode.SANPO)
         val definition = convertToRoleplayScenarioDefinition(fallbackScenario)
-        history.clear()
-        branchFacts.clear()
         pendingAutoExitHistory = null
         scriptedRuntime = null
         activeDynamicScenario = null
@@ -587,8 +589,6 @@ class RoleplayChatViewModel(
         
         switchMode(RoleplayMode.DOJO)
         val definition = convertToRoleplayScenarioDefinition(scenario)
-        history.clear()
-        branchFacts.clear()
         pendingAutoExitHistory = null
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
         activeDynamicScenario = null
