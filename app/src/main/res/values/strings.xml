@@ -308,11 +308,8 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_feature_ai_translator_subtitle">Native-grade translations</string>
     <string name="home_feature_tari_walk_title">Tari Walk</string>
     <string name="home_feature_tari_walk_subtitle">Free conversation journeys</string>
-    <string name="home_feature_dojo_title_coming">Coming Soon</string>
-    <string name="home_feature_dojo_title_debug">Tari Dojo</string>
-    <string name="home_feature_dojo_subtitle_coming">Special training underway</string>
-    <string name="home_feature_dojo_subtitle_debug">Hands-on voice practice</string>
-    <string name="home_feature_dojo_badge">Training</string>
+    <string name="home_feature_dojo_title_master">Master Tari Dojo</string>
+    <string name="home_feature_dojo_subtitle_master">Strict roleplay training</string>
     <string name="home_owl_description">Owl mentor illustration</string>
     <string name="home_tarsier_description">Tarsier illustration</string>
     <string name="home_pro_dialog_title">Upgrade to PRO</string>

@@ -7,6 +7,7 @@ import android.os.Looper
 import android.util.Log
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.remote.OpenAiSpeechService
+import com.bisayaspeak.ai.ui.roleplay.RoleplayMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -188,6 +189,10 @@ class GeminiVoiceService(
     companion object {
         fun stopAllActive() {
             GeminiVoiceSupervisor.stopAndClearAll()
+        }
+
+        fun switchMode(mode: RoleplayMode) {
+            Log.d("GeminiVoiceService", "Switching voice cue profile to $mode")
         }
     }
 }

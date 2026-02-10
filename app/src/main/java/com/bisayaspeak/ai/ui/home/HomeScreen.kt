@@ -381,28 +381,19 @@ fun ProFeaturesSection(
         )
 
         // カミングスーン（リリース） / タリ道場（デバッグ）
-        val dojoTitle = stringResource(
-            if (isTariComingSoon) R.string.home_feature_dojo_title_coming else R.string.home_feature_dojo_title_debug
-        )
-        val dojoSubtitle = stringResource(
-            if (isTariComingSoon) R.string.home_feature_dojo_subtitle_coming else R.string.home_feature_dojo_subtitle_debug
-        )
-        val dojoBadge = if (isTariComingSoon) stringResource(R.string.home_feature_dojo_badge) else null
-        val dojoIllustration = if (isTariComingSoon) R.drawable.taridoujo else null
+        val dojoTitle = stringResource(R.string.home_feature_dojo_title_master)
+        val dojoSubtitle = stringResource(R.string.home_feature_dojo_subtitle_master)
+        val dojoIllustration = R.drawable.taridoujo
 
         ProFeatureItem(
             title = dojoTitle,
             subtitle = dojoSubtitle,
             icon = Icons.Default.Psychology,
             color = Color(0xFFCD7F32),
-            badgeText = dojoBadge,
             illustration = dojoIllustration,
+
             onClick = {
-                if (isTariComingSoon) {
-                    onComingSoon()
-                } else {
-                    onClickFeature(FeatureId.AI_CHAT)
-                }
+                onClickFeature(FeatureId.AI_CHAT)
             },
             modifier = Modifier.weight(1f)
         )

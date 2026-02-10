@@ -38,6 +38,7 @@ import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.auth.AuthManager
 import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.model.UserPlan
+import com.bisayaspeak.ai.data.repository.ScenarioRepository
 import com.bisayaspeak.ai.ui.account.AccountScreen
 import com.bisayaspeak.ai.ui.account.AccountUiState
 import com.bisayaspeak.ai.ui.account.AccountViewModel
@@ -116,6 +117,7 @@ fun AppNavGraph(
     val app = context.applicationContext as BisayaSpeakApp
     val authManager = remember(context) { AuthManager(context) }
     val scope = rememberCoroutineScope()
+    val scenarioRepository = remember(context) { ScenarioRepository(context) }
 
     var currentUser by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
 
@@ -160,7 +162,7 @@ fun AppNavGraph(
                         when (feature) {
                             FeatureId.AI_CHAT -> {
                                 if (isProVersion) {
-                                    navController.navigate(AppRoute.RolePlayList.route)
+                                    navController.navigate(AppRoute.TariDojo.route)
                                 } else {
                                     navController.navigate(AppRoute.Upgrade.route)
                                 }
@@ -183,10 +185,7 @@ fun AppNavGraph(
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
                             FeatureId.ROLE_PLAY -> {
                                 if (isProVersion) {
-                                    val defaultScenario = "tari_infinite_mode"
-                                    navController.navigate(
-                                        AppRoute.RolePlayChat.route.replace("{scenarioId}", defaultScenario)
-                                    )
+                                    navController.navigate(AppRoute.RolePlayList.route)
                                 } else {
                                     navController.navigate(AppRoute.Upgrade.route)
                                 }
@@ -328,7 +327,11 @@ fun AppNavGraph(
         }
 
         composable(AppRoute.TariDojo.route) {
-            val scenarioId = "tari_dojo_mission"
+            val scenarioId = remember {
+                scenarioRepository.getRandomDojoScenario()?.id
+                    ?: scenarioRepository.getScenarioById("dojo_1")?.id
+                    ?: "dojo_1"
+            }
             RoleplayChatScreen(
                 scenarioId = scenarioId,
                 onBackClick = { navController.popBackStack() },

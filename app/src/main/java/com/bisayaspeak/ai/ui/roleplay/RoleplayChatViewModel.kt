@@ -2,6 +2,7 @@ package com.bisayaspeak.ai.ui.roleplay
 
 import android.app.Application
 import android.util.Log
+import com.bisayaspeak.ai.BuildConfig
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.LessonStatusManager
@@ -19,6 +20,7 @@ import com.bisayaspeak.ai.domain.honor.HonorLevelManager
 import com.bisayaspeak.ai.ui.roleplay.RoleplayThemeManager
 import com.bisayaspeak.ai.util.LocaleUtils
 import com.bisayaspeak.ai.utils.MistakeManager
+import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.VoiceInputRecorder
 import java.io.File
@@ -462,7 +464,7 @@ class RoleplayChatViewModel(
         currentRelationshipMode = RelationshipMode.INTIMATE_KNOWN
         knownLearnerName = userNickname?.takeIf { it.isNotBlank() }
         isLearnerIdentified = knownLearnerName != null
-        val scenarioDetails = definition.description.ifBlank { definition.situation }
+        val scenarioDetails = "場所: ${definition.description.ifBlank { definition.situation }} / 役割: ${definition.aiRole} / 目的: ${definition.goal}"
         val systemPrompt = buildModeAwareSystemPrompt(scenarioDetails)
 
         _uiState.value = RoleplayUiState(
@@ -588,6 +590,7 @@ class RoleplayChatViewModel(
         Log.d("RoleplayChatViewModel", "Loading scenario=${scenario.id} title=${scenario.title}")
         
         switchMode(RoleplayMode.DOJO)
+        GeminiVoiceService.switchMode(RoleplayMode.DOJO)
         val definition = convertToRoleplayScenarioDefinition(scenario)
         pendingAutoExitHistory = null
         scriptedRuntime = scriptedScenarioDefinitions[scenarioId]?.let { ScriptedRuntime(it) }
@@ -608,15 +611,21 @@ class RoleplayChatViewModel(
 
         val cleanThemeTitle = levelPrefixRegex.replace(activeTheme.title, "").trim().ifBlank { activeTheme.title }
         val closingCue = activeTheme.closingCue
-        val localizedThemeTitle = if (isJapaneseLocale) cleanThemeTitle else definition.title
-        val localizedThemeDescription = if (isJapaneseLocale) activeTheme.description else definition.situation
-        val localizedThemePersona = if (isJapaneseLocale) activeTheme.persona else definition.aiRole
-        val localizedThemeGoal = if (isJapaneseLocale) activeTheme.goalStatement else definition.goal
-        val localizedIntroLine = if (isJapaneseLocale) activeTheme.introLine else ""
-        val localizedFarewellTranslation = if (isJapaneseLocale) closingCue.translation else definition.description
-        val localizedFarewellExplanation = if (isJapaneseLocale) closingCue.explanation else definition.goal
-        val scenarioDetails = definition.situation.ifBlank { definition.description }
+        val forceScenarioCopy = true
+        val localizedThemeTitle = if (forceScenarioCopy) definition.title else if (isJapaneseLocale) cleanThemeTitle else definition.title
+        val localizedThemeDescription = if (forceScenarioCopy) definition.situation else if (isJapaneseLocale) activeTheme.description else definition.situation
+        val localizedThemePersona = if (forceScenarioCopy) definition.aiRole else if (isJapaneseLocale) activeTheme.persona else definition.aiRole
+        val localizedThemeGoal = if (forceScenarioCopy) definition.goal else if (isJapaneseLocale) activeTheme.goalStatement else definition.goal
+        val localizedIntroLine = if (forceScenarioCopy) definition.initialMessage else if (isJapaneseLocale) activeTheme.introLine else ""
+        val localizedFarewellTranslation = if (forceScenarioCopy) definition.description else if (isJapaneseLocale) closingCue.translation else definition.description
+        val localizedFarewellExplanation = if (forceScenarioCopy) definition.goal else if (isJapaneseLocale) closingCue.explanation else definition.goal
+        val scenarioDetails = "場所: ${definition.situation} / 役割: ${definition.aiRole} / 目的: ${definition.goal}"
         val systemPrompt = buildModeAwareSystemPrompt(scenarioDetails)
+        val strippedSceneLabel = when (currentMode) {
+            RoleplayMode.DOJO -> localizedThemeTitle.substringAfter(' ').substringAfter('、').substringAfter('。').takeIf { it.isNotBlank() }
+                ?: localizedThemeTitle.replace("[道場]", "").trim().substringAfter(' ').trim()
+            else -> localizedThemeTitle
+        }
 
         _uiState.value = RoleplayUiState(
             currentScenario = definition,
@@ -627,7 +636,7 @@ class RoleplayChatViewModel(
             isLoading = scriptedRuntime == null,
             isProUser = isProVersion,
             userGender = currentUserGender,
-            activeThemeTitle = localizedThemeTitle,
+            activeThemeTitle = strippedSceneLabel,
             activeThemeDescription = localizedThemeDescription,
             activeThemePersona = localizedThemePersona,
             activeThemeGoal = localizedThemeGoal,
@@ -636,7 +645,7 @@ class RoleplayChatViewModel(
             activeThemeFarewellBisaya = closingCue.bisaya,
             activeThemeFarewellTranslation = localizedFarewellTranslation,
             activeThemeFarewellExplanation = localizedFarewellExplanation,
-            activeSceneLabel = localizedThemeTitle,
+            activeSceneLabel = strippedSceneLabel,
             activeSceneDescription = localizedThemeDescription,
             activeSceneIntroLine = localizedIntroLine.ifBlank { definition.initialMessage },
             showOptionTutorial = optionTutorialVisible,
@@ -647,7 +656,7 @@ class RoleplayChatViewModel(
         )
 
         if (scriptedRuntime == null) {
-            if (isJapaneseLocale) {
+            if (isJapaneseLocale && currentMode != RoleplayMode.DOJO) {
                 injectThemeIntroLine()
             }
             requestAiTurn(
@@ -1622,6 +1631,9 @@ class RoleplayChatViewModel(
             "RoleplayChatViewModel",
             "Prompt generated lang=$translationLanguage userMsg='${userMessage.take(40)}'"
         )
+        if (BuildConfig.DEBUG) {
+            Log.d("RoleplayChatViewModel", "Final prompt JSON for ${currentMode}:\n$prompt")
+        }
         return prompt
     }
 
