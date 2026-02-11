@@ -68,6 +68,35 @@ class OpenAiChatRepository(
         return sendPrompt(userPrompt = prompt, temperature = temperature)
     }
 
+    suspend fun generateSanpoReply(
+        baseSystemPrompt: String,
+        userMessage: String,
+        turnCount: Int
+    ): String {
+        val systemPrompt = when {
+            turnCount >= 12 -> """
+                これは最終ターン（12ターン目）です。
+                必ず以下形式で終了してください。
+
+                1行目：○○だから帰るわ！
+                2行目：ビサヤ語メインの締め台詞
+                3行目：[TOPページへ]
+            """.trimIndent()
+            turnCount >= 10 -> """
+                $baseSystemPrompt
+
+                そろそろ帰りそうな空気を自然に出してください。
+            """.trimIndent()
+            else -> baseSystemPrompt
+        }
+
+        return sendPrompt(
+            systemPrompt = systemPrompt,
+            userPrompt = userMessage,
+            temperature = 0.8
+        )
+    }
+
     suspend fun sendPrompt(
         systemPrompt: String? = null,
         userPrompt: String,

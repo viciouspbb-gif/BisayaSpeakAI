@@ -277,6 +277,8 @@ fun RoleplayChatScreen(
     val completionMessage = if (uiState.isEndingSession) {
         stringResource(R.string.roleplay_finish_message, scenarioLabel)
     } else null
+    val isSanpoMode = uiState.roleplayMode == RoleplayMode.SANPO
+    val isSanpoInputLocked = isSanpoMode && uiState.isSessionEnded
 
     LaunchedEffect(latestAiLine?.id) {
         latestAiLine?.let { message ->
@@ -308,7 +310,10 @@ fun RoleplayChatScreen(
     val screenScrollState = rememberScrollState()
 
     val audioPermissionGranted = audioPermissionGrantedState.value
-    val micButtonAction = {
+    val micButtonAction: () -> Unit = micAction@{
+        if (isSanpoInputLocked) {
+            return@micAction
+        }
         when {
             uiState.isVoiceRecording -> viewModel.stopVoiceRecordingAndSend()
             uiState.isVoiceTranscribing -> Unit
@@ -465,7 +470,8 @@ fun RoleplayChatScreen(
                         textScale = textScaleFactor,
                         isEndingSession = uiState.isEndingSession,
                         completionMessage = completionMessage,
-                        roleplayMode = uiState.roleplayMode
+                        roleplayMode = uiState.roleplayMode,
+                        onTopLinkClick = if (isSanpoMode) handleImmediateExit else null
                     )
 
                     Spacer(modifier = Modifier.height(sectionSpacing))
@@ -551,6 +557,7 @@ fun RoleplayChatScreen(
                         onMicClick = micButtonAction,
                         onCancelRecording = { viewModel.cancelVoiceRecording() },
                         scale = voicePanelScale,
+                        inputEnabled = !isSanpoInputLocked,
                         onPanelClick = { micButtonAction() }
                     )
                 }
@@ -644,7 +651,8 @@ private fun StageSection(
     textScale: Float = 1f,
     isEndingSession: Boolean,
     completionMessage: String?,
-    roleplayMode: RoleplayMode
+    roleplayMode: RoleplayMode,
+    onTopLinkClick: (() -> Unit)? = null
 ) {
     val characterImageRes = if (roleplayMode == RoleplayMode.DOJO) {
         R.drawable.taridoujo
@@ -777,13 +785,38 @@ private fun StageSection(
                     val textToShow = if (isTranslation) translationToShow else displayText
                     val fontSize = if (isTranslation) 16.sp else 20.sp
                     val color = if (isTranslation) Color(0xCC5B3600) else Color(0xFF5B3600)
-                    Text(
-                        text = textToShow,
-                        color = color,
-                        fontSize = fontSize * scale * textScale,
-                        textAlign = TextAlign.Center,
-                        fontWeight = if (!isTranslation && isSpeaking) FontWeight.Black else FontWeight.SemiBold
-                    )
+                    val containsTopLink = !isTranslation && roleplayMode == RoleplayMode.SANPO &&
+                        onTopLinkClick != null && textToShow.contains("[TOPページへ]")
+                    if (containsTopLink) {
+                        val cleaned = textToShow.replace("[TOPページへ]", "").trim()
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (cleaned.isNotBlank()) {
+                                Text(
+                                    text = cleaned,
+                                    color = color,
+                                    fontSize = fontSize * scale * textScale,
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = if (isSpeaking) FontWeight.Black else FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                            Text(
+                                text = "[TOPページへ]",
+                                color = Color(0xFF3B82F6),
+                                fontSize = 18.sp * scale * textScale,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.clickable { onTopLinkClick?.invoke() }
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = textToShow,
+                            color = color,
+                            fontSize = fontSize * scale * textScale,
+                            textAlign = TextAlign.Center,
+                            fontWeight = if (!isTranslation && isSpeaking) FontWeight.Black else FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }
@@ -1000,6 +1033,7 @@ private fun VoiceInputPanel(
     onMicClick: () -> Unit,
     onCancelRecording: () -> Unit,
     scale: Float = 1f,
+    inputEnabled: Boolean = true,
     onPanelClick: () -> Unit
 ) {
     val trimmedPreview = lastTranscribedText?.let { text ->
@@ -1025,7 +1059,7 @@ private fun VoiceInputPanel(
 
     Surface(
         modifier = modifier
-            .clickable { onPanelClick() },
+            .clickable(enabled = inputEnabled) { onPanelClick() },
         shape = RoundedCornerShape(24.dp * scale.coerceAtLeast(0.85f)),
         color = Color(0xFF0B1124),
         tonalElevation = 4.dp,
@@ -1039,7 +1073,7 @@ private fun VoiceInputPanel(
             ) {
                 FilledIconButton(
                     onClick = onMicClick,
-                    enabled = permissionGranted && !isTranscribing,
+                    enabled = permissionGranted && !isTranscribing && inputEnabled,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = buttonColor,
                         disabledContainerColor = Color(0xFF1E293B)

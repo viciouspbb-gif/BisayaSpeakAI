@@ -1113,15 +1113,16 @@ class RoleplayChatViewModel(
                 .trim()
         )
         turnCount++
-        val shouldForceEndByTurnLimit = currentMode == RoleplayMode.SANPO && turnCount >= 12
-        val finishDetected = rawAiSpeech.contains("[FINISH]") || completionTagDetected || shouldForceEndByTurnLimit
-        val hasCompleteTag = completionTagDetected || shouldForceEndByTurnLimit
-        val finalAiSpeech = if (shouldForceEndByTurnLimit) {
+        val isSanpoMode = currentMode == RoleplayMode.SANPO
+        val isDojoMode = currentMode == RoleplayMode.DOJO
+        val sanpoTurnLimitReached = isSanpoMode && turnCount >= 12
+        val finishTagFound = rawAiSpeech.contains("[FINISH]") || completionTagDetected
+        val finalAiSpeech = if (sanpoTurnLimitReached) {
             "今日はたくさん話したね、また明日！"
         } else {
             sanitizedAiSpeech
         }
-        val finalAiTranslation = if (shouldForceEndByTurnLimit) {
+        val finalAiTranslation = if (sanpoTurnLimitReached) {
             "今日はたくさん話したね、また明日！"
         } else {
             aiTranslation
@@ -1149,14 +1150,18 @@ class RoleplayChatViewModel(
             }.filterForAccess()
         val ensuredOptions = if (options.isNotEmpty()) options else buildFallbackOptions()
         val optionsWithForcedFarewell = maybeInjectFarewellOption(ensuredOptions, _uiState.value.completedTurns)
-        val farewellDetected = containsFarewellCue(finalAiSpeech) || containsFarewellCue(finalAiTranslation)
-        val shouldForceEnd = finishDetected || farewellDetected
+        val sanpoFarewellDetected = isSanpoMode && (containsFarewellCue(finalAiSpeech) || containsFarewellCue(finalAiTranslation))
+        val sanpoFinishDetected = isSanpoMode && (finishTagFound || sanpoTurnLimitReached)
+        val forcedTopToken = isDojoMode && finalAiSpeech.contains("[TOPページへ]")
+        val goalCleared = isDojoMode && payload.goalAchieved
+        val shouldEndByMode = when {
+            isSanpoMode -> sanpoFinishDetected || sanpoFarewellDetected
+            else -> goalCleared || forcedTopToken
+        }
 
-        val sanitizedOptions = if (shouldForceEnd) emptyList() else optionsWithForcedFarewell
+        val sanitizedOptions = if (shouldEndByMode) emptyList() else optionsWithForcedFarewell
 
-        val aiClosedConversation = shouldForceEnd || sanitizedOptions.isEmpty()
-
-        if (finishDetected) {
+        if (sanpoFinishDetected) {
             cancelVoiceRecording()
         }
 
@@ -1167,25 +1172,43 @@ class RoleplayChatViewModel(
                 options = sanitizedOptions,
                 peekedHintOptionIds = emptySet(),
                 lockedOption = null,
-                isEndingSession = shouldForceEnd || (aiClosedConversation && sanitizedOptions.isEmpty()),
+                goalAchieved = goalCleared,
+                isEndingSession = when {
+                    isSanpoMode -> shouldEndByMode || sanitizedOptions.isEmpty()
+                    else -> shouldEndByMode
+                },
                 finalFarewellMessageId = if (aiClosedConversation) aiMsg.id else null,
                 pendingExitHistory = if (aiClosedConversation) it.pendingExitHistory else null
             )
         }
 
-        if (aiClosedConversation) {
-            val emitFarewellMessage = !(finishDetected || farewellDetected)
-            val shouldComplete = finishDetected || aiClosedConversation
-            if (shouldComplete) {
-                queueCompletion(
-                    emitFarewellMessage = !finishDetected,
-                    closingReference = if (finishDetected) aiMsg else null
-                )
+        if (isDojoMode) {
+            when {
+                goalCleared -> handleSessionEnd(isMissionComplete = true)
+                forcedTopToken && !goalCleared -> handleSessionEnd(isMissionComplete = false)
             }
         }
 
-        if (hasCompleteTag) {
-            handleSessionEnd(isMissionComplete = currentMode == RoleplayMode.DOJO)
+        val aiClosedConversation = when {
+            isSanpoMode -> shouldEndByMode || sanitizedOptions.isEmpty()
+            else -> shouldEndByMode
+        }
+
+        if (aiClosedConversation) {
+            val emitFarewellMessage = when {
+                isSanpoMode -> !(sanpoFinishDetected || sanpoFarewellDetected)
+                else -> false
+            }
+            val shouldComplete = when {
+                isSanpoMode -> shouldEndByMode || aiClosedConversation
+                else -> shouldEndByMode
+            }
+            if (shouldComplete) {
+                queueCompletion(
+                    emitFarewellMessage = emitFarewellMessage,
+                    closingReference = if (sanpoFinishDetected) aiMsg else null
+                )
+            }
         }
     }
 
