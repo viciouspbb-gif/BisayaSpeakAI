@@ -52,7 +52,9 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -88,7 +90,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -970,35 +971,11 @@ private fun RoleplayOptionCard(
     }
     val translationAvailable = translationText.isNotBlank()
     val displayText = primaryOptionText.ifBlank { option.text }
-    val interactionSource = remember(option.id) { MutableInteractionSource() }
-
-    LaunchedEffect(option.id, interactionSource) {
-        interactionSource.interactions.collect { interaction ->
-            if (interaction is PressInteraction.Release || interaction is PressInteraction.Cancel) {
-                showTranslation = false
-            }
-        }
-    }
-
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 96.dp * scale.coerceAtLeast(0.85f))
-            .combinedClickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = { onPreview(option.text) },
-                onLongClick = {
-                    if (translationAvailable) {
-                        showTranslation = true
-                        if (!hasPeeked) {
-                            onPeekHint(option.id)
-                            hasPeeked = true
-                        }
-                    }
-                },
-                onDoubleClick = { onSelect(option.id) }
-            ),
+            .clickable { onSelect(option.id) },
         color = if (hintRevealed) Color(0xFF273251) else Color(0xFF16223B),
         shape = RoundedCornerShape(26.dp * scale.coerceAtLeast(0.85f)),
         tonalElevation = if (showTranslation) 6.dp else 2.dp,
@@ -1008,8 +985,10 @@ private fun RoleplayOptionCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = horizontalPadding, vertical = verticalPadding),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
                 text = if (showTranslation && translationAvailable) translationText else displayText,
@@ -1018,6 +997,41 @@ private fun RoleplayOptionCard(
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { onPreview(option.text) },
+                    colors = IconButtonDefaults.iconButtonColors(containerColor = Color(0x332A3A54))
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = Color(0xFF7DD3FC)
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        if (translationAvailable) {
+                            showTranslation = !showTranslation
+                            if (showTranslation && !hasPeeked) {
+                                onPeekHint(option.id)
+                                hasPeeked = true
+                            }
+                        }
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = if (showTranslation) Color(0xFF12324A) else Color(0x332A3A54)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Translate,
+                        contentDescription = null,
+                        tint = if (showTranslation) Color(0xFF64F2C2) else Color(0xFF9FB4D3)
+                    )
+                }
+            }
         }
     }
 }
