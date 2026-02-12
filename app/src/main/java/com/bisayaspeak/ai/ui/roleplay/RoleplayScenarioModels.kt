@@ -37,7 +37,14 @@ data class RoleplayScenarioDefinition(
     val systemPrompt: String,
     val hintPhrases: List<HintPhrase> = emptyList(),
     val closingGuidance: ScenarioClosingGuidance? = null,
-    val difficultyLabel: String = ""
+    val difficultyLabel: String = "",
+    val starterOptions: List<RoleplayStarterOption> = emptyList()
+)
+
+data class RoleplayStarterOption(
+    val text: String,
+    val translation: String,
+    val tone: String? = null
 )
 
 data class ScenarioClosingGuidance(

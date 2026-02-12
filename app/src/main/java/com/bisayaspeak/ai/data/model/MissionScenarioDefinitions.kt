@@ -9,7 +9,14 @@ data class MissionScenario(
     val context: MissionContext,
     val backgroundGradient: List<Color>,
     val openingMessage: String,
-    val systemPrompt: String
+    val systemPrompt: String,
+    val starterOptions: List<MissionStarterOption> = emptyList()
+)
+
+data class MissionStarterOption(
+    val text: String,
+    val translation: String,
+    val tone: String? = null
 )
 
 val missionScenarios: List<MissionScenario> = listOf(

@@ -19,6 +19,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -90,6 +91,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -262,6 +265,7 @@ fun RoleplayChatScreen(
         viewModel.loadScenario(scenarioId, isProVersion)
     }
 
+    val latestUserMessage = uiState.messages.lastOrNull { it.isUser }
     val latestAiLine: ChatMessage? = uiState.messages.lastOrNull { !it.isUser }
     val introLine = remember(
         uiState.activeSceneIntroLine,
@@ -474,6 +478,14 @@ fun RoleplayChatScreen(
                         roleplayMode = uiState.roleplayMode,
                         onTopLinkClick = if (isSanpoMode) handleImmediateExit else null
                     )
+
+                    if (latestUserMessage != null) {
+                        Spacer(modifier = Modifier.height(sectionSpacing))
+                        UserMessageBubble(
+                            message = latestUserMessage,
+                            scale = textScaleFactor
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(sectionSpacing))
 
@@ -819,6 +831,55 @@ private fun StageSection(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun UserMessageBubble(
+    message: ChatMessage,
+    scale: Float = 1f
+) {
+    val bubbleKey = message.id
+    var showTranslation by remember(bubbleKey) { mutableStateOf(false) }
+    val hasTranslation = message.translation?.isNotBlank() == true
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(bubbleKey) {
+                detectTapGestures(
+                    onTap = { showTranslation = false },
+                    onLongPress = {
+                        if (hasTranslation) showTranslation = true
+                    }
+                )
+            },
+        color = Color(0xFF122035),
+        shape = RoundedCornerShape(22.dp * scale)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp * scale, vertical = 14.dp * scale),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp * scale)
+        ) {
+            Text(
+                text = message.text,
+                color = Color(0xFFE0ECFF),
+                fontSize = 18.sp * scale,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+            AnimatedVisibility(visible = showTranslation && hasTranslation) {
+                Text(
+                    text = message.translation.orEmpty(),
+                    color = Color(0xFF9AB6FF),
+                    fontSize = 15.sp * scale,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }

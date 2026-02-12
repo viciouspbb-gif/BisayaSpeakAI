@@ -1,33 +1,59 @@
 package com.bisayaspeak.ai.data.repository
 
 import android.content.Context
+import android.util.Log
+import com.bisayaspeak.ai.data.model.LearningLevel
 import com.bisayaspeak.ai.data.model.MissionScenario
+import com.bisayaspeak.ai.data.model.MissionStarterOption
+import com.bisayaspeak.ai.util.LocaleUtils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import android.util.Log
-import com.bisayaspeak.ai.util.LocaleUtils
+import java.io.InputStreamReader
+import java.util.Locale
 import kotlin.random.Random
 
-private data class DojoScenarioSpec(val id: String, val title: String, val situation: String)
+private val DEFAULT_GRADIENTS: List<List<androidx.compose.ui.graphics.Color>> = listOf(
+    listOf(
+        androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#232526")),
+        androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#414345"))
+    ),
+    listOf(
+        androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#1e3c72")),
+        androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#2a5298"))
+    ),
+    listOf(
+        androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#0f2027")),
+        androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#2c5364"))
+    ),
+    listOf(
+        androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#485563")),
+        androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#29323c"))
+    )
+)
+
+data class ScenarioOptionAsset(
+    val text: String,
+    val translation: String,
+    val tone: String? = null
+)
 
 data class ScenarioAssetItem(
     val id: String,
-    val level: Int,
     val title: Map<String, String>,
     val subtitle: Map<String, String>,
     val difficultyLabel: Map<String, String>,
     val context: ScenarioContextAsset,
     val backgroundGradient: List<String>,
     val openingMessage: Map<String, String>,
-    val systemPrompt: Map<String, String>
+    val systemPrompt: Map<String, String>,
+    val starterOptions: List<ScenarioOptionAsset>? = null
 )
 
 data class ScenarioContextAsset(
-    val title: Map<String, String>,
     val role: Map<String, String>,
     val situation: Map<String, String>,
     val goal: Map<String, String>,
-    val hints: List<Map<String, String>>,
+    val hints: List<String>,
     val turnLimit: Int,
     val tone: Map<String, String>,
     val level: String
@@ -36,29 +62,151 @@ data class ScenarioContextAsset(
 class ScenarioRepository(private val context: Context) {
 
     private val random = Random(System.currentTimeMillis())
-    
-    fun loadScenarios(): List<MissionScenario> = getHardcodedScenarios()
+    private val gson = Gson()
 
-    fun getScenarioById(id: String): MissionScenario? = getHardcodedScenarios().find { it.id == id }
+    @Volatile
+    private var cachedScenarios: List<MissionScenario>? = null
 
-    private fun getHardcodedScenarios(): List<MissionScenario> {
+    fun loadScenarios(): List<MissionScenario> {
+        cachedScenarios?.let { return it }
+        val scenarios = buildScenarioPackageWithAssetsFallback()
+        cachedScenarios = scenarios
+        return scenarios
+    }
+
+    fun getScenarioById(id: String): MissionScenario? = loadScenarios().find { it.id == id }
+
+    private fun buildScenarioPackageWithAssetsFallback(): List<MissionScenario> {
         val locale = LocaleUtils.resolveAppLocale(context)
         val lang = if (locale.language.equals("ja", true)) "ja" else "en"
-        Log.d("ScenarioRepository", "loadScenarios locale=${locale.language} (${locale.displayName}), lang=$lang")
-        return buildScenarioPackage(lang)
+        Log.d(TAG, "loadScenarios locale=${locale.language} (${locale.displayName}), lang=$lang")
+        val tariWalk = buildTariWalkScenario(lang)
+        val dojoScenarios = loadDojoScenarios(lang)
+        return listOf(tariWalk) + dojoScenarios
     }
 
     fun getRandomDojoScenario(): MissionScenario? {
         val locale = LocaleUtils.resolveAppLocale(context)
         val lang = if (locale.language.equals("ja", true)) "ja" else "en"
-        val dojoScenarios = buildAllDojoScenarios(lang)
+        val dojoScenarios = loadDojoScenarios(lang)
         return dojoScenarios.randomOrNull(random)
     }
 
-    private fun buildScenarioPackage(lang: String): List<MissionScenario> {
-        val tariWalk = buildTariWalkScenario(lang)
-        val dojoScenarios = buildAllDojoScenarios(lang)
-        return listOf(tariWalk) + dojoScenarios
+    private fun loadDojoScenarios(lang: String): List<MissionScenario> {
+        val assetScenarios = runCatching { buildDojoScenariosFromAssets(lang) }
+            .onFailure {
+                Log.e(TAG, "Failed to load scenarios from assets, fallback to hardcoded", it)
+            }
+            .getOrNull()
+
+        if (assetScenarios != null) {
+            if (assetScenarios.isNotEmpty()) {
+                Log.d(TAG, "Loaded DOJO scenarios from assets: count=${assetScenarios.size}")
+                return assetScenarios
+            } else {
+                Log.w(TAG, "Scenario asset contained 0 DOJO entries. Falling back to hardcoded list.")
+            }
+        }
+
+        return buildAllDojoScenarios(lang).also {
+            Log.w(TAG, "Using hardcoded DOJO scenarios: count=${it.size}")
+        }
+    }
+
+    private fun buildDojoScenariosFromAssets(lang: String): List<MissionScenario> {
+        val raw = readAssetText(DOJO_ASSET_PATH)
+        val listType = object : TypeToken<List<ScenarioAssetItem>>() {}.type
+        val items: List<ScenarioAssetItem> = gson.fromJson(raw, listType) ?: emptyList()
+        Log.d(TAG, "Parsed DOJO scenario asset entries: count=${items.size}")
+        items.firstOrNull()?.let { first ->
+            val titleJa = first.title["ja"] ?: first.title.values.firstOrNull().orEmpty()
+            val roleJa = first.context.role["ja"] ?: first.context.role.values.firstOrNull().orEmpty()
+            Log.d(
+                TAG,
+                "First asset sample id=${first.id}, title=$titleJa, role=$roleJa"
+            )
+        }
+        if (items.isEmpty()) return emptyList()
+        return items.mapIndexed { index, item -> item.toMissionScenario(lang, index) }
+    }
+
+    private fun readAssetText(path: String): String {
+        Log.d(TAG, "Reading scenario asset path=$path (matches expected=${path == DOJO_ASSET_PATH})")
+        context.assets.open(path).use { input ->
+            InputStreamReader(input, Charsets.UTF_8).use { reader ->
+                val text = reader.readText()
+                val preview = text.take(100).replace("\n", "\\n")
+                Log.d(TAG, "Scenario asset bytes=${text.length}, preview='$preview'")
+                return text
+            }
+        }
+    }
+
+    private fun ScenarioAssetItem.toMissionScenario(lang: String, index: Int): MissionScenario {
+        val isJa = lang == "ja"
+        val defaultPrompt = if (isJa) DOJO_PROMPT_JA else DOJO_PROMPT_EN
+        val defaultOpening = if (isJa) {
+            "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\""
+        } else {
+            "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+        }
+        val resolvedTitle = title.resolve(lang)
+        return MissionScenario(
+            id = id,
+            title = resolvedTitle,
+            subtitle = subtitle.resolve(lang),
+            difficultyLabel = difficultyLabel.resolve(lang),
+            context = com.bisayaspeak.ai.data.model.MissionContext(
+                title = resolvedTitle,
+                role = context.role.resolve(lang),
+                situation = context.situation.resolve(lang),
+                goal = context.goal.resolve(lang),
+                hints = context.hints.orEmpty(),
+                turnLimit = context.turnLimit,
+                tone = context.tone.resolve(lang),
+                level = context.level.toLearningLevel()
+            ),
+            backgroundGradient = backgroundGradient.toColorGradient(index),
+            openingMessage = openingMessage.resolve(lang).ifBlank { defaultOpening },
+            systemPrompt = systemPrompt.resolve(lang).ifBlank { defaultPrompt },
+            starterOptions = starterOptions
+                .orEmpty()
+                .mapNotNull { option ->
+                    val text = option.text.trim()
+                    val translation = option.translation.trim()
+                    if (text.isBlank() || translation.isBlank()) {
+                        Log.w(TAG, "Starter option missing text/translation for scenario=$id: text='${option.text}', translation='${option.translation}'")
+                        null
+                    } else {
+                        MissionStarterOption(text = text, translation = translation, tone = option.tone)
+                    }
+                }
+                .ifEmpty { DEFAULT_DOJO_STARTER_OPTIONS }
+        )
+    }
+
+    private fun Map<String, String>?.resolve(lang: String): String {
+        if (this.isNullOrEmpty()) return ""
+        return this[lang]
+            ?: this[lang.lowercase(Locale.US)]
+            ?: this[if (lang == "ja") "en" else "ja"]
+            ?: this.values.firstOrNull().orEmpty()
+    }
+
+    private fun List<String>?.toColorGradient(index: Int): List<androidx.compose.ui.graphics.Color> {
+        val parsed = this.orEmpty().mapNotNull {
+            runCatching { androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(it)) }.getOrNull()
+        }
+        if (parsed.isNotEmpty()) return parsed
+        return DEFAULT_GRADIENTS[index % DEFAULT_GRADIENTS.size]
+    }
+
+    private fun String?.toLearningLevel(): LearningLevel {
+        return when (this?.lowercase(Locale.US)) {
+            "beginner" -> LearningLevel.BEGINNER
+            "advanced" -> LearningLevel.ADVANCED
+            else -> LearningLevel.INTERMEDIATE
+        }
     }
 
     private fun buildTariWalkScenario(lang: String): MissionScenario {
@@ -103,7 +251,8 @@ class ScenarioRepository(private val context: Context) {
                 androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#BE185D"))
             ),
             openingMessage = opening,
-            systemPrompt = systemPrompt
+            systemPrompt = systemPrompt,
+            starterOptions = emptyList()
         )
     }
 
@@ -117,25 +266,6 @@ class ScenarioRepository(private val context: Context) {
         }
         val hintsRespect = listOf("Maayong adlaw", "Palihug", "Salamat kaayo")
         val hintsService = listOf("Sir/Ma'am", "Pasensya", "Balikon nako ha")
-        val gradients = listOf(
-            listOf(
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#232526")),
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#414345"))
-            ),
-            listOf(
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#1e3c72")),
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#2a5298"))
-            ),
-            listOf(
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#0f2027")),
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#2c5364"))
-            ),
-            listOf(
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#485563")),
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor("#29323c"))
-            )
-        )
-
         return DOJO_CONTENTS.mapIndexed { idx, content ->
             val number = idx + 1
             val isRespectArc = number <= 30
@@ -173,9 +303,10 @@ class ScenarioRepository(private val context: Context) {
                     tone = tone,
                     level = learningLevel
                 ),
-                backgroundGradient = gradients[number % gradients.size],
+                backgroundGradient = DEFAULT_GRADIENTS[number % DEFAULT_GRADIENTS.size],
                 openingMessage = opening,
-                systemPrompt = basePrompt
+                systemPrompt = basePrompt,
+                starterOptions = DEFAULT_DOJO_STARTER_OPTIONS
             )
         }
     }
@@ -190,6 +321,24 @@ class ScenarioRepository(private val context: Context) {
     }
 
     companion object {
+        private const val TAG = "ScenarioRepository"
+        private const val DOJO_ASSET_PATH = "content/scenarios_v1.json"
+
+        private val DEFAULT_DOJO_STARTER_OPTIONS = listOf(
+            MissionStarterOption(
+                text = "Maayong adlaw. Palihug ko gamayng tabang.",
+                translation = "こんにちは。少しだけ助けてください。"
+            ),
+            MissionStarterOption(
+                text = "Pasensya ha, naa koy hangyo nga gusto ipangutana.",
+                translation = "すみません、お願いがあって伺いたいです。"
+            ),
+            MissionStarterOption(
+                text = "Gusto ko maabot ang tumong, tabangi ko og lakang-lakang.",
+                translation = "目標を達成したいので、段取りを教えてください。"
+            )
+        )
+
         private val TARl_WALK_PROMPT_JA = """
             あなたはユーザーの相棒「タリ」。
             1. 会話開始時に【親友】【恋人】【喧嘩中】【遊び仲間】のいずれかを内部で引き、最後までその関係性を崩さない。
