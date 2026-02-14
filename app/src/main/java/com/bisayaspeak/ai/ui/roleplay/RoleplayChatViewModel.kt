@@ -595,13 +595,28 @@ class RoleplayChatViewModel(
         isLearnerIdentified = false
         val systemPrompt = buildModeAwareSystemPrompt()
 
+        val initialSanpoOptions = listOf(
+            RoleplayOption(
+                text = "Maayong adlaw!",
+                hint = "こんにちは！"
+            ),
+            RoleplayOption(
+                text = "Asa ta paingon?",
+                hint = "どこに向かう？"
+            ),
+            RoleplayOption(
+                text = "Unsa imong ginabuhat?",
+                hint = "何してるの？"
+            )
+        )
+
         _uiState.value = RoleplayUiState(
             currentScenario = definition,
             missionGoal = definition.goal,
             aiCharacterName = definition.aiRole,
             systemPrompt = systemPrompt,
             messages = emptyList(),
-            isLoading = true,
+            isLoading = false,
             isProUser = isProVersion,
             userGender = currentUserGender,
             activeThemeTitle = definition.title,
@@ -621,7 +636,8 @@ class RoleplayChatViewModel(
             goalAchieved = false,
             isEndingSession = false,
             roleplayMode = RoleplayMode.SANPO,
-            learnerName = resolveUserDisplayName()
+            learnerName = resolveUserDisplayName(),
+            options = initialSanpoOptions
         )
 
         requestAiTurn(

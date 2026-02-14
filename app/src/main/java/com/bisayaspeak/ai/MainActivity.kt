@@ -79,9 +79,10 @@ class MainActivity : ComponentActivity() {
 
         val app = application as BisayaSpeakApp
         val listeningViewModelFactory = ListeningViewModelFactory(
-            app,
-            app.questionRepository,
-            app.userProgressRepository
+            application = app,
+            repository = app.questionRepository,
+            userProgressRepository = app.userProgressRepository,
+            dbSeedStateRepository = app.dbSeedStateRepository
         )
 
         setContent {

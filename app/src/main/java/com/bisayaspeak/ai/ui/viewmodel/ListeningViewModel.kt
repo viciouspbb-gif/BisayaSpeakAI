@@ -20,6 +20,7 @@ import com.bisayaspeak.ai.data.listening.ListeningSession
 import com.bisayaspeak.ai.data.model.DifficultyLevel
 import com.bisayaspeak.ai.data.model.LessonResult
 import com.bisayaspeak.ai.data.local.Question
+import com.bisayaspeak.ai.data.repository.DbSeedStateRepository
 import com.bisayaspeak.ai.data.repository.QuestionRepository
 import com.bisayaspeak.ai.data.repository.UsageRepository
 import com.bisayaspeak.ai.data.repository.UserProgressRepository
@@ -51,7 +52,8 @@ data class LocalizedPromptItem(
 class ListeningViewModel(
     application: Application,
     private val questionRepository: QuestionRepository,
-    private val userProgressRepository: UserProgressRepository
+    private val userProgressRepository: UserProgressRepository,
+    private val dbSeedStateRepository: DbSeedStateRepository
 ) : AndroidViewModel(application) {
 
     private val bisayaSpeakApp = application as BisayaSpeakApp
@@ -59,6 +61,12 @@ class ListeningViewModel(
     // UI State
     private val _session = MutableStateFlow<ListeningSession?>(null)
     val session: StateFlow<ListeningSession?> = _session.asStateFlow()
+
+    private val _isDbReady = MutableStateFlow(false)
+    val isDbReady: StateFlow<Boolean> = _isDbReady.asStateFlow()
+
+    private val _seedTimeoutElapsed = MutableStateFlow(false)
+    val seedTimeoutElapsed: StateFlow<Boolean> = _seedTimeoutElapsed.asStateFlow()
 
     private val _currentQuestion = MutableStateFlow<ListeningQuestion?>(null)
     val currentQuestion: StateFlow<ListeningQuestion?> = _currentQuestion.asStateFlow()
@@ -220,6 +228,8 @@ class ListeningViewModel(
     private var rewardTimeoutJob: Job? = null
     private var isRoleplaySession: Boolean = false
     private var pendingLevelLoad: Int? = null
+    private var requestedLevel: Int? = null
+    private var seedTimeoutJob: Job? = null
 
     fun setRoleplaySession(isRoleplay: Boolean) {
         isRoleplaySession = isRoleplay
@@ -254,6 +264,33 @@ class ListeningViewModel(
                 _isProUser.value = isPro
                 if (isPro) {
                     _showHintRecoveryDialog.value = false
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            dbSeedStateRepository.seededFlow.collect { seeded ->
+                Log.d("ListeningViewModel", "seededFlow change: $seeded")
+                val wasReady = _isDbReady.value
+                _isDbReady.value = seeded
+                if (seeded) {
+                    cancelSeedTimeoutTimer()
+                    _seedTimeoutElapsed.value = false
+                }
+
+                if (!wasReady && seeded) {
+                    val pendingRequestedLevel = requestedLevel
+                    pendingRequestedLevel?.let { levelToLoad ->
+                        requestedLevel = null
+                        Log.d("ListeningViewModel", "seeded=true -> loading now level=$levelToLoad (pending request)")
+                        loadQuestions(levelToLoad)
+                    }
+                    pendingLevelLoad?.let { levelToLoad ->
+                        if (pendingRequestedLevel == null || pendingRequestedLevel != levelToLoad) {
+                            Log.d("ListeningViewModel", "Replaying pending level load=$levelToLoad after seeding")
+                            loadQuestions(levelToLoad)
+                        }
+                    }
                 }
             }
         }
@@ -314,6 +351,14 @@ class ListeningViewModel(
         } else {
             Log.d("ListeningViewModel", "No ad needed - counter: ${_adCounter.value}")
         }
+    }
+
+    fun retryDatabaseInitialization() {
+        Log.d("ListeningViewModel", "retryDatabaseInitialization() invoked")
+        _seedTimeoutElapsed.value = false
+        _isDbReady.value = false
+        restartSeedTimeoutTimer()
+        bisayaSpeakApp.triggerDatabaseSeed()
     }
 
     fun processHintRequest() {
@@ -451,7 +496,26 @@ class ListeningViewModel(
         startAdReloading()
     }
 
+    fun requestLevel(level: Int) {
+        Log.d("ListeningViewModel", "requestLevel(level=$level)")
+        requestedLevel = level
+        if (_isDbReady.value) {
+            Log.d("ListeningViewModel", "seeded=true -> loading now level=$level")
+            loadQuestions(level)
+            requestedLevel = null
+        } else {
+            Log.d("ListeningViewModel", "seeded=false -> defer level=$level")
+            restartSeedTimeoutTimer()
+        }
+    }
+
     fun loadQuestions(level: Int) {
+        if (!_isDbReady.value) {
+            Log.d("ListeningViewModel", "seeded=false -> defer level=$level (loadQuestions)")
+            pendingLevelLoad = level
+            return
+        }
+
         pendingLevelLoad = null
         viewModelScope.launch {
             Log.d("ListeningViewModel", "Loading questions for level $level")
@@ -543,6 +607,20 @@ class ListeningViewModel(
     }
 
     // ========== プライベート関数 ==========
+
+    private fun restartSeedTimeoutTimer() {
+        cancelSeedTimeoutTimer()
+        seedTimeoutJob = viewModelScope.launch {
+            delay(10_000)
+            _seedTimeoutElapsed.value = true
+            Log.w("ListeningViewModel", "Seed initialization timeout reached")
+        }
+    }
+
+    private fun cancelSeedTimeoutTimer() {
+        seedTimeoutJob?.cancel()
+        seedTimeoutJob = null
+    }
 
     private fun loadHintCount() {
         val savedCount = sharedPreferences.getInt(HINT_COUNT_KEY, MAX_VOICE_HINTS)

@@ -113,6 +113,8 @@ fun ListeningScreen(
     val rewardedAdState by viewModel.rewardedAdState.collectAsState()
     val selectedWords by viewModel.selectedWords.collectAsState()
     val shuffledWords by viewModel.shuffledWords.collectAsState()
+    val isDbReady by viewModel.isDbReady.collectAsState()
+    val seedTimeoutElapsed by viewModel.seedTimeoutElapsed.collectAsState()
 
     val showBilingual = BuildConfig.DEBUG
     val deviceLocale = Locale.getDefault()
@@ -162,8 +164,8 @@ fun ListeningScreen(
     }
 
     LaunchedEffect(level) {
-        Log.d("ListeningScreen", "Loading questions for level $level")
-        viewModel.loadQuestions(level)
+        Log.d("ListeningScreen", "Requesting questions for level $level")
+        viewModel.requestLevel(level)
     }
 
     // Observe session state so the UI updates reliably
@@ -250,7 +252,31 @@ fun ListeningScreen(
                 .padding(padding)
                 .background(Color.Black)
         ) {
-            if (session?.completed == true) {
+            if (!isDbReady) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    if (seedTimeoutElapsed) {
+                        Text(
+                            text = "初期化に時間がかかっています。通信環境を確認するか、再試行してください。",
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { viewModel.retryDatabaseInitialization() }) {
+                            Text("再試行")
+                        }
+                    } else {
+                        CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(text = "準備中…", color = Color.White)
+                    }
+                }
+            } else if (session?.completed == true) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(text = stringResource(R.string.loading), color = Color.White)
                 }

@@ -2,160 +2,96 @@ package com.bisayaspeak.ai.data.local
 
 import android.content.Context
 import android.util.Log
+import androidx.room.withTransaction
+import com.bisayaspeak.ai.data.repository.DbSeedStateRepository
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.Locale
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * アセット内のJSONからRoomに初期データを流し込むユーティリティ。
- * DBが空の時のみ動作する。
+ * db_seededフラグがtrueになるまで一度だけ動作する。
  */
 object DatabaseInitializer {
     private const val TAG = "DatabaseInitializer"
     private const val SEED_FILE = "content/listening_seed_v2.json"
 
     private val gson = Gson()
+    private val seedMutex = Mutex()
 
     suspend fun initialize(
         context: Context,
-        questionDao: QuestionDao,
-        userProgressDao: UserProgressDao
+        database: AppDatabase,
+        seedStateRepository: DbSeedStateRepository = DbSeedStateRepository(context)
     ) {
-        // Temporary hard reset to ensure latest seed data is loaded (remove after migration)
-        runCatching {
-            Log.w(TAG, "Force-clearing questions table before seeding (temporary)")
-            questionDao.clearAll()
-        }.onFailure { throwable ->
-            Log.e(TAG, "Failed to force-clear database", throwable)
-            return
-        }
+        seedMutex.withLock {
+            val isAlreadySeeded = seedStateRepository.seededFlow.first()
+            Log.d(TAG, "initialize() start, db_seeded=$isAlreadySeeded")
+            Log.d("DEBUG_SEED", "initialize() invoked, db_seeded=$isAlreadySeeded")
+            val questionDao = database.questionDao()
+            val userProgressDao = database.userProgressDao()
 
-        val currentCount = runCatching { questionDao.countQuestions() }.getOrElse { throwable ->
-            Log.e(TAG, "Failed to read question count", throwable)
-            return
-        }
-        
-        Log.d(TAG, "Current DB question count: $currentCount")
-        
-        // 強制リロードチェック - LV1データがなければ必ず再初期化
-        val lv1Questions = runCatching { questionDao.getQuestionsByLevel(1) }.getOrElse { emptyList() }
-        val needsForceReload = lv1Questions.isEmpty()
-        
-        if (needsForceReload) {
-            Log.w(TAG, "LV1 questions missing or empty! Forcing complete database reload.")
-            runCatching { questionDao.clearAll() }.onFailure { throwable ->
-                Log.e(TAG, "Failed to clear database for force reload", throwable)
+            if (isAlreadySeeded) {
+                Log.d(TAG, "Skipping seeding – already completed")
+                Log.d("DEBUG_SEED", "Skipping seeding because db_seeded already true")
                 return
             }
-            val countAfterClear = runCatching { questionDao.countQuestions() }.getOrElse { 0 }
-            Log.d(TAG, "Questions count after force clear: $countAfterClear")
-        }
-        
-        // 最終的なデータベース状態を再確認
-        val finalCount = runCatching { questionDao.countQuestions() }.getOrElse { 0 }
-        val finalLv1Count = runCatching { questionDao.getQuestionsByLevel(1) }.getOrElse { emptyList() }.size
-        
-        Log.d(TAG, "Final DB state - Total: $finalCount, LV1: $finalLv1Count")
-        
-        val needsRefresh = if (needsForceReload) {
-            true
-        } else if (finalCount == 0) {
-            Log.d(TAG, "Database is empty, needs seeding")
-            true
-        } else if (finalLv1Count == 0) {
-            Log.w(TAG, "Database has data but no LV1 questions, forcing refresh")
-            runCatching { questionDao.clearAll() }.onFailure { throwable ->
-                Log.e(TAG, "Failed to clear for LV1 refresh", throwable)
-                return
-            }
-            true
-        } else {
-            val containsLegacy = runCatching { questionDao.containsKeyword("bisaya") }.getOrElse { throwable ->
-                Log.e(TAG, "Failed to inspect legacy data", throwable)
-                false
-            }
-            if (containsLegacy) {
-                Log.w(TAG, "Legacy placeholder data detected. Clearing questions table.")
-                runCatching { questionDao.clearAll() }.onFailure { throwable ->
-                    Log.e(TAG, "Failed to clear legacy questions", throwable)
-                    return
-                }
-                // クリア後の確認
-                val countAfterClear = runCatching { questionDao.countQuestions() }.getOrElse { 0 }
-                Log.d(TAG, "Questions count after clear: $countAfterClear")
-                true
-            } else {
-                Log.d(TAG, "Database already seeded with valid data (entries=$finalCount)")
-                false
-            }
-        }
-        
-        if (!needsRefresh) {
-            Log.d(TAG, "No refresh needed, database is properly initialized")
-            return
-        }
 
-        runCatching {
-            val questions = loadQuestionsFromAssets(context)
-            if (questions.isEmpty()) {
-                Log.w(TAG, "Seed file has no content: $SEED_FILE")
+            val existingCount = runCatching { questionDao.countQuestions() }.getOrElse { throwable ->
+                Log.e(TAG, "Failed to count existing questions", throwable)
+                Log.e("DEBUG_SEED", "Failed to count existing questions: ${throwable.message}", throwable)
+                0
+            }
+            val existingLv1Count = runCatching { questionDao.getQuestionsByLevel(1).size }.getOrElse { 0 }
+
+            if (existingCount > 0 || existingLv1Count > 0) {
+                Log.d(TAG, "Existing questions detected (total=$existingCount, lv1=$existingLv1Count). Marking as seeded without reimport.")
+                Log.d("DEBUG_SEED", "Existing DB detected, marking seeded and skipping clearAll")
+                seedStateRepository.setDbSeeded(true)
                 return
             }
-            
-            // 必ずクリアして重複を完全防止
-            val preClearCount = runCatching { questionDao.countQuestions() }.getOrElse { 0 }
-            if (preClearCount > 0) {
-                Log.w(TAG, "Clearing existing database (${preClearCount} entries) to prevent duplicates")
-                runCatching { questionDao.clearAll() }.onFailure { throwable ->
-                    Log.e(TAG, "Failed to clear database", throwable)
-                    return
-                }
-                val countAfterClear = runCatching { questionDao.countQuestions() }.getOrElse { 0 }
-                Log.d(TAG, "Database cleared, current count: $countAfterClear")
-            }
-            
-            Log.d(TAG, "Starting insertion of ${questions.size} questions")
-            questionDao.insertQuestions(questions)
-            
-            // 挿入後の確認
-            val insertedCount = runCatching { questionDao.countQuestions() }.getOrElse { 0 }
-            Log.d(TAG, "Successfully inserted ${questions.size} questions from $SEED_FILE")
-            Log.d(TAG, "Total questions in DB after insertion: $insertedCount")
-            
-            // 重複チェック - 厳密な検証
-            if (insertedCount != questions.size) {
-                Log.e(TAG, "CRITICAL: Database count mismatch! Expected: ${questions.size}, Actual: $insertedCount")
-                if (insertedCount > questions.size) {
-                    Log.e(TAG, "Duplicates detected! Clearing and re-inserting...")
-                    runCatching { questionDao.clearAll() }.onFailure { throwable ->
-                        Log.e(TAG, "Failed to clear duplicates", throwable)
-                        return
+
+            Log.d(TAG, "Starting initial database seed (db_seeded=false)")
+
+            runCatching {
+                Log.d(TAG, "Beginning seed transaction")
+                Log.d("DEBUG_SEED", "Seed transaction start")
+                database.withTransaction {
+                    questionDao.clearAll()
+                    val questions = loadQuestionsFromAssets(context)
+                    if (questions.isEmpty()) {
+                        error("Seed file has no content: $SEED_FILE")
                     }
-                    questionDao.insertQuestions(questions)
-                    val finalCount = runCatching { questionDao.countQuestions() }.getOrElse { 0 }
-                    Log.d(TAG, "Final count after re-insertion: $finalCount")
-                }
-            }
-            
-            // LV1のデータ確認
-            val lv1QuestionsAfter = runCatching { questionDao.getQuestionsByLevel(1) }.getOrElse { emptyList() }
-            Log.d(TAG, "LV1 questions available: ${lv1QuestionsAfter.size}")
-            if (lv1QuestionsAfter.isNotEmpty()) {
-                Log.d(TAG, "First LV1 question: ${lv1QuestionsAfter.first().sentence}")
-                // LV1の重複チェック
-                val lv1Distinct = lv1QuestionsAfter.distinctBy { it.sentence }
-                if (lv1Distinct.size != lv1QuestionsAfter.size) {
-                    Log.e(TAG, "LV1 has duplicates! Total: ${lv1QuestionsAfter.size}, Distinct: ${lv1Distinct.size}")
-                }
-            } else {
-                Log.e(TAG, "CRITICAL: No LV1 questions found after insertion!")
-            }
 
-            seedUserProgress(userProgressDao)
-        }.onFailure { throwable ->
-            Log.e(TAG, "Failed to import questions from assets", throwable)
+                    Log.d(TAG, "Inserting ${questions.size} questions from $SEED_FILE")
+                    Log.d("DEBUG_SEED", "Inserting ${questions.size} questions")
+                    questionDao.insertQuestions(questions)
+                    questions.forEachIndexed { index, question ->
+                        Log.d("DEBUG_SEED", "Inserted question ${index + 1}/${questions.size}: level=${question.level}, sentence=${question.sentence}")
+                    }
+                    seedUserProgress(userProgressDao)
+                }
+                Log.d(TAG, "Seed transaction completed")
+                Log.d("DEBUG_SEED", "Seed transaction completed")
+
+                val lv1Count = questionDao.getQuestionsByLevel(1).size
+                if (lv1Count == 0) {
+                    error("Seeding failed – LV1 questions missing after insert")
+                }
+
+                seedStateRepository.setDbSeeded(true)
+                Log.d(TAG, "Database seeding completed successfully (LV1 count=$lv1Count)")
+                Log.d("DEBUG_SEED", "Database seeding finished successfully, LV1=$lv1Count")
+            }.onFailure { throwable ->
+                Log.e(TAG, "Database seeding failed", throwable)
+                Log.e("DEBUG_SEED", "Database seeding failed: ${throwable.message}", throwable)
+                seedStateRepository.setDbSeeded(false)
+            }
         }
     }
 

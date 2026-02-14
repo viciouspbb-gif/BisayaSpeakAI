@@ -276,11 +276,12 @@ fun RoleplayChatScreen(
     val scenarioLabel = uiState.activeThemeTitle
         .ifBlank { uiState.currentScenario?.title.orEmpty() }
         .ifBlank { stringResource(id = R.string.roleplay) }
-    val completionMessage = if (uiState.isEndingSession) {
+    val completionMessage = if (uiState.isEndingSession && !uiState.isSanpoEnding) {
         stringResource(R.string.roleplay_finish_message, scenarioLabel)
     } else null
     val isSanpoMode = uiState.roleplayMode == RoleplayMode.SANPO
     val isSanpoInputLocked = isSanpoMode && uiState.isSessionEnded
+    val showResponsePanel = uiState.options.isNotEmpty()
 
     LaunchedEffect(latestAiLine?.id) {
         latestAiLine?.let { message ->
@@ -338,7 +339,7 @@ fun RoleplayChatScreen(
         }
     }
 
-    if (uiState.showCompletionDialog) {
+    if (uiState.showCompletionDialog && !uiState.isSanpoEnding) {
         val onPlayFarewell = {
             val text = uiState.activeThemeFarewellBisaya
             if (text.isNotBlank()) {
@@ -518,69 +519,39 @@ fun RoleplayChatScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(sectionSpacing))
-
-                    if (!uiState.isEndingSession) {
+                    if (showResponsePanel) {
                         ResponsePanel(
                             modifier = Modifier
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp),
                             isLoading = uiState.isLoading,
                             options = uiState.options,
                             peekedHintIds = uiState.peekedHintOptionIds,
-                            onSelect = { viewModel.selectOption(it) },
-                            onHintPeek = { viewModel.markHintPeeked(it) },
-                            onPreview = { text -> speakUserPreview(text) },
+                            onSelect = { optionId -> viewModel.selectOption(optionId) },
+                            onHintPeek = { optionId -> viewModel.markHintPeeked(optionId) },
+                            onPreview = { phrase -> speakUserPreview(phrase) },
                             optionSpacing = optionSpacing,
                             scale = scaleFactor,
                             cardHorizontalPadding = cardHorizontalPadding,
                             cardVerticalPadding = cardVerticalPadding,
                             isJapaneseLocale = isJapaneseLocale
                         )
-
-                        Spacer(modifier = Modifier.height(sectionSpacing))
                     }
 
                     Spacer(modifier = Modifier.height(bottomContentSpacer))
                 }
 
                 if (uiState.isSanpoEnding) {
-                    Column(
+                    SanpoEndingUserPanel(
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter)
-                            .padding(horizontal = 24.dp, vertical = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Color(0xFF0D1724),
-                            shape = RoundedCornerShape(28.dp),
-                            tonalElevation = 6.dp
-                        ) {
-                            Text(
-                                text = uiState.sanpoEndingFarewell,
-                                color = Color.White,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .padding(horizontal = 24.dp, vertical = 26.dp)
-                            )
-                        }
-
-                        Button(
-                            onClick = handleImmediateExit,
-                            shape = RoundedCornerShape(50),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.roleplay_back_to_top),
-                                color = Color.Black,
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
+                            .padding(horizontal = 20.dp, vertical = voicePanelVerticalPadding)
+                            .padding(bottom = voicePanelBottomSpace)
+                            .navigationBarsPadding(),
+                        scale = voicePanelScale,
+                        onTopClick = handleImmediateExit
+                    )
                 } else if (!uiState.isEndingSession) {
                     VoiceInputPanel(
                         modifier = Modifier
@@ -602,7 +573,7 @@ fun RoleplayChatScreen(
                     )
                 }
 
-                if (uiState.isSessionEnded) {
+                if (uiState.isSessionEnded && !uiState.isSanpoEnding) {
                     val finaleText = uiState.finalMessage.ifBlank {
                         stringResource(R.string.roleplay_finish_message, scenarioLabel)
                     }
@@ -858,6 +829,42 @@ private fun StageSection(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SanpoEndingUserPanel(
+    modifier: Modifier = Modifier,
+    scale: Float,
+    onTopClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier.clip(RoundedCornerShape(36.dp * scale.coerceAtLeast(0.85f))),
+        color = Color(0xCC0D1424)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 24.dp * scale.coerceAtLeast(0.85f),
+                    vertical = 24.dp * scale.coerceAtLeast(0.85f)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = onTopClick,
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+            ) {
+                Text(
+                    text = stringResource(R.string.roleplay_back_to_top),
+                    color = Color.Black,
+                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }

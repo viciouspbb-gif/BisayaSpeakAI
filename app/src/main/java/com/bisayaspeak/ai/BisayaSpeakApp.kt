@@ -3,13 +3,19 @@ package com.bisayaspeak.ai
 import android.app.Application
 import android.util.Log
 import com.bisayaspeak.ai.data.local.AppDatabase
+import com.bisayaspeak.ai.data.local.DatabaseInitializer
+import com.bisayaspeak.ai.data.repository.DbSeedStateRepository
 import com.bisayaspeak.ai.data.repository.QuestionRepository
 import com.bisayaspeak.ai.data.repository.UserProgressRepository
 import com.bisayaspeak.ai.feature.ProFeatureGate
 import com.google.firebase.FirebaseApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
 
 class BisayaSpeakApp : Application() {
 
@@ -18,10 +24,18 @@ class BisayaSpeakApp : Application() {
             private set
     }
 
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    lateinit var database: AppDatabase
+        private set
+
     lateinit var questionRepository: QuestionRepository
         private set
 
     lateinit var userProgressRepository: UserProgressRepository
+        private set
+
+    lateinit var dbSeedStateRepository: DbSeedStateRepository
         private set
 
     private val _proVersionState = MutableStateFlow(false)
@@ -45,8 +59,21 @@ class BisayaSpeakApp : Application() {
         }
         Log.d("BisayaSpeakApp", "Application started")
 
-        val database = AppDatabase.getInstance(this)
+        database = AppDatabase.getInstance(this)
         questionRepository = QuestionRepository(database.questionDao())
         userProgressRepository = UserProgressRepository(database.userProgressDao())
+        dbSeedStateRepository = DbSeedStateRepository(this)
+
+        triggerDatabaseSeed()
+    }
+
+    fun triggerDatabaseSeed() {
+        applicationScope.launch {
+            DatabaseInitializer.initialize(
+                context = applicationContext,
+                database = database,
+                seedStateRepository = dbSeedStateRepository
+            )
+        }
     }
 }
