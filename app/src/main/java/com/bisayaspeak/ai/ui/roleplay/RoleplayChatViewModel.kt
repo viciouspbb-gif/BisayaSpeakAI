@@ -126,7 +126,9 @@ data class RoleplayUiState(
     val finalMessage: String = "",
     val showFeedbackCard: Boolean = true,
     val roleplayMode: RoleplayMode = RoleplayMode.SANPO,
-    val learnerName: String = ""
+    val learnerName: String = "",
+    val isSanpoEnding: Boolean = false,
+    val sanpoEndingFarewell: String = ""
 )
 
 enum class TranslationLanguage { JAPANESE, ENGLISH }
@@ -201,6 +203,15 @@ class RoleplayChatViewModel(
         private const val FORCED_FAREWELL_OPTION_ID = "forced-farewell-option"
         private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*: \\s*", RegexOption.IGNORE_CASE)
         private const val OPTION_TUTORIAL_VERSION = 2
+        private const val MIN_VISIBLE_OPTIONS = 2
+        private const val MAX_VISIBLE_OPTIONS = 3
+        private val SANPO_FAREWELL_LINES = listOf(
+            "Sige ha, naa pa koy buhaton. Magkita ta sunod.",
+            "Amping sa imong adlaw. Mag-istorya ta puhon.",
+            "Sige una ko ha. Tawga lang ko kung kinahanglan nimo ko.",
+            "Salamat sa istorya. Maghulat ko sa sunod nimong tawag.",
+            "Pahuway usa ko gamay. Balik lang og chat kung andam naka."
+        )
         private val SITUATION_TAG_REGEX = Regex("\\[Situation:[^]]*]")
         private val DEFAULT_FAREWELL_KEYWORDS = setOf(
             "babay",
@@ -1332,7 +1343,10 @@ class RoleplayChatViewModel(
 
         val userTurnIndex = _uiState.value.completedTurns
         val (computedOptions, computedSource) = if (isDojoMode) {
-            val dojoOptions = buildDojoOptionsForTurn(userTurnIndex)
+            val dojoOptions = enforceVisibleOptionCount(
+                buildDojoOptionsForTurn(userTurnIndex),
+                allowFallback = false
+            )
             val source = if (userTurnIndex == 0) OptionSource.STARTER else OptionSource.TEMPLATE
             dojoOptions to source
         } else {
@@ -1348,6 +1362,7 @@ class RoleplayChatViewModel(
                 .filterForAccess()
                 .let { ensured -> if (ensured.isNotEmpty()) ensured else buildFallbackOptions() }
                 .let { maybeInjectFarewellOption(it, _uiState.value.completedTurns) }
+                .let { enforceVisibleOptionCount(it) }
             sanpoOptions to OptionSource.AI
         }
         val sanpoFarewellDetected = isSanpoMode && (containsFarewellCue(finalAiSpeech) || containsFarewellCue(finalAiTranslation))
@@ -1421,9 +1436,27 @@ class RoleplayChatViewModel(
         return picks.map { phrase ->
             RoleplayOption(
                 text = phrase.nativeText,
-                hint = if (isProVersion) phrase.translation else null
+                hint = phrase.translation
             )
         }
+    }
+
+    private fun enforceVisibleOptionCount(
+        options: List<RoleplayOption>,
+        allowFallback: Boolean = true
+    ): List<RoleplayOption> {
+        val trimmed = options.take(MAX_VISIBLE_OPTIONS)
+        if (trimmed.size >= MIN_VISIBLE_OPTIONS) {
+            return trimmed
+        }
+        if (!allowFallback) {
+            return trimmed
+        }
+        val needed = MIN_VISIBLE_OPTIONS - trimmed.size
+        val fallback = buildFallbackOptions()
+            .filterNot { candidate -> trimmed.any { it.text == candidate.text } }
+            .take(needed)
+        return (trimmed + fallback).take(MAX_VISIBLE_OPTIONS)
     }
 
     private fun maybeInjectFarewellOption(
@@ -1649,6 +1682,36 @@ class RoleplayChatViewModel(
         emitFarewellMessage: Boolean = true,
         closingReference: ChatMessage? = null
     ) {
+        if (currentMode == RoleplayMode.SANPO) {
+            val farewellText = SANPO_FAREWELL_LINES.random(random)
+            val farewellMessage = ChatMessage(
+                id = UUID.randomUUID().toString(),
+                text = farewellText,
+                isUser = false,
+                translation = null,
+                voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
+            )
+            history.add(MissionHistoryMessage(farewellText, isUser = false))
+            val historySnapshot = history.toList()
+            pendingAutoExitHistory = historySnapshot
+            _uiState.update {
+                it.copy(
+                    showCompletionDialog = false,
+                    messages = it.messages + farewellMessage,
+                    options = emptyList(),
+                    peekedHintOptionIds = emptySet(),
+                    isEndingSession = true,
+                    isSanpoEnding = true,
+                    sanpoEndingFarewell = farewellText,
+                    finalFarewellMessageId = farewellMessage.id,
+                    pendingExitHistory = historySnapshot,
+                    finalMessage = farewellText,
+                    showFeedbackCard = false
+                )
+            }
+            return
+        }
+
         val farewellMessage = if (emitFarewellMessage) {
             val farewell = forcedTariFarewell() ?: selectCompletionFarewell()
             history.add(MissionHistoryMessage(farewell.bisaya, isUser = false))
@@ -1679,7 +1742,9 @@ class RoleplayChatViewModel(
                 activeThemeFarewellExplanation = farewellLine?.explanation ?: it.activeThemeFarewellExplanation,
                 isEndingSession = true,
                 finalFarewellMessageId = referenceMessage?.id ?: it.finalFarewellMessageId,
-                pendingExitHistory = historySnapshot
+                pendingExitHistory = historySnapshot,
+                isSanpoEnding = false,
+                sanpoEndingFarewell = ""
             )
         }
         scheduleAutoExit()
