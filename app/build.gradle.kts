@@ -194,6 +194,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("com.google.firebase:firebase-analytics-ktx")
     
     // reCAPTCHA Enterprise - セキュリティ脆弱性対応（18.4.0以上必須）
     implementation("com.google.android.recaptcha:recaptcha:18.6.1")
