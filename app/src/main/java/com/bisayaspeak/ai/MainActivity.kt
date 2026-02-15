@@ -3,7 +3,6 @@ package com.bisayaspeak.ai
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -13,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.bisayaspeak.ai.ads.AdManager
@@ -24,6 +24,7 @@ import com.bisayaspeak.ai.ui.theme.BisayaSpeakAITheme
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 import com.bisayaspeak.ai.update.UpdateCheckResult
 import com.bisayaspeak.ai.update.UpdateManager
+import com.bisayaspeak.ai.R
 import com.google.android.gms.ads.MobileAds
 import com.google.android.ump.ConsentDebugSettings
 import com.google.android.ump.ConsentInformation
@@ -85,7 +86,22 @@ class MainActivity : ComponentActivity() {
             dbSeedStateRepository = app.dbSeedStateRepository
         )
 
-        setContent {
+        setContentView(R.layout.activity_main)
+        setupComposeContent(app, listeningViewModelFactory)
+    }
+
+    private fun setupComposeContent(
+        app: BisayaSpeakApp,
+        listeningViewModelFactory: ListeningViewModelFactory
+    ) {
+        val composeView = findViewById<ComposeView>(R.id.main_compose_view)
+        if (composeView == null) {
+            Log.e(TAG, "ComposeView not found; finishing activity to avoid blank screen")
+            finish()
+            return
+        }
+
+        val content: @Composable () -> Unit = {
             BisayaSpeakAITheme {
 
                 val navController = rememberNavController()
@@ -125,6 +141,26 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 )
+            }
+        }
+
+        applyComposeContentWithRetry(composeView, content)
+    }
+
+    private fun applyComposeContentWithRetry(
+        composeView: ComposeView,
+        content: @Composable () -> Unit,
+        remainingAttempts: Int = 3
+    ) {
+        try {
+            composeView.setContent(content)
+        } catch (npe: NullPointerException) {
+            if (remainingAttempts > 1) {
+                Log.w(TAG, "ComposeView.setContent NPE; retrying (${remainingAttempts - 1} attempts left)", npe)
+                composeView.post { applyComposeContentWithRetry(composeView, content, remainingAttempts - 1) }
+            } else {
+                Log.e(TAG, "ComposeView.setContent failed after retries", npe)
+                throw npe
             }
         }
     }

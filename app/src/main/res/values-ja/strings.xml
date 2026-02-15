@@ -226,8 +226,8 @@
     <string name="roleplay_subtitle">会話</string>
     <string name="roleplay_back_desc">戻る</string>
     <string name="roleplay_immediate_exit">終了してTOP</string>
-    <string name="roleplay_tutorial_message">長押しで訳を表示、ダブルタップで決定できます。</string>
-    <string name="roleplay_tutorial_hint">OKを押すと次回から表示されません</string>
+    <string name="roleplay_tutorial_message">タップで音声、ダブルタップで送信、長押しで訳を表示できます。</string>
+    <string name="roleplay_option_hint">タップ=音声／ダブルタップ=送信／長押し=訳表示</string>
     <string name="roleplay_tutorial_ok">OK</string>
     <string name="roleplay_info_desc">操作ガイド</string>
     <string name="roleplay_permission_open_settings">設定を開く</string>
@@ -317,7 +317,8 @@
     <string name="translator_result_label">翻訳結果</string>
     <string name="translator_result_ja_ceb_sub">ビサヤ語（ネイティブ口語）</string>
     <string name="translator_result_ceb_ja_sub">日本語（自然なニュアンス）</string>
-    <string name="translator_copy_desc">コピー</string>
+    <string name="translator_copy_desc">訳文をコピー</string>
+    <string name="translator_copy_toast">訳文をコピーしました</string>
     <string name="translator_result_placeholder">ここに翻訳結果が表示されます</string>
     <string name="translator_tap_to_play_bisaya">タップするとビサヤ語音声を再生</string>
     <string name="translator_voice_prompt">自然な口語で話すと、ニュアンスごと翻訳されます</string>

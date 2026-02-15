@@ -722,7 +722,7 @@ private fun StageSection(
     }
 
     val bubbleKey = latestAiLine?.id ?: "initial"
-    val defaultIntro = stringResource(R.string.roleplay_default_intro)
+    val defaultIntro = if (roleplayMode == RoleplayMode.SANPO) "" else stringResource(R.string.roleplay_default_intro)
     val fullDisplayText = latestAiLine?.text ?: initialLine ?: defaultIntro
     val splitResult = remember(fullDisplayText) {
         splitInlineTranslation(fullDisplayText)
@@ -1017,11 +1017,46 @@ private fun RoleplayOptionCard(
     }
     val translationAvailable = translationText.isNotBlank()
     val displayText = primaryOptionText.ifBlank { option.text }
+    val interactionSource = remember(option.id) { MutableInteractionSource() }
+
+    LaunchedEffect(option.id, interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> {
+                    if (translationAvailable) {
+                        showTranslation = true
+                        if (!hasPeeked) {
+                            onPeekHint(option.id)
+                            hasPeeked = true
+                        }
+                    }
+                }
+                is PressInteraction.Release, is PressInteraction.Cancel -> {
+                    showTranslation = false
+                }
+            }
+        }
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 96.dp * scale.coerceAtLeast(0.85f))
-            .clickable { onSelect(option.id) },
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = { onPreview(option.text) },
+                onDoubleClick = { onSelect(option.id) },
+                onLongClick = {
+                    if (translationAvailable) {
+                        showTranslation = true
+                        if (!hasPeeked) {
+                            onPeekHint(option.id)
+                            hasPeeked = true
+                        }
+                    }
+                }
+            ),
         color = if (hintRevealed) Color(0xFF273251) else Color(0xFF16223B),
         shape = RoundedCornerShape(26.dp * scale.coerceAtLeast(0.85f)),
         tonalElevation = if (showTranslation) 6.dp else 2.dp,
@@ -1043,41 +1078,6 @@ private fun RoleplayOptionCard(
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = { onPreview(option.text) },
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = Color(0x332A3A54))
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        tint = Color(0xFF7DD3FC)
-                    )
-                }
-                IconButton(
-                    onClick = {
-                        if (translationAvailable) {
-                            showTranslation = !showTranslation
-                            if (showTranslation && !hasPeeked) {
-                                onPeekHint(option.id)
-                                hasPeeked = true
-                            }
-                        }
-                    },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = if (showTranslation) Color(0xFF12324A) else Color(0x332A3A54)
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Translate,
-                        contentDescription = null,
-                        tint = if (showTranslation) Color(0xFF64F2C2) else Color(0xFF9FB4D3)
-                    )
-                }
-            }
         }
     }
 }

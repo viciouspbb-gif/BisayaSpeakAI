@@ -4,18 +4,24 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
+import android.util.TypedValue
+import android.view.ActionMode
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,13 +36,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -63,13 +69,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.data.model.TranslationDirection
@@ -79,7 +88,7 @@ import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.R
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiTranslatorScreen(
     onBack: () -> Unit,
@@ -134,7 +143,7 @@ fun AiTranslatorScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.Default.ArrowBack,
+                            imageVector = Icons.Default.ArrowBack,
                             contentDescription = stringResource(R.string.back)
                         )
                     }
@@ -199,6 +208,11 @@ fun AiTranslatorScreen(
                 onCopy = {
                     if (translatedText.isNotBlank()) {
                         clipboardManager.setText(AnnotatedString(translatedText))
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.translator_copy_toast),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 },
                 isSpeakEnabled = canPlayBisaya,
@@ -400,7 +414,6 @@ private fun ActionButtons(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ResultCard(
     text: String,
@@ -409,90 +422,44 @@ private fun ResultCard(
     isSpeakEnabled: Boolean,
     onSpeak: () -> Unit
 ) {
-    Card(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 200.dp)
-            .widthIn(max = 720.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0D1828)),
-        shape = RoundedCornerShape(28.dp)
+            .widthIn(max = 720.dp)
+            .background(Color(0xFF16253C), RoundedCornerShape(20.dp))
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.translator_result_label),
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = stringResource(
-                            if (direction == TranslationDirection.JA_TO_CEB)
-                                R.string.translator_result_ja_ceb_sub
-                            else R.string.translator_result_ceb_ja_sub
-                        ),
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 13.sp
-                    )
-                }
-                IconButton(
-                    onClick = onCopy,
-                    enabled = text.isNotBlank()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = stringResource(R.string.translator_copy_desc),
-                        tint = if (text.isNotBlank()) Color.White else Color.White.copy(alpha = 0.4f)
-                    )
-                }
-            }
+        val header = stringResource(R.string.translator_result_label)
+        val placeholder = stringResource(R.string.translator_result_placeholder)
 
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 140.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .combinedClickable(
-                        enabled = text.isNotBlank() || isSpeakEnabled,
-                        onClick = {
-                            if (isSpeakEnabled) {
-                                onSpeak()
-                            }
-                        },
-                        onLongClick = {
-                            if (text.isNotBlank()) {
-                                onCopy()
-                            }
-                        }
-                    ),
-                color = Color(0xFF16253C),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Box(modifier = Modifier.padding(16.dp)) {
-                    SelectionContainer {
-                        Text(
-                            text = if (text.isBlank()) stringResource(R.string.translator_result_placeholder) else text,
-                            color = if (text.isBlank()) Color.White.copy(alpha = 0.4f) else Color.White,
-                            fontSize = 18.sp,
-                            lineHeight = 26.sp
-                        )
-                    }
+        SelectableResultText(
+            label = header,
+            text = text,
+            placeholder = placeholder
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (isSpeakEnabled) {
+                IconButton(onClick = onSpeak) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = stringResource(R.string.translator_tap_to_play_bisaya),
+                        tint = Color.White
+                    )
                 }
             }
-            if (isSpeakEnabled) {
-                Text(
-                    text = stringResource(R.string.translator_tap_to_play_bisaya),
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 12.sp
+            IconButton(
+                onClick = onCopy,
+                enabled = text.isNotBlank()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = stringResource(R.string.translator_copy_desc),
+                    tint = if (text.isNotBlank()) Color.White else Color.White.copy(alpha = 0.4f)
                 )
             }
         }
@@ -534,4 +501,48 @@ private fun launchSpeechRecognizer(
         )
     }
     launcher.launch(intent)
+}
+
+@Composable
+private fun SelectableResultText(
+    label: String,
+    text: String,
+    placeholder: String
+) {
+    val textColor = Color.White
+    val selectionHighlight = Color.White.copy(alpha = 0.25f)
+    val content = remember(label, text, placeholder) {
+        buildString {
+            append("【")
+            append(label)
+            append("】")
+            append("\n\n")
+            append(if (text.isBlank()) placeholder else text)
+        }
+    }
+
+    AndroidView(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 120.dp),
+        factory = { context ->
+            TextView(context).apply {
+                setTextIsSelectable(true)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                setLineSpacing(0f, 1.3f)
+                setTextColor(textColor.toArgb())
+                highlightColor = selectionHighlight.toArgb()
+                customSelectionActionModeCallback = object : ActionMode.Callback {
+                    override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean = true
+                    override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean = false
+                    override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean = false
+                    override fun onDestroyActionMode(mode: ActionMode) {}
+                }
+            }
+        },
+        update = { view ->
+            view.text = content
+            view.setTextColor(textColor.toArgb())
+        }
+    )
 }

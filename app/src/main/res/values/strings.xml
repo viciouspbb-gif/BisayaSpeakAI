@@ -411,6 +411,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="translator_result_ja_ceb_sub">Bisaya (natural speech)</string>
     <string name="translator_result_ceb_ja_sub">Japanese (natural nuance)</string>
     <string name="translator_copy_desc">Copy translation</string>
+    <string name="translator_copy_toast">Translation copied</string>
     <string name="translator_result_placeholder">Translated text will appear here</string>
     <string name="translator_tap_to_play_bisaya">Tap to play Bisaya audio</string>
     <string name="translator_voice_prompt">Speak naturally for nuance-rich translation</string>

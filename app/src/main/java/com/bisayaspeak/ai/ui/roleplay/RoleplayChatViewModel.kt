@@ -65,6 +65,12 @@ data class FarewellLine(
     val explanation: String
 )
 
+data class SanpoFarewellLine(
+    val bisaya: String,
+    val translationJa: String,
+    val translationEn: String
+)
+
 data class RoleplayResultPayload(
     val correctCount: Int,
     val totalQuestions: Int,
@@ -128,7 +134,8 @@ data class RoleplayUiState(
     val roleplayMode: RoleplayMode = RoleplayMode.SANPO,
     val learnerName: String = "",
     val isSanpoEnding: Boolean = false,
-    val sanpoEndingFarewell: String = ""
+    val sanpoEndingFarewell: String = "",
+    val sanpoEndingFarewellTranslation: String = ""
 )
 
 enum class TranslationLanguage { JAPANESE, ENGLISH }
@@ -206,11 +213,26 @@ class RoleplayChatViewModel(
         private const val MIN_VISIBLE_OPTIONS = 2
         private const val MAX_VISIBLE_OPTIONS = 3
         private val SANPO_FAREWELL_LINES = listOf(
-            "Sige ha, naa pa koy buhaton. Magkita ta sunod.",
-            "Amping sa imong adlaw. Mag-istorya ta puhon.",
-            "Sige una ko ha. Tawga lang ko kung kinahanglan nimo ko.",
-            "Salamat sa istorya. Maghulat ko sa sunod nimong tawag.",
-            "Pahuway usa ko gamay. Balik lang og chat kung andam naka."
+            SanpoFarewellLine(
+                bisaya = "Sige ha, naa pa koy buhaton. Magkita ta sunod.",
+                translationJa = "ちょっと用事があるから行ってくるね。また会おう。",
+                translationEn = "Okay, I still have something to do. Let's meet again later."
+            ),
+            SanpoFarewellLine(
+                bisaya = "Amping sa imong adlaw. Mag-istorya ta puhon.",
+                translationJa = "今日はこのへんで。続きはまた今度話そう。",
+                translationEn = "Take care with the rest of your day. We'll chat again soon."
+            ),
+            SanpoFarewellLine(
+                bisaya = "Sige una ko ha. Tawga lang ko kung kinahanglan nimo ko.",
+                translationJa = "じゃあ先に行くね。必要なときはいつでも呼んで。",
+                translationEn = "I'll head out first. Call me whenever you need me."
+            ),
+            SanpoFarewellLine(
+                bisaya = "Pahuway usa ko gamay. Balik lang og chat kung andam naka.",
+                translationJa = "ちょっと休むね。準備できたらまた話そう。",
+                translationEn = "Let me rest a bit. Chat me again when you're ready."
+            )
         )
         private val SITUATION_TAG_REGEX = Regex("\\[Situation:[^]]*]")
         private val DEFAULT_FAREWELL_KEYWORDS = setOf(
@@ -582,7 +604,7 @@ class RoleplayChatViewModel(
     private fun loadInfiniteTariMode(isProUser: Boolean) {
         resetAutoExitState()
         switchMode(RoleplayMode.SANPO)
-        val definition = buildSanpoScenarioDefinition()
+        val definition = buildSanpoScenarioDefinition().copy(initialMessage = "")
         pendingAutoExitHistory = null
         scriptedRuntime = null
         activeDynamicScenario = null
@@ -658,7 +680,7 @@ class RoleplayChatViewModel(
                 aiRole = "Tari",
                 goal = "Enjoy a 12-turn Cebuano chat",
                 iconEmoji = "🎉",
-                initialMessage = "Maayong adlaw! Unsa'y balita nimo karon?",
+                initialMessage = "",
                 systemPrompt = sanpoPromptProvider.baseSystemPrompt(resolveUserDisplayName()),
                 hintPhrases = emptyList(),
                 closingGuidance = null
@@ -1382,11 +1404,12 @@ class RoleplayChatViewModel(
             sanpoOptions to OptionSource.AI
         }
         val sanpoFarewellDetected = isSanpoMode && (containsFarewellCue(finalAiSpeech) || containsFarewellCue(finalAiTranslation))
+        val sanpoTopLinkEnding = isSanpoMode && rawAiSpeech.contains("[TOPページへ]")
         val sanpoFinishDetected = isSanpoMode && (finishTagFound || sanpoTurnLimitReached)
 
         val forcedTopToken = isDojoMode && finalAiSpeech.contains("[TOPページへ]")
         val shouldEndByMode = when {
-            isSanpoMode -> sanpoFinishDetected || sanpoFarewellDetected
+            isSanpoMode -> sanpoFinishDetected || sanpoFarewellDetected || sanpoTopLinkEnding
             else -> goalCleared || forcedTopToken
         }
 
@@ -1431,7 +1454,7 @@ class RoleplayChatViewModel(
 
         if (aiClosedConversation) {
             val emitFarewellMessage = when {
-                isSanpoMode -> !(sanpoFinishDetected || sanpoFarewellDetected)
+                isSanpoMode -> !(sanpoFinishDetected || sanpoFarewellDetected || sanpoTopLinkEnding)
                 else -> false
             }
             val shouldComplete = when {
@@ -1699,12 +1722,17 @@ class RoleplayChatViewModel(
         closingReference: ChatMessage? = null
     ) {
         if (currentMode == RoleplayMode.SANPO) {
-            val farewellText = SANPO_FAREWELL_LINES.random(random)
+            val farewellLine = SANPO_FAREWELL_LINES.random(random)
+            val farewellText = farewellLine.bisaya
+            val farewellTranslation = when (translationLanguageState.value) {
+                TranslationLanguage.JAPANESE -> farewellLine.translationJa
+                TranslationLanguage.ENGLISH -> farewellLine.translationEn
+            }
             val farewellMessage = ChatMessage(
                 id = UUID.randomUUID().toString(),
                 text = farewellText,
                 isUser = false,
-                translation = null,
+                translation = farewellTranslation,
                 voiceCue = GeminiVoiceCue.ROLEPLAY_NOVA_CUTE
             )
             history.add(MissionHistoryMessage(farewellText, isUser = false))
@@ -1719,6 +1747,7 @@ class RoleplayChatViewModel(
                     isEndingSession = true,
                     isSanpoEnding = true,
                     sanpoEndingFarewell = farewellText,
+                    sanpoEndingFarewellTranslation = farewellTranslation,
                     finalFarewellMessageId = farewellMessage.id,
                     pendingExitHistory = historySnapshot,
                     finalMessage = farewellText,
@@ -1760,7 +1789,8 @@ class RoleplayChatViewModel(
                 finalFarewellMessageId = referenceMessage?.id ?: it.finalFarewellMessageId,
                 pendingExitHistory = historySnapshot,
                 isSanpoEnding = false,
-                sanpoEndingFarewell = ""
+                sanpoEndingFarewell = "",
+                sanpoEndingFarewellTranslation = ""
             )
         }
         scheduleAutoExit()
