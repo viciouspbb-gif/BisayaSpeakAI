@@ -331,10 +331,6 @@ fun LearningSection(
                 )
             }
         }
-    }
-}
-
-@Composable
 fun ProFeaturesSection(
     onClickFeature: (FeatureId) -> Unit,
     onRequireUpgrade: () -> Unit,
@@ -354,13 +350,7 @@ fun ProFeaturesSection(
             subtitle = stringResource(R.string.home_feature_ai_translator_subtitle),
             icon = Icons.Default.Translate,
             color = Color(0xFFD4A017),
-            onClick = {
-                if (isLiteRestricted) {
-                    onRequireUpgrade()
-                } else {
-                    onClickFeature(FeatureId.AI_TRANSLATOR)
-                }
-            },
+            onClick = { onClickFeature(FeatureId.AI_TRANSLATOR) },
             modifier = Modifier.weight(1f)
         )
 
@@ -370,13 +360,7 @@ fun ProFeaturesSection(
             subtitle = stringResource(R.string.home_feature_tari_walk_subtitle),
             icon = Icons.Default.ViewList,
             color = MaterialTheme.colorScheme.primary,
-            onClick = {
-                if (isLiteRestricted) {
-                    onRequireUpgrade()
-                } else {
-                    onClickFeature(FeatureId.ROLE_PLAY)
-                }
-            },
+            onClick = { onClickFeature(FeatureId.ROLE_PLAY) },
             modifier = Modifier.weight(1f)
         )
 

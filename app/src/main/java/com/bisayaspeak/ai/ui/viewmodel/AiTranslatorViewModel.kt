@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.model.TranslationDirection
+import com.bisayaspeak.ai.data.repository.FreeUsageManager
+import com.bisayaspeak.ai.data.repository.FreeUsageRepository
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.PromptProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +19,13 @@ sealed interface TranslatorUiState {
     data class Error(val message: String) : TranslatorUiState
     object Success : TranslatorUiState
 }
+
+data class TranslatorUsageStatus(
+    val dayKey: String,
+    val usedCount: Int,
+    val maxCount: Int,
+    val canUse: Boolean
+)
 
 class AiTranslatorViewModel(
     private val repository: OpenAiChatRepository = OpenAiChatRepository(),
@@ -34,6 +43,16 @@ class AiTranslatorViewModel(
 
     private val _uiState = MutableStateFlow<TranslatorUiState>(TranslatorUiState.Idle)
     val uiState: StateFlow<TranslatorUiState> = _uiState.asStateFlow()
+
+    private val _usageStatus = MutableStateFlow<TranslatorUsageStatus?>(null)
+    val usageStatus: StateFlow<TranslatorUsageStatus?> = _usageStatus.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            FreeUsageManager.resetIfNewDay()
+            refreshUsageStatus()
+        }
+    }
 
     fun onInputChange(text: String) {
         _inputText.value = text
@@ -54,7 +73,7 @@ class AiTranslatorViewModel(
         _uiState.value = TranslatorUiState.Idle
     }
 
-    fun translate() {
+    fun translate(isPremiumUser: Boolean) {
         val text = _inputText.value.trim()
         if (text.isEmpty()) {
             _uiState.value = TranslatorUiState.Error("Please enter text to translate")
@@ -62,17 +81,49 @@ class AiTranslatorViewModel(
         }
 
         viewModelScope.launch {
+            if (!isPremiumUser) {
+                FreeUsageManager.resetIfNewDay()
+                refreshUsageStatus()
+                val currentStatus = _usageStatus.value
+                if (currentStatus != null && !currentStatus.canUse) {
+                    FreeUsageManager.logUsage(
+                        "translate_limit_blocked day=${currentStatus.dayKey} count=${currentStatus.usedCount}"
+                    )
+                    _uiState.value = TranslatorUiState.Error("本日の無料翻訳は上限に達しました")
+                    return@launch
+                }
+            }
             _uiState.value = TranslatorUiState.Loading
             try {
                 val direction = _direction.value
                 val result = translateWithOpenAi(text, direction)
                 _translatedText.value = sanitizeTranslation(result, direction)
+                if (!isPremiumUser) {
+                    FreeUsageManager.consumeTranslate()
+                    refreshUsageStatus()
+                    FreeUsageManager.logUsage(
+                        "translate_consumed day=${_usageStatus.value?.dayKey} count=${_usageStatus.value?.usedCount}"
+                    )
+                }
                 _uiState.value = TranslatorUiState.Success
             } catch (e: Exception) {
                 _uiState.value =
                     TranslatorUiState.Error(e.message ?: "Translation failed")
             }
         }
+    }
+
+    private suspend fun refreshUsageStatus() {
+        val day = FreeUsageManager.dayKey() ?: FreeUsageManager.currentDayKey()
+        val used = FreeUsageManager.translateCount()
+        val max = FreeUsageRepository.MAX_TRANSLATE_PER_DAY
+        val canUse = used < max
+        _usageStatus.value = TranslatorUsageStatus(
+            dayKey = day,
+            usedCount = used,
+            maxCount = max,
+            canUse = canUse
+        )
     }
 
     private suspend fun translateWithOpenAi(

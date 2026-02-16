@@ -17,8 +17,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.billing.BillingManager
+import com.bisayaspeak.ai.billing.PremiumStatusProvider
 import com.bisayaspeak.ai.data.PurchaseStore
-import com.bisayaspeak.ai.data.model.UserPlan
 import com.bisayaspeak.ai.ui.navigation.AppNavGraph
 import com.bisayaspeak.ai.ui.theme.BisayaSpeakAITheme
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
@@ -34,6 +34,7 @@ import com.google.android.ump.UserMessagingPlatform
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
 
 class MainActivity : ComponentActivity() {
     
@@ -67,6 +68,19 @@ class MainActivity : ComponentActivity() {
                 billingManager.checkPremiumStatus()
                 syncPurchaseStatus()
             }
+        }
+        lifecycleScope.launch {
+            combine(
+                billingManager.hasPremiumAI,
+                billingManager.isProUnlocked,
+                billingManager.isPremium
+            ) { hasPremiumAI, isProUnlocked, subscriptionActive ->
+                PremiumStatusProvider.updateStatus(
+                    hasPremiumAI = hasPremiumAI,
+                    isProUnlocked = isProUnlocked,
+                    subscriptionActive = subscriptionActive
+                )
+            }.collect { }
         }
         
         if (isInAppUpdateSupported) {
@@ -105,8 +119,7 @@ class MainActivity : ComponentActivity() {
             BisayaSpeakAITheme {
 
                 val navController = rememberNavController()
-                val basePlan by billingManager.userPlan.collectAsState()
-                val hasPurchasedPro = basePlan != UserPlan.LITE
+                val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
                 val observedPro by app.proVersionState.collectAsState()
 
                 val debugAuth = remember { FirebaseAuth.getInstance() }
@@ -123,7 +136,7 @@ class MainActivity : ComponentActivity() {
                 val isDebugWhitelistedUser = BuildConfig.DEBUG &&
                     currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
                 val isProDebugBuild = BuildConfig.DEBUG && BuildConfig.FLAVOR.equals("pro", ignoreCase = true)
-                val effectivePro = hasPurchasedPro || isDebugWhitelistedUser || isProDebugBuild
+                val effectivePro = isPremiumUser || isDebugWhitelistedUser || isProDebugBuild
 
                 androidx.compose.runtime.LaunchedEffect(effectivePro) {
                     app.isProVersion = effectivePro

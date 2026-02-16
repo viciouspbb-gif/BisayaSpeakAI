@@ -2,6 +2,7 @@ package com.bisayaspeak.ai.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -50,10 +51,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,23 +72,31 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.ads.AdManager
+import com.bisayaspeak.ai.billing.PremiumStatusProvider
 import com.bisayaspeak.ai.ui.viewmodel.AiExplanation
 import com.bisayaspeak.ai.ui.viewmodel.DictionaryLanguage
 import com.bisayaspeak.ai.ui.viewmodel.DictionaryMode
+import com.bisayaspeak.ai.ui.viewmodel.DictionaryTalkEvent
 import com.bisayaspeak.ai.ui.viewmodel.DictionaryUiState
 import com.bisayaspeak.ai.ui.viewmodel.DictionaryViewModel
 import com.bisayaspeak.ai.ui.viewmodel.TalkResponse
 import com.bisayaspeak.ai.ui.viewmodel.TalkStatus
+import com.bisayaspeak.ai.ui.viewmodel.TalkUsageStatus
 import com.bisayaspeak.ai.ui.viewmodel.TranslationCandidate
+import com.bisayaspeak.ai.util.findActivityOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DictionaryScreen(
     onBack: () -> Unit,
+    onNavigateToUpgrade: () -> Unit = {},
     viewModel: DictionaryViewModel = viewModel(factory = DictionaryViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
     val context = LocalContext.current
+    val latestPremiumState = rememberUpdatedState(isPremiumUser)
 
     var hasMicPermission by remember {
         mutableStateOf(
@@ -100,6 +111,36 @@ fun DictionaryScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasMicPermission = granted
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.talkEvents.collect { event ->
+            when (event) {
+                is DictionaryTalkEvent.RequireAd -> {
+                    if (latestPremiumState.value) {
+                        viewModel.onAdResult(true)
+                    } else {
+                        val activity = context.findActivityOrNull()
+                        if (activity != null) {
+                            AdManager.showInterstitialWithTimeout(activity, timeoutMs = 3_000L) {
+                                AdManager.loadInterstitial(activity.applicationContext)
+                                viewModel.onAdResult(true)
+                            }
+                        } else {
+                            viewModel.onAdResult(true)
+                        }
+                    }
+                }
+
+                is DictionaryTalkEvent.ReachedLimit -> {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.dictionary_talk_limit_error),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -164,6 +205,8 @@ fun DictionaryScreen(
                     modifier = baseModifier,
                     state = uiState,
                     hasMicPermission = hasMicPermission,
+                    isPremiumUser = isPremiumUser,
+                    talkUsageStatus = uiState.talkUsageStatus,
                     onModeToggle = viewModel::setMode,
                     onMicTapStart = {
                         if (hasMicPermission) {
@@ -176,7 +219,8 @@ fun DictionaryScreen(
                     onRequestPermission = {
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     },
-                    onReplayLast = viewModel::replayLastTranslation
+                    onReplayLast = viewModel::replayLastTranslation,
+                    onNavigateToUpgrade = onNavigateToUpgrade
                 )
             }
         }
@@ -383,11 +427,14 @@ private fun TalkSection(
     modifier: Modifier,
     state: DictionaryUiState,
     hasMicPermission: Boolean,
+    isPremiumUser: Boolean,
+    talkUsageStatus: TalkUsageStatus?,
     onModeToggle: (DictionaryMode) -> Unit,
     onMicTapStart: () -> Unit,
     onMicTapStop: () -> Unit,
     onRequestPermission: () -> Unit,
-    onReplayLast: () -> Unit
+    onReplayLast: () -> Unit,
+    onNavigateToUpgrade: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     Column(modifier = modifier.fillMaxHeight()) {
@@ -401,6 +448,9 @@ private fun TalkSection(
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (!isPremiumUser && talkUsageStatus != null) {
+                TalkUsageCard(status = talkUsageStatus, onUpgrade = onNavigateToUpgrade)
+            }
             TalkStatusCard(state.talkStatus, state.isManualRecording)
 
             state.talkResponse?.let { response ->
@@ -425,7 +475,8 @@ private fun TalkSection(
         Spacer(modifier = Modifier.height(12.dp))
 
         val isBusy = state.talkStatus is TalkStatus.Processing || state.talkStatus is TalkStatus.Speaking
-        val isMicEnabled = hasMicPermission && !isBusy
+        val canUseQuota = isPremiumUser || talkUsageStatus !is TalkUsageStatus.Blocked
+        val isMicEnabled = hasMicPermission && !isBusy && canUseQuota
         ManualMicButton(
             isRecording = state.isManualRecording,
             enabled = isMicEnabled || state.isManualRecording,
@@ -434,7 +485,7 @@ private fun TalkSection(
                 when {
                     !hasMicPermission -> onRequestPermission()
                     state.isManualRecording -> onMicTapStop()
-                    isBusy -> Unit
+                    !canUseQuota -> onNavigateToUpgrade()
                     else -> onMicTapStart()
                 }
             }
@@ -443,6 +494,93 @@ private fun TalkSection(
         if (!hasMicPermission) {
             Spacer(modifier = Modifier.height(8.dp))
             PermissionHint(onRequestPermission)
+        }
+
+        if (!isPremiumUser && talkUsageStatus is TalkUsageStatus.Blocked) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TalkLimitCta(onUpgrade = onNavigateToUpgrade)
+        }
+    }
+}
+
+@Composable
+private fun TalkUsageCard(status: TalkUsageStatus, onUpgrade: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF152032))
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = stringResource(R.string.dictionary_talk_usage_title),
+                color = Color(0xFF38BDF8),
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(
+                    R.string.dictionary_talk_usage_remaining,
+                    status.remaining,
+                    status.maxCount
+                ),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(R.string.dictionary_talk_usage_reset),
+                color = Color(0xFF9CA3AF),
+                fontSize = 12.sp
+            )
+            when (status) {
+                is TalkUsageStatus.NeedsAdBeforeUse -> {
+                    Text(
+                        text = stringResource(R.string.dictionary_talk_usage_ad_notice),
+                        color = Color(0xFFFB923C),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                is TalkUsageStatus.Blocked -> {
+                    Text(
+                        text = stringResource(R.string.dictionary_talk_limit_title),
+                        color = Color(0xFFF87171),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Button(
+                        onClick = onUpgrade,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                    ) {
+                        Text(stringResource(R.string.dictionary_talk_upgrade_button), fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                else -> Unit
+            }
+        }
+    }
+}
+
+@Composable
+private fun TalkLimitCta(onUpgrade: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = Color(0xFF3F1F2B)
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = stringResource(R.string.dictionary_talk_limit_cta),
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            Button(
+                onClick = onUpgrade,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D48))
+            ) {
+                Text(stringResource(R.string.dictionary_talk_upgrade_button), fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

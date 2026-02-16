@@ -415,6 +415,11 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="translator_result_placeholder">Translated text will appear here</string>
     <string name="translator_tap_to_play_bisaya">Tap to play Bisaya audio</string>
     <string name="translator_voice_prompt">Speak naturally for nuance-rich translation</string>
+    <string name="translator_usage_title">Free translation turns</string>
+    <string name="translator_usage_remaining">Remaining today: %1$d / %2$d</string>
+    <string name="translator_usage_reset">Resets daily (Japan time)</string>
+    <string name="translator_limit_reached_label">Free translations exhausted</string>
+    <string name="translator_upgrade_cta">See Premium plans</string>
     
     <!-- Conversation Mode Screen -->
     <string name="conversation_mode_title">Realtime Translation Mode</string>
@@ -563,6 +568,14 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="dictionary_usage_title">Usage Tips</string>
     <string name="dictionary_related_title">Related Phrases</string>
     <string name="dictionary_recent_talks">Recent Talks</string>
+    <string name="dictionary_talk_usage_title">Talk mode free turns</string>
+    <string name="dictionary_talk_usage_remaining">Remaining today: %1$d / %2$d</string>
+    <string name="dictionary_talk_usage_reset">Resets daily (Japan time)</string>
+    <string name="dictionary_talk_usage_ad_notice">Next turn requires a short ad</string>
+    <string name="dictionary_talk_limit_error">Free talk turns are exhausted for today. Upgrade for unlimited access.</string>
+    <string name="dictionary_talk_limit_title">Free turns finished</string>
+    <string name="dictionary_talk_limit_cta">Upgrade for unlimited talk</string>
+    <string name="dictionary_talk_upgrade_button">View Premium plans</string>
     <string name="dictionary_status_idle_manual">Recording standby</string>
     <string name="dictionary_status_idle_tap">Idle (tap to record)</string>
     <string name="dictionary_status_listening_manual">Recording… tap to translate</string>

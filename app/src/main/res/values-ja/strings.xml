@@ -321,6 +321,11 @@
     <string name="translator_copy_toast">訳文をコピーしました</string>
     <string name="translator_result_placeholder">ここに翻訳結果が表示されます</string>
     <string name="translator_tap_to_play_bisaya">タップするとビサヤ語音声を再生</string>
+    <string name="translator_usage_title">翻訳モード無料枠</string>
+    <string name="translator_usage_remaining">今日の残り: %1$d / %2$d</string>
+    <string name="translator_usage_reset">毎日0時（日本時間）にリセット</string>
+    <string name="translator_limit_reached_label">本日の無料翻訳は上限に達しました</string>
+    <string name="translator_upgrade_cta">プレミアムプランを見る</string>
     <string name="translator_voice_prompt">自然な口語で話すと、ニュアンスごと翻訳されます</string>
     
     <!-- Account Screen -->
@@ -548,6 +553,14 @@
     <string name="dictionary_usage_title">使い方ヒント</string>
     <string name="dictionary_related_title">関連表現</string>
     <string name="dictionary_recent_talks">最近のトーク</string>
+    <string name="dictionary_talk_usage_title">トークモード無料枠</string>
+    <string name="dictionary_talk_usage_remaining">今日の残り: %1$d / %2$d</string>
+    <string name="dictionary_talk_usage_reset">毎日0時（日本時間）にリセット</string>
+    <string name="dictionary_talk_usage_ad_notice">次の1回は広告視聴が必要です</string>
+    <string name="dictionary_talk_limit_error">本日の無料トーク回数は上限に達しました。プレミアムで無制限に利用できます。</string>
+    <string name="dictionary_talk_limit_title">本日の無料トークは終了しました</string>
+    <string name="dictionary_talk_limit_cta">無制限トークを解放</string>
+    <string name="dictionary_talk_upgrade_button">プレミアムプランを見る</string>
     <string name="dictionary_status_idle_manual">録音待機</string>
     <string name="dictionary_status_idle_tap">待機中 (タップで録音)</string>
     <string name="dictionary_status_listening_manual">録音中 (タップで翻訳)</string>

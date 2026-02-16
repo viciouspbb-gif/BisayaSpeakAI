@@ -44,6 +44,8 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -82,8 +84,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bisayaspeak.ai.data.model.TranslationDirection
+import com.bisayaspeak.ai.billing.PremiumStatusProvider
 import com.bisayaspeak.ai.ui.viewmodel.AiTranslatorViewModel
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorUiState
+import com.bisayaspeak.ai.ui.viewmodel.TranslatorUsageStatus
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.R
@@ -92,15 +96,19 @@ import com.bisayaspeak.ai.R
 @Composable
 fun AiTranslatorScreen(
     onBack: () -> Unit,
+    onNavigateToUpgrade: () -> Unit = {},
     viewModel: AiTranslatorViewModel = viewModel()
 ) {
     val inputText by viewModel.inputText.collectAsState()
     val translatedText by viewModel.translatedText.collectAsState()
     val direction by viewModel.direction.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    val usageStatus by viewModel.usageStatus.collectAsState()
+    val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val voiceService = remember { GeminiVoiceService(context) }
+    val canUseTranslate = isPremiumUser || (usageStatus?.canUse ?: true)
 
     DisposableEffect(Unit) {
         onDispose {
@@ -194,11 +202,20 @@ fun AiTranslatorScreen(
                 }
             )
 
+            UsageStatusCard(
+                isPremiumUser = isPremiumUser,
+                usageStatus = usageStatus,
+                onUpgrade = onNavigateToUpgrade
+            )
+
             ActionButtons(
                 direction = direction,
                 isTranslating = uiState is TranslatorUiState.Loading,
+                isPremiumUser = isPremiumUser,
+                canUseFreeQuota = canUseTranslate,
                 onSwap = viewModel::swapDirection,
-                onTranslate = viewModel::translate
+                onTranslate = { viewModel.translate(isPremiumUser) },
+                onUpgrade = onNavigateToUpgrade
             )
 
             val canPlayBisaya = direction == TranslationDirection.JA_TO_CEB && translatedText.isNotBlank()
@@ -231,6 +248,64 @@ fun AiTranslatorScreen(
                 ErrorBanner(
                     message = (uiState as TranslatorUiState.Error).message
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UsageStatusCard(
+    isPremiumUser: Boolean,
+    usageStatus: TranslatorUsageStatus?,
+    onUpgrade: () -> Unit
+) {
+    if (isPremiumUser || usageStatus == null) return
+    val remaining = (usageStatus.maxCount - usageStatus.usedCount).coerceAtLeast(0)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0D1828)),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.translator_usage_title),
+                color = Color(0xFF38BDF8),
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(
+                    R.string.translator_usage_remaining,
+                    remaining,
+                    usageStatus.maxCount
+                ),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(R.string.translator_usage_reset),
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 12.sp
+            )
+            if (!usageStatus.canUse) {
+                Text(
+                    text = stringResource(R.string.translator_limit_reached_label),
+                    color = Color(0xFFF87171),
+                    fontWeight = FontWeight.SemiBold
+                )
+                Button(
+                    onClick = onUpgrade,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                ) {
+                    Text(
+                        text = stringResource(R.string.translator_upgrade_cta),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
         }
     }
@@ -334,8 +409,11 @@ private fun InputCard(
 private fun ActionButtons(
     direction: TranslationDirection,
     isTranslating: Boolean,
+    isPremiumUser: Boolean,
+    canUseFreeQuota: Boolean,
     onSwap: () -> Unit,
-    onTranslate: () -> Unit
+    onTranslate: () -> Unit,
+    onUpgrade: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -401,8 +479,23 @@ private fun ActionButtons(
                     color = Color.White,
                     strokeWidth = 3.dp
                 )
+            } else if (!isPremiumUser && !canUseFreeQuota) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.translator_limit_reached_label),
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    TextButton(onClick = onUpgrade) {
+                        Text(
+                            text = stringResource(R.string.translator_upgrade_cta),
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
             } else {
-                TextButton(onClick = onTranslate) {
+                TextButton(onClick = onTranslate, enabled = !isTranslating) {
                     Text(
                         text = stringResource(R.string.translator_translate_button),
                         color = Color.White,

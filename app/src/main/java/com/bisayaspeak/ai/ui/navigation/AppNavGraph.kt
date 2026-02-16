@@ -168,11 +168,7 @@ fun AppNavGraph(
                                 }
                             }
                             FeatureId.AI_TRANSLATOR -> {
-                                if (isProVersion) {
-                                    navController.navigate(AppRoute.Dictionary.route)
-                                } else {
-                                    navController.navigate(AppRoute.Upgrade.route)
-                                }
+                                navController.navigate(AppRoute.Dictionary.route)
                             }
 
                             FeatureId.TRANSLATE -> navController.navigate(AppRoute.Translation.route)
@@ -184,11 +180,7 @@ fun AppNavGraph(
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
                             FeatureId.ROLE_PLAY -> {
-                                if (isProVersion) {
-                                    navController.navigate(AppRoute.RolePlayList.route)
-                                } else {
-                                    navController.navigate(AppRoute.Upgrade.route)
-                                }
+                                navController.navigate(AppRoute.RolePlayList.route)
                             }
 
                             else -> { /* Legacy/unused features */ }
@@ -343,15 +335,9 @@ fun AppNavGraph(
         }
 
         composable(AppRoute.Dictionary.route) {
-            if (!isProVersion) {
-                LaunchedEffect(Unit) {
-                    navController.navigate(AppRoute.Upgrade.route)
-                }
-            } else {
-                DictionaryScreen(
-                    onBack = { navController.popBackStack() }
-                )
-            }
+            DictionaryScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(AppRoute.MissionScenarioSelect.route) {
