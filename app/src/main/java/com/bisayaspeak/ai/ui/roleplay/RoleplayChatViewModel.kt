@@ -9,6 +9,7 @@ import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.data.model.MissionScenario
+import com.bisayaspeak.ai.data.repository.FreeUsageManager
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.RoleplayHistoryRepository
 import com.bisayaspeak.ai.data.repository.ScenarioRepository
@@ -148,6 +149,10 @@ private enum class RelationshipMode {
 class RoleplayChatViewModel(
     application: Application
 ) : AndroidViewModel(application) {
+
+    private companion object {
+        private const val LOG_TAG = "LearnBisaya"
+    }
 
     private val userPreferencesRepository = UserPreferencesRepository(application)
     private val scenarioRepository = ScenarioRepository(application)
@@ -309,10 +314,10 @@ class RoleplayChatViewModel(
         private val NAME_UNLOCK_PATTERNS = listOf(
             Regex("(?i)(?:my name is|i am|i'm|this is|call me)\\s+([A-Za-z][A-Za-z\\-'\\s]{1,40})"),
             Regex("(?i)(?:ako\\s+si|ako\\s+kay|ako\\s+ni|ang pangalan ko kay|ang pangalan nako kay|pangalan ko si|pangalan ko kay|pangalan nako)\\s+([A-Za-z][A-Za-z\\-'\\s]{1,40})"),
-            Regex("私の名前は\\s*([\\p{InHiragana}\\p{InKatakana}\\p{IsHan}A-Za-zー\\s]{1,20})"),
-            Regex("僕の名前は\\s*([\\p{InHiragana}\\p{InKatakana}\\p{IsHan}A-Za-zー\\s]{1,20})"),
-            Regex("俺の名前は\\s*([\\p{InHiragana}\\p{InKatakana}\\p{IsHan}A-Za-zー\\s]{1,20})"),
-            Regex("私は\\s*([\\p{InHiragana}\\p{InKatakana}\\p{IsHan}A-Za-zー\\s]{1,20})です")
+            Regex("私の名前は\\s*([\\u3040-\\u309F\\u30A0-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFFーA-Za-z\\s]{1,20})"),
+            Regex("僕の名前は\\s*([\\u3040-\\u309F\\u30A0-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFFーA-Za-z\\s]{1,20})"),
+            Regex("俺の名前は\\s*([\\u3040-\\u309F\\u30A0-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFFーA-Za-z\\s]{1,20})"),
+            Regex("私は\\s*([\\u3040-\\u309F\\u30A0-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFFーA-Za-z\\s]{1,20})です")
         )
         private val SCENE_LOCATIONS = listOf(
             "オスメニャ・サークル周辺",
@@ -616,6 +621,7 @@ class RoleplayChatViewModel(
         knownLearnerName = null
         isLearnerIdentified = false
         val systemPrompt = buildModeAwareSystemPrompt()
+        markSanpoUsageIfNeeded()
 
         val initialSanpoOptions = listOf(
             RoleplayOption(
@@ -666,6 +672,24 @@ class RoleplayChatViewModel(
             scenario = definition,
             userMessage = START_TOKEN
         )
+    }
+
+    private fun markSanpoUsageIfNeeded() {
+        if (isProVersion) return
+        viewModelScope.launch {
+            runCatching {
+                FreeUsageManager.resetIfNewDay()
+                FreeUsageManager.consumeSanpoStart()
+                val day = FreeUsageManager.dayKey() ?: FreeUsageManager.currentDayKey()
+                val count = FreeUsageManager.sanpoCount()
+                FreeUsageManager.logUsage(
+                    "free_limit_check feature=sanpo event=start day=${'$'}day count=${'$'}count premium=${isProVersion}"
+                )
+                Log.d(LOG_TAG, "sanpo consumed day=$day count=$count premium=$isProVersion")
+            }.onFailure { error ->
+                Log.e(LOG_TAG, "sanpo consume failed", error)
+            }
+        }
     }
 
     private fun buildSanpoScenarioDefinition(): RoleplayScenarioDefinition {

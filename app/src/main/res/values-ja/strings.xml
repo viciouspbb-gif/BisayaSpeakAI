@@ -280,6 +280,9 @@
     <string name="home_feature_tari_walk_subtitle">自由な会話の旅</string>
     <string name="home_feature_dojo_title_master">マスタータリ道場</string>
     <string name="home_feature_dojo_subtitle_master">厳格ロールプレイ訓練</string>
+    <string name="home_feature_dojo_placeholder_title">タリ道場は準備中です</string>
+    <string name="home_feature_dojo_placeholder_message">タリだよ！マスタータリ道場はもうすぐ公開予定。今はAI翻訳機とタリ散歩を楽しんでね。</string>
+    <string name="home_feature_dojo_placeholder_cta">うん、やってみる</string>
     <string name="home_owl_description">フクロウ先生のイラスト</string>
     <string name="home_tarsier_description">タルシエのイラスト</string>
     <string name="home_pro_dialog_title">PROプランへアップグレード</string>
@@ -326,6 +329,7 @@
     <string name="translator_usage_reset">毎日0時（日本時間）にリセット</string>
     <string name="translator_limit_reached_label">本日の無料翻訳は上限に達しました</string>
     <string name="translator_upgrade_cta">プレミアムプランを見る</string>
+    <string name="translator_usage_limit_finished_toast">無料の翻訳枠は使い切りました。プレミアムプランをご検討ください。</string>
     <string name="translator_voice_prompt">自然な口語で話すと、ニュアンスごと翻訳されます</string>
     
     <!-- Account Screen -->
@@ -540,47 +544,22 @@
     <string name="play_audio">音声を再生</string>
     <string name="add_to_favorites">お気に入りに追加</string>
     <string name="dictionary_title">AI翻訳機</string>
-    <string name="dictionary_subtitle">辞書・翻訳 / トークモード</string>
-    <string name="dictionary_mode_explore">辞書・翻訳</string>
-    <string name="dictionary_mode_talk">トークモード</string>
-    <string name="dictionary_query_placeholder">日本語でもビサヤ語でもOK</string>
-    <string name="dictionary_button_searching">探索中…</string>
-    <string name="dictionary_button_explore">探索する</string>
-    <string name="dictionary_play_bisaya_desc">ビサヤ語を再生</string>
-    <string name="dictionary_politeness_label">丁寧度 %1$s</string>
+    <string name="dictionary_subtitle">辞書とニュアンスの探検</string>
+    <string name="dictionary_query_placeholder">英語またはビサヤ語で検索</string>
+    <string name="dictionary_button_searching">検索中…</string>
+    <string name="dictionary_button_explore">詳しく見る</string>
+    <string name="dictionary_play_bisaya_desc">ビサヤ語音声を再生</string>
+    <string name="dictionary_politeness_label">丁寧度: %1$s</string>
     <string name="dictionary_situation_label">シチュエーション: %1$s</string>
-    <string name="dictionary_explanation_title">タリのメモ</string>
-    <string name="dictionary_usage_title">使い方ヒント</string>
+    <string name="dictionary_explanation_title">タリメモ</string>
+    <string name="dictionary_usage_title">使いこなしポイント</string>
     <string name="dictionary_related_title">関連表現</string>
-    <string name="dictionary_recent_talks">最近のトーク</string>
-    <string name="dictionary_talk_usage_title">トークモード無料枠</string>
-    <string name="dictionary_talk_usage_remaining">今日の残り: %1$d / %2$d</string>
-    <string name="dictionary_talk_usage_reset">毎日0時（日本時間）にリセット</string>
-    <string name="dictionary_talk_usage_ad_notice">次の1回は広告視聴が必要です</string>
-    <string name="dictionary_talk_limit_error">本日の無料トーク回数は上限に達しました。プレミアムで無制限に利用できます。</string>
-    <string name="dictionary_talk_limit_title">本日の無料トークは終了しました</string>
-    <string name="dictionary_talk_limit_cta">無制限トークを解放</string>
-    <string name="dictionary_talk_upgrade_button">プレミアムプランを見る</string>
-    <string name="dictionary_status_idle_manual">録音待機</string>
-    <string name="dictionary_status_idle_tap">待機中 (タップで録音)</string>
-    <string name="dictionary_status_listening_manual">録音中 (タップで翻訳)</string>
-    <string name="dictionary_status_listening_auto">リスニング中</string>
-    <string name="dictionary_status_processing">翻訳中</string>
-    <string name="dictionary_status_speaking">翻訳テキストを再生中</string>
-    <string name="dictionary_detected_language">検知言語: %1$s</string>
+    <string name="dictionary_detected_language">自動判別: %1$s</string>
+    <string name="translator_auto_detect_label">入力言語を自動判別</string>
     <string name="dictionary_input_label">入力</string>
     <string name="dictionary_translation_label">翻訳</string>
-    <string name="dictionary_explanation_label">解説</string>
-    <string name="dictionary_retranslate_button">この発話で再翻訳</string>
-    <string name="dictionary_language_unknown">未判定</string>
-    <string name="dictionary_mic_label_recording">録音中…タップで翻訳する</string>
-    <string name="dictionary_mic_label_busy">翻訳処理中</string>
-    <string name="dictionary_mic_label_idle">タップで録音開始</string>
-    <string name="dictionary_mic_sub_label_recording">話し終えたらもう一度タップ</string>
-    <string name="dictionary_mic_sub_label_busy">タリが処理しています</string>
-    <string name="dictionary_mic_sub_label_idle">タップ → 録音 / もう一度タップ → 訳＆読み上げ</string>
-    <string name="dictionary_permission_title">マイク権限が必要です</string>
-    <string name="dictionary_permission_button">マイク権限を許可する</string>
+    <string name="dictionary_explanation_label">説明</string>
+    <string name="dictionary_language_unknown">不明</string>
     
     <!-- Favorites Screen -->
     <string name="no_favorites">お気に入りはまだありません</string>

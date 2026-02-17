@@ -17,6 +17,7 @@ object FreeUsageManager {
     private val mutex = Mutex()
     private val tokyoZoneId = ZoneId.of("Asia/Tokyo")
     private val dayFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+    private const val LOG_TAG = "LearnBisaya"
 
     fun currentDayKey(): String = ZonedDateTime.now(tokyoZoneId).format(dayFormatter)
 
@@ -49,6 +50,6 @@ object FreeUsageManager {
     suspend fun dayKey(): String? = mutex.withLock { repository.getDayKey() }
 
     fun logUsage(message: String) {
-        Log.d("free_limit_check", message)
+        Log.d(LOG_TAG, message)
     }
 }

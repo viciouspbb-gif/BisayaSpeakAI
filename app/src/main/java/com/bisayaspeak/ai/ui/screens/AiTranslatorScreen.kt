@@ -4,15 +4,9 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
-import android.util.TypedValue
-import android.view.ActionMode
-import android.view.Menu
-import android.view.MenuItem
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,29 +15,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -56,7 +45,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -71,7 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -80,17 +68,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.bisayaspeak.ai.data.model.TranslationDirection
+import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.billing.PremiumStatusProvider
+import com.bisayaspeak.ai.data.model.TranslationDirection
 import com.bisayaspeak.ai.ui.viewmodel.AiTranslatorViewModel
+import com.bisayaspeak.ai.ui.viewmodel.TranslatorCandidate
+import com.bisayaspeak.ai.ui.viewmodel.TranslatorExplanation
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorUiState
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorUsageStatus
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
-import com.bisayaspeak.ai.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,6 +93,8 @@ fun AiTranslatorScreen(
     val direction by viewModel.direction.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val usageStatus by viewModel.usageStatus.collectAsState()
+    val candidates by viewModel.candidates.collectAsState()
+    val explanation by viewModel.explanation.collectAsState()
     val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -156,6 +147,7 @@ fun AiTranslatorScreen(
                         )
                     }
                 },
+                actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF02040A),
                     titleContentColor = Color.White,
@@ -189,7 +181,6 @@ fun AiTranslatorScreen(
         ) {
             InputCard(
                 text = inputText,
-                direction = direction,
                 isLoading = uiState is TranslatorUiState.Loading,
                 onTextChange = viewModel::onInputChange,
                 onClear = viewModel::clearAll,
@@ -202,29 +193,25 @@ fun AiTranslatorScreen(
                 }
             )
 
-            UsageStatusCard(
-                isPremiumUser = isPremiumUser,
-                usageStatus = usageStatus,
-                onUpgrade = onNavigateToUpgrade
-            )
+            if (!isPremiumUser) {
+                usageStatus?.let { FreeUsageCounter(it) }
+            }
 
-            ActionButtons(
-                direction = direction,
+            TranslateActionButton(
                 isTranslating = uiState is TranslatorUiState.Loading,
-                isPremiumUser = isPremiumUser,
                 canUseFreeQuota = canUseTranslate,
-                onSwap = viewModel::swapDirection,
+                isPremiumUser = isPremiumUser,
                 onTranslate = { viewModel.translate(isPremiumUser) },
                 onUpgrade = onNavigateToUpgrade
             )
 
-            val canPlayBisaya = direction == TranslationDirection.JA_TO_CEB && translatedText.isNotBlank()
-            ResultCard(
-                text = translatedText,
-                direction = direction,
-                onCopy = {
-                    if (translatedText.isNotBlank()) {
-                        clipboardManager.setText(AnnotatedString(translatedText))
+            TranslatorResultsSection(
+                candidates = candidates,
+                explanation = explanation,
+                canSpeakBisaya = direction == TranslationDirection.JA_TO_CEB,
+                onCopy = { text ->
+                    if (text.isNotBlank()) {
+                        clipboardManager.setText(AnnotatedString(text))
                         Toast.makeText(
                             context,
                             context.getString(R.string.translator_copy_toast),
@@ -232,16 +219,13 @@ fun AiTranslatorScreen(
                         ).show()
                     }
                 },
-                isSpeakEnabled = canPlayBisaya,
-                onSpeak = {
-                    if (canPlayBisaya) {
+                onSpeak = { text ->
+                    if (text.isNotBlank()) {
                         voiceService.stop()
-                        voiceService.speak(
-                            text = translatedText,
-                            cue = GeminiVoiceCue.TRANSLATOR_SWIFT
-                        )
+                        voiceService.speak(text = text, cue = GeminiVoiceCue.TRANSLATOR_SWIFT)
                     }
-                }
+                },
+                fallbackText = translatedText
             )
 
             if (uiState is TranslatorUiState.Error) {
@@ -254,67 +238,8 @@ fun AiTranslatorScreen(
 }
 
 @Composable
-private fun UsageStatusCard(
-    isPremiumUser: Boolean,
-    usageStatus: TranslatorUsageStatus?,
-    onUpgrade: () -> Unit
-) {
-    if (isPremiumUser || usageStatus == null) return
-    val remaining = (usageStatus.maxCount - usageStatus.usedCount).coerceAtLeast(0)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0D1828)),
-        shape = RoundedCornerShape(24.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.translator_usage_title),
-                color = Color(0xFF38BDF8),
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = stringResource(
-                    R.string.translator_usage_remaining,
-                    remaining,
-                    usageStatus.maxCount
-                ),
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(R.string.translator_usage_reset),
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 12.sp
-            )
-            if (!usageStatus.canUse) {
-                Text(
-                    text = stringResource(R.string.translator_limit_reached_label),
-                    color = Color(0xFFF87171),
-                    fontWeight = FontWeight.SemiBold
-                )
-                Button(
-                    onClick = onUpgrade,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
-                ) {
-                    Text(
-                        text = stringResource(R.string.translator_upgrade_cta),
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun InputCard(
     text: String,
-    direction: TranslationDirection,
     isLoading: Boolean,
     onTextChange: (String) -> Unit,
     onClear: () -> Unit,
@@ -346,11 +271,7 @@ private fun InputCard(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = stringResource(
-                            if (direction == TranslationDirection.JA_TO_CEB)
-                                R.string.translator_direction_ja_ceb
-                            else R.string.translator_direction_ceb_ja
-                        ),
+                        text = stringResource(R.string.translator_auto_detect_label),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 13.sp
                     )
@@ -406,160 +327,6 @@ private fun InputCard(
 }
 
 @Composable
-private fun ActionButtons(
-    direction: TranslationDirection,
-    isTranslating: Boolean,
-    isPremiumUser: Boolean,
-    canUseFreeQuota: Boolean,
-    onSwap: () -> Unit,
-    onTranslate: () -> Unit,
-    onUpgrade: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            color = Color(0xFF0D1828),
-            shape = RoundedCornerShape(18.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.translator_swap_label),
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 12.sp
-                    )
-                    Text(
-                        text = stringResource(
-                            if (direction == TranslationDirection.JA_TO_CEB)
-                                R.string.translator_direction_ja_ceb
-                            else R.string.translator_direction_ceb_ja
-                        ),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                IconButton(onClick = onSwap) {
-                    Icon(
-                        imageVector = Icons.Default.SwapHoriz,
-                        contentDescription = stringResource(R.string.translator_swap_desc),
-                        tint = Color.White
-                    )
-                }
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(64.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0xFF00C896), Color(0xFF0EB5E0))
-                    )
-                )
-                .let { base ->
-                    if (isTranslating) base else base
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            if (isTranslating) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(28.dp),
-                    color = Color.White,
-                    strokeWidth = 3.dp
-                )
-            } else if (!isPremiumUser && !canUseFreeQuota) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.translator_limit_reached_label),
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    TextButton(onClick = onUpgrade) {
-                        Text(
-                            text = stringResource(R.string.translator_upgrade_cta),
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
-            } else {
-                TextButton(onClick = onTranslate, enabled = !isTranslating) {
-                    Text(
-                        text = stringResource(R.string.translator_translate_button),
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ResultCard(
-    text: String,
-    direction: TranslationDirection,
-    onCopy: () -> Unit,
-    isSpeakEnabled: Boolean,
-    onSpeak: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 720.dp)
-            .background(Color(0xFF16253C), RoundedCornerShape(20.dp))
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        val header = stringResource(R.string.translator_result_label)
-        val placeholder = stringResource(R.string.translator_result_placeholder)
-
-        SelectableResultText(
-            label = header,
-            text = text,
-            placeholder = placeholder
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (isSpeakEnabled) {
-                IconButton(onClick = onSpeak) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = stringResource(R.string.translator_tap_to_play_bisaya),
-                        tint = Color.White
-                    )
-                }
-            }
-            IconButton(
-                onClick = onCopy,
-                enabled = text.isNotBlank()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ContentCopy,
-                    contentDescription = stringResource(R.string.translator_copy_desc),
-                    tint = if (text.isNotBlank()) Color.White else Color.White.copy(alpha = 0.4f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun ErrorBanner(message: String) {
     Surface(
         modifier = Modifier
@@ -597,45 +364,215 @@ private fun launchSpeechRecognizer(
 }
 
 @Composable
-private fun SelectableResultText(
-    label: String,
-    text: String,
-    placeholder: String
-) {
-    val textColor = Color.White
-    val selectionHighlight = Color.White.copy(alpha = 0.25f)
-    val content = remember(label, text, placeholder) {
-        buildString {
-            append("【")
-            append(label)
-            append("】")
-            append("\n\n")
-            append(if (text.isBlank()) placeholder else text)
-        }
-    }
+private fun FreeUsageCounter(usageStatus: TranslatorUsageStatus) {
+    val remaining = (usageStatus.maxCount - usageStatus.usedCount).coerceAtLeast(0)
+    Text(
+        text = stringResource(R.string.translator_usage_remaining, remaining, usageStatus.maxCount),
+        color = Color(0xFFFF8A80),
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
+}
 
-    AndroidView(
+@Composable
+private fun TranslateActionButton(
+    isTranslating: Boolean,
+    canUseFreeQuota: Boolean,
+    isPremiumUser: Boolean,
+    onTranslate: () -> Unit,
+    onUpgrade: () -> Unit
+) {
+    val gradient = Brush.horizontalGradient(listOf(Color(0xFF00C896), Color(0xFF0EB5E0)))
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 120.dp),
-        factory = { context ->
-            TextView(context).apply {
-                setTextIsSelectable(true)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
-                setLineSpacing(0f, 1.3f)
-                setTextColor(textColor.toArgb())
-                highlightColor = selectionHighlight.toArgb()
-                customSelectionActionModeCallback = object : ActionMode.Callback {
-                    override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean = true
-                    override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean = false
-                    override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean = false
-                    override fun onDestroyActionMode(mode: ActionMode) {}
+            .heightIn(min = 64.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(gradient),
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            isTranslating -> {
+                CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp)
+            }
+            !isPremiumUser && !canUseFreeQuota -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.translator_limit_reached_label),
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Button(
+                        onClick = onUpgrade,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.15f))
+                    ) {
+                        Text(
+                            text = stringResource(R.string.translator_upgrade_cta),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
-        },
-        update = { view ->
-            view.text = content
-            view.setTextColor(textColor.toArgb())
+            else -> {
+                Button(
+                    onClick = onTranslate,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                ) {
+                    Text(
+                        text = stringResource(R.string.translator_translate_button),
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun TranslatorResultsSection(
+    candidates: List<TranslatorCandidate>,
+    explanation: TranslatorExplanation?,
+    canSpeakBisaya: Boolean,
+    onCopy: (String) -> Unit,
+    onSpeak: (String) -> Unit,
+    fallbackText: String
+) {
+    val items = if (candidates.isNotEmpty()) candidates else listOf(
+        TranslatorCandidate(
+            bisaya = fallbackText,
+            japanese = "",
+            english = "",
+            politeness = "",
+            situation = "",
+            nuance = "",
+            tip = ""
+        )
     )
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        items.forEachIndexed { index, candidate ->
+            TranslatorCandidateCard(
+                candidate = candidate,
+                isPrimary = index == 0,
+                canSpeak = canSpeakBisaya,
+                onCopy = { onCopy(candidate.bisaya) },
+                onSpeak = { onSpeak(candidate.bisaya) }
+            )
+        }
+
+        explanation?.let {
+            TranslatorExplanationCard(it)
+        }
+    }
+}
+
+@Composable
+private fun TranslatorCandidateCard(
+    candidate: TranslatorCandidate,
+    isPrimary: Boolean,
+    canSpeak: Boolean,
+    onCopy: () -> Unit,
+    onSpeak: () -> Unit
+) {
+    val cardColor = if (isPrimary) Color(0xFF10213A) else Color(0xFF0B172A)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = candidate.bisaya.ifBlank { stringResource(R.string.translator_result_placeholder) },
+                    color = Color(0xFF4ADE80),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onCopy, enabled = candidate.bisaya.isNotBlank()) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = stringResource(R.string.translator_copy_desc),
+                        tint = Color.White
+                    )
+                }
+                if (canSpeak && candidate.bisaya.isNotBlank()) {
+                    IconButton(onClick = onSpeak) {
+                        Icon(
+                            imageVector = Icons.Default.VolumeUp,
+                            contentDescription = stringResource(R.string.translator_tap_to_play_bisaya),
+                            tint = Color(0xFF38BDF8)
+                        )
+                    }
+                }
+            }
+            if (candidate.japanese.isNotBlank()) {
+                Text(candidate.japanese, color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
+            if (candidate.english.isNotBlank()) {
+                Text(candidate.english, color = Color(0xFF94A3B8), fontSize = 13.sp)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (candidate.politeness.isNotBlank()) {
+                    TranslatorInfoPill(stringResource(R.string.dictionary_politeness_label, candidate.politeness))
+                }
+                if (candidate.situation.isNotBlank()) {
+                    TranslatorInfoPill(stringResource(R.string.dictionary_situation_label, candidate.situation))
+                }
+            }
+            if (candidate.nuance.isNotBlank()) {
+                Text(candidate.nuance, color = Color(0xFFD7E0F5), fontSize = 13.sp)
+            }
+            if (candidate.tip.isNotBlank()) {
+                Text(candidate.tip, color = Color(0xFF93E6C8), fontSize = 12.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TranslatorInfoPill(text: String) {
+    Surface(shape = CircleShape, color = Color(0x3322C55E)) {
+        Text(
+            text = text,
+            color = Color(0xFF22C55E),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            fontSize = 12.sp
+        )
+    }
+}
+
+@Composable
+private fun TranslatorExplanationCard(explanation: TranslatorExplanation) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0A1424)),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(stringResource(R.string.dictionary_explanation_title), color = Color(0xFFFB7185), fontWeight = FontWeight.Bold)
+            Text(explanation.summary, color = Color.White)
+            Text(stringResource(R.string.dictionary_usage_title), color = Color(0xFF38BDF8), fontSize = 13.sp)
+            Text(explanation.usage, color = Color(0xFFD7E0F5))
+            if (explanation.relatedPhrases.isNotEmpty()) {
+                Text(stringResource(R.string.dictionary_related_title), color = Color(0xFF22C55E), fontSize = 13.sp)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    explanation.relatedPhrases.forEach { phrase ->
+                        Text("・$phrase", color = Color(0xFFA5B4FC))
+                    }
+                }
+            }
+        }
+    }
 }
