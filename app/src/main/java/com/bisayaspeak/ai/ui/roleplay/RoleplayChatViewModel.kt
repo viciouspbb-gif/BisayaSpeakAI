@@ -3,6 +3,7 @@ package com.bisayaspeak.ai.ui.roleplay
 import android.app.Application
 import android.util.Log
 import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.R
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bisayaspeak.ai.LessonStatusManager
@@ -10,6 +11,7 @@ import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.data.model.MissionScenario
 import com.bisayaspeak.ai.data.repository.FreeUsageManager
+import com.bisayaspeak.ai.data.repository.FreeUsageRepository
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.RoleplayHistoryRepository
 import com.bisayaspeak.ai.data.repository.ScenarioRepository
@@ -29,12 +31,14 @@ import java.util.UUID
 import kotlin.random.Random
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -52,6 +56,15 @@ data class RoleplayOption(
     val branchValue: String? = null,
     val requiresPro: Boolean = false
 )
+
+sealed interface RoleplayEvent {
+    data object ShowSanpoUpsell : RoleplayEvent
+    data class RequestSanpoInterstitial(val phase: SanpoAdGatePhase) : RoleplayEvent
+    data class RequireSanpoAd(val placement: String) : RoleplayEvent
+    data class ShowSanpoUpsellDialog(val placement: String) : RoleplayEvent
+}
+
+enum class SanpoMonetPlacement { ENTER, TURN_COMPLETE, EXIT_TO_TOP }
 
 private enum class OptionSource {
     STARTER,
@@ -136,10 +149,33 @@ data class RoleplayUiState(
     val learnerName: String = "",
     val isSanpoEnding: Boolean = false,
     val sanpoEndingFarewell: String = "",
-    val sanpoEndingFarewellTranslation: String = ""
+    val sanpoEndingFarewellTranslation: String = "",
+    val sanpoAdGateRemainingCount: Int = 0,
+    val pendingSanpoStart: Boolean = false,
+    val sanpoAdGatePhase: SanpoAdGatePhase = SanpoAdGatePhase.IDLE,
+    val pendingSecondAdReason: SanpoSecondAdReason = SanpoSecondAdReason.NONE,
+    val sanpoTurnCount: Int = 0,
+    val hasShownTurnLimitAdThisSession: Boolean = false
 )
 
 enum class TranslationLanguage { JAPANESE, ENGLISH }
+
+enum class SanpoAdGatePhase {
+    IDLE,
+    FIRST_GATE_PENDING,
+    FIRST_GATE_SHOWING,
+    SECOND_GATE_PENDING,
+    SECOND_GATE_SHOWING,
+    TURN_LIMIT_PENDING,
+    TURN_LIMIT_SHOWING
+}
+
+enum class SanpoSecondAdReason {
+    NONE,
+    USER_CANCEL_ONLY,
+    REENTRY_AFTER_DISMISS,
+    SESSION_EXIT
+}
 
 private enum class RelationshipMode {
     FORMAL_UNKNOWN,
@@ -149,10 +185,6 @@ private enum class RelationshipMode {
 class RoleplayChatViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-
-    private companion object {
-        private const val LOG_TAG = "LearnBisaya"
-    }
 
     private val userPreferencesRepository = UserPreferencesRepository(application)
     private val scenarioRepository = ScenarioRepository(application)
@@ -166,9 +198,24 @@ class RoleplayChatViewModel(
     private val voiceRecorder = VoiceInputRecorder(application)
     private val random: Random = Random(System.currentTimeMillis())
     private val scenarioGenerator = ScenarioGenerator(random)
+    private val guestNicknameFallback = application.getString(R.string.account_guest_nickname_default)
+
+    init {
+        viewModelScope.launch {
+            userPreferencesRepository.sanpoCycleState.collect { sanpoCycleState = it }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.sanpoTurnCount.collect { sanpoTurnCount = it }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.sanpoMonetCount.collect { sanpoMonetCount = it }
+        }
+    }
 
     private val _uiState = MutableStateFlow(RoleplayUiState())
     val uiState: StateFlow<RoleplayUiState> = _uiState.asStateFlow()
+    private val _events = Channel<RoleplayEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
     private val _speakingMessageId = MutableStateFlow<String?>(null)
     val speakingMessageId: StateFlow<String?> = _speakingMessageId.asStateFlow()
 
@@ -201,22 +248,32 @@ class RoleplayChatViewModel(
     private var farewellSignals: Set<String> = DEFAULT_FAREWELL_KEYWORDS
     private var currentUserGender: UserGender = UserGender.OTHER
     private var calloutJapanese: String = "Friend"
+    private var sanpoAdGateConsumed: Boolean = false
+    private var sanpoUpsellConsumed: Boolean = false
+    private var sanpoSessionId: String = ""
+    private var lastSanpoEntryAtMs: Long = 0L
+    private var lastSanpoExitAtMs: Long = 0L
+    private var lastSanpoSessionTurnCount: Int = 0
+
+    // Sanpo monetization cycle state
+    private var sanpoCycleState: String = "NEW"
+    private var sanpoTurnCount: Int = 0
+    private var sanpoMonetCount: Int = 0
 
     private companion object {
+        private const val LOG_TAG = "LearnBisaya"
+        private const val SANPO_REENTRY_DEBOUNCE_MS = 10_000L
         private const val START_TOKEN = "[START_CONVERSATION]"
-        private const val TARI_SCENARIO_ID = "tari_infinite_mode"
-        private const val COMPLETION_SCORE = 90
-        private const val COMPLETION_THRESHOLD = 80
+        private const val TARI_SCENARIO_ID = "sanpo_free_talk"
+        private const val SANPO_TURN_LIMIT_AD_THRESHOLD = 3
+        const val SANPO_QUOTA_ENFORCEMENT_ENABLED = false
         private const val LOCKED_OPTION_HOLD_MS = 500L
         private const val POST_CLEAR_SILENCE_MS = 1000L
         private const val SCENARIO_LOG_TAG = "ScenarioGenerator"
         private const val OPTION_LOG_TAG = "RoleplayOptionLogger"
         private const val FORCED_EXIT_TURN_THRESHOLD = 6
         private const val FORCED_FAREWELL_OPTION_ID = "forced-farewell-option"
-        private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*: \\s*", RegexOption.IGNORE_CASE)
-        private const val OPTION_TUTORIAL_VERSION = 2
-        private const val MIN_VISIBLE_OPTIONS = 2
-        private const val MAX_VISIBLE_OPTIONS = 3
+        private const val SANPO_AD_GATE_IMPRESSIONS = 2
         private val SANPO_FAREWELL_LINES = listOf(
             SanpoFarewellLine(
                 bisaya = "Sige ha, naa pa koy buhaton. Magkita ta sunod.",
@@ -239,6 +296,10 @@ class RoleplayChatViewModel(
                 translationEn = "Let me rest a bit. Chat me again when you're ready."
             )
         )
+        private val levelPrefixRegex = Regex("^LV\\s*\\d+\\s*: \\s*", RegexOption.IGNORE_CASE)
+        private const val OPTION_TUTORIAL_VERSION = 2
+        private const val MIN_VISIBLE_OPTIONS = 2
+        private const val MAX_VISIBLE_OPTIONS = 3
         private val SITUATION_TAG_REGEX = Regex("\\[Situation:[^]]*]")
         private val DEFAULT_FAREWELL_KEYWORDS = setOf(
             "babay",
@@ -490,7 +551,7 @@ class RoleplayChatViewModel(
 
     private fun buildModeAwareSystemPrompt(details: String = ""): String {
         return when (currentMode) {
-            RoleplayMode.SANPO -> sanpoPromptProvider.baseSystemPrompt(resolveUserDisplayName())
+            RoleplayMode.SANPO -> buildSanpoSystemPrompt()
             RoleplayMode.DOJO -> {
                 val scenarioDetails = details.ifBlank { "指定シチュエーション" }
                 promptManager.getSystemPrompt(
@@ -499,6 +560,283 @@ class RoleplayChatViewModel(
                     details = scenarioDetails
                 )
             }
+        }
+    }
+
+    fun onSanpoAdStarted(phase: SanpoAdGatePhase) {
+        if (phase == SanpoAdGatePhase.IDLE) return
+        _uiState.update {
+            it.copy(
+                sanpoAdGatePhase = when (phase) {
+                    SanpoAdGatePhase.FIRST_GATE_PENDING, SanpoAdGatePhase.FIRST_GATE_SHOWING -> SanpoAdGatePhase.FIRST_GATE_SHOWING
+                    SanpoAdGatePhase.SECOND_GATE_PENDING, SanpoAdGatePhase.SECOND_GATE_SHOWING -> SanpoAdGatePhase.SECOND_GATE_SHOWING
+                    SanpoAdGatePhase.TURN_LIMIT_PENDING, SanpoAdGatePhase.TURN_LIMIT_SHOWING -> SanpoAdGatePhase.TURN_LIMIT_SHOWING
+                    SanpoAdGatePhase.IDLE -> SanpoAdGatePhase.IDLE
+                }
+            )
+        }
+    }
+
+    fun onSanpoAdDismissed(phase: SanpoAdGatePhase) {
+        Log.d("SanpoAdFlow", "AD_DISMISSED gate=$phase session=$sanpoSessionId")
+        when (phase) {
+            SanpoAdGatePhase.FIRST_GATE_PENDING, SanpoAdGatePhase.FIRST_GATE_SHOWING -> {
+                _uiState.update {
+                    it.copy(
+                        sanpoAdGatePhase = SanpoAdGatePhase.IDLE,
+                        pendingSecondAdReason = it.pendingSecondAdReason.takeIf { reason -> reason != SanpoSecondAdReason.NONE }
+                            ?: SanpoSecondAdReason.USER_CANCEL_ONLY
+                    )
+                }
+                completeSanpoAdGate()
+            }
+            SanpoAdGatePhase.SECOND_GATE_PENDING, SanpoAdGatePhase.SECOND_GATE_SHOWING -> {
+                _uiState.update {
+                    it.copy(
+                        sanpoAdGatePhase = SanpoAdGatePhase.IDLE,
+                        pendingSecondAdReason = SanpoSecondAdReason.NONE
+                    )
+                }
+                completeSanpoAdGate()
+            }
+            SanpoAdGatePhase.TURN_LIMIT_PENDING, SanpoAdGatePhase.TURN_LIMIT_SHOWING -> {
+                _uiState.update { it.copy(sanpoAdGatePhase = SanpoAdGatePhase.IDLE) }
+                viewModelScope.launch { requestUpgradeForSanpo() }
+            }
+            SanpoAdGatePhase.IDLE -> Unit
+        }
+    }
+
+    private fun registerSanpoTurn() {
+        if (currentMode != RoleplayMode.SANPO) return
+        if (isProVersion) {
+            _uiState.update { it.copy(sanpoTurnCount = it.sanpoTurnCount + 1) }
+            return
+        }
+
+        var shouldTriggerTurnLimitAd = false
+        _uiState.update {
+            val nextCount = it.sanpoTurnCount + 1
+            val trigger = nextCount >= SANPO_TURN_LIMIT_AD_THRESHOLD && !it.hasShownTurnLimitAdThisSession
+            if (trigger) {
+                shouldTriggerTurnLimitAd = true
+            }
+            it.copy(
+                sanpoTurnCount = nextCount,
+                hasShownTurnLimitAdThisSession = it.hasShownTurnLimitAdThisSession || trigger
+            )
+        }
+        Log.d(
+            LOG_TAG,
+            "registerSanpoTurn mode=$currentMode count=${_uiState.value.sanpoTurnCount} trigger=$shouldTriggerTurnLimitAd pro=$isProVersion"
+        )
+        Log.d("SanpoAdFlow", "TURN turn=${_uiState.value.sanpoTurnCount} session=$sanpoSessionId")
+
+        // Update monetization cycle state and trigger TURN_COMPLETE
+        sanpoTurnCount = _uiState.value.sanpoTurnCount
+        viewModelScope.launch { userPreferencesRepository.setSanpoTurnCount(sanpoTurnCount) }
+        if (sanpoCycleState == "NEW") {
+            sanpoCycleState = "IN_PROGRESS"
+            viewModelScope.launch { userPreferencesRepository.setSanpoCycleState("IN_PROGRESS") }
+        }
+        onSanpoMonetEvent(SanpoMonetPlacement.TURN_COMPLETE)
+
+        if (!shouldTriggerTurnLimitAd) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(sanpoAdGatePhase = SanpoAdGatePhase.TURN_LIMIT_PENDING)
+            }
+            Log.d(LOG_TAG, "Sanpo turn limit ad requested phase=${SanpoAdGatePhase.TURN_LIMIT_PENDING}")
+            Log.d("SanpoAdFlow", "REQUEST_AD gate=${SanpoAdGatePhase.TURN_LIMIT_PENDING} session=$sanpoSessionId turn=${_uiState.value.sanpoTurnCount}")
+            _events.send(RoleplayEvent.RequestSanpoInterstitial(SanpoAdGatePhase.TURN_LIMIT_PENDING))
+        }
+    }
+
+    fun onSanpoAdFailed(phase: SanpoAdGatePhase) {
+        when (phase) {
+            SanpoAdGatePhase.FIRST_GATE_PENDING, SanpoAdGatePhase.FIRST_GATE_SHOWING -> {
+                _uiState.update { it.copy(sanpoAdGatePhase = SanpoAdGatePhase.IDLE) }
+                completeSanpoAdGate()
+            }
+            SanpoAdGatePhase.SECOND_GATE_PENDING, SanpoAdGatePhase.SECOND_GATE_SHOWING -> {
+                _uiState.update {
+                    it.copy(
+                        sanpoAdGatePhase = SanpoAdGatePhase.IDLE,
+                        pendingSecondAdReason = SanpoSecondAdReason.NONE
+                    )
+                }
+                completeSanpoAdGate()
+            }
+            SanpoAdGatePhase.TURN_LIMIT_PENDING, SanpoAdGatePhase.TURN_LIMIT_SHOWING -> {
+                _uiState.update { it.copy(sanpoAdGatePhase = SanpoAdGatePhase.IDLE) }
+                viewModelScope.launch { requestUpgradeForSanpo() }
+            }
+            SanpoAdGatePhase.IDLE -> Unit
+        }
+    }
+
+    private suspend fun requestUpgradeForSanpo(endSession: Boolean = true) {
+        val currentTurns = _uiState.value.sanpoTurnCount
+        if (currentTurns < SANPO_TURN_LIMIT_AD_THRESHOLD) {
+            Log.d(LOG_TAG, "Sanpo upsell suppressed turns=$currentTurns sessionId=$sanpoSessionId")
+            return
+        }
+        if (sanpoUpsellConsumed) {
+            Log.d(LOG_TAG, "Sanpo upsell already consumed sessionId=$sanpoSessionId")
+            return
+        }
+        if (shouldDebounceUpsell()) {
+            Log.d(LOG_TAG, "Sanpo upsell debounced due to quick re-entry sessionId=$sanpoSessionId")
+            return
+        }
+        sanpoUpsellConsumed = true
+        lastSanpoSessionTurnCount = currentTurns
+        lastSanpoExitAtMs = System.currentTimeMillis()
+        _uiState.update {
+            it.copy(
+                messages = it.messages,
+                options = emptyList(),
+                lockedOption = null,
+                isLoading = false,
+                finalFarewellMessageId = null,
+                pendingExitHistory = null,
+                tutorialMessage = "",
+                tutorialHint = "",
+                sanpoAdGateRemainingCount = 0,
+                pendingSanpoStart = false,
+                isEndingSession = if (endSession) true else it.isEndingSession
+            )
+        }
+        if (endSession) {
+            val snapshot = history.toList()
+            if (snapshot.isNotEmpty()) {
+                _uiState.update { it.copy(pendingExitHistory = snapshot) }
+            }
+        }
+        _events.send(RoleplayEvent.ShowSanpoUpsell)
+    }
+
+    private fun shouldDebounceUpsell(): Boolean {
+        if (lastSanpoExitAtMs == 0L) return false
+        if (lastSanpoSessionTurnCount >= SANPO_TURN_LIMIT_AD_THRESHOLD) return false
+        val elapsed = System.currentTimeMillis() - lastSanpoExitAtMs
+        return elapsed in 1 until SANPO_REENTRY_DEBOUNCE_MS
+    }
+
+    fun completeSanpoAdGate() {
+        val state = _uiState.value
+        val shouldStartSanpo = state.pendingSanpoStart
+        _uiState.update { it.copy(sanpoAdGateRemainingCount = 0, pendingSanpoStart = false) }
+        if (shouldStartSanpo) {
+            sanpoAdGateConsumed = true
+            startSanpoSession(isProVersion)
+        }
+    }
+
+    private fun shouldEnforceSanpoAdGate(): Boolean {
+        val reasons = mutableListOf<String>()
+        if (!BuildConfig.IS_LITE_BUILD) reasons += "not_lite"
+        if (isProVersion) reasons += "pro_user"
+        if (currentMode != RoleplayMode.SANPO) reasons += "not_sanpo"
+        if (sanpoAdGateConsumed) reasons += "consumed"
+        val result = BuildConfig.IS_LITE_BUILD && !isProVersion && currentMode == RoleplayMode.SANPO && !sanpoAdGateConsumed
+        val reason = if (result) "eligible" else reasons.joinToString(",").ifBlank { "other" }
+        Log.d(
+            LOG_TAG,
+            "shouldEnforceSanpoAdGate=$result lite=${BuildConfig.IS_LITE_BUILD} pro=$isProVersion mode=$currentMode consumed=$sanpoAdGateConsumed"
+        )
+        Log.d(
+            "SanpoAdFlow",
+            "SHOULD_ENFORCE result=$result reason=$reason consumed=$sanpoAdGateConsumed mode=$currentMode turn=${_uiState.value.sanpoTurnCount}"
+        )
+        return result
+    }
+
+    private fun onSanpoMonetEvent(placement: SanpoMonetPlacement) {
+        if (isProVersion) {
+            Log.i("SANPO_MONET", "SKIP placement=$placement reason=pro_user")
+            return
+        }
+        when (placement) {
+            SanpoMonetPlacement.ENTER -> {
+                Log.i("SANPO_MONET", "ENTER state=$sanpoCycleState turn=$sanpoTurnCount will_show_upsell=${sanpoCycleState == "READY_FOR_UPSELL"}")
+                handleSanpoMonetRequest(if (sanpoCycleState == "READY_FOR_UPSELL") "ENTER_READY" else "ENTER")
+            }
+            SanpoMonetPlacement.TURN_COMPLETE -> {
+                val nextTurn = sanpoTurnCount + 1
+                val becameReady = nextTurn >= 3 && sanpoCycleState == "IN_PROGRESS"
+                Log.i("SANPO_MONET", "TURN_COMPLETE turn=$nextTurn became_ready=$becameReady")
+                if (becameReady) {
+                    sanpoCycleState = "READY_FOR_UPSELL"
+                    viewModelScope.launch { userPreferencesRepository.setSanpoCycleState("READY_FOR_UPSELL") }
+                }
+            }
+            SanpoMonetPlacement.EXIT_TO_TOP -> {
+                val becameReady = sanpoCycleState == "IN_PROGRESS"
+                Log.i("SANPO_MONET", "EXIT_TO_TOP became_ready=$becameReady")
+                if (becameReady) {
+                    sanpoCycleState = "READY_FOR_UPSELL"
+                    viewModelScope.launch { userPreferencesRepository.setSanpoCycleState("READY_FOR_UPSELL") }
+                }
+            }
+        }
+    }
+
+    private fun handleSanpoMonetRequest(placement: String) {
+        Log.i("SANPO_MONET", "REQUEST placement=$placement isPro=$isProVersion lite=${BuildConfig.IS_LITE_BUILD}")
+        
+        if (isProVersion) {
+            Log.i("SANPO_MONET", "SKIP placement=$placement reason=pro_user")
+            return
+        }
+        viewModelScope.launch {
+            val countBefore = sanpoMonetCount
+            sanpoMonetCount++
+            userPreferencesRepository.setSanpoMonetCount(sanpoMonetCount)
+            val countAfter = sanpoMonetCount
+            val shouldShowAd = countAfter in listOf(2, 4)
+            val shouldShowUpsell = countAfter >= 5
+
+            Log.i(
+                "SANPO_MONET",
+                "CHECK placement=$placement count_before=$countBefore count_after=$countAfter decision=${when {
+                    shouldShowUpsell -> "SHOW_UPSELL"
+                    shouldShowAd -> "SHOW_AD"
+                    else -> "NONE"
+                }} skip_reason=${when {
+                    shouldShowUpsell -> null
+                    shouldShowAd -> null
+                    else -> "not_eligible"
+                }}"
+            )
+
+            when {
+                shouldShowUpsell -> {
+                    Log.i("SANPO_MONET", "SHOW_UPSELL placement=$placement")
+                    _events.send(RoleplayEvent.ShowSanpoUpsellDialog(placement))
+                    resetSanpoMonetCycle()
+                }
+                shouldShowAd -> {
+                    Log.i("SANPO_MONET", "SHOW_AD placement=$placement")
+                    _events.send(RoleplayEvent.RequestSanpoInterstitial(SanpoAdGatePhase.FIRST_GATE_PENDING))
+                }
+                else -> {
+                    Log.i("SANPO_MONET", "NO_ACTION placement=$placement")
+                }
+            }
+        }
+    }
+
+    private fun resetSanpoMonetCycle() {
+        Log.i("SANPO_MONET", "RESET cycle")
+        sanpoCycleState = "NEW"
+        sanpoTurnCount = 0
+        sanpoMonetCount = 0
+        viewModelScope.launch {
+            userPreferencesRepository.setSanpoCycleState("NEW")
+            userPreferencesRepository.setSanpoTurnCount(0)
+            userPreferencesRepository.setSanpoMonetCount(0)
         }
     }
 
@@ -604,12 +942,131 @@ class RoleplayChatViewModel(
                 isLoading = false
             )
         }
+        if (currentMode == RoleplayMode.SANPO) {
+            lastSanpoSessionTurnCount = _uiState.value.sanpoTurnCount
+            lastSanpoExitAtMs = System.currentTimeMillis()
+            Log.d(
+                LOG_TAG,
+                "Sanpo session end sessionId=$sanpoSessionId turns=$lastSanpoSessionTurnCount exitAt=$lastSanpoExitAtMs"
+            )
+            // Trigger EXIT_TO_TOP monetization event
+            onSanpoMonetEvent(SanpoMonetPlacement.EXIT_TO_TOP)
+        }
+    }
+
+    fun onSanpoEnter(isProUser: Boolean) {
+        isProVersion = isProUser
+        currentMode = RoleplayMode.SANPO
+        sanpoSessionId = generateSanpoSessionId()
+        val now = System.currentTimeMillis()
+        lastSanpoEntryAtMs = now
+        sanpoAdGateConsumed = false
+        sanpoUpsellConsumed = false
+        _uiState.update {
+            it.copy(
+                sanpoTurnCount = 0,
+                hasShownTurnLimitAdThisSession = false
+            )
+        }
+        val pendingReason = _uiState.value.pendingSecondAdReason
+        Log.d(
+            LOG_TAG,
+            "onSanpoEnter sessionId=$sanpoSessionId pro=$isProUser lite=${BuildConfig.IS_LITE_BUILD} gateConsumed=$sanpoAdGateConsumed pendingSecond=$pendingReason entryAt=$now"
+        )
+        val firstGatePending = shouldEnforceSanpoAdGate()
+        val secondGatePending = pendingReason != SanpoSecondAdReason.NONE
+        Log.d(
+            "SanpoAdFlow",
+            "ENTER pro=$isProUser lite=${BuildConfig.IS_LITE_BUILD} session=$sanpoSessionId first=$firstGatePending second=$secondGatePending turn=${_uiState.value.sanpoTurnCount}"
+        )
+
+        // Sanpo monetization trigger
+        onSanpoMonetEvent(SanpoMonetPlacement.ENTER)
+
+        if (isProUser || !BuildConfig.IS_LITE_BUILD) {
+            startSanpoSession(isProUser)
+            return
+        }
+
+        viewModelScope.launch {
+            val hasFreeExperience = if (SANPO_QUOTA_ENFORCEMENT_ENABLED) {
+                runCatching { FreeUsageManager.canStartSanpo() }.getOrDefault(false)
+            } else {
+                Log.w(LOG_TAG, "Sanpo quota temporarily bypassed for re-entry sessionId=$sanpoSessionId")
+                true
+            }
+            if (!hasFreeExperience) {
+                Log.w(LOG_TAG, "Sanpo start skipped due to exhausted quota sessionId=$sanpoSessionId")
+                return@launch
+            }
+
+            val shouldShowSecondGate = _uiState.value.pendingSecondAdReason != SanpoSecondAdReason.NONE
+            when {
+                shouldShowSecondGate -> {
+                    _uiState.update {
+                        it.copy(
+                            pendingSanpoStart = true,
+                            sanpoAdGatePhase = SanpoAdGatePhase.SECOND_GATE_PENDING
+                        )
+                    }
+                    Log.d(
+                        "SanpoAdFlow",
+                        "REQUEST_AD gate=${SanpoAdGatePhase.SECOND_GATE_PENDING} session=$sanpoSessionId turn=${_uiState.value.sanpoTurnCount}"
+                    )
+                    _events.send(RoleplayEvent.RequestSanpoInterstitial(SanpoAdGatePhase.SECOND_GATE_PENDING))
+                }
+                shouldEnforceSanpoAdGate() -> {
+                    _uiState.update {
+                        it.copy(
+                            pendingSanpoStart = true,
+                            sanpoAdGatePhase = SanpoAdGatePhase.FIRST_GATE_PENDING
+                        )
+                    }
+                    Log.d(
+                        "SanpoAdFlow",
+                        "REQUEST_AD gate=${SanpoAdGatePhase.FIRST_GATE_PENDING} session=$sanpoSessionId turn=${_uiState.value.sanpoTurnCount}"
+                    )
+                    _events.send(RoleplayEvent.RequestSanpoInterstitial(SanpoAdGatePhase.FIRST_GATE_PENDING))
+                }
+                else -> startSanpoSession(isProUser)
+            }
+        }
     }
 
     private fun loadInfiniteTariMode(isProUser: Boolean) {
+        onSanpoEnter(isProUser)
+    }
+
+    private fun startSanpoSession(isProUser: Boolean) {
+        if (!isProUser) {
+            viewModelScope.launch {
+                val canUse = if (SANPO_QUOTA_ENFORCEMENT_ENABLED) {
+                    runCatching { FreeUsageManager.canStartSanpo() }.getOrDefault(false)
+                } else {
+                    true
+                }
+                if (!canUse) {
+                    requestUpgradeForSanpo()
+                    return@launch
+                }
+                proceedLoadSanpo(isProUser)
+            }
+        } else {
+            proceedLoadSanpo(isProUser)
+        }
+    }
+
+    private fun proceedLoadSanpo(isProUser: Boolean) {
         resetAutoExitState()
         switchMode(RoleplayMode.SANPO)
-        val definition = buildSanpoScenarioDefinition().copy(initialMessage = "")
+        turnCount = 0
+        _uiState.update {
+            it.copy(
+                sanpoTurnCount = 0,
+                hasShownTurnLimitAdThisSession = false
+            )
+        }
+        val definition = buildSanpoScenarioDefinition()
         pendingAutoExitHistory = null
         scriptedRuntime = null
         activeDynamicScenario = null
@@ -621,7 +1078,9 @@ class RoleplayChatViewModel(
         knownLearnerName = null
         isLearnerIdentified = false
         val systemPrompt = buildModeAwareSystemPrompt()
-        markSanpoUsageIfNeeded()
+        if (!isProUser) {
+            markSanpoUsageIfNeeded()
+        }
 
         val initialSanpoOptions = listOf(
             RoleplayOption(
@@ -665,7 +1124,9 @@ class RoleplayChatViewModel(
             isEndingSession = false,
             roleplayMode = RoleplayMode.SANPO,
             learnerName = resolveUserDisplayName(),
-            options = initialSanpoOptions
+            options = initialSanpoOptions,
+            sanpoAdGateRemainingCount = 0,
+            pendingSanpoStart = false
         )
 
         requestAiTurn(
@@ -676,6 +1137,10 @@ class RoleplayChatViewModel(
 
     private fun markSanpoUsageIfNeeded() {
         if (isProVersion) return
+        if (!SANPO_QUOTA_ENFORCEMENT_ENABLED) {
+            Log.d(LOG_TAG, "Sanpo quota enforcement disabled; skipping consumption sessionId=$sanpoSessionId")
+            return
+        }
         viewModelScope.launch {
             runCatching {
                 FreeUsageManager.resetIfNewDay()
@@ -686,6 +1151,7 @@ class RoleplayChatViewModel(
                     "free_limit_check feature=sanpo event=start day=${'$'}day count=${'$'}count premium=${isProVersion}"
                 )
                 Log.d(LOG_TAG, "sanpo consumed day=$day count=$count premium=$isProVersion")
+                sanpoAdGateConsumed = true
             }.onFailure { error ->
                 Log.e(LOG_TAG, "sanpo consume failed", error)
             }
@@ -693,22 +1159,17 @@ class RoleplayChatViewModel(
     }
 
     private fun buildSanpoScenarioDefinition(): RoleplayScenarioDefinition {
-        val base = scenarioRepository.getScenarioById(TARI_SCENARIO_ID)
-        return base?.let { convertToRoleplayScenarioDefinition(it) }
-            ?: RoleplayScenarioDefinition(
-                id = TARI_SCENARIO_ID,
-                level = 1,
-                title = "タリ散歩道",
-                description = "自由な雑談モード",
-                situation = "Cebu daily life banter",
-                aiRole = "Tari",
-                goal = "Enjoy a 12-turn Cebuano chat",
-                iconEmoji = "🎉",
-                initialMessage = "",
-                systemPrompt = sanpoPromptProvider.baseSystemPrompt(resolveUserDisplayName()),
-                hintPhrases = emptyList(),
-                closingGuidance = null
-            )
+        Log.d("SanpoScenario", "Building Sanpo scenario with ID: $TARI_SCENARIO_ID")
+        Log.d("SanpoScenario", "BuildConfig.FLAVOR: ${BuildConfig.FLAVOR}")
+        Log.d("SanpoScenario", "BuildConfig.IS_LITE_BUILD: ${BuildConfig.IS_LITE_BUILD}")
+        
+        // Always use scenarioRepository - no fallback
+        val result = scenarioRepository.getScenarioById(TARI_SCENARIO_ID)
+        Log.d("SanpoScenario", "ScenarioRepository returned: ${result?.id ?: "null"}")
+        
+        val missionScenario = result ?: throw IllegalStateException("Sanpo scenario '$TARI_SCENARIO_ID' not found in ScenarioRepository")
+        
+        return convertToRoleplayScenarioDefinition(missionScenario)
     }
 
     private fun selectActiveTheme(scenario: RoleplayScenarioDefinition) {
@@ -777,7 +1238,9 @@ class RoleplayChatViewModel(
                 userCallSign = callSignLabel
                 calloutBisaya = baseBisaya
                 calloutEnglish = baseEnglish
-                userNickname = profile.nickname.takeIf { it.isNotBlank() }
+                val resolvedNickname = profile.nickname
+                    .takeIf { it.isNotBlank() && it != guestNicknameFallback }
+                userNickname = resolvedNickname
                 refreshLearnerNameState()
             }
         }
@@ -956,10 +1419,11 @@ class RoleplayChatViewModel(
         )
         history.add(MissionHistoryMessage(option.text, isUser = true))
         processUserUtteranceForNameUnlock(option.text)
+        registerSanpoTurn()
         _uiState.update {
             it.copy(
                 messages = it.messages + userMsg,
-                isLoading = scriptedRuntime == null,
+                isLoading = false,
                 options = emptyList(),
                 peekedHintOptionIds = emptySet(),
                 completedTurns = it.completedTurns + 1,
@@ -1002,6 +1466,7 @@ class RoleplayChatViewModel(
         history.add(MissionHistoryMessage(trimmed, isUser = true))
         processUserUtteranceForNameUnlock(trimmed)
         scriptedRuntime = null
+        registerSanpoTurn()
 
         _uiState.update {
             it.copy(
@@ -1088,6 +1553,7 @@ class RoleplayChatViewModel(
         }
 
         currentRecordingFile = recordedFile
+        registerSanpoTurn()
         transcribeAndSend(recordedFile)
     }
 
@@ -1412,12 +1878,13 @@ class RoleplayChatViewModel(
             val source = if (userTurnIndex == 0) OptionSource.STARTER else OptionSource.TEMPLATE
             dojoOptions to source
         } else {
+            val exposeHintForLiteDebug = BuildConfig.DEBUG && BuildConfig.IS_LITE_BUILD
             val sanpoOptions = cleanedPayloadOptions
                 .filter { it.text.isNotBlank() }
                 .map {
                     RoleplayOption(
                         text = it.text,
-                        hint = if (isProVersion) it.translation else null,
+                        hint = if (isProVersion || exposeHintForLiteDebug) it.translation else null,
                         tone = it.tone
                     )
                 }
@@ -1830,7 +2297,36 @@ class RoleplayChatViewModel(
         }
     }
 
+    private fun buildSanpoSystemPrompt(): String {
+        val base = sanpoPromptProvider.baseSystemPrompt(resolveUserDisplayName())
+        val nicknameInstruction = buildSanpoNicknameInstruction()
+        return if (nicknameInstruction.isNullOrBlank()) base else "$base\n\n$nicknameInstruction"
+    }
+
+    private fun buildSanpoNicknameInstruction(): String? {
+        if (!isProVersion) return null
+        val nickname = userNickname?.takeIf { it.isNotBlank() } ?: return null
+        val sanitizedNickname = sanitizeNicknameForPrompt(nickname) ?: return null
+        if (!shouldNudgeNicknameThisTurn()) return null
+        return "- 約25%の頻度で、そのターンに限りビサヤ語のセリフ内に一度だけニックネーム「$sanitizedNickname」を自然に入れてもよい。ただし連続使用や不自然な挿入は禁止。"
+    }
+
+    private fun shouldNudgeNicknameThisTurn(): Boolean = random.nextInt(4) == 0
+
+    private fun sanitizeNicknameForPrompt(raw: String): String? {
+        val cleaned = raw.replace(Regex("[\n\r]+"), " ").trim()
+        return cleaned.takeIf { it.isNotBlank() }?.take(24)
+    }
+
+    private fun generateSanpoSessionId(): String = UUID.randomUUID().toString()
+
     private fun buildSanpoPrompt(userMessage: String): String {
+        val deviceLanguage = Locale.getDefault().language.lowercase(Locale.ROOT)
+        val translationLocaleLabel = if (deviceLanguage == "ja") "Japanese" else "English"
+        val translationRules = OpenAiChatRepository.TRANSLATION_FIELD_RULES
+            .replace("Japanese", translationLocaleLabel)
+            .replace("English", translationLocaleLabel)
+            .prependIndent("            ")
         val translationLanguage = translationLanguageState.value
         val historyText = history.joinToString(separator = "\n") { entry ->
             val speaker = if (entry.isUser) "USER" else "AI"
@@ -1857,17 +2353,19 @@ class RoleplayChatViewModel(
             Respond strictly in JSON with exactly these fields and no extras:
             {
               "aiSpeech": "Assistant reply in Bisaya ONLY. Keep it under two lines. Append '[TOPページへ]' only on the forced final turn.",
-              "aiTranslation": "${if (translationLanguage == TranslationLanguage.JAPANESE) "Japanese" else "English"} translation of aiSpeech ONLY.",
+              "aiTranslation": "$translationLocaleLabel translation of aiSpeech ONLY. NEVER leave this blank.",
               "options": [
                 {
                   "text": "Suggested learner reply in Bisaya ONLY (casual tone).",
-                  "translation": "${if (translationLanguage == TranslationLanguage.JAPANESE) "Japanese" else "English"} translation of that option ONLY.",
-                  "tone": "Short descriptor in Japanese (optional)."
+                  "translation": "$translationLocaleLabel translation of that option ONLY. Must be natural $translationLocaleLabel and non-empty.",
+                  "tone": "Short descriptor in $translationLocaleLabel (optional)."
                 }
               ]
             }
             - Output 2-3 concise options unless you already ended with [TOPページへ], in which case options must be an empty array.
             - Never include markdown, commentary, or explanations outside the JSON object.
+            Translation requirements:
+$translationRules
         """.trimIndent()
         val prompt = when (translationLanguage) {
             TranslationLanguage.JAPANESE -> localizedPrompt
@@ -1884,6 +2382,12 @@ class RoleplayChatViewModel(
         scenario: RoleplayScenarioDefinition,
         userMessage: String
     ): String {
+        val deviceLanguage = Locale.getDefault().language.lowercase(Locale.ROOT)
+        val translationLocaleLabel = if (deviceLanguage == "ja") "Japanese" else "English"
+        val translationRules = OpenAiChatRepository.TRANSLATION_FIELD_RULES
+            .replace("Japanese", translationLocaleLabel)
+            .replace("English", translationLocaleLabel)
+            .prependIndent("            ")
         val translationLanguage = translationLanguageState.value
         val missionGoal = scenario.goal.ifBlank { scenario.description.ifBlank { "Learner must complete the assigned task." } }
         val scenarioDetails = "状況: ${scenario.situation.ifBlank { scenario.description }} / 役割: ${scenario.aiRole} / 目的: $missionGoal"
@@ -1919,17 +2423,19 @@ class RoleplayChatViewModel(
             Respond strictly in JSON with exactly these fields and no extras:
             {
               "aiSpeech": "Assistant reply in Bisaya ONLY. Append ' [FINISH]' only after the goal is undeniably complete.",
-              "aiTranslation": "${if (translationLanguage == TranslationLanguage.JAPANESE) "Japanese" else "English"} translation of aiSpeech ONLY.",
+              "aiTranslation": "$translationLocaleLabel translation of aiSpeech ONLY. This must be non-empty $translationLocaleLabel text.",
               "options": [
                 {
                   "text": "Concrete next action in Bisaya ONLY (no learner names).",
-                  "translation": "${if (translationLanguage == TranslationLanguage.JAPANESE) "Japanese" else "English"} translation of that option ONLY.",
-                  "tone": "Short descriptor in Japanese (optional)."
+                  "translation": "$translationLocaleLabel translation of that option ONLY. Never leave this blank and keep it natural.",
+                  "tone": "Short descriptor in $translationLocaleLabel (optional)."
                 }
               ]
             }
             - Output 2-3 decisive options unless you already ended with [FINISH], in which case options must be an empty array.
             - Never include markdown, commentary, or explanations outside the JSON object.
+            Translation requirements:
+$translationRules
         """.trimIndent()
         val prompt = when (translationLanguage) {
             TranslationLanguage.JAPANESE -> localizedPrompt

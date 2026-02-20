@@ -208,12 +208,17 @@ fun ListeningScreen(
                 Log.e("DEBUG_ADS", "[ListeningScreen] Starting interstitial (LaunchedEffect)")
                 AdManager.showInterstitialWithTimeout(
                     activity = activity,
-                    timeoutMs = 2_000L
-                ) {
-                    Log.e("DEBUG_ADS", "[ListeningScreen] navigateToResult right before run (LaunchedEffect)")
-                    Log.e("ListeningScreen", "★★★ TIMEOUT OR AD CLOSED, FORCING NAVIGATION ★★★")
-                    navigateToResult()
-                }
+                    timeoutMs = 2_000L,
+                    onAdClosed = {
+                        Log.e("DEBUG_ADS", "[ListeningScreen] Interstitial closed -> enabling mic")
+                        viewModel.unlockMicAfterAd()
+                    },
+                    onAttemptResult = {
+                        Log.e("DEBUG_ADS", "[ListeningScreen] navigateToResult right before run (LaunchedEffect)")
+                        Log.e("ListeningScreen", "★★★ TIMEOUT OR AD CLOSED, FORCING NAVIGATION ★★★")
+                        navigateToResult()
+                    }
+                )
             } else {
                 Log.e("DEBUG_ADS", "[ListeningScreen] Activity is null; navigateToResult directly")
                 Log.e("ListeningScreen", "★★★ NO ACTIVITY, FORCING NAVIGATION ★★★")

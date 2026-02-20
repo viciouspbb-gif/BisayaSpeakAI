@@ -92,6 +92,19 @@
     <string name="continue_after_reset">You can continue playing after reset!</string>
     <string name="watch_ad">Watch Ad</string>
     <string name="later">Later</string>
+    <!-- Sanpo Upsell -->
+    <string name="roleplay_sanpo_upsell_title">Chat more with Tari</string>
+    <string name="roleplay_sanpo_upsell_upgrade">Upgrade</string>
+    <string name="roleplay_sanpo_upsell_later">Later</string>
+    <string name="roleplay_sanpo_ad_gate_message">Showing an ad… (please wait a few seconds)</string>
+    <!-- Translator Upsell -->
+    <string name="translator_limit_upsell_title">Get native-level explanations</string>
+    <string name="translator_limit_upsell_subtitle_unlimited">Unlimited translations</string>
+    <string name="translator_limit_upsell_subtitle_nuance">AI nuance breakdowns</string>
+    <string name="translator_limit_upsell_subtitle_no_ads">No ads</string>
+    <string name="translator_limit_upsell_cta">Upgrade</string>
+    <string name="translator_limit_upsell_later">Later</string>
+    <string name="roleplay_translation_unavailable">Translation unavailable</string>
     <!-- AI Conversation -->
     <string name="ai_conversation">AI Conversation</string>
     <string name="scenario_conversation">Scenario Conversation</string>

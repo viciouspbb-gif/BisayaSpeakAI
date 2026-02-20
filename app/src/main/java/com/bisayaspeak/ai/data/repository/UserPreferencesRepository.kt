@@ -31,6 +31,9 @@ class UserPreferencesRepository(private val context: Context) {
         private val ROLEPLAY_TUTORIAL_SEEN_KEY = booleanPreferencesKey("roleplay_tutorial_seen")
         private val ROLEPLAY_TUTORIAL_VERSION_KEY = intPreferencesKey("roleplay_tutorial_version")
         private val ROLEPLAY_TUTORIAL_LOCALE_KEY = stringPreferencesKey("roleplay_tutorial_locale")
+        private val SANPO_CYCLE_STATE_KEY = stringPreferencesKey("sanpo_cycle_state")
+        private val SANPO_TURN_COUNT_KEY = intPreferencesKey("sanpo_turn_count")
+        private val SANPO_MONET_COUNT_KEY = intPreferencesKey("sanpo_monet_count")
         private const val LEGACY_JA_GUEST = "ゲストユーザー"
     }
 
@@ -61,6 +64,18 @@ class UserPreferencesRepository(private val context: Context) {
 
     val roleplayTutorialLocale: Flow<String?> = context.userPreferencesDataStore.data.map { preferences ->
         preferences[ROLEPLAY_TUTORIAL_LOCALE_KEY]
+    }
+
+    val sanpoCycleState: Flow<String> = context.userPreferencesDataStore.data.map { preferences ->
+        preferences[SANPO_CYCLE_STATE_KEY] ?: "NEW"
+    }
+
+    val sanpoTurnCount: Flow<Int> = context.userPreferencesDataStore.data.map { preferences ->
+        preferences[SANPO_TURN_COUNT_KEY] ?: 0
+    }
+
+    val sanpoMonetCount: Flow<Int> = context.userPreferencesDataStore.data.map { preferences ->
+        preferences[SANPO_MONET_COUNT_KEY] ?: 0
     }
 
     suspend fun saveUserProfile(nickname: String, gender: UserGender) {
@@ -98,6 +113,24 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun setRoleplayTutorialLocale(localeTag: String) {
         context.userPreferencesDataStore.edit { prefs ->
             prefs[ROLEPLAY_TUTORIAL_LOCALE_KEY] = localeTag
+        }
+    }
+
+    suspend fun setSanpoCycleState(state: String) {
+        context.userPreferencesDataStore.edit { prefs ->
+            prefs[SANPO_CYCLE_STATE_KEY] = state
+        }
+    }
+
+    suspend fun setSanpoTurnCount(count: Int) {
+        context.userPreferencesDataStore.edit { prefs ->
+            prefs[SANPO_TURN_COUNT_KEY] = count
+        }
+    }
+
+    suspend fun setSanpoMonetCount(count: Int) {
+        context.userPreferencesDataStore.edit { prefs ->
+            prefs[SANPO_MONET_COUNT_KEY] = count
         }
     }
 

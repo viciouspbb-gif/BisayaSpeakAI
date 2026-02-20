@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -54,6 +55,17 @@ data class TranslatorExplanation(
     val summary: String,
     val usage: String,
     val relatedPhrases: List<String>
+)
+
+data class TranslatorCandidateDisplay(
+    val candidate: TranslatorCandidate,
+    val politenessLabel: String?,
+    val situationLabel: String?
+)
+
+private data class TranslatorPrompt(
+    val systemPrompt: String,
+    val userPrompt: String
 )
 
 data class TranslatorDebugState(
@@ -148,7 +160,8 @@ class AiTranslatorViewModel(
 
         viewModelScope.launch {
             var attemptContext: TranslateAttemptContext? = null
-            if (!isPremiumUser) {
+            val isLiteFreeUser = BuildConfig.IS_LITE_BUILD && !isPremiumUser
+            if (isLiteFreeUser) {
                 attemptContext = prepareTranslateAttempt() ?: return@launch
             } else {
                 val premiumSnapshot = usageSnapshot()
@@ -182,7 +195,7 @@ class AiTranslatorViewModel(
                     TranslatorUiState.Error(e.message ?: "Translation failed")
             }
 
-            if (!isPremiumUser) {
+            if (isLiteFreeUser) {
                 attemptContext?.let {
                     handleTranslateAttemptCompletion(
                         attempt = it,
@@ -238,23 +251,39 @@ class AiTranslatorViewModel(
         direction: TranslationDirection
     ): String {
         val prompt = buildTranslatorPrompt(text, direction)
-        return repository.generateJsonResponse(prompt, temperature = 0.35)
+        return repository.generateJsonResponse(
+            userPrompt = prompt.userPrompt,
+            temperature = 0.35,
+            systemPrompt = prompt.systemPrompt
+        )
     }
 
     private fun buildTranslatorPrompt(
         text: String,
         direction: TranslationDirection
-    ): String {
+    ): TranslatorPrompt {
+        val deviceLanguage = Locale.getDefault().language.lowercase(Locale.ROOT)
+        val uiLangCode = if (deviceLanguage == "ja") "ja" else "en"
+        val uiLangName = if (uiLangCode == "ja") "Japanese" else "English"
         val basePrompt = promptProvider?.getSystemPrompt().orEmpty()
-        val instruction = when (direction) {
+        val directionInstruction = when (direction) {
             TranslationDirection.JA_TO_CEB -> "Convert the user's Japanese or English text into rich Cebuano (Bisaya) expressions."
             TranslationDirection.CEB_TO_JA -> "Review the user's Cebuano text and produce natural Japanese and refined Bisaya variations."
         }
-        return buildString {
-            if (basePrompt.isNotBlank()) appendLine(basePrompt)
+
+        val systemPrompt = buildString {
+            if (basePrompt.isNotBlank()) {
+                appendLine(basePrompt)
+                appendLine()
+            }
             appendLine("You are an AI translator and nuance dictionary for Japanese, English, and Cebuano (Bisaya).")
-            appendLine(instruction)
-            appendLine("Respond ONLY in JSON with the following schema:")
+            appendLine(directionInstruction)
+            appendLine("Output ONLY valid JSON.")
+            appendLine("Language rule: All explanation-related fields (politeness, situation, nuance, tip, summary, usage, related) MUST be written strictly in $uiLangName only.")
+            appendLine("Keep every explanation field short (max 2-3 sentences).")
+            appendLine("If any explanation field is not written in $uiLangName, you must regenerate it in the correct language before returning the JSON response. Never output mixed-language explanations.")
+            appendLine("Never include narrative text outside of the JSON object.")
+            appendLine("Schema (keys must match exactly):")
             appendLine("{")
             appendLine("  \"detectedLanguage\": \"ja\"|\"ceb\"|\"en\",")
             appendLine("  \"candidates\": [")
@@ -269,14 +298,23 @@ class AiTranslatorViewModel(
             appendLine("    }...")
             appendLine("  ],")
             appendLine("  \"explanation\": {")
-            appendLine("      \"summary\": string,")
-            appendLine("      \"usage\": string,")
-            appendLine("      \"related\": [string]")
+            appendLine("    \"summary\": string,")
+            appendLine("    \"usage\": string,")
+            appendLine("    \"related\": [string]")
             appendLine("  }")
             appendLine("}")
-            appendLine("Limit candidates to 2-3 high quality suggestions. Keep explanations concise and in Japanese.")
-            appendLine("User input: \"$text\"")
+            appendLine("Candidates may include multi-language translations as usual, but explanation-related fields must follow the $uiLangName rule.")
         }
+
+        val userPrompt = buildString {
+            appendLine("ui_lang: \"$uiLangCode\"")
+            appendLine("translation_direction: \"${direction.name}\"")
+            appendLine("detect_input_language: true")
+            appendLine("Return translations and explanations using the schema above. Do not emit any keys outside this structure.")
+            appendLine("User text: ${JSONObject.quote(text)}")
+        }
+
+        return TranslatorPrompt(systemPrompt = systemPrompt.trim(), userPrompt = userPrompt.trim())
     }
 
     private fun sanitizeTranslation(
@@ -365,6 +403,26 @@ class AiTranslatorViewModel(
             )
         }
         return TranslatorPayload(candidates = candidates, explanation = explanation)
+    }
+
+    fun buildCandidateDisplayList(candidates: List<TranslatorCandidate>): List<TranslatorCandidateDisplay> {
+        return candidates.map { candidate ->
+            val polite = candidate.politeness.trim().takeIf { it.isNotEmpty() }
+            val situation = candidate.situation.trim().takeIf { it.isNotEmpty() }
+            TranslatorCandidateDisplay(
+                candidate = candidate,
+                politenessLabel = polite?.let { shortenLabel(it, 12) },
+                situationLabel = situation?.let { shortenLabel(it, 16) }
+            )
+        }
+    }
+
+    private fun shortenLabel(text: String, maxLength: Int): String {
+        val trimmed = text.trim()
+        if (trimmed.length <= maxLength) return trimmed
+        if (maxLength <= 1) return trimmed.first().toString()
+        val slice = trimmed.take(maxLength - 1).trimEnd()
+        return "$slice…"
     }
 
     private fun logTranslationUsage(

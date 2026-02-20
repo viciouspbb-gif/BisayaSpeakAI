@@ -8,6 +8,8 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
@@ -24,8 +27,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -33,6 +34,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -45,10 +49,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,20 +72,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.billing.PremiumStatusProvider
 import com.bisayaspeak.ai.data.model.TranslationDirection
 import com.bisayaspeak.ai.ui.viewmodel.AiTranslatorViewModel
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorCandidate
+import com.bisayaspeak.ai.ui.viewmodel.TranslatorCandidateDisplay
+import com.bisayaspeak.ai.ui.viewmodel.TranslatorEvent
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorExplanation
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorUiState
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorUsageStatus
 import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
+import com.bisayaspeak.ai.ads.AdManager
+import com.bisayaspeak.ai.util.findActivityOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,12 +108,26 @@ fun AiTranslatorScreen(
     val candidates by viewModel.candidates.collectAsState()
     val explanation by viewModel.explanation.collectAsState()
     val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
+
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+    val isDebugProBuild = BuildConfig.DEBUG && !BuildConfig.IS_LITE_BUILD
     val voiceService = remember { GeminiVoiceService(context) }
-    val canUseTranslate = isPremiumUser || (usageStatus?.canUse ?: true)
+
+    val limitReached = !isPremiumUser && (usageStatus?.canUse == false)
+    val limitKey = if (limitReached) {
+        listOfNotNull(usageStatus?.dayKey, usageStatus?.usedCount?.toString()).joinToString(":")
+    } else null
+    var showTranslatorUpsell by remember { mutableStateOf(false) }
+
+    LaunchedEffect(limitKey) {
+        if (limitKey == null) {
+            showTranslatorUpsell = false
+        }
+    }
 
     DisposableEffect(Unit) {
+        AdManager.initialize(context.applicationContext)
         onDispose {
             voiceService.stop()
         }
@@ -133,6 +159,39 @@ fun AiTranslatorScreen(
         hasMicPermission = granted
         if (granted) {
             launchSpeechRecognizer(direction, speechLauncher, context)
+        }
+    }
+
+    LaunchedEffect(isDebugProBuild) {
+        if (isDebugProBuild) {
+            return@LaunchedEffect
+        }
+        AdManager.loadInterstitial(context.applicationContext)
+        viewModel.events.collect { event ->
+            when (event) {
+                is TranslatorEvent.RequireAd -> {
+                    val activity = context.findActivityOrNull()
+                    if (activity == null) {
+                        viewModel.onAdResult(AdManager.InterstitialAttemptResult.NOT_READY)
+                        return@collect
+                    }
+                    AdManager.showInterstitialWithTimeout(
+                        activity = activity,
+                        timeoutMs = 3_000L,
+                        onAdClosed = {
+                            viewModel.onAdResult(AdManager.InterstitialAttemptResult.SHOWN)
+                        },
+                        onAttemptResult = { result ->
+                            if (result != null) {
+                                viewModel.onAdResult(result)
+                            }
+                        }
+                    )
+                }
+                is TranslatorEvent.ShowToast -> {
+                    Toast.makeText(context, event.messageResId, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -193,20 +252,33 @@ fun AiTranslatorScreen(
                 }
             )
 
-            if (!isPremiumUser) {
-                usageStatus?.let { FreeUsageCounter(it) }
-            }
-
             TranslateActionButton(
                 isTranslating = uiState is TranslatorUiState.Loading,
-                canUseFreeQuota = canUseTranslate,
-                isPremiumUser = isPremiumUser,
+                limitReached = limitReached,
                 onTranslate = { viewModel.translate(isPremiumUser) },
-                onUpgrade = onNavigateToUpgrade
+                onLimitReached = { showTranslatorUpsell = true }
             )
 
+            val rawCandidates = if (candidates.isNotEmpty()) {
+                candidates
+            } else {
+                listOf(
+                    TranslatorCandidate(
+                        bisaya = translatedText,
+                        japanese = "",
+                        english = "",
+                        politeness = "",
+                        situation = "",
+                        nuance = "",
+                        tip = ""
+                    )
+                )
+            }
+            val candidateDisplays = viewModel.buildCandidateDisplayList(rawCandidates)
+            val primaryCandidate = candidateDisplays.firstOrNull()
+
             TranslatorResultsSection(
-                candidates = candidates,
+                primaryCandidate = primaryCandidate,
                 explanation = explanation,
                 canSpeakBisaya = direction == TranslationDirection.JA_TO_CEB,
                 onCopy = { text ->
@@ -224,8 +296,7 @@ fun AiTranslatorScreen(
                         voiceService.stop()
                         voiceService.speak(text = text, cue = GeminiVoiceCue.TRANSLATOR_SWIFT)
                     }
-                },
-                fallbackText = translatedText
+                }
             )
 
             if (uiState is TranslatorUiState.Error) {
@@ -234,6 +305,53 @@ fun AiTranslatorScreen(
                 )
             }
         }
+    }
+
+    if (showTranslatorUpsell) {
+        AlertDialog(
+            onDismissRequest = { showTranslatorUpsell = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.translator_limit_upsell_title),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.translator_limit_upsell_subtitle_unlimited),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = stringResource(R.string.translator_limit_upsell_subtitle_nuance),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = stringResource(R.string.translator_limit_upsell_subtitle_no_ads),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showTranslatorUpsell = false
+                    onNavigateToUpgrade()
+                }) {
+                    Text(stringResource(R.string.translator_limit_upsell_cta))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTranslatorUpsell = false }) {
+                    Text(stringResource(R.string.translator_limit_upsell_later))
+                }
+            }
+        )
     }
 }
 
@@ -326,6 +444,25 @@ private fun InputCard(
     }
 }
 
+private fun buildUsageTips(raw: String): List<String> {
+    if (raw.isBlank()) return emptyList()
+    val normalized = raw.replace("\r", "\n")
+    val candidates = normalized.split('\n', '。', '.', '！', '!', '？', '?')
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+    return candidates.take(2)
+}
+
+private fun buildContextNotes(candidate: TranslatorCandidate?): List<String> {
+    if (candidate == null) return emptyList()
+    val notes = mutableListOf<String>()
+    candidate.politeness.takeIf { it.isNotBlank() }?.let { notes += it }
+    candidate.situation.takeIf { it.isNotBlank() }?.let { notes += it }
+    candidate.nuance.takeIf { it.isNotBlank() }?.let { notes += it }
+    candidate.tip.takeIf { it.isNotBlank() }?.let { notes += it }
+    return notes.take(4)
+}
+
 @Composable
 private fun ErrorBanner(message: String) {
     Surface(
@@ -377,10 +514,9 @@ private fun FreeUsageCounter(usageStatus: TranslatorUsageStatus) {
 @Composable
 private fun TranslateActionButton(
     isTranslating: Boolean,
-    canUseFreeQuota: Boolean,
-    isPremiumUser: Boolean,
+    limitReached: Boolean,
     onTranslate: () -> Unit,
-    onUpgrade: () -> Unit
+    onLimitReached: () -> Unit
 ) {
     val gradient = Brush.horizontalGradient(listOf(Color(0xFF00C896), Color(0xFF0EB5E0)))
     Box(
@@ -395,28 +531,9 @@ private fun TranslateActionButton(
             isTranslating -> {
                 CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp)
             }
-            !isPremiumUser && !canUseFreeQuota -> {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.translator_limit_reached_label),
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Button(
-                        onClick = onUpgrade,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.15f))
-                    ) {
-                        Text(
-                            text = stringResource(R.string.translator_upgrade_cta),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
             else -> {
                 Button(
-                    onClick = onTranslate,
+                    onClick = { if (limitReached) onLimitReached() else onTranslate() },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
                 ) {
                     Text(
@@ -433,79 +550,68 @@ private fun TranslateActionButton(
 
 @Composable
 private fun TranslatorResultsSection(
-    candidates: List<TranslatorCandidate>,
+    primaryCandidate: TranslatorCandidateDisplay?,
     explanation: TranslatorExplanation?,
     canSpeakBisaya: Boolean,
     onCopy: (String) -> Unit,
-    onSpeak: (String) -> Unit,
-    fallbackText: String
+    onSpeak: (String) -> Unit
 ) {
-    val items = if (candidates.isNotEmpty()) candidates else listOf(
-        TranslatorCandidate(
-            bisaya = fallbackText,
-            japanese = "",
-            english = "",
-            politeness = "",
-            situation = "",
-            nuance = "",
-            tip = ""
-        )
-    )
-
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        items.forEachIndexed { index, candidate ->
-            TranslatorCandidateCard(
-                candidate = candidate,
-                isPrimary = index == 0,
-                canSpeak = canSpeakBisaya,
-                onCopy = { onCopy(candidate.bisaya) },
-                onSpeak = { onSpeak(candidate.bisaya) }
-            )
-        }
+        TranslatorUnifiedResultCard(
+            candidateDisplay = primaryCandidate,
+            canSpeak = canSpeakBisaya,
+            onCopy = onCopy,
+            onSpeak = onSpeak
+        )
 
         explanation?.let {
-            TranslatorExplanationCard(it)
+            TranslatorTariMemoCard(explanation = it, candidate = primaryCandidate?.candidate)
         }
     }
 }
 
 @Composable
-private fun TranslatorCandidateCard(
-    candidate: TranslatorCandidate,
-    isPrimary: Boolean,
+private fun TranslatorUnifiedResultCard(
+    candidateDisplay: TranslatorCandidateDisplay?,
     canSpeak: Boolean,
-    onCopy: () -> Unit,
-    onSpeak: () -> Unit
+    onCopy: (String) -> Unit,
+    onSpeak: (String) -> Unit
 ) {
-    val cardColor = if (isPrimary) Color(0xFF10213A) else Color(0xFF0B172A)
+    val bisayaText = candidateDisplay?.candidate?.bisaya?.takeIf { it.isNotBlank() }
+    val japaneseText = candidateDisplay?.candidate?.japanese?.takeIf { it.isNotBlank() }
+    val placeholder = stringResource(R.string.translator_result_language_placeholder)
+    val bisayaDisplay = bisayaText ?: stringResource(R.string.translator_result_placeholder)
+    val japaneseDisplay = japaneseText ?: placeholder
+    val isCopyEnabled = bisayaText?.isNotBlank() == true
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = cardColor),
-        shape = RoundedCornerShape(24.dp)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF10213A)),
+        shape = RoundedCornerShape(28.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = candidate.bisaya.ifBlank { stringResource(R.string.translator_result_placeholder) },
+                    text = bisayaDisplay,
                     color = Color(0xFF4ADE80),
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = onCopy, enabled = candidate.bisaya.isNotBlank()) {
+                IconButton(onClick = { if (isCopyEnabled) onCopy(bisayaDisplay) }, enabled = isCopyEnabled) {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
                         contentDescription = stringResource(R.string.translator_copy_desc),
                         tint = Color.White
                     )
                 }
-                if (canSpeak && candidate.bisaya.isNotBlank()) {
-                    IconButton(onClick = onSpeak) {
+                if (canSpeak && isCopyEnabled) {
+                    IconButton(onClick = { onSpeak(bisayaDisplay) }) {
                         Icon(
                             imageVector = Icons.Default.VolumeUp,
                             contentDescription = stringResource(R.string.translator_tap_to_play_bisaya),
@@ -514,62 +620,86 @@ private fun TranslatorCandidateCard(
                     }
                 }
             }
-            if (candidate.japanese.isNotBlank()) {
-                Text(candidate.japanese, color = Color.White, fontWeight = FontWeight.SemiBold)
-            }
-            if (candidate.english.isNotBlank()) {
-                Text(candidate.english, color = Color(0xFF94A3B8), fontSize = 13.sp)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (candidate.politeness.isNotBlank()) {
-                    TranslatorInfoPill(stringResource(R.string.dictionary_politeness_label, candidate.politeness))
-                }
-                if (candidate.situation.isNotBlank()) {
-                    TranslatorInfoPill(stringResource(R.string.dictionary_situation_label, candidate.situation))
-                }
-            }
-            if (candidate.nuance.isNotBlank()) {
-                Text(candidate.nuance, color = Color(0xFFD7E0F5), fontSize = 13.sp)
-            }
-            if (candidate.tip.isNotBlank()) {
-                Text(candidate.tip, color = Color(0xFF93E6C8), fontSize = 12.sp)
-            }
+
+            Text(
+                text = japaneseDisplay,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
 
 @Composable
-private fun TranslatorInfoPill(text: String) {
-    Surface(shape = CircleShape, color = Color(0x3322C55E)) {
-        Text(
-            text = text,
-            color = Color(0xFF22C55E),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-            fontSize = 12.sp
-        )
-    }
-}
+private fun TranslatorTariMemoCard(explanation: TranslatorExplanation, candidate: TranslatorCandidate?) {
+    val summaryText = explanation.summary.takeIf { it.isNotBlank() }
+    val usageTips = remember(explanation.usage) { buildUsageTips(explanation.usage) }
+    val relatedList = explanation.relatedPhrases.filter { it.isNotBlank() }.take(3)
+    val contextNotes = remember(candidate) { buildContextNotes(candidate) }
 
-@Composable
-private fun TranslatorExplanationCard(explanation: TranslatorExplanation) {
+    if (summaryText == null && usageTips.isEmpty() && relatedList.isEmpty() && contextNotes.isEmpty()) {
+        return
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0A1424)),
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(26.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(stringResource(R.string.dictionary_explanation_title), color = Color(0xFFFB7185), fontWeight = FontWeight.Bold)
-            Text(explanation.summary, color = Color.White)
-            Text(stringResource(R.string.dictionary_usage_title), color = Color(0xFF38BDF8), fontSize = 13.sp)
-            Text(explanation.usage, color = Color(0xFFD7E0F5))
-            if (explanation.relatedPhrases.isNotEmpty()) {
-                Text(stringResource(R.string.dictionary_related_title), color = Color(0xFF22C55E), fontSize = 13.sp)
+            Text(
+                text = stringResource(R.string.translator_tari_memo_title),
+                color = Color(0xFFFB7185),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+
+            summaryText?.let {
+                Text(text = it, color = Color.White, lineHeight = 20.sp)
+            }
+
+            if (contextNotes.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.translator_tari_memo_context_title),
+                    color = Color(0xFFFCD34D),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    explanation.relatedPhrases.forEach { phrase ->
-                        Text("・$phrase", color = Color(0xFFA5B4FC))
+                    contextNotes.forEach { note ->
+                        Text(text = "• $note", color = Color(0xFFE2E8F0), fontSize = 13.sp)
+                    }
+                }
+            }
+
+            if (usageTips.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.translator_tari_memo_usage_title),
+                    color = Color(0xFF38BDF8),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    usageTips.forEach { tip ->
+                        Text(text = "• $tip", color = Color(0xFFD7E0F5), fontSize = 13.sp)
+                    }
+                }
+            }
+
+            if (relatedList.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.translator_tari_memo_related_title),
+                    color = Color(0xFF22C55E),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    relatedList.forEach { phrase ->
+                        Text(text = "• $phrase", color = Color(0xFFA5B4FC), fontSize = 13.sp)
                     }
                 }
             }

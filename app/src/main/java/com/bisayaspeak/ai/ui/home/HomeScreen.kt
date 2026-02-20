@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -331,6 +332,10 @@ fun LearningSection(
                 )
             }
         }
+    }
+}
+
+@Composable
 fun ProFeaturesSection(
     onClickFeature: (FeatureId) -> Unit,
     onRequireUpgrade: () -> Unit,
@@ -338,6 +343,9 @@ fun ProFeaturesSection(
     onComingSoon: () -> Unit,
     isLiteRestricted: Boolean
 ) {
+    val context = LocalContext.current
+    var showDojoInfo by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -376,10 +384,21 @@ fun ProFeaturesSection(
             color = Color(0xFFCD7F32),
             illustration = dojoIllustration,
 
-            onClick = {
-                onClickFeature(FeatureId.AI_CHAT)
-            },
+            onClick = { showDojoInfo = true },
             modifier = Modifier.weight(1f)
+        )
+    }
+
+    if (showDojoInfo) {
+        AlertDialog(
+            onDismissRequest = { showDojoInfo = false },
+            title = { Text(text = stringResource(R.string.home_feature_dojo_placeholder_title)) },
+            text = { Text(text = stringResource(R.string.home_feature_dojo_placeholder_message)) },
+            confirmButton = {
+                TextButton(onClick = { showDojoInfo = false }) {
+                    Text(text = stringResource(R.string.home_feature_dojo_placeholder_cta))
+                }
+            }
         )
     }
 }

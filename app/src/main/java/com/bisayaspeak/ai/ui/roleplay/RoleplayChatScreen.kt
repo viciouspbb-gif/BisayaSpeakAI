@@ -101,7 +101,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.data.UserGender
 import com.bisayaspeak.ai.data.model.MissionHistoryMessage
 import com.bisayaspeak.ai.ui.roleplay.RoleplayChatViewModel
@@ -111,9 +113,15 @@ import com.bisayaspeak.ai.voice.GeminiVoiceCue
 import com.bisayaspeak.ai.voice.GeminiVoiceService
 import com.bisayaspeak.ai.util.LocaleUtils
 import com.bisayaspeak.ai.ui.roleplay.CompletionDialog
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.math.max
+import kotlin.coroutines.resume
 
 data class ChatMessage(
     val id: String,
@@ -131,7 +139,8 @@ fun RoleplayChatScreen(
     onBackClick: () -> Unit,
     isProVersion: Boolean = false,
     onSaveAndExit: (List<MissionHistoryMessage>) -> Unit,
-    viewModel: RoleplayChatViewModel = viewModel()
+    viewModel: RoleplayChatViewModel = viewModel(),
+    onNavigateToUpgrade: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val speakingMessageId by viewModel.speakingMessageId.collectAsState()
@@ -141,6 +150,93 @@ fun RoleplayChatScreen(
     val voiceService = remember { GeminiVoiceService(context) }
 
     var initialLineSpoken by remember(scenarioId) { mutableStateOf(false) }
+    var showSanpoUpsell by remember { mutableStateOf(false) }
+    val coroutineScope = remember { CoroutineScope(Dispatchers.Main) }
+    val sanpoAdGateRemainingCount = uiState.sanpoAdGateRemainingCount
+    val sanpoAdGateActive = sanpoAdGateRemainingCount > 0 && !uiState.isProUser
+    LaunchedEffect(viewModel, uiState.isProUser) {
+        if (uiState.isProUser) {
+            showSanpoUpsell = false
+            return@LaunchedEffect
+        }
+        viewModel.events.collectLatest { event ->
+            when (event) {
+                RoleplayEvent.ShowSanpoUpsell -> showSanpoUpsell = true
+                is RoleplayEvent.RequestSanpoInterstitial -> {
+                    val activity = context.findActivity()
+                    if (activity == null) {
+                        if (event.phase == SanpoAdGatePhase.TURN_LIMIT_PENDING) {
+                            viewModel.onSanpoAdFailed(event.phase)
+                        } else {
+                            viewModel.completeSanpoAdGate()
+                        }
+                        return@collectLatest
+                    }
+                    coroutineScope.launch {
+                        viewModel.onSanpoAdStarted(event.phase)
+                        val result = awaitInterstitialWithTimeout(activity)
+                        when (result) {
+                            AdManager.InterstitialAttemptResult.SHOWN -> viewModel.onSanpoAdDismissed(event.phase)
+                            AdManager.InterstitialAttemptResult.NOT_READY,
+                            AdManager.InterstitialAttemptResult.FAILED,
+                            AdManager.InterstitialAttemptResult.SKIPPED_BY_POLICY -> viewModel.onSanpoAdFailed(event.phase)
+                        }
+                    }
+                }
+                is RoleplayEvent.RequireSanpoAd -> {
+                    val activity = context.findActivity()
+                    if (activity == null) {
+                        return@collectLatest
+                    }
+                    AdManager.showInterstitialWithTimeout(
+                        activity = activity,
+                        timeoutMs = AdManager.INTERSTITIAL_TIMEOUT_MS,
+                        onAdClosed = {
+                            // Handle ad closed for shared monetization
+                        },
+                        onAttemptResult = { result ->
+                            // Handle ad result for shared monetization
+                        }
+                    )
+                }
+                is RoleplayEvent.ShowSanpoUpsellDialog -> {
+                    showSanpoUpsell = true
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(sanpoAdGateRemainingCount, uiState.isProUser) {
+        if (uiState.isProUser || sanpoAdGateRemainingCount <= 0) {
+            return@LaunchedEffect
+        }
+        val activity = context.findActivity()
+        if (activity == null) {
+            viewModel.completeSanpoAdGate()
+            return@LaunchedEffect
+        }
+        try {
+            repeat(sanpoAdGateRemainingCount) { attemptIndex ->
+                try {
+                    awaitInterstitialWithTimeout(activity)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    Log.w(
+                        "RoleplayChatScreen",
+                        "Sanpo ad gate attempt ${'$'}{attemptIndex + 1} failed: ${'$'}{error.message}",
+                        error
+                    )
+                }
+            }
+        } finally {
+            val remaining = viewModel.uiState.value.sanpoAdGateRemainingCount
+            val shouldComplete = remaining > 0 && !viewModel.uiState.value.isProUser
+            if (shouldComplete) {
+                viewModel.completeSanpoAdGate()
+            }
+        }
+    }
     val completionSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val audioPermissionGrantedState = remember {
@@ -298,14 +394,16 @@ fun RoleplayChatScreen(
     }
 
     val pendingExitHistory = uiState.pendingExitHistory
-    val exitEnabled = pendingExitHistory != null
-    val handleExitClick: () -> Unit = {
+    val exitEnabled = pendingExitHistory != null && !sanpoAdGateActive
+    val handleExitClick: () -> Unit = gate@{
+        if (sanpoAdGateActive) return@gate
         pendingExitHistory?.let {
             onSaveAndExit(it)
             viewModel.consumePendingExitHistory()
         }
     }
-    val handleImmediateExit: () -> Unit = {
+    val handleImmediateExit: () -> Unit = gate@{
+        if (sanpoAdGateActive) return@gate
         val snapshot = viewModel.prepareImmediateExit()
         onSaveAndExit(snapshot)
     }
@@ -314,7 +412,7 @@ fun RoleplayChatScreen(
 
     val audioPermissionGranted = audioPermissionGrantedState.value
     val micButtonAction: () -> Unit = micAction@{
-        if (isSanpoInputLocked) {
+        if (isSanpoInputLocked || sanpoAdGateActive) {
             return@micAction
         }
         when {
@@ -388,7 +486,7 @@ fun RoleplayChatScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !sanpoAdGateActive) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = stringResource(R.string.roleplay_back_desc)
@@ -396,7 +494,7 @@ fun RoleplayChatScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = handleImmediateExit) {
+                    TextButton(onClick = handleImmediateExit, enabled = !sanpoAdGateActive) {
                         Text(
                             text = stringResource(R.string.roleplay_immediate_exit),
                             color = Color.White,
@@ -448,8 +546,6 @@ fun RoleplayChatScreen(
             val voicePanelBottomSpace = if (condensedLayout) 32.dp else 48.dp
             val bottomContentSpacer = voicePanelBottomSpace + if (condensedLayout) 96.dp else 140.dp
 
-            val isJapaneseLocale = locale.language.equals("ja", ignoreCase = true)
-
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = columnModifier,
@@ -474,7 +570,7 @@ fun RoleplayChatScreen(
                         isEndingSession = uiState.isEndingSession,
                         completionMessage = completionMessage,
                         roleplayMode = uiState.roleplayMode,
-                        onTopLinkClick = if (isSanpoMode) handleImmediateExit else null
+                        onTopLinkClick = if (isSanpoMode && !sanpoAdGateActive) handleImmediateExit else null
                     )
 
                     Spacer(modifier = Modifier.height(sectionSpacing))
@@ -533,8 +629,7 @@ fun RoleplayChatScreen(
                             optionSpacing = optionSpacing,
                             scale = scaleFactor,
                             cardHorizontalPadding = cardHorizontalPadding,
-                            cardVerticalPadding = cardVerticalPadding,
-                            isJapaneseLocale = isJapaneseLocale
+                            cardVerticalPadding = cardVerticalPadding
                         )
                     }
 
@@ -550,7 +645,7 @@ fun RoleplayChatScreen(
                             .padding(bottom = voicePanelBottomSpace)
                             .navigationBarsPadding(),
                         scale = voicePanelScale,
-                        onTopClick = handleImmediateExit
+                        onTopClick = { if (!sanpoAdGateActive) handleImmediateExit() }
                     )
                 } else if (!uiState.isEndingSession) {
                     VoiceInputPanel(
@@ -609,9 +704,60 @@ fun RoleplayChatScreen(
                         }
                     }
                 }
+                if (sanpoAdGateActive) {
+                    val overlayInteraction = remember { MutableInteractionSource() }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xCC050A18))
+                            .clickable(
+                                interactionSource = overlayInteraction,
+                                indication = null
+                            ) { },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(color = Color.White)
+                            Text(
+                                text = stringResource(R.string.roleplay_sanpo_ad_gate_message),
+                                color = Color.White,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
             }
         }
     }
+    if (showSanpoUpsell) {
+        AlertDialog(
+            onDismissRequest = { showSanpoUpsell = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.roleplay_sanpo_upsell_title),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSanpoUpsell = false
+                    onNavigateToUpgrade()
+                }) {
+                    Text(stringResource(R.string.roleplay_sanpo_upsell_upgrade))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSanpoUpsell = false }) {
+                    Text(stringResource(R.string.roleplay_sanpo_upsell_later))
+                }
+            }
+        )
+    }
+
     if (showPermissionDialog) {
         AlertDialog(
             onDismissRequest = { showPermissionDialog = false },
@@ -638,8 +784,29 @@ private tailrec fun Context.findActivity(): Activity {
     return when (this) {
         is Activity -> this
         is ContextWrapper -> baseContext.findActivity()
-        else -> throw IllegalStateException("Context is not an Activity")
+        else -> throw IllegalStateException("Unable to find Activity from context")
     }
+}
+
+private suspend fun awaitInterstitialWithTimeout(
+    activity: Activity,
+    timeoutMs: Long = AdManager.INTERSTITIAL_TIMEOUT_MS
+): AdManager.InterstitialAttemptResult = suspendCancellableCoroutine { continuation ->
+    if (!continuation.isActive) return@suspendCancellableCoroutine
+    var attemptResult = AdManager.InterstitialAttemptResult.NOT_READY
+    AdManager.showInterstitialWithTimeout(
+        activity = activity,
+        timeoutMs = timeoutMs,
+        onAdClosed = {
+            if (continuation.isActive) {
+                continuation.resume(attemptResult)
+            }
+        },
+        onAttemptResult = { result ->
+            attemptResult = result
+        }
+    )
+    continuation.invokeOnCancellation {}
 }
 
 private fun openAppSettings(context: Context) {
@@ -871,6 +1038,45 @@ private fun SanpoEndingUserPanel(
 }
 
 @Composable
+private fun SanpoDebugBanner(
+    isPremiumUser: Boolean,
+    info: SanpoDebugInfo
+) {
+    val remaining = if (isPremiumUser) "∞" else (info.limit - info.usedCount).coerceAtLeast(0).toString()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0x33FF585D), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFFF585D), RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    ) {
+        Text(
+            text = "SANPO DEBUG",
+            color = Color(0xFFFF4D4F),
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp
+        )
+        Text(
+            text = "残り：$remaining 回 / Premium：${isPremiumUser.toString().uppercase()}",
+            color = Color.White,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 16.sp
+        )
+        Text(
+            text = "day=${info.dayKey} / used=${info.usedCount}/${info.limit}",
+            color = Color.White.copy(alpha = 0.85f),
+            fontSize = 12.sp
+        )
+    }
+}
+
+private data class SanpoDebugInfo(
+    val dayKey: String,
+    val usedCount: Int,
+    val limit: Int
+)
+
+@Composable
 private fun ThemeMetaRow(
     flavor: RoleplayThemeFlavor,
     persona: String,
@@ -930,8 +1136,7 @@ private fun ResponsePanel(
     optionSpacing: Dp,
     scale: Float,
     cardHorizontalPadding: Dp,
-    cardVerticalPadding: Dp,
-    isJapaneseLocale: Boolean
+    cardVerticalPadding: Dp
 ) {
     Surface(
         modifier = modifier.clip(RoundedCornerShape(36.dp * scale.coerceAtLeast(0.85f))),
@@ -983,8 +1188,7 @@ private fun ResponsePanel(
                                 onPreview = onPreview,
                                 scale = scale,
                                 horizontalPadding = cardHorizontalPadding,
-                                verticalPadding = cardVerticalPadding,
-                                isJapaneseLocale = isJapaneseLocale
+                                verticalPadding = cardVerticalPadding
                             )
                         }
                     }
@@ -1004,20 +1208,27 @@ private fun RoleplayOptionCard(
     onPreview: (String) -> Unit,
     scale: Float = 1f,
     horizontalPadding: Dp = 20.dp,
-    verticalPadding: Dp = 18.dp,
-    isJapaneseLocale: Boolean
+    verticalPadding: Dp = 18.dp
 ) {
     var showTranslation by remember(option.id) { mutableStateOf(false) }
     var hasPeeked by remember(option.id) { mutableStateOf(false) }
     val (primaryOptionText, inlineTranslation) = remember(option.id, option.text) {
         splitInlineTranslation(option.text)
     }
-    val translationText = remember(option.id, option.hint, inlineTranslation, isJapaneseLocale) {
-        option.hint ?: inlineTranslation ?: if (isJapaneseLocale) "訳はまだありません" else "Translation unavailable"
+    val translationText = remember(option.id, option.hint, inlineTranslation) {
+        val sanitizedTranslation = option.hint?.trim().takeIf { !it.isNullOrBlank() }
+        val sanitizedInline = inlineTranslation?.trim().takeIf { !it.isNullOrBlank() }
+        sanitizedTranslation ?: sanitizedInline
     }
-    val translationAvailable = translationText.isNotBlank()
+    val fallbackTranslation = stringResource(R.string.roleplay_translation_unavailable)
+    val resolvedTranslationText = translationText ?: fallbackTranslation
+    val translationAvailable = translationText?.isNotBlank() == true
     val displayText = primaryOptionText.ifBlank { option.text }
     val interactionSource = remember(option.id) { MutableInteractionSource() }
+
+    val textToShow = remember(option.id, resolvedTranslationText, displayText, translationAvailable, showTranslation) {
+        if (showTranslation && translationAvailable) resolvedTranslationText else displayText
+    }
 
     LaunchedEffect(option.id, interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -1072,7 +1283,7 @@ private fun RoleplayOptionCard(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = if (showTranslation && translationAvailable) translationText else displayText,
+                text = textToShow,
                 color = Color(0xFFFFF176),
                 fontSize = 16.sp * scale,
                 fontWeight = FontWeight.SemiBold,

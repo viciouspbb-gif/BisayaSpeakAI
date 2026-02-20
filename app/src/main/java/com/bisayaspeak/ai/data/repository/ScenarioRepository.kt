@@ -74,7 +74,16 @@ class ScenarioRepository(private val context: Context) {
         return scenarios
     }
 
-    fun getScenarioById(id: String): MissionScenario? = loadScenarios().find { it.id == id }
+    fun getScenarioById(id: String): MissionScenario? {
+        // Special handling for sanpo_free_talk
+        if (id == "sanpo_free_talk") {
+            val locale = LocaleUtils.resolveAppLocale(context)
+            val lang = if (locale.language.equals("ja", true)) "ja" else "en"
+            return buildTariWalkScenario(lang)
+        }
+        
+        return loadScenarios().find { it.id == id }
+    }
 
     private fun buildScenarioPackageWithAssetsFallback(): List<MissionScenario> {
         val locale = LocaleUtils.resolveAppLocale(context)
@@ -232,7 +241,7 @@ class ScenarioRepository(private val context: Context) {
             "Maayong buntag! Hey, you’re here! What mischief are we getting into today?"
         }
         return MissionScenario(
-            id = "tari_infinite_mode",
+            id = "sanpo_free_talk",
             title = title,
             subtitle = subtitle,
             difficultyLabel = difficulty,

@@ -168,7 +168,7 @@ fun AppNavGraph(
                                 }
                             }
                             FeatureId.AI_TRANSLATOR -> {
-                                navController.navigate(AppRoute.Dictionary.route)
+                                navController.navigate(AppRoute.AiTranslator.route)
                             }
 
                             FeatureId.TRANSLATE -> navController.navigate(AppRoute.Translation.route)
@@ -302,7 +302,10 @@ fun AppNavGraph(
 
         composable(AppRoute.AiTranslator.route) {
             AiTranslatorScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onNavigateToUpgrade = {
+                    navController.navigate(AppRoute.Upgrade.route)
+                }
             )
         }
 
@@ -314,7 +317,8 @@ fun AppNavGraph(
                 isProVersion = isProVersion,
                 onSaveAndExit = { history ->
                     navController.popBackStack(AppRoute.Home.route, false)
-                }
+                },
+                onNavigateToUpgrade = { navController.navigate(AppRoute.Upgrade.route) }
             )
         }
 
@@ -329,8 +333,9 @@ fun AppNavGraph(
                 onBackClick = { navController.popBackStack() },
                 isProVersion = isProVersion,
                 onSaveAndExit = { history ->
-                    navController.popBackStack(AppRoute.Home.route, false)
-                }
+                    navController.popBackStack()
+                },
+                onNavigateToUpgrade = { navController.navigate(AppRoute.Upgrade.route) }
             )
         }
 

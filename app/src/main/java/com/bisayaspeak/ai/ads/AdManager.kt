@@ -1,7 +1,9 @@
 package com.bisayaspeak.ai.ads
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -35,6 +37,9 @@ object AdManager {
 
     private const val TAG = "LearnBisaya"
     private const val DEBUG_TAG = "LearnBisaya"
+    const val INTERSTITIAL_TIMEOUT_MS = 10_000L
+    private const val INTERSTITIAL_TIMEOUT_RECHECK_MS = 1_000L
+    private const val AD_ACTIVITY_CLASS_NAME = "com.google.android.gms.ads.AdActivity"
 
     private inline fun logDebug(message: () -> String) {
         if (BuildConfig.DEBUG) {
@@ -341,7 +346,7 @@ object AdManager {
 
     fun showInterstitialWithTimeout(
         activity: Activity,
-        timeoutMs: Long = 2_000L,
+        timeoutMs: Long = INTERSTITIAL_TIMEOUT_MS,
         onAdClosed: () -> Unit,
         onAttemptResult: ((InterstitialAttemptResult) -> Unit)? = null
     ) {
@@ -361,34 +366,47 @@ object AdManager {
             return
         }
 
+        Log.d("SanpoAdFlow", "SHOW_AD timeout=$timeoutMs isLoaded=${interstitialAd != null}")
         val finished = AtomicBoolean(false)
         val resultDelivered = AtomicBoolean(false)
         val handler = Handler(Looper.getMainLooper())
-        logFlow { "2秒タイマー作動開始" }
-
-        val timeoutRunnable = Runnable {
-            logFlow { "タイムアウト発生 -> navigateToResult 強制呼び出し" }
-            if (finished.compareAndSet(false, true)) {
-                Log.w(TAG, "Interstitial timeout reached ($timeoutMs ms)")
-                onAdClosed.safeInvoke()
-            }
-        }
-        handler.postDelayed(timeoutRunnable, timeoutMs)
-
-        fun finish(reason: String) {
-            if (finished.compareAndSet(false, true)) {
-                logFlow { "finish 呼び出し reason=$reason -> onAdClosed 実行" }
-                logDebug { "showInterstitialWithTimeout finished ($reason)" }
-                handler.removeCallbacks(timeoutRunnable)
-                onAdClosed.safeInvoke()
-            }
-        }
+        logFlow { "タイムアウト監視開始 (${timeoutMs}ms)" }
 
         fun deliverResult(result: InterstitialAttemptResult) {
             if (resultDelivered.compareAndSet(false, true)) {
                 onAttemptResult?.invoke(result)
             }
         }
+
+        fun finishFromCallback(reason: String) {
+            if (finished.compareAndSet(false, true)) {
+                logFlow { "finish 呼び出し reason=$reason -> onAdClosed 実行" }
+                logDebug { "showInterstitialWithTimeout finished ($reason)" }
+                handler.removeCallbacksAndMessages(null)
+                onAdClosed.safeInvoke()
+            }
+        }
+
+        val timeoutRunnable = object : Runnable {
+            override fun run() {
+                if (finished.get()) {
+                    handler.removeCallbacks(this)
+                    return
+                }
+                if (isAdActivityOnTop(activity)) {
+                    logFlow { "timeout監視: AdActivity前面 -> 待機継続" }
+                    handler.postDelayed(this, INTERSTITIAL_TIMEOUT_RECHECK_MS)
+                    return
+                }
+                logFlow { "timeout監視: AdActivity非前面 -> FAILED扱い" }
+                Log.w(TAG, "Interstitial timeout reached without AdActivity foreground ($timeoutMs ms)")
+                deliverResult(InterstitialAttemptResult.FAILED)
+                interstitialAd = null
+                loadInterstitial(activity.applicationContext)
+                finishFromCallback("timeout_no_adactivity")
+            }
+        }
+        handler.postDelayed(timeoutRunnable, timeoutMs)
 
         try {
             val ad = interstitialAd
@@ -397,7 +415,7 @@ object AdManager {
                 logFlow { "interstitialAd == null -> 即座にonAdClosed" }
                 loadInterstitial(activity.applicationContext)
                 deliverResult(InterstitialAttemptResult.NOT_READY)
-                finish("interstitial_not_ready_before_show")
+                finishFromCallback("interstitial_not_ready_before_show")
                 return
             }
 
@@ -411,7 +429,7 @@ object AdManager {
                             interstitialAd = null
                             loadInterstitial(activity.applicationContext)
                             deliverResult(InterstitialAttemptResult.SHOWN)
-                            finish("onAdDismissedFullScreenContent")
+                            finishFromCallback("onAdDismissedFullScreenContent")
                         }
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
@@ -419,7 +437,7 @@ object AdManager {
                             interstitialAd = null
                             loadInterstitial(activity.applicationContext)
                             deliverResult(InterstitialAttemptResult.FAILED)
-                            finish("onAdFailedToShowFullScreenContent")
+                            finishFromCallback("onAdFailedToShowFullScreenContent")
                         }
                     }
                     ad.show(activity)
@@ -428,13 +446,30 @@ object AdManager {
                     interstitialAd = null
                     loadInterstitial(activity.applicationContext)
                     deliverResult(InterstitialAttemptResult.FAILED)
-                    finish("exception_in_runOnUiThread")
+                    finishFromCallback("exception_in_runOnUiThread")
                 }
             }
         } catch (e: Exception) {
             Log.e(TAG, "showInterstitialWithTimeout failed: ${e.message}", e)
             deliverResult(InterstitialAttemptResult.FAILED)
-            finish("exception_before_show")
+            finishFromCallback("exception_before_show")
+        }
+    }
+
+    private fun isAdActivityOnTop(activity: Activity): Boolean {
+        val activityManager = activity.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+            ?: return false
+        return try {
+            val topActivityName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                activityManager.appTasks.firstOrNull()?.taskInfo?.topActivity?.className
+            } else {
+                @Suppress("DEPRECATION")
+                activityManager.getRunningTasks(1).firstOrNull()?.topActivity?.className
+            }
+            topActivityName == AD_ACTIVITY_CLASS_NAME
+        } catch (error: Exception) {
+            Log.w(TAG, "Failed to inspect top activity: ${error.message}", error)
+            false
         }
     }
 

@@ -65,10 +65,14 @@ class PracticeSessionManager(
         
         Log.d(TAG, "Showing interstitial ad on session complete")
         activity?.let { safeActivity ->
-            AdManager.showInterstitialWithTimeout(safeActivity, timeoutMs = 3_000L) {
-                AdManager.loadInterstitial(safeActivity.applicationContext)
-                onAdDismissed()
-            }
+            AdManager.showInterstitialWithTimeout(
+                activity = safeActivity,
+                timeoutMs = 3_000L,
+                onAdClosed = {
+                    AdManager.loadInterstitial(safeActivity.applicationContext)
+                    onAdDismissed()
+                }
+            )
         } ?: onAdDismissed()
     }
     
@@ -105,10 +109,14 @@ class PracticeSessionManager(
         
         Log.d(TAG, "Showing interstitial ad on session interruption")
         activity?.let { safeActivity ->
-            AdManager.showInterstitialWithTimeout(safeActivity, timeoutMs = 3_000L) {
-                AdManager.loadInterstitial(safeActivity.applicationContext)
-                onAdDismissed()
-            }
+            AdManager.showInterstitialWithTimeout(
+                activity = safeActivity,
+                timeoutMs = 3_000L,
+                onAdClosed = {
+                    AdManager.loadInterstitial(safeActivity.applicationContext)
+                    onAdDismissed()
+                }
+            )
         } ?: onAdDismissed()
     }
     
@@ -131,10 +139,14 @@ class PracticeSessionManager(
         
         Log.d(TAG, "Showing interstitial ad on retry success")
         activity?.let { safeActivity ->
-            AdManager.showInterstitialWithTimeout(safeActivity, timeoutMs = 3_000L) {
-                AdManager.loadInterstitial(safeActivity.applicationContext)
-                onAdDismissed()
-            }
+            AdManager.showInterstitialWithTimeout(
+                activity = safeActivity,
+                timeoutMs = 3_000L,
+                onAdClosed = {
+                    AdManager.loadInterstitial(safeActivity.applicationContext)
+                    onAdDismissed()
+                }
+            )
         } ?: onAdDismissed()
     }
     

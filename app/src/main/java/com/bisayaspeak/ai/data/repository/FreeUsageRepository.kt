@@ -20,6 +20,8 @@ class FreeUsageRepository(private val context: Context) {
         const val MAX_TALK_TURNS_PER_DAY = 3
         const val MAX_SANPO_PER_DAY = 1
 
+        private const val PERMANENT_DAY_KEY = "PERMANENT_QUOTA"
+
         private val DAY_KEY = stringPreferencesKey("day_key")
         private val TRANSLATE_COUNT_KEY = intPreferencesKey("translate_count")
         private val TALK_TURN_COUNT_KEY = intPreferencesKey("talk_turn_count")
@@ -35,15 +37,11 @@ class FreeUsageRepository(private val context: Context) {
         val installId: String
     )
 
-    suspend fun resetIfNewDay(nowDayKey: String) {
+    suspend fun resetIfNewDay(@Suppress("UNUSED_PARAMETER") nowDayKey: String) {
         context.freeUsageDataStore.edit { prefs ->
-            val currentDay = prefs[DAY_KEY]
             ensureInstallId(prefs)
-            if (currentDay != nowDayKey) {
-                prefs[DAY_KEY] = nowDayKey
-                prefs[TRANSLATE_COUNT_KEY] = 0
-                prefs[TALK_TURN_COUNT_KEY] = 0
-                prefs[SANPO_COUNT_KEY] = 0
+            if (prefs[DAY_KEY] != PERMANENT_DAY_KEY) {
+                prefs[DAY_KEY] = PERMANENT_DAY_KEY
             }
         }
     }
@@ -92,7 +90,7 @@ class FreeUsageRepository(private val context: Context) {
         val prefs = context.freeUsageDataStore.data.first()
         val installId = prefs[INSTALL_ID_KEY] ?: generateInstallId(prefs)
         return UsageState(
-            dayKey = prefs[DAY_KEY],
+            dayKey = prefs[DAY_KEY] ?: PERMANENT_DAY_KEY,
             translateCount = prefs[TRANSLATE_COUNT_KEY] ?: 0,
             talkTurnCount = prefs[TALK_TURN_COUNT_KEY] ?: 0,
             sanpoCount = prefs[SANPO_COUNT_KEY] ?: 0,

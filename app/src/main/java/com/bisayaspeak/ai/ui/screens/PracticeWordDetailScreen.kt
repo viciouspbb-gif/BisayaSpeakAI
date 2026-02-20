@@ -378,9 +378,13 @@ fun PracticeWordDetailScreen(
                                         if (!isPremium && silentTryAgainCount >= 3) {
                                             val activity = context as? Activity
                                             activity?.let { safeActivity ->
-                                                AdManager.showInterstitialWithTimeout(safeActivity, timeoutMs = 3_000L) {
-                                                    AdManager.loadInterstitial(context)
-                                                }
+                                                AdManager.showInterstitialWithTimeout(
+                                                    activity = safeActivity,
+                                                    timeoutMs = 3_000L,
+                                                    onAdClosed = {
+                                                        AdManager.loadInterstitial(context)
+                                                    }
+                                                )
                                             }
                                             silentTryAgainCount = 0
                                         }

@@ -18,6 +18,12 @@ class OpenAiChatRepository(
         private const val TEMPERATURE = 0.7
         private const val TAG = "OpenAiChatRepository"
         private const val MAX_RETRY_ATTEMPTS = 3
+        val TRANSLATION_FIELD_RULES = """
+- Ensure translations are written in natural Japanese with correct punctuation.
+- Never leave a translation blank; paraphrase if necessary while staying faithful to intent.
+- Avoid mixing English commentary unless the translationLocaleLabel is English.
+- Keep tone concise and learner-friendly.
+        """.trimIndent()
     }
 
     suspend fun generateListeningReply(
@@ -66,6 +72,19 @@ class OpenAiChatRepository(
         temperature: Double = TEMPERATURE
     ): String {
         return sendPrompt(userPrompt = prompt, temperature = temperature)
+    }
+
+    suspend fun generateJsonResponse(
+        userPrompt: String,
+        temperature: Double = TEMPERATURE,
+        systemPrompt: String
+    ): String {
+        val resolvedSystemPrompt = systemPrompt.takeIf { it.isNotBlank() }
+        return sendPrompt(
+            systemPrompt = resolvedSystemPrompt,
+            userPrompt = userPrompt,
+            temperature = temperature
+        )
     }
 
     suspend fun generateSanpoReply(

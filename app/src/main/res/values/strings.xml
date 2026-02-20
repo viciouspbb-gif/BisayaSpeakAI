@@ -161,7 +161,23 @@
     <string name="continue_after_reset">You can continue playing after reset!</string>
     <string name="watch_ad">Watch Ad</string>
     <string name="later">Later</string>
-    
+
+    <!-- Sanpo Upsell -->
+    <string name="roleplay_sanpo_upsell_title">Chat more with Tari</string>
+    <string name="roleplay_sanpo_upsell_upgrade">Upgrade</string>
+    <string name="roleplay_sanpo_upsell_later">Later</string>
+    <string name="roleplay_sanpo_ad_gate_message">Showing an ad… (please wait a few seconds)</string>
+
+    <!-- Translator Upsell -->
+    <string name="translator_limit_upsell_title">Get native-level explanations</string>
+    <string name="translator_limit_upsell_subtitle_unlimited">Unlimited translations</string>
+    <string name="translator_limit_upsell_subtitle_nuance">AI nuance breakdowns</string>
+    <string name="translator_limit_upsell_subtitle_no_ads">No ads</string>
+    <string name="translator_limit_upsell_cta">Upgrade</string>
+    <string name="translator_limit_upsell_later">Later</string>
+
+    <string name="roleplay_translation_unavailable">Translation unavailable</string>
+
     <!-- AI Conversation -->
     <string name="ai_conversation">AI Conversation</string>
     <string name="scenario_conversation">Scenario Conversation</string>
@@ -417,12 +433,17 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="translator_copy_desc">Copy translation</string>
     <string name="translator_copy_toast">Translation copied</string>
     <string name="translator_result_placeholder">Translated text will appear here</string>
+    <string name="translator_result_language_placeholder">No translation</string>
+    <string name="translator_tari_memo_title">Tari Memo</string>
+    <string name="translator_tari_memo_usage_title">Usage tips</string>
+    <string name="translator_tari_memo_related_title">Related phrases</string>
+    <string name="translator_tari_memo_context_title">Context &amp; tips</string>
     <string name="translator_tap_to_play_bisaya">Tap to play Bisaya audio</string>
     <string name="translator_voice_prompt">Speak naturally for nuance-rich translation</string>
     <string name="translator_usage_title">Free translation turns</string>
     <string name="translator_usage_remaining">Remaining today: %1$d / %2$d</string>
     <string name="translator_usage_reset">Resets daily (Japan time)</string>
-    <string name="translator_limit_reached_label">Free translations exhausted</string>
+    <string name="translator_limit_reached_label">Free trial ended</string>
     <string name="translator_upgrade_cta">See Premium plans</string>
     
     <!-- Conversation Mode Screen -->

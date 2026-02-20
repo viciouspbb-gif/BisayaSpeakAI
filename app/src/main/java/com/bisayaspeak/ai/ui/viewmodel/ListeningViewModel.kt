@@ -385,6 +385,10 @@ class ListeningViewModel(
         performAudioPlayback()
     }
 
+    fun unlockMicAfterAd() {
+        Log.d("ListeningViewModel", "unlockMicAfterAd() invoked")
+    }
+
     fun selectWord(word: String) {
         if (_showResult.value) return
 

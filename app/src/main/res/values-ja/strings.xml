@@ -57,6 +57,20 @@
     <string name="analyzing">AIがあなたの発音を分析中...</string>
     <string name="please_wait">お待ちください</string>
     
+    <!-- Translator Upsell -->
+    <string name="translator_limit_upsell_title">ネイティブ級の解説を入手</string>
+    <string name="translator_limit_upsell_subtitle_unlimited">翻訳し放題</string>
+    <string name="translator_limit_upsell_subtitle_nuance">AIがニュアンスまで解説</string>
+    <string name="translator_limit_upsell_subtitle_no_ads">広告なし</string>
+    <string name="translator_limit_upsell_cta">アップグレード</string>
+    <string name="translator_limit_upsell_later">あとで</string>
+
+    <!-- Sanpo Upsell -->
+    <string name="roleplay_sanpo_upsell_title">もっとタリと話そう</string>
+    <string name="roleplay_sanpo_upsell_upgrade">アップグレード</string>
+    <string name="roleplay_sanpo_upsell_later">あとで</string>
+    <string name="roleplay_sanpo_ad_gate_message">広告を表示しています…数秒お待ちください</string>
+
     <!-- AI Conversation -->
     <string name="enter_bisaya">ビサヤ語を入力</string>
     <string name="enter_japanese">日本語を入力</string>
@@ -323,11 +337,15 @@
     <string name="translator_copy_desc">訳文をコピー</string>
     <string name="translator_copy_toast">訳文をコピーしました</string>
     <string name="translator_result_placeholder">ここに翻訳結果が表示されます</string>
+    <string name="translator_result_language_placeholder">訳文なし</string>
+    <string name="translator_tari_memo_title">タリメモ</string>
+    <string name="translator_tari_memo_usage_title">使いこなしポイント</string>
+    <string name="translator_tari_memo_related_title">関連表現</string>
     <string name="translator_tap_to_play_bisaya">タップするとビサヤ語音声を再生</string>
     <string name="translator_usage_title">翻訳モード無料枠</string>
     <string name="translator_usage_remaining">今日の残り: %1$d / %2$d</string>
     <string name="translator_usage_reset">毎日0時（日本時間）にリセット</string>
-    <string name="translator_limit_reached_label">本日の無料翻訳は上限に達しました</string>
+    <string name="translator_limit_reached_label">無料体験は終了しました</string>
     <string name="translator_upgrade_cta">プレミアムプランを見る</string>
     <string name="translator_usage_limit_finished_toast">無料の翻訳枠は使い切りました。プレミアムプランをご検討ください。</string>
     <string name="translator_voice_prompt">自然な口語で話すと、ニュアンスごと翻訳されます</string>

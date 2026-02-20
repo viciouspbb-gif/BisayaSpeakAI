@@ -411,12 +411,16 @@ fun MockRolePlayScreen(
                                 // 会話終了時にインタースティシャル広告を表示し、閉じたら最初から
                                 val activity = context as? android.app.Activity
                                 if (activity != null) {
-                                    AdManager.showInterstitialWithTimeout(activity, timeoutMs = 3_000L) {
-                                        currentStepIndex = 0
-                                        chatMessages = emptyList()
-                                        isProcessing = false
-                                        AdManager.loadInterstitial(activity.applicationContext)
-                                    }
+                                    AdManager.showInterstitialWithTimeout(
+                                        activity = activity,
+                                        timeoutMs = 3_000L,
+                                        onAdClosed = {
+                                            currentStepIndex = 0
+                                            chatMessages = emptyList()
+                                            isProcessing = false
+                                            AdManager.loadInterstitial(activity.applicationContext)
+                                        }
+                                    )
                                 } else {
                                     currentStepIndex = 0
                                     chatMessages = emptyList()
@@ -427,10 +431,14 @@ fun MockRolePlayScreen(
                                 // 会話終了時にインタースティシャル広告を表示し、閉じたらUpgrade提案
                                 val activity = context as? android.app.Activity
                                 if (activity != null && !isPremium) {
-                                    AdManager.showInterstitialWithTimeout(activity, timeoutMs = 3_000L) {
-                                        showUpgradeDialog = true
-                                        AdManager.loadInterstitial(activity.applicationContext)
-                                    }
+                                    AdManager.showInterstitialWithTimeout(
+                                        activity = activity,
+                                        timeoutMs = 3_000L,
+                                        onAdClosed = {
+                                            showUpgradeDialog = true
+                                            AdManager.loadInterstitial(activity.applicationContext)
+                                        }
+                                    )
                                 } else {
                                     onNavigateBack()
                                 }

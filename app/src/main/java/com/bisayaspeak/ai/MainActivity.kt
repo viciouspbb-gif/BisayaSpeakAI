@@ -3,7 +3,14 @@ package com.bisayaspeak.ai
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -12,12 +19,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.billing.BillingManager
 import com.bisayaspeak.ai.billing.PremiumStatusProvider
+import com.bisayaspeak.ai.AppStartupState
 import com.bisayaspeak.ai.data.PurchaseStore
 import com.bisayaspeak.ai.ui.navigation.AppNavGraph
 import com.bisayaspeak.ai.ui.theme.BisayaSpeakAITheme
@@ -33,8 +44,8 @@ import com.google.android.ump.FormError
 import com.google.android.ump.UserMessagingPlatform
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     
@@ -51,22 +62,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (FirebaseApp.getApps(this).isEmpty()) {
-            FirebaseApp.initializeApp(this)
-        }
-
-        requestUserConsentAndInitializeAds()
-        
-        // Billing初期化と購入リストア
         billingManager = BillingManager(this)
         purchaseStore = PurchaseStore(this)
-        
-        billingManager.initialize {
-            // 初期化完了後、購入状態をリストア
-            lifecycleScope.launch {
-                billingManager.checkPremiumStatus()
-                syncPurchaseStatus()
+
+        setContentView(R.layout.activity_main)
+        val app = application as BisayaSpeakApp
+        setupComposeContent(app)
+
+        requestUserConsentAndInitializeAds()
+
+        lifecycleScope.launch {
+            billingManager.initialize {
+                lifecycleScope.launch {
+                    billingManager.checkPremiumStatus()
+                    syncPurchaseStatus()
+                }
             }
         }
         lifecycleScope.launch {
@@ -82,7 +92,7 @@ class MainActivity : ComponentActivity() {
                 )
             }.collect { }
         }
-        
+
         if (isInAppUpdateSupported) {
             updateManager = UpdateManager(this).also { manager ->
                 setupUpdateCallbacks(manager)
@@ -91,22 +101,10 @@ class MainActivity : ComponentActivity() {
         } else {
             android.util.Log.d("MainActivity", "Skip in-app update: not installed from Play Store")
         }
-
-        val app = application as BisayaSpeakApp
-        val listeningViewModelFactory = ListeningViewModelFactory(
-            application = app,
-            repository = app.questionRepository,
-            userProgressRepository = app.userProgressRepository,
-            dbSeedStateRepository = app.dbSeedStateRepository
-        )
-
-        setContentView(R.layout.activity_main)
-        setupComposeContent(app, listeningViewModelFactory)
     }
 
     private fun setupComposeContent(
-        app: BisayaSpeakApp,
-        listeningViewModelFactory: ListeningViewModelFactory
+        app: BisayaSpeakApp
     ) {
         val composeView = findViewById<ComposeView>(R.id.main_compose_view)
         if (composeView == null) {
@@ -117,47 +115,93 @@ class MainActivity : ComponentActivity() {
 
         val content: @Composable () -> Unit = {
             BisayaSpeakAITheme {
-
-                val navController = rememberNavController()
-                val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
-                val observedPro by app.proVersionState.collectAsState()
-
-                val debugAuth = remember { FirebaseAuth.getInstance() }
-                val currentUser = remember { mutableStateOf(debugAuth.currentUser) }
-
-                DisposableEffect(Unit) {
-                    val listener = FirebaseAuth.AuthStateListener { auth ->
-                        currentUser.value = auth.currentUser
-                    }
-                    debugAuth.addAuthStateListener(listener)
-                    onDispose { debugAuth.removeAuthStateListener(listener) }
-                }
-
-                val isDebugWhitelistedUser = BuildConfig.DEBUG &&
-                    currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
-                val isProDebugBuild = BuildConfig.DEBUG && BuildConfig.FLAVOR.equals("pro", ignoreCase = true)
-                val effectivePro = isPremiumUser || isDebugWhitelistedUser || isProDebugBuild
-
-                androidx.compose.runtime.LaunchedEffect(effectivePro) {
-                    app.isProVersion = effectivePro
-                }
-
-                AppNavGraph(
-                    navController = navController,
-                    isProVersion = observedPro,
-                    showPremiumTestToggle = false,
-                    onTogglePremiumTest = {},
-                    listeningViewModelFactory = listeningViewModelFactory,
-                    onRestorePurchase = {
-                        billingManager.restorePurchases {
-                            lifecycleScope.launch { syncPurchaseStatus() }
+                val startupState by app.startupState.collectAsState()
+                when (val state = startupState) {
+                    AppStartupState.Loading -> StartupLoadingScreen()
+                    is AppStartupState.Failed -> StartupErrorScreen(
+                        throwable = state.throwable,
+                        onRetry = { app.retryInitialization() }
+                    )
+                    AppStartupState.Ready -> {
+                        val listeningViewModelFactory = remember {
+                            ListeningViewModelFactory(
+                                application = app,
+                                repository = app.questionRepository,
+                                userProgressRepository = app.userProgressRepository,
+                                dbSeedStateRepository = app.dbSeedStateRepository
+                            )
                         }
+
+                        val navController = rememberNavController()
+                        val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
+                        val observedPro by app.proVersionState.collectAsState()
+
+                        val debugAuth = remember { FirebaseAuth.getInstance() }
+                        val currentUser = remember { mutableStateOf(debugAuth.currentUser) }
+
+                        DisposableEffect(Unit) {
+                            val listener = FirebaseAuth.AuthStateListener { auth ->
+                                currentUser.value = auth.currentUser
+                            }
+                            debugAuth.addAuthStateListener(listener)
+                            onDispose { debugAuth.removeAuthStateListener(listener) }
+                        }
+
+                        val isDebugWhitelistedUser = BuildConfig.DEBUG &&
+                            currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
+                        val isProDebugBuild = BuildConfig.DEBUG && BuildConfig.FLAVOR.equals("pro", ignoreCase = true)
+                        val isProReleaseBuild = !BuildConfig.DEBUG && BuildConfig.FLAVOR.equals("pro", ignoreCase = true)
+                        val effectivePro = isPremiumUser || isDebugWhitelistedUser || isProDebugBuild || isProReleaseBuild
+
+                        androidx.compose.runtime.LaunchedEffect(effectivePro) {
+                            app.isProVersion = effectivePro
+                        }
+
+                        AppNavGraph(
+                            navController = navController,
+                            isProVersion = observedPro,
+                            showPremiumTestToggle = false,
+                            onTogglePremiumTest = {},
+                            listeningViewModelFactory = listeningViewModelFactory,
+                            onRestorePurchase = {
+                                billingManager.restorePurchases {
+                                    lifecycleScope.launch { syncPurchaseStatus() }
+                                }
+                            }
+                        )
                     }
-                )
+                }
             }
         }
 
         applyComposeContentWithRetry(composeView, content)
+    }
+
+    @Composable
+    private fun StartupLoadingScreen() {
+        Box(modifier = androidx.compose.ui.Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    }
+
+    @Composable
+    private fun StartupErrorScreen(throwable: Throwable, onRetry: () -> Unit) {
+        Column(
+            modifier = androidx.compose.ui.Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "初期化に失敗しました", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = throwable.localizedMessage ?: throwable.javaClass.simpleName,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = androidx.compose.ui.Modifier.padding(top = 12.dp)
+            )
+            Button(onClick = onRetry, modifier = androidx.compose.ui.Modifier.padding(top = 24.dp)) {
+                Text("再試行")
+            }
+        }
     }
 
     private fun applyComposeContentWithRetry(

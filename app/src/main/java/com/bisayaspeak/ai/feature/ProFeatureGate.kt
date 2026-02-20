@@ -8,7 +8,7 @@ import com.bisayaspeak.ai.BuildConfig
  */
 object ProFeatureGate {
     fun isProFeatureEnabled(baseCondition: Boolean): Boolean {
-        if (BuildConfig.DEBUG) return true
+        if (BuildConfig.DEBUG && !BuildConfig.IS_LITE_BUILD) return true
         return baseCondition
     }
 }
