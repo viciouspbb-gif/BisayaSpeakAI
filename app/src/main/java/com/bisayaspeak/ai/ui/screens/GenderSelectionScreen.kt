@@ -63,7 +63,7 @@ fun GenderSelectionScreen(
         }
     }
     val targetRoute = remember {
-        AppRoute.RolePlayChat.route.replace("{scenarioId}", "tari_infinite_mode")
+        AppRoute.RolePlayChat.route.replace("{scenarioId}", "sanpo_free_talk")
     }
 
     LaunchedEffect(Unit) {

@@ -155,6 +155,12 @@ class AiTranslatorViewModel(
             return
         }
 
+        // Prevent concurrent translation requests
+        if (_uiState.value is TranslatorUiState.Loading) {
+            Log.d(LOG_TAG, "translate skipped - already loading")
+            return
+        }
+
         _direction.value = determineDirectionFromInput(text)
         Log.d(LOG_TAG, "translate start premium=$isPremiumUser direction=${_direction.value}")
 

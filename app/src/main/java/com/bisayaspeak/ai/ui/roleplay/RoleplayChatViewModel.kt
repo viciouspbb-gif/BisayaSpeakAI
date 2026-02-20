@@ -643,6 +643,7 @@ class RoleplayChatViewModel(
 
         if (!shouldTriggerTurnLimitAd) return
 
+        // At 3 turns, show ad and end session
         viewModelScope.launch {
             _uiState.update {
                 it.copy(sanpoAdGatePhase = SanpoAdGatePhase.TURN_LIMIT_PENDING)
@@ -650,6 +651,10 @@ class RoleplayChatViewModel(
             Log.d(LOG_TAG, "Sanpo turn limit ad requested phase=${SanpoAdGatePhase.TURN_LIMIT_PENDING}")
             Log.d("SanpoAdFlow", "REQUEST_AD gate=${SanpoAdGatePhase.TURN_LIMIT_PENDING} session=$sanpoSessionId turn=${_uiState.value.sanpoTurnCount}")
             _events.send(RoleplayEvent.RequestSanpoInterstitial(SanpoAdGatePhase.TURN_LIMIT_PENDING))
+            
+            // Force session end after 3 turns
+            delay(1000) // Give ad time to show
+            handleSessionEnd(isMissionComplete = true)
         }
     }
 
@@ -758,6 +763,13 @@ class RoleplayChatViewModel(
             Log.i("SANPO_MONET", "SKIP placement=$placement reason=pro_user")
             return
         }
+        
+        // Only proceed with monetization logic for Lite users
+        if (!BuildConfig.IS_LITE_BUILD) {
+            Log.i("SANPO_MONET", "SKIP placement=$placement reason=not_lite_build")
+            return
+        }
+        
         when (placement) {
             SanpoMonetPlacement.ENTER -> {
                 Log.i("SANPO_MONET", "ENTER state=$sanpoCycleState turn=$sanpoTurnCount will_show_upsell=${sanpoCycleState == "READY_FOR_UPSELL"}")
@@ -795,16 +807,23 @@ class RoleplayChatViewModel(
             sanpoMonetCount++
             userPreferencesRepository.setSanpoMonetCount(sanpoMonetCount)
             val countAfter = sanpoMonetCount
-            val shouldShowAd = countAfter in listOf(2, 4)
-            val shouldShowUpsell = countAfter >= 5
+            
+            // Sanpo-specific logic
+            val isFirstEntry = countAfter == 1
+            val isAfterFirstSession = countAfter >= 2 // 1回目のセッション終了後
+            val shouldShowUpsell = isAfterFirstSession // 1回目以降はすべてアップセル
+            val shouldShowAd = isFirstEntry // 初回のみ広告
+            val shouldBlockSanpo = isAfterFirstSession // 1回目以降はSanpoを動かさない
 
             Log.i(
                 "SANPO_MONET",
                 "CHECK placement=$placement count_before=$countBefore count_after=$countAfter decision=${when {
+                    shouldBlockSanpo -> "BLOCK_SANPO_SHOW_UPSELL"
                     shouldShowUpsell -> "SHOW_UPSELL"
                     shouldShowAd -> "SHOW_AD"
                     else -> "NONE"
                 }} skip_reason=${when {
+                    shouldBlockSanpo -> null
                     shouldShowUpsell -> null
                     shouldShowAd -> null
                     else -> "not_eligible"
@@ -812,6 +831,11 @@ class RoleplayChatViewModel(
             )
 
             when {
+                shouldBlockSanpo -> {
+                    Log.i("SANPO_MONET", "BLOCK_SANPO_SHOW_UPSELL placement=$placement")
+                    _events.send(RoleplayEvent.ShowSanpoUpsellDialog(placement))
+                    resetSanpoMonetCycle()
+                }
                 shouldShowUpsell -> {
                     Log.i("SANPO_MONET", "SHOW_UPSELL placement=$placement")
                     _events.send(RoleplayEvent.ShowSanpoUpsellDialog(placement))
@@ -982,6 +1006,12 @@ class RoleplayChatViewModel(
 
         // Sanpo monetization trigger
         onSanpoMonetEvent(SanpoMonetPlacement.ENTER)
+
+        // Check if this is after first session completion - if so, only show upsell
+        if (sanpoCycleState == "READY_FOR_UPSELL" || sanpoMonetCount >= 2) {
+            Log.i("SANPO_MONET", "POST_FIRST_SESSION_ENTRY - showing upsell only")
+            return
+        }
 
         if (isProUser || !BuildConfig.IS_LITE_BUILD) {
             startSanpoSession(isProUser)
@@ -2298,9 +2328,15 @@ class RoleplayChatViewModel(
     }
 
     private fun buildSanpoSystemPrompt(): String {
-        val base = sanpoPromptProvider.baseSystemPrompt(resolveUserDisplayName())
+        // Force Bisaya language for Sanpo mode
+        val basePrompt = "You are Tari, a friendly tarsier companion. Always respond in Bisaya (Cebuano) language first, with Japanese translation in parentheses if user is Japanese. Be casual, intimate, and emotionally expressive. Use natural conversational Bisaya with occasional English loanwords. Show personality through your responses."
         val nicknameInstruction = buildSanpoNicknameInstruction()
-        return if (nicknameInstruction.isNullOrBlank()) base else "$base\n\n$nicknameInstruction"
+        val fullPrompt = if (nicknameInstruction.isNullOrBlank()) basePrompt else "$basePrompt\n\n$nicknameInstruction"
+        
+        // Log the current system prompt for debugging
+        Log.d("SanpoPrompt", "Current Sanpo system prompt: $fullPrompt")
+        
+        return fullPrompt
     }
 
     private fun buildSanpoNicknameInstruction(): String? {

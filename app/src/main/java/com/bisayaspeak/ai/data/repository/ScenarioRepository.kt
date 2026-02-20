@@ -235,11 +235,7 @@ class ScenarioRepository(private val context: Context) {
         }
         val tone = if (isJa) "タメ口・親密・感情豊か" else "Casual, intimate, emotionally rich"
         val systemPrompt = if (isJa) TARl_WALK_PROMPT_JA else TARl_WALK_PROMPT_EN
-        val opening = if (isJa) {
-            "Maayong buntag! おっ、来たな！今日は何して遊ぶ？"
-        } else {
-            "Maayong buntag! Hey, you’re here! What mischief are we getting into today?"
-        }
+        val opening = "" // Let AI generate natural opening
         return MissionScenario(
             id = "sanpo_free_talk",
             title = title,

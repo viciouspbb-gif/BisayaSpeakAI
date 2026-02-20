@@ -161,12 +161,10 @@ fun AppNavGraph(
                     onClickFeature = { feature ->
                         when (feature) {
                             FeatureId.AI_CHAT -> {
-                                if (isProVersion) {
-                                    navController.navigate(AppRoute.TariDojo.route)
-                                } else {
-                                    navController.navigate(AppRoute.Upgrade.route)
-                                }
+                                // Dojo is still under preparation for all users
+                                Toast.makeText(context, "道場は準備中です。もう少々お待ちください！", Toast.LENGTH_LONG).show()
                             }
+
                             FeatureId.AI_TRANSLATOR -> {
                                 navController.navigate(AppRoute.AiTranslator.route)
                             }
@@ -180,7 +178,12 @@ fun AppNavGraph(
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
                             FeatureId.ROLE_PLAY -> {
-                                navController.navigate(AppRoute.RolePlayList.route)
+                                // Allow Pro users to access Sanpo, show toast for Lite users
+                                if (isProVersion) {
+                                    navController.navigate(AppRoute.RolePlayList.route)
+                                } else {
+                                    Toast.makeText(context, "タリ散歩はPro版限定です。まずはAI翻訳機を体験してみましょう！", Toast.LENGTH_LONG).show()
+                                }
                             }
 
                             else -> { /* Legacy/unused features */ }
@@ -310,7 +313,7 @@ fun AppNavGraph(
         }
 
         composable(AppRoute.RolePlayList.route) {
-            val scenarioId = "tari_infinite_mode"
+            val scenarioId = "sanpo_free_talk"
             RoleplayChatScreen(
                 scenarioId = scenarioId,
                 onBackClick = { navController.popBackStack() },
