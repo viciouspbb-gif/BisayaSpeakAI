@@ -390,7 +390,8 @@ fun AppNavGraph(
                     navController.navigate(
                         AppRoute.Listening.route.replace("{level}", level.toString())
                     )
-                }
+                },
+                isPro = isProVersion
             )
         }
 
