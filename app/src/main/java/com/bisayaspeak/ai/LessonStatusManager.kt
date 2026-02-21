@@ -18,6 +18,11 @@ object LessonStatusManager {
     fun getLessonStatus(context: Context, level: Int, isPro: Boolean): Status {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
+        // Pro users get all content unlocked
+        if (isPro) {
+            return if (isCleared(context, level)) Status.CLEARED else Status.OPEN
+        }
+
         if (level == 1) {
             return if (isCleared(context, 1)) Status.CLEARED else Status.OPEN
         }
@@ -30,7 +35,8 @@ object LessonStatusManager {
             return Status.CLEARED
         }
 
-        if (level >= 11 && !isPro) {
+        // Free users need ads for level 11+
+        if (level >= 11) {
             val isUnlockedByAd = prefs.getBoolean(KEY_AD_UNLOCKED_PREFIX + level, false)
             if (!isUnlockedByAd) {
                 return Status.NEED_AD

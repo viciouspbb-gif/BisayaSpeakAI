@@ -380,6 +380,8 @@ class ListeningViewModel(
             _voiceHintRemaining.value = (_voiceHintRemaining.value - 1).coerceAtLeast(0)
             saveHintCount() // Save to SharedPreferences after consumption
         } else {
+            // Pro users get unlimited hints - no consumption
+            Log.d("ListeningViewModel", "Pro user - unlimited hints available")
             _showHintRecoveryDialog.value = false
         }
         performAudioPlayback()
