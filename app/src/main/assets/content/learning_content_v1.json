@@ -1,0 +1,302 @@
+[
+  {
+    "id": "b1",
+    "level": "beginner",
+    "category": "greetings",
+    "ceb": "Maayong buntag",
+    "translations": {
+      "en": { "meaning": "Good morning" },
+      "ja": { "meaning": "おはようございます" }
+    }
+  },
+  {
+    "id": "b2",
+    "level": "beginner",
+    "category": "greetings",
+    "ceb": "Maayong hapon",
+    "translations": {
+      "en": { "meaning": "Good afternoon" },
+      "ja": { "meaning": "こんにちは" }
+    }
+  },
+  {
+    "id": "b3",
+    "level": "beginner",
+    "category": "greetings",
+    "ceb": "Maayong gabii",
+    "translations": {
+      "en": { "meaning": "Good evening" },
+      "ja": { "meaning": "こんばんは" }
+    }
+  },
+  {
+    "id": "b4",
+    "level": "beginner",
+    "category": "greetings",
+    "ceb": "Kumusta",
+    "translations": {
+      "en": { "meaning": "How are you" },
+      "ja": { "meaning": "元気ですか" }
+    }
+  },
+  {
+    "id": "b5",
+    "level": "beginner",
+    "category": "greetings",
+    "ceb": "Maayo",
+    "translations": {
+      "en": { "meaning": "Good" },
+      "ja": { "meaning": "良い" }
+    }
+  },
+  {
+    "id": "b6",
+    "level": "beginner",
+    "category": "greetings",
+    "ceb": "Adios",
+    "translations": {
+      "en": { "meaning": "Goodbye" },
+      "ja": { "meaning": "さようなら" }
+    }
+  },
+  {
+    "id": "b7",
+    "level": "beginner",
+    "category": "greetings",
+    "ceb": "Babay",
+    "translations": {
+      "en": { "meaning": "Bye" },
+      "ja": { "meaning": "バイバイ" }
+    }
+  },
+  {
+    "id": "b8",
+    "level": "beginner",
+    "category": "basic",
+    "ceb": "Salamat",
+    "translations": {
+      "en": { "meaning": "Thank you" },
+      "ja": { "meaning": "ありがとう" }
+    }
+  },
+  {
+    "id": "b9",
+    "level": "beginner",
+    "category": "basic",
+    "ceb": "Palihug",
+    "translations": {
+      "en": { "meaning": "Please" },
+      "ja": { "meaning": "お願いします" }
+    }
+  },
+  {
+    "id": "b10",
+    "level": "beginner",
+    "category": "basic",
+    "ceb": "Oo",
+    "translations": {
+      "en": { "meaning": "Yes" },
+      "ja": { "meaning": "はい" }
+    }
+  },
+  {
+    "id": "b11",
+    "level": "beginner",
+    "category": "basic",
+    "ceb": "Dili",
+    "translations": {
+      "en": { "meaning": "No" },
+      "ja": { "meaning": "いいえ" }
+    }
+  },
+  {
+    "id": "b12",
+    "level": "beginner",
+    "category": "basic",
+    "ceb": "Pasensya",
+    "translations": {
+      "en": { "meaning": "Sorry" },
+      "ja": { "meaning": "すみません" }
+    }
+  },
+  {
+    "id": "b13",
+    "level": "beginner",
+    "category": "basic",
+    "ceb": "Walay sapayan",
+    "translations": {
+      "en": { "meaning": "You're welcome" },
+      "ja": { "meaning": "どういたしまして" }
+    }
+  },
+  {
+    "id": "b14",
+    "level": "beginner",
+    "category": "introduction",
+    "ceb": "Pangalan",
+    "translations": {
+      "en": { "meaning": "Name" },
+      "ja": { "meaning": "名前" }
+    }
+  },
+  {
+    "id": "b15",
+    "level": "beginner",
+    "category": "introduction",
+    "ceb": "Ako si",
+    "translations": {
+      "en": { "meaning": "I am" },
+      "ja": { "meaning": "私は〜です" }
+    }
+  },
+  {
+    "id": "b16",
+    "level": "beginner",
+    "category": "introduction",
+    "ceb": "Unsa imong pangalan",
+    "translations": {
+      "en": { "meaning": "What is your name" },
+      "ja": { "meaning": "あなたの名前は" }
+    }
+  },
+  {
+    "id": "b17",
+    "level": "beginner",
+    "category": "introduction",
+    "ceb": "Nalipay ko nga makaila nimo",
+    "translations": {
+      "en": { "meaning": "Nice to meet you" },
+      "ja": { "meaning": "お会いできて嬉しいです" }
+    }
+  },
+  {
+    "id": "b18",
+    "level": "beginner",
+    "category": "numbers",
+    "ceb": "Usa",
+    "translations": {
+      "en": { "meaning": "One" },
+      "ja": { "meaning": "1" }
+    }
+  },
+  {
+    "id": "b19",
+    "level": "beginner",
+    "category": "numbers",
+    "ceb": "Duha",
+    "translations": {
+      "en": { "meaning": "Two" },
+      "ja": { "meaning": "2" }
+    }
+  },
+  {
+    "id": "b20",
+    "level": "beginner",
+    "category": "numbers",
+    "ceb": "Tulo",
+    "translations": {
+      "en": { "meaning": "Three" },
+      "ja": { "meaning": "3" }
+    }
+  },
+  {
+    "id": "b21",
+    "level": "beginner",
+    "category": "numbers",
+    "ceb": "Upat",
+    "translations": {
+      "en": { "meaning": "Four" },
+      "ja": { "meaning": "4" }
+    }
+  },
+  {
+    "id": "b22",
+    "level": "beginner",
+    "category": "numbers",
+    "ceb": "Lima",
+    "translations": {
+      "en": { "meaning": "Five" },
+      "ja": { "meaning": "5" }
+    }
+  },
+  {
+    "id": "b23",
+    "level": "beginner",
+    "category": "family",
+    "ceb": "Pamilya",
+    "translations": {
+      "en": { "meaning": "Family" },
+      "ja": { "meaning": "家族" }
+    }
+  },
+  {
+    "id": "b24",
+    "level": "beginner",
+    "category": "family",
+    "ceb": "Mama",
+    "translations": {
+      "en": { "meaning": "Mother" },
+      "ja": { "meaning": "お母さん" }
+    }
+  },
+  {
+    "id": "b25",
+    "level": "beginner",
+    "category": "family",
+    "ceb": "Papa",
+    "translations": {
+      "en": { "meaning": "Father" },
+      "ja": { "meaning": "お父さん" }
+    }
+  },
+  {
+    "id": "b26",
+    "level": "beginner",
+    "category": "family",
+    "ceb": "Igsoon",
+    "translations": {
+      "en": { "meaning": "Sibling" },
+      "ja": { "meaning": "兄弟姉妹" }
+    }
+  },
+  {
+    "id": "b27",
+    "level": "beginner",
+    "category": "questions",
+    "ceb": "Asa ka gikan",
+    "translations": {
+      "en": { "meaning": "Where are you from" },
+      "ja": { "meaning": "どこから来ましたか" }
+    }
+  },
+  {
+    "id": "b28",
+    "level": "beginner",
+    "category": "questions",
+    "ceb": "Pila ka tuig",
+    "translations": {
+      "en": { "meaning": "How old are you" },
+      "ja": { "meaning": "何歳ですか" }
+    }
+  },
+  {
+    "id": "b29",
+    "level": "beginner",
+    "category": "questions",
+    "ceb": "Unsa ni",
+    "translations": {
+      "en": { "meaning": "What is this" },
+      "ja": { "meaning": "これは何ですか" }
+    }
+  },
+  {
+    "id": "b30",
+    "level": "beginner",
+    "category": "questions",
+    "ceb": "Asa ang banyo",
+    "translations": {
+      "en": { "meaning": "Where is the bathroom" },
+      "ja": { "meaning": "トイレはどこですか" }
+    }
+  }
+]

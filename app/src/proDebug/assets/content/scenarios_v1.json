@@ -1,0 +1,2732 @@
+[
+  {
+    "id": "dojo_1",
+    "title": {
+      "ja": "【道場】1. 空港のタクシー",
+      "en": "【Dojo】1. Airport Taxi"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "タクシー運転手",
+        "en": "Taxi driver"
+      },
+      "situation": {
+        "ja": "空港タクシーが高額提示。渋滞事情も理解しつつ交渉する。",
+        "en": "The airport taxi quotes a high flat rate; you must negotiate while respecting traffic realities."
+      },
+      "goal": {
+        "ja": "メーター利用＋妥当なチップで合意し、気持ちよく乗車する。",
+        "en": "Secure a metered ride with a fair tip so both sides feel respected."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、タクシー運転手さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, The airport taxi quotes a high flat rate; you must negotiate while respecting traffic realities.",
+        "translation": "すみません、空港タクシーが高額提示 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Secure a metered ride with a fair tip so both sides feel respected.",
+        "translation": "目標は「メーター利用＋妥当なチップで合意し、気持ちよく乗車する」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Taxi driver?",
+        "translation": "タクシー運転手さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_2",
+    "title": {
+      "ja": "【道場】2. 市場の魚屋",
+      "en": "【Dojo】2. Market Fish Vendor"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "魚屋",
+        "en": "Fish vendor"
+      },
+      "situation": {
+        "ja": "魚の鮮度が気になる観光客として信頼を勝ち取る。",
+        "en": "At the wet market you want the freshest catch and must earn the vendor's trust."
+      },
+      "goal": {
+        "ja": "相手の目利きを褒め、今日一番の魚を選ばせて購入する。",
+        "en": "Praise their expertise and let them pick today's best fish for you to buy."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、魚屋さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, At the wet market you want the freshest catch and must earn the vendor's trust.",
+        "translation": "すみません、魚の鮮度が気になる観光客として信頼を勝ち取る ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Praise their expertise and let them pick today's best fish for you to buy.",
+        "translation": "目標は「相手の目利きを褒め、今日一番の魚を選ばせて購入する」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Fish vendor?",
+        "translation": "魚屋さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_3",
+    "title": {
+      "ja": "【道場】3. サリサリストア",
+      "en": "【Dojo】3. Sari-sari Store"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "サリサリストア店主",
+        "en": "Sari-sari shop owner"
+      },
+      "situation": {
+        "ja": "欲しい銘柄が欠品。店主と世間話をしながら代替品を探す。",
+        "en": "Your preferred brand is out; you need to chat with the owner to accept a substitute."
+      },
+      "goal": {
+        "ja": "世間話で距離を縮め、納得できる代替品を選んで購入する。",
+        "en": "Build rapport and walk away with a substitute you genuinely accept."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、サリサリストア店主さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, Your preferred brand is out; you need to chat with the owner to accept a substitute.",
+        "translation": "すみません、欲しい銘柄が欠品 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Build rapport and walk away with a substitute you genuinely accept.",
+        "translation": "目標は「世間話で距離を縮め、納得できる代替品を選んで購入する」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Sari-sari shop owner?",
+        "translation": "サリサリストア店主さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_4",
+    "title": {
+      "ja": "【道場】4. ジプニーの料金",
+      "en": "【Dojo】4. Jeepney Fare"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "ジプニーの乗客",
+        "en": "Jeepney riders"
+      },
+      "situation": {
+        "ja": "混雑で料金を手渡せない。周囲と協力して届ける。",
+        "en": "The jeepney is packed and you can't pass the fare forward."
+      },
+      "goal": {
+        "ja": "乗客へ丁寧に「Palihug」と頼み、料金を確実に届けてもらう。",
+        "en": "Ask fellow riders politely with 'Palihug' so the driver receives your payment."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#485563",
+      "#29323c"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、ジプニーの乗客さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, The jeepney is packed and you can't pass the fare forward.",
+        "translation": "すみません、混雑で料金を手渡せない ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Ask fellow riders politely with 'Palihug' so the driver receives your payment.",
+        "translation": "目標は「乗客へ丁寧に「Palihug」と頼み、料金を確実に届けてもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Jeepney riders?",
+        "translation": "ジプニーの乗客さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_5",
+    "title": {
+      "ja": "【道場】5. 警察の検問",
+      "en": "【Dojo】5. Police Checkpoint"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "警察官",
+        "en": "Police officer"
+      },
+      "situation": {
+        "ja": "書類提示を求められた旅行者。",
+        "en": "At a checkpoint you must present documents without panic."
+      },
+      "goal": {
+        "ja": "誠実に挨拶し身分を証明、笑顔で通過させてもらう。",
+        "en": "Greet respectfully, show ID, and leave with a friendly send-off."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、警察官さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, At a checkpoint you must present documents without panic.",
+        "translation": "すみません、書類提示を求められた旅行者 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Greet respectfully, show ID, and leave with a friendly send-off.",
+        "translation": "目標は「誠実に挨拶し身分を証明、笑顔で通過させてもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Police officer?",
+        "translation": "警察官さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_6",
+    "title": {
+      "ja": "【道場】6. 村長への挨拶",
+      "en": "【Dojo】6. Barangay Captain"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "バランガイキャプテン",
+        "en": "Barangay captain"
+      },
+      "situation": {
+        "ja": "祭の見学を願う余所者として門を叩く。",
+        "en": "You want to observe a local fiesta and must address the barangay captain."
+      },
+      "goal": {
+        "ja": "謙虚な自己紹介で参加許可をもらい、礼を尽くす。",
+        "en": "Introduce yourself humbly and earn permission to attend."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、バランガイキャプテンさん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You want to observe a local fiesta and must address the barangay captain.",
+        "translation": "すみません、祭の見学を願う余所者として門を叩く ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Introduce yourself humbly and earn permission to attend.",
+        "translation": "目標は「謙虚な自己紹介で参加許可をもらい、礼を尽くす」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Barangay captain?",
+        "translation": "バランガイキャプテンさんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_7",
+    "title": {
+      "ja": "【道場】7. 地主の私有地",
+      "en": "【Dojo】7. Private Lot Owner"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "地主",
+        "en": "Landowner"
+      },
+      "situation": {
+        "ja": "散歩中に迷い込み、土地の主と対話が必要。",
+        "en": "You accidentally trespassed and must calm the owner."
+      },
+      "goal": {
+        "ja": "誠実に謝罪し、土地への敬意を伝え、通り抜けを許してもらう。",
+        "en": "Apologize sincerely, show respect, and get safe passage."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、地主さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You accidentally trespassed and must calm the owner.",
+        "translation": "すみません、散歩中に迷い込み、土地の主と対話が必要 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Apologize sincerely, show respect, and get safe passage.",
+        "translation": "目標は「誠実に謝罪し、土地への敬意を伝え、通り抜けを許してもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Landowner?",
+        "translation": "地主さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_8",
+    "title": {
+      "ja": "【道場】8. 仕立て屋",
+      "en": "【Dojo】8. Tailor Shop"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "仕立て屋",
+        "en": "Tailor"
+      },
+      "situation": {
+        "ja": "大事な服の直しを丁寧にお願いする。",
+        "en": "You need precise alterations on a beloved outfit."
+      },
+      "goal": {
+        "ja": "細かな要望を敬語で伝え、仕上げ期日を約束してもらう。",
+        "en": "Explain details respectfully and secure a reliable completion date."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#485563",
+      "#29323c"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、仕立て屋さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You need precise alterations on a beloved outfit.",
+        "translation": "すみません、大事な服の直しを丁寧にお願いする ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Explain details respectfully and secure a reliable completion date.",
+        "translation": "目標は「細かな要望を敬語で伝え、仕上げ期日を約束してもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Tailor?",
+        "translation": "仕立て屋さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_9",
+    "title": {
+      "ja": "【道場】9. 図書館の係員",
+      "en": "【Dojo】9. Library Staff"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "図書館司書",
+        "en": "Library staff"
+      },
+      "situation": {
+        "ja": "貸出禁止の資料を閲覧したい学生。",
+        "en": "You want to consult a restricted archive at the library."
+      },
+      "goal": {
+        "ja": "勉強への熱意を伝え、館内閲覧の特別許可を得る。",
+        "en": "Show passion for study and earn supervised access."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、図書館司書さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You want to consult a restricted archive at the library.",
+        "translation": "すみません、貸出禁止の資料を閲覧したい学生 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Show passion for study and earn supervised access.",
+        "translation": "目標は「勉強への熱意を伝え、館内閲覧の特別許可を得る」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Library staff?",
+        "translation": "図書館司書さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_10",
+    "title": {
+      "ja": "【道場】10. 農家の庭",
+      "en": "【Dojo】10. Mango Farmer"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "マンゴー農家",
+        "en": "Mango farmer"
+      },
+      "situation": {
+        "ja": "私有地のマンゴーが気になって声を掛ける。",
+        "en": "A private mango grove tempts you; you must speak to the farmer."
+      },
+      "goal": {
+        "ja": "正しい敬称で呼びかけ、少し分けてもらう交渉を成功させる。",
+        "en": "Use proper honorifics and earn permission to take a few fruits."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、マンゴー農家さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, A private mango grove tempts you; you must speak to the farmer.",
+        "translation": "すみません、私有地のマンゴーが気になって声を掛ける ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Use proper honorifics and earn permission to take a few fruits.",
+        "translation": "目標は「正しい敬称で呼びかけ、少し分けてもらう交渉を成功させる」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Mango farmer?",
+        "translation": "マンゴー農家さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_11",
+    "title": {
+      "ja": "【道場】11. ホテルの早着",
+      "en": "【Dojo】11. Early Hotel Check-in"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "ホテル受付",
+        "en": "Hotel front desk staff"
+      },
+      "situation": {
+        "ja": "予約より早く到着し疲れている。",
+        "en": "You arrived ahead of time and are exhausted."
+      },
+      "goal": {
+        "ja": "状況を丁寧に伝え、空き部屋があれば入れてもらう。",
+        "en": "Explain politely and convince the staff to ready a room."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、ホテル受付さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You arrived ahead of time and are exhausted.",
+        "translation": "すみません、予約より早く到着し疲れている ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Explain politely and convince the staff to ready a room.",
+        "translation": "目標は「状況を丁寧に伝え、空き部屋があれば入れてもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Hotel front desk staff?",
+        "translation": "ホテル受付さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_12",
+    "title": {
+      "ja": "【道場】12. 教会の案内係",
+      "en": "【Dojo】12. Church Guide"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "教会案内係",
+        "en": "Church guide"
+      },
+      "situation": {
+        "ja": "神聖な祭壇を撮影したい巡礼者。",
+        "en": "You want to take photos in a sacred church."
+      },
+      "goal": {
+        "ja": "敬虔さを示し、短時間だけ撮影許可をもらう。",
+        "en": "Prove reverence and gain limited photo access."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#485563",
+      "#29323c"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、教会案内係さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You want to take photos in a sacred church.",
+        "translation": "すみません、神聖な祭壇を撮影したい巡礼者 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Prove reverence and gain limited photo access.",
+        "translation": "目標は「敬虔さを示し、短時間だけ撮影許可をもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Church guide?",
+        "translation": "教会案内係さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_13",
+    "title": {
+      "ja": "【道場】13. ボート乗り",
+      "en": "【Dojo】13. Boatman"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "ボートマン",
+        "en": "Boatman"
+      },
+      "situation": {
+        "ja": "観光外の穴場へ案内してほしい。",
+        "en": "You seek a hidden spot only the boatman knows."
+      },
+      "goal": {
+        "ja": "彼の知識をリスペクトし、特別コースへ連れて行ってもらう。",
+        "en": "Respect his expertise and earn a bespoke route."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、ボートマンさん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You seek a hidden spot only the boatman knows.",
+        "translation": "すみません、観光外の穴場へ案内してほしい ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Respect his expertise and earn a bespoke route.",
+        "translation": "目標は「彼の知識をリスペクトし、特別コースへ連れて行ってもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Boatman?",
+        "translation": "ボートマンさんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_14",
+    "title": {
+      "ja": "【道場】14. 大家の清掃",
+      "en": "【Dojo】14. Landlord Cleaning"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "大家",
+        "en": "Landlord"
+      },
+      "situation": {
+        "ja": "庭を自分で掃除したい入居者。",
+        "en": "As a tenant you want to handle yard work yourself."
+      },
+      "goal": {
+        "ja": "家への愛着を伝え、掃除を任せてもらう。",
+        "en": "Express affection for the home and gain permission to maintain it."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、大家さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, As a tenant you want to handle yard work yourself.",
+        "translation": "すみません、庭を自分で掃除したい入居者 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Express affection for the home and gain permission to maintain it.",
+        "translation": "目標は「家への愛着を伝え、掃除を任せてもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Landlord?",
+        "translation": "大家さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_15",
+    "title": {
+      "ja": "【道場】15. 楽器店主",
+      "en": "【Dojo】15. Music Shop Owner"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "楽器店主",
+        "en": "Music shop owner"
+      },
+      "situation": {
+        "ja": "高価な楽器を試奏したい音楽好き。",
+        "en": "You wish to test a pricey instrument."
+      },
+      "goal": {
+        "ja": "丁寧に扱うと約束し、試奏の許可を得る。",
+        "en": "Promise utmost care and get permission to play."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、楽器店主さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You wish to test a pricey instrument.",
+        "translation": "すみません、高価な楽器を試奏したい音楽好き ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Promise utmost care and get permission to play.",
+        "translation": "目標は「丁寧に扱うと約束し、試奏の許可を得る」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Music shop owner?",
+        "translation": "楽器店主さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_16",
+    "title": {
+      "ja": "【道場】16. 公園の管理人",
+      "en": "【Dojo】16. Park Manager"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "公園管理人",
+        "en": "Park manager"
+      },
+      "situation": {
+        "ja": "閉園後の忘れ物を探したい。",
+        "en": "You need a few minutes after closing to retrieve something."
+      },
+      "goal": {
+        "ja": "困っている状況を端的に伝え、数分だけ門を開けてもらう。",
+        "en": "Explain calmly and secure a short grace period."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#485563",
+      "#29323c"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、公園管理人さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You need a few minutes after closing to retrieve something.",
+        "translation": "すみません、閉園後の忘れ物を探したい ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Explain calmly and secure a short grace period.",
+        "translation": "目標は「困っている状況を端的に伝え、数分だけ門を開けてもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Park manager?",
+        "translation": "公園管理人さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_17",
+    "title": {
+      "ja": "【道場】17. 工事現場の班長",
+      "en": "【Dojo】17. Construction Foreman"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "工事現場の班長",
+        "en": "Construction foreman"
+      },
+      "situation": {
+        "ja": "道路封鎖で通れない。",
+        "en": "A construction site blocks your path."
+      },
+      "goal": {
+        "ja": "現場の苦労を労い、安全なタイミングで通してもらう。",
+        "en": "Respect the crew and arrange a safe moment to pass."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、工事現場の班長さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, A construction site blocks your path.",
+        "translation": "すみません、道路封鎖で通れない ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Respect the crew and arrange a safe moment to pass.",
+        "translation": "目標は「現場の苦労を労い、安全なタイミングで通してもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Construction foreman?",
+        "translation": "工事現場の班長さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_18",
+    "title": {
+      "ja": "【道場】18. 郷土史家",
+      "en": "【Dojo】18. Local Historian"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "郷土史家",
+        "en": "Local historian"
+      },
+      "situation": {
+        "ja": "土地の本当の歴史を知りたい旅人。",
+        "en": "You seek a story not written in guidebooks."
+      },
+      "goal": {
+        "ja": "深い関心と敬意を示し、逸話を一つ教えてもらう。",
+        "en": "Show genuine curiosity to hear an authentic tale."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、郷土史家さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You seek a story not written in guidebooks.",
+        "translation": "すみません、土地の本当の歴史を知りたい旅人 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Show genuine curiosity to hear an authentic tale.",
+        "translation": "目標は「深い関心と敬意を示し、逸話を一つ教えてもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Local historian?",
+        "translation": "郷土史家さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_19",
+    "title": {
+      "ja": "【道場】19. カフェの店員",
+      "en": "【Dojo】19. Cafe Staff"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "カフェ店員",
+        "en": "Cafe staff"
+      },
+      "situation": {
+        "ja": "薬を飲むために水がほしい。",
+        "en": "You urgently need water to take medicine."
+      },
+      "goal": {
+        "ja": "忙しい相手を気遣い、スマートに水をいただく。",
+        "en": "Request softly with thanks and receive water graciously."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、カフェ店員さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You urgently need water to take medicine.",
+        "translation": "すみません、薬を飲むために水がほしい ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Request softly with thanks and receive water graciously.",
+        "translation": "目標は「忙しい相手を気遣い、スマートに水をいただく」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Cafe staff?",
+        "translation": "カフェ店員さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_20",
+    "title": {
+      "ja": "【道場】20. バスの乗務員",
+      "en": "【Dojo】20. Bus Conductor"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "バス乗務員",
+        "en": "Bus conductor"
+      },
+      "situation": {
+        "ja": "降りる場所が不安な乗客。",
+        "en": "You fear missing your stop on an unfamiliar bus."
+      },
+      "goal": {
+        "ja": "目的地を伝え、近くに来たら知らせてもらう約束を取り付ける。",
+        "en": "State your stop and get the conductor to alert you."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#485563",
+      "#29323c"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、バス乗務員さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You fear missing your stop on an unfamiliar bus.",
+        "translation": "すみません、降りる場所が不安な乗客 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: State your stop and get the conductor to alert you.",
+        "translation": "目標は「目的地を伝え、近くに来たら知らせてもらう約束を取り付ける」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Bus conductor?",
+        "translation": "バス乗務員さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_21",
+    "title": {
+      "ja": "【道場】21. 街の古老",
+      "en": "【Dojo】21. Town Elder"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "街の古老",
+        "en": "Town elder"
+      },
+      "situation": {
+        "ja": "昔の街の様子を聞きたい。",
+        "en": "You want a nostalgic story from a local elder."
+      },
+      "goal": {
+        "ja": "敬意を持って接し、古き良き時代の話を一つ引き出す。",
+        "en": "Approach respectfully and draw out a cherished memory."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、街の古老さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You want a nostalgic story from a local elder.",
+        "translation": "すみません、昔の街の様子を聞きたい ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Approach respectfully and draw out a cherished memory.",
+        "translation": "目標は「敬意を持って接し、古き良き時代の話を一つ引き出す」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Town elder?",
+        "translation": "街の古老さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_22",
+    "title": {
+      "ja": "【道場】22. 派出所の警官",
+      "en": "【Dojo】22. Police Desk"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "派出所の警官",
+        "en": "Police desk officer"
+      },
+      "situation": {
+        "ja": "落とし物を届けた善意の人。",
+        "en": "You are filing a lost-and-found report."
+      },
+      "goal": {
+        "ja": "手続きを厭わず丁寧に説明し、受理してもらう。",
+        "en": "Handle the paperwork patiently and receive thanks."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、派出所の警官さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You are filing a lost-and-found report.",
+        "translation": "すみません、落とし物を届けた善意の人 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Handle the paperwork patiently and receive thanks.",
+        "translation": "目標は「手続きを厭わず丁寧に説明し、受理してもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Police desk officer?",
+        "translation": "派出所の警官さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_23",
+    "title": {
+      "ja": "【道場】23. 隣人の植木",
+      "en": "【Dojo】23. Neighbor's Tree"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "隣人",
+        "en": "Neighbor"
+      },
+      "situation": {
+        "ja": "枝が越境しトラブル寸前。",
+        "en": "A neighbor's tree is encroaching."
+      },
+      "goal": {
+        "ja": "攻撃的にならず相談ベースで剪定案をまとめる。",
+        "en": "Discuss calmly and agree on a trimming plan."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、隣人さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, A neighbor's tree is encroaching.",
+        "translation": "すみません、枝が越境しトラブル寸前 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Discuss calmly and agree on a trimming plan.",
+        "translation": "目標は「攻撃的にならず相談ベースで剪定案をまとめる」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Neighbor?",
+        "translation": "隣人さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_24",
+    "title": {
+      "ja": "【道場】24. 銀行の窓口",
+      "en": "【Dojo】24. Bank Counter"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "銀行窓口担当",
+        "en": "Bank clerk"
+      },
+      "situation": {
+        "ja": "書類の書き方がわからない。",
+        "en": "You need help filling out forms at the bank."
+      },
+      "goal": {
+        "ja": "謙虚に助けを求め、窓口で完成させる。",
+        "en": "Ask humbly and complete the document together."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#485563",
+      "#29323c"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、銀行窓口担当さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You need help filling out forms at the bank.",
+        "translation": "すみません、書類の書き方がわからない ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Ask humbly and complete the document together.",
+        "translation": "目標は「謙虚に助けを求め、窓口で完成させる」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Bank clerk?",
+        "translation": "銀行窓口担当さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_25",
+    "title": {
+      "ja": "【道場】25. ポーター",
+      "en": "【Dojo】25. Porter"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "ポーター",
+        "en": "Porter"
+      },
+      "situation": {
+        "ja": "重い荷物を運んでほしい旅人。",
+        "en": "You need assistance carrying heavy luggage."
+      },
+      "goal": {
+        "ja": "適切な挨拶と労い、チップの約束で安全に運んでもらう。",
+        "en": "Greet gratefully, promise fair pay, and reach the destination."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、ポーターさん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You need assistance carrying heavy luggage.",
+        "translation": "すみません、重い荷物を運んでほしい旅人 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Greet gratefully, promise fair pay, and reach the destination.",
+        "translation": "目標は「適切な挨拶と労い、チップの約束で安全に運んでもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Porter?",
+        "translation": "ポーターさんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_26",
+    "title": {
+      "ja": "【道場】26. 広場の若者",
+      "en": "【Dojo】26. Plaza Basketball"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "広場の若者たち",
+        "en": "Plaza basketball players"
+      },
+      "situation": {
+        "ja": "バスケに混ぜてほしい。",
+        "en": "You want the local youths to let you join their game."
+      },
+      "goal": {
+        "ja": "挨拶と謙虚さを示し、仲間として受け入れてもらう。",
+        "en": "Introduce yourself politely and get invited in."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、広場の若者たちさん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You want the local youths to let you join their game.",
+        "translation": "すみません、バスケに混ぜてほしい ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Introduce yourself politely and get invited in.",
+        "translation": "目標は「挨拶と謙虚さを示し、仲間として受け入れてもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Plaza basketball players?",
+        "translation": "広場の若者たちさんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_27",
+    "title": {
+      "ja": "【道場】27. 不動産管理",
+      "en": "【Dojo】27. Property Manager"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "不動産管理人",
+        "en": "Property manager"
+      },
+      "situation": {
+        "ja": "蛇口の修理を急ぎたい入居者。",
+        "en": "As a tenant you need a broken faucet fixed fast."
+      },
+      "goal": {
+        "ja": "日頃の感謝を伝えつつ、迅速な対応を約束させる。",
+        "en": "Express gratitude yet secure a prompt repair commitment."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、不動産管理人さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, As a tenant you need a broken faucet fixed fast.",
+        "translation": "すみません、蛇口の修理を急ぎたい入居者 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Express gratitude yet secure a prompt repair commitment.",
+        "translation": "目標は「日頃の感謝を伝えつつ、迅速な対応を約束させる」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Property manager?",
+        "translation": "不動産管理人さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_28",
+    "title": {
+      "ja": "【道場】28. 看護師",
+      "en": "【Dojo】28. Nurse"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "看護師",
+        "en": "Nurse"
+      },
+      "situation": {
+        "ja": "面会時間外に友人の容態を知りたい。",
+        "en": "You arrive after visiting hours seeking an update."
+      },
+      "goal": {
+        "ja": "忙しい相手を邪魔せず、短い報告だけお願いする。",
+        "en": "Respect their workload and request a concise update."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#485563",
+      "#29323c"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、看護師さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You arrive after visiting hours seeking an update.",
+        "translation": "すみません、面会時間外に友人の容態を知りたい ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Respect their workload and request a concise update.",
+        "translation": "目標は「忙しい相手を邪魔せず、短い報告だけお願いする」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Nurse?",
+        "translation": "看護師さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_29",
+    "title": {
+      "ja": "【道場】29. タクシーの渋滞",
+      "en": "【Dojo】29. Taxi Traffic"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "タクシー運転手",
+        "en": "Taxi driver"
+      },
+      "situation": {
+        "ja": "渋滞で急いでいる乗客。",
+        "en": "You are in a rush but stuck in traffic inside a taxi."
+      },
+      "goal": {
+        "ja": "運転手を急かさず、プロの判断で抜け道を探してもらう。",
+        "en": "Trust the driver and inspire them to find the best route."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、タクシー運転手さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You are in a rush but stuck in traffic inside a taxi.",
+        "translation": "すみません、渋滞で急いでいる乗客 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Trust the driver and inspire them to find the best route.",
+        "translation": "目標は「運転手を急かさず、プロの判断で抜け道を探してもらう」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Taxi driver?",
+        "translation": "タクシー運転手さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_30",
+    "title": {
+      "ja": "【道場】30. バスの隣客",
+      "en": "【Dojo】30. Bus Seatmate"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.4 敬意と交渉",
+      "en": "Lv.4 Respect"
+    },
+    "context": {
+      "role": {
+        "ja": "バスの隣の乗客",
+        "en": "Bus seatmate"
+      },
+      "situation": {
+        "ja": "荷物が食い込み不快。",
+        "en": "A neighbor's baggage invades your space on the bus."
+      },
+      "goal": {
+        "ja": "相手を不快にさせず、お互いのスペースを確保する。",
+        "en": "Address it gently and co-create comfortable space."
+      },
+      "hints": [
+        "Maayong adlaw",
+        "Palihug",
+        "Salamat kaayo"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "厳格だが公正。礼儀を欠けば即失格。",
+        "en": "Strict yet fair—any lack of respect ends the deal."
+      },
+      "level": "advanced"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Sir/Ma'am. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、バスの隣の乗客さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, A neighbor's baggage invades your space on the bus.",
+        "translation": "すみません、荷物が食い込み不快 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Address it gently and co-create comfortable space.",
+        "translation": "目標は「相手を不快にさせず、お互いのスペースを確保する」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Bus seatmate?",
+        "translation": "バスの隣の乗客さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "次に取るべき手順をはっきり教えてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_31",
+    "title": {
+      "ja": "【道場】31. 飲食店員（ユーザー）",
+      "en": "【Dojo】31. Restaurant Crew (User)"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.3 プロ接客",
+      "en": "Lv.3 Service"
+    },
+    "context": {
+      "role": {
+        "ja": "迷っている客",
+        "en": "Confused diner"
+      },
+      "situation": {
+        "ja": "忙しいランチで迷う客を担当。",
+        "en": "You are the crew guiding a confused diner during rush hour."
+      },
+      "goal": {
+        "ja": "Sir/Ma'amで敬意を払い、注文を提案→復唱してキッチンへ通す。",
+        "en": "Suggest, confirm, and relay the order flawlessly."
+      },
+      "hints": [
+        "Sir/Ma'am",
+        "Pasensya",
+        "Balikon nako ha"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "プロ同士として鋭いが、誠意があれば認める。",
+        "en": "Professional to professional: brisk but appreciative of sincerity."
+      },
+      "level": "intermediate"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Confused diner. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、迷っている客さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You are the crew guiding a confused diner during rush hour.",
+        "translation": "すみません、忙しいランチで迷う客を担当 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Suggest, confirm, and relay the order flawlessly.",
+        "translation": "目標は「Sir/Ma'amで敬意を払い、注文を提案→復唱してキッチンへ通す」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Confused diner?",
+        "translation": "迷っている客さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "最適なやり方を一緒に決めさせてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_32",
+    "title": {
+      "ja": "【道場】32. ホテルベルスタッフ（ユーザー）",
+      "en": "【Dojo】32. Hotel Bell Staff (User)"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.3 プロ接客",
+      "en": "Lv.3 Service"
+    },
+    "context": {
+      "role": {
+        "ja": "荷物が多い家族",
+        "en": "Weary family"
+      },
+      "situation": {
+        "ja": "荷物が多い家族を部屋まで案内。",
+        "en": "You must help a weary family settle into their room."
+      },
+      "goal": {
+        "ja": "荷物数を確認し、部屋を案内して最後に「Pahuway mo og maayo」と労う。",
+        "en": "Count bags, escort them, and end with 'Pahuway mo og maayo'."
+      },
+      "hints": [
+        "Sir/Ma'am",
+        "Pasensya",
+        "Balikon nako ha"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "プロ同士として鋭いが、誠意があれば認める。",
+        "en": "Professional to professional: brisk but appreciative of sincerity."
+      },
+      "level": "intermediate"
+    },
+    "backgroundGradient": [
+      "#485563",
+      "#29323c"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Weary family. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、荷物が多い家族さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You must help a weary family settle into their room.",
+        "translation": "すみません、荷物が多い家族を部屋まで案内 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Count bags, escort them, and end with 'Pahuway mo og maayo'.",
+        "translation": "目標は「荷物数を確認し、部屋を案内して最後に「Pahuway mo og maayo」と労う」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Weary family?",
+        "translation": "荷物が多い家族さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "最適なやり方を一緒に決めさせてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_33",
+    "title": {
+      "ja": "【道場】33. アパート管理（ユーザー）",
+      "en": "【Dojo】33. Apartment Manager (User)"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.3 プロ接客",
+      "en": "Lv.3 Service"
+    },
+    "context": {
+      "role": {
+        "ja": "怒っている住人",
+        "en": "Angry tenant"
+      },
+      "situation": {
+        "ja": "騒音に怒る住人と向き合う。",
+        "en": "You are the building manager handling a noise complaint."
+      },
+      "goal": {
+        "ja": "謝罪し、今すぐ隣へ注意しに行く約束で怒りを鎮める。",
+        "en": "Apologize, promise immediate action, and calm them down."
+      },
+      "hints": [
+        "Sir/Ma'am",
+        "Pasensya",
+        "Balikon nako ha"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "プロ同士として鋭いが、誠意があれば認める。",
+        "en": "Professional to professional: brisk but appreciative of sincerity."
+      },
+      "level": "intermediate"
+    },
+    "backgroundGradient": [
+      "#232526",
+      "#414345"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Angry tenant. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、怒っている住人さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, You are the building manager handling a noise complaint.",
+        "translation": "すみません、騒音に怒る住人と向き合う ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Apologize, promise immediate action, and calm them down.",
+        "translation": "目標は「謝罪し、今すぐ隣へ注意しに行く約束で怒りを鎮める」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Angry tenant?",
+        "translation": "怒っている住人さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "最適なやり方を一緒に決めさせてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_34",
+    "title": {
+      "ja": "【道場】34. 薬局店員（ユーザー）",
+      "en": "【Dojo】34. Pharmacist (User)"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.3 プロ接客",
+      "en": "Lv.3 Service"
+    },
+    "context": {
+      "role": {
+        "ja": "喉を痛めたお年寄り",
+        "en": "Elderly customer"
+      },
+      "situation": {
+        "ja": "喉を痛めたお年寄りの相談。",
+        "en": "An elderly customer needs throat medicine."
+      },
+      "goal": {
+        "ja": "症状と期間を聞き、薬と飲み方を丁寧に伝え「Amping kanunay」で締める。",
+        "en": "Ask symptoms, explain dosage, and close with 'Amping kanunay'."
+      },
+      "hints": [
+        "Sir/Ma'am",
+        "Pasensya",
+        "Balikon nako ha"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "プロ同士として鋭いが、誠意があれば認める。",
+        "en": "Professional to professional: brisk but appreciative of sincerity."
+      },
+      "level": "intermediate"
+    },
+    "backgroundGradient": [
+      "#1e3c72",
+      "#2a5298"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Elderly customer. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、喉を痛めたお年寄りさん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, An elderly customer needs throat medicine.",
+        "translation": "すみません、喉を痛めたお年寄りの相談 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Ask symptoms, explain dosage, and close with 'Amping kanunay'.",
+        "translation": "目標は「症状と期間を聞き、薬と飲み方を丁寧に伝え「Amping kanunay」で締める」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Elderly customer?",
+        "translation": "喉を痛めたお年寄りさんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "最適なやり方を一緒に決めさせてください。"
+      }
+    ]
+  },
+  {
+    "id": "dojo_35",
+    "title": {
+      "ja": "【道場】35. ギフトショップ店員（ユーザー）",
+      "en": "【Dojo】35. Gift Shop Staff (User)"
+    },
+    "subtitle": {
+      "ja": "マスタータリの修行",
+      "en": "Master Tari trial"
+    },
+    "difficultyLabel": {
+      "ja": "Lv.3 プロ接客",
+      "en": "Lv.3 Service"
+    },
+    "context": {
+      "role": {
+        "ja": "恋人へのプレゼントに迷う若者",
+        "en": "Young shopper"
+      },
+      "situation": {
+        "ja": "恋人へのプレゼントに迷う若者。",
+        "en": "A young shopper is unsure about a gift for their partner."
+      },
+      "goal": {
+        "ja": "相手の好みと予算を引き出し、自信を持って一品を推薦する。",
+        "en": "Draw out tastes and budget, then recommend one perfect item."
+      },
+      "hints": [
+        "Sir/Ma'am",
+        "Pasensya",
+        "Balikon nako ha"
+      ],
+      "turnLimit": 8,
+      "tone": {
+        "ja": "プロ同士として鋭いが、誠意があれば認める。",
+        "en": "Professional to professional: brisk but appreciative of sincerity."
+      },
+      "level": "intermediate"
+    },
+    "backgroundGradient": [
+      "#0f2027",
+      "#2c5364"
+    ],
+    "openingMessage": {
+      "ja": "Hinay nga nagginhawa si Master Tari… \"Unsa may ato?\"",
+      "en": "(Eyes closed, breathing slowly) \"...Unsa may ato?\""
+    },
+    "systemPrompt": {
+      "ja": "",
+      "en": ""
+    },
+    "starterOptions": [
+      {
+        "text": "Maayong adlaw, Young shopper. Palihug ko gamayng tabang.",
+        "translation": "こんにちは、恋人へのプレゼントに迷う若者さん。少しだけ助けてください。"
+      },
+      {
+        "text": "Pasensya ha, A young shopper is unsure about a gift for their partner.",
+        "translation": "すみません、恋人へのプレゼントに迷う若者 ことについて相談させてください。"
+      },
+      {
+        "text": "Gusto ko makab-ot ni: Draw out tastes and budget, then recommend one perfect item.",
+        "translation": "目標は「相手の好みと予算を引き出し、自信を持って一品を推薦する」。そのために力を貸してください。"
+      },
+      {
+        "text": "Pwede ta maghisgot saon pag-ayo ani, Young shopper?",
+        "translation": "恋人へのプレゼントに迷う若者さんの判断を頼りに進めてもいいですか？"
+      },
+      {
+        "text": "Kalma lang ko pero kinahanglan nako imong giya karon.",
+        "translation": "落ち着いて進めますので、今どう動けばいいか教えてください。"
+      },
+      {
+        "text": "Hatagi ko og klaro nga lakang palihug.",
+        "translation": "最適なやり方を一緒に決めさせてください。"
+      }
+    ]
+  }
+]

@@ -1,0 +1,9 @@
+BisayaSpeak AI v1.0.47 Release Notes
+
+[日本語]
+- Android SDK パス設定を修正し、ビルド環境の安定性を改善しました。
+- Play Console へのアップロード時に発生したバージョン競合を解消しました。
+
+[English]
+- Fixed the Android SDK path configuration to stabilize the build environment.
+- Resolved the Play Console upload issue by bumping the app version.
