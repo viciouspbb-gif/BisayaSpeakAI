@@ -191,6 +191,9 @@ fun AiTranslatorScreen(
                 is TranslatorEvent.ShowToast -> {
                     Toast.makeText(context, event.messageResId, Toast.LENGTH_SHORT).show()
                 }
+                TranslatorEvent.ShowUpsell -> {
+                    showTranslatorUpsell = true
+                }
             }
         }
     }

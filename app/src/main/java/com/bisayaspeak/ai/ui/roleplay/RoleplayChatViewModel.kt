@@ -992,6 +992,20 @@ class RoleplayChatViewModel(
                 hasShownTurnLimitAdThisSession = false
             )
         }
+        if (!isProUser && BuildConfig.IS_LITE_BUILD) {
+            Log.i(LOG_TAG, "Sanpo entry blocked for lite non-premium user -> upsell")
+            _uiState.update { state ->
+                state.copy(
+                    pendingSanpoStart = false,
+                    sanpoAdGatePhase = SanpoAdGatePhase.IDLE,
+                    sanpoAdGateRemainingCount = 0
+                )
+            }
+            viewModelScope.launch {
+                _events.send(RoleplayEvent.ShowSanpoUpsell)
+            }
+            return
+        }
         val pendingReason = _uiState.value.pendingSecondAdReason
         Log.d(
             LOG_TAG,

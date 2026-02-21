@@ -225,6 +225,52 @@ class BillingManager(private val context: Context) {
         // サブスクリプションを確認
         val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
+            .build()
+
+        client.queryPurchasesAsync(subsParams) { billingResult, purchases ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                val hasPremiumAI = purchases.any { purchase ->
+                    logPurchaseSnapshot("subs_query", purchase)
+                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                        purchase.isAcknowledged &&
+                        purchase.products.any { isPremiumSubscriptionSku(it) }
+                }
+
+                _hasPremiumAI.value = hasPremiumAI
+                if (hasPremiumAI) {
+                    _isPremium.value = true
+                } else if (!_isProUnlocked.value) {
+                    _isPremium.value = false
+                }
+                Log.d(TAG, "Premium AI status: $hasPremiumAI (${purchases.size} subs)")
+                refreshUserPlan()
+            } else {
+                Log.w(TAG, "Failed to query subs purchases: ${billingResult.debugMessage}")
+            }
+        }
+
+        // 買い切り商品を確認
+        val inAppParams = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.INAPP)
+            .build()
+
+        client.queryPurchasesAsync(inAppParams) { billingResult, purchases ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                val hasProUnlock = purchases.any { purchase ->
+                    logPurchaseSnapshot("inapp_query", purchase)
+                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                        purchase.isAcknowledged &&
+                        purchase.products.contains(PRO_UNLOCK_SKU)
+                }
+
+                _isProUnlocked.value = hasProUnlock
+                if (hasProUnlock) {
+                    _isPremium.value = true
+                }
+                Log.d(TAG, "Pro Unlock status: $hasProUnlock (${purchases.size} in-app)")
+                refreshUserPlan()
+            } else {
+                Log.w(TAG, "Failed to query in-app purchases: ${billingResult.debugMessage}")
             }
         }
     }
