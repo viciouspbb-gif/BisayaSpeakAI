@@ -37,10 +37,6 @@ class BillingManager(private val context: Context) {
         const val MONTHLY_TRIAL_TAG = "monthly-trial"
         const val YEARLY_TRIAL_TAG = "yearly-trial"
         
-        // 旧商品ID（互換性のため）
-        const val PREMIUM_MONTHLY_SKU = "premium_monthly"
-        const val PREMIUM_YEARLY_SKU = "premium_yearly"
-        
         fun basePlanIdFor(productId: String): String? = when (productId) {
             PREMIUM_AI_MONTHLY_SKU -> PREMIUM_AI_MONTHLY_BASE_PLAN_ID
             PREMIUM_AI_YEARLY_SKU -> PREMIUM_AI_YEARLY_BASE_PLAN_ID
@@ -202,14 +198,6 @@ class BillingManager(private val context: Context) {
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(PREMIUM_AI_YEARLY_SKU)
                 .setProductType(BillingClient.ProductType.SUBS)
-                .build(),
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(PREMIUM_MONTHLY_SKU)
-                .setProductType(BillingClient.ProductType.SUBS)
-                .build(),
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(PREMIUM_YEARLY_SKU)
-                .setProductType(BillingClient.ProductType.SUBS)
                 .build()
         )
 
@@ -237,43 +225,6 @@ class BillingManager(private val context: Context) {
         // サブスクリプションを確認
         val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
-            .build()
-        
-        client.queryPurchasesAsync(subsParams) { billingResult, purchases ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val hasPremiumAI = purchases.any { purchase ->
-                    (purchase.products.contains(PREMIUM_AI_MONTHLY_SKU) || 
-                     purchase.products.contains(PREMIUM_AI_YEARLY_SKU) ||
-                     purchase.products.contains(PREMIUM_MONTHLY_SKU) || 
-                     purchase.products.contains(PREMIUM_YEARLY_SKU)) &&
-                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED
-                }
-                
-                _hasPremiumAI.value = hasPremiumAI
-                _isPremium.value = hasPremiumAI // Premium AIは全機能含む
-                Log.d(TAG, "Premium AI status: $hasPremiumAI (${purchases.size} subs)")
-                refreshUserPlan()
-            }
-        }
-        
-        // 買い切り商品を確認
-        val inAppParams = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.INAPP)
-            .build()
-        
-        client.queryPurchasesAsync(inAppParams) { billingResult, purchases ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val hasProUnlock = purchases.any { purchase ->
-                    purchase.products.contains(PRO_UNLOCK_SKU) &&
-                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED
-                }
-                
-                _isProUnlocked.value = hasProUnlock
-                if (hasProUnlock && !_isPremium.value) {
-                    _isPremium.value = true // ProもPremium扱い
-                }
-                Log.d(TAG, "Pro Unlock status: $hasProUnlock (${purchases.size} in-app)")
-                refreshUserPlan()
             }
         }
     }
@@ -336,31 +287,37 @@ class BillingManager(private val context: Context) {
      * 購入を処理
      */
     private fun handlePurchases(purchases: List<Purchase>) {
-        for (purchase in purchases) {
-            if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-                if (!purchase.isAcknowledged) {
-                    acknowledgePurchase(purchase)
-                }
-                
-                // 購入した商品に応じてフラグを更新
-                for (productId in purchase.products) {
+        purchases.forEach { purchase ->
+            logPurchaseSnapshot("update", purchase)
+            if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return@forEach
+
+            val recognizedProducts = purchase.products.filter { isRecognizedProduct(it) }
+            if (recognizedProducts.isEmpty()) return@forEach
+
+            val onAcknowledged = {
+                recognizedProducts.forEach { productId ->
                     when (productId) {
                         PRO_UNLOCK_SKU -> {
                             _isProUnlocked.value = true
                             _isPremium.value = true
                             onPurchaseSuccess?.invoke(productId)
-                            Log.d(TAG, "Pro Unlock purchased")
+                            Log.d(TAG, "Pro Unlock activated")
                         }
-                        PREMIUM_AI_MONTHLY_SKU, PREMIUM_AI_YEARLY_SKU,
-                        PREMIUM_MONTHLY_SKU, PREMIUM_YEARLY_SKU -> {
+                        PREMIUM_AI_MONTHLY_SKU, PREMIUM_AI_YEARLY_SKU -> {
                             _hasPremiumAI.value = true
                             _isPremium.value = true
                             onPurchaseSuccess?.invoke(productId)
-                            Log.d(TAG, "Premium AI purchased")
+                            Log.d(TAG, "Premium AI activated product=$productId")
                         }
                     }
-                    refreshUserPlan()
                 }
+                refreshUserPlan()
+            }
+
+            if (purchase.isAcknowledged) {
+                onAcknowledged()
+            } else {
+                acknowledgePurchase(purchase, onAcknowledged)
             }
         }
     }
@@ -375,16 +332,35 @@ class BillingManager(private val context: Context) {
     /**
      * 購入を承認
      */
-    private fun acknowledgePurchase(purchase: Purchase) {
+    private fun acknowledgePurchase(purchase: Purchase, onAcknowledged: () -> Unit = {}) {
         val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
             .setPurchaseToken(purchase.purchaseToken)
             .build()
         
         billingClient?.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                Log.d(TAG, "Purchase acknowledged")
+                Log.d(TAG, "Purchase acknowledged token=${purchase.purchaseToken.take(8)} products=${purchase.products}")
+                onAcknowledged()
+            } else {
+                Log.w(TAG, "Failed to acknowledge purchase: ${billingResult.debugMessage}")
             }
         }
+    }
+
+    private fun isPremiumSubscriptionSku(productId: String): Boolean {
+        return productId == PREMIUM_AI_MONTHLY_SKU || productId == PREMIUM_AI_YEARLY_SKU
+    }
+
+    private fun isRecognizedProduct(productId: String): Boolean {
+        return productId == PRO_UNLOCK_SKU || isPremiumSubscriptionSku(productId)
+    }
+
+    private fun logPurchaseSnapshot(source: String, purchase: Purchase) {
+        Log.d(
+            TAG,
+            "purchase[$source] products=${purchase.products} state=${purchase.purchaseState} " +
+                "ack=${purchase.isAcknowledged} autoRenew=${purchase.isAutoRenewing}"
+        )
     }
     
     /**

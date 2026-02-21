@@ -149,11 +149,17 @@ class MainActivity : ComponentActivity() {
 
                         val isDebugWhitelistedUser = BuildConfig.DEBUG &&
                             currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
-                        val isProDebugBuild = BuildConfig.DEBUG && BuildConfig.FLAVOR.equals("pro", ignoreCase = true)
-                        val isProReleaseBuild = !BuildConfig.DEBUG && BuildConfig.FLAVOR.equals("pro", ignoreCase = true)
-                        val effectivePro = isPremiumUser || isDebugWhitelistedUser || isProDebugBuild || isProReleaseBuild
+                        val effectivePro = EffectiveProDecider.decide(
+                            isPremiumUser = isPremiumUser,
+                            isDebugWhitelistedUser = isDebugWhitelistedUser
+                        )
 
-                        androidx.compose.runtime.LaunchedEffect(effectivePro) {
+                        androidx.compose.runtime.SideEffect {
+                            logEffectiveProState(
+                                isPremiumUser = isPremiumUser,
+                                isDebugWhitelistedUser = isDebugWhitelistedUser,
+                                effectivePro = effectivePro
+                            )
                             app.isProVersion = effectivePro
                         }
 
