@@ -149,10 +149,8 @@ class MainActivity : ComponentActivity() {
 
                         val isDebugWhitelistedUser = BuildConfig.DEBUG &&
                             currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
-                        val effectivePro = EffectiveProDecider.decide(
-                            isPremiumUser = isPremiumUser,
-                            isDebugWhitelistedUser = isDebugWhitelistedUser
-                        )
+                        // effectivePro は isPremiumUser のみを唯一の判定基準とする
+                        val effectivePro = isPremiumUser
 
                         androidx.compose.runtime.SideEffect {
                             logEffectiveProState(
@@ -285,6 +283,17 @@ class MainActivity : ComponentActivity() {
         MobileAds.initialize(this) { initializationStatus ->
             AdManager.initialize(this, initializationStatus)
         }
+    }
+
+    private fun logEffectiveProState(
+        isPremiumUser: Boolean,
+        isDebugWhitelistedUser: Boolean,
+        effectivePro: Boolean
+    ) {
+        Log.i(
+            TAG,
+            "effectivePro=$effectivePro (isPremiumUser=$isPremiumUser, debugWhitelisted=$isDebugWhitelistedUser)"
+        )
     }
     
     /**

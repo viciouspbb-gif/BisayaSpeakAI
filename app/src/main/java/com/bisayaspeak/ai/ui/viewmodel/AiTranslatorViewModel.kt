@@ -83,6 +83,7 @@ data class TranslatorDebugState(
 sealed interface TranslatorEvent {
     data class RequireAd(val translateCount: Int) : TranslatorEvent
     data class ShowToast(@StringRes val messageResId: Int) : TranslatorEvent
+    data object ShowUpsell : TranslatorEvent
 }
 
 class AiTranslatorViewModel(
@@ -525,6 +526,7 @@ class AiTranslatorViewModel(
                 "free_limit_check feature=translate event=limit_reached dayKey=${statusBefore.dayKey} count=${statusBefore.usedCount}"
             )
             _uiState.value = TranslatorUiState.Error("本日の無料翻訳は上限に達しました")
+            _events.emit(TranslatorEvent.ShowUpsell)
             return null
         }
 
@@ -567,6 +569,8 @@ class AiTranslatorViewModel(
         attempt: TranslateAttemptContext,
         translationFailed: Boolean
     ) {
+        val attemptCount = attempt.logContext.countAfter
+        val shouldPromptUpsell = attemptCount in listOf(2, 4) || attempt.reachedLimitAfterAttempt
         if (attempt.shouldShowAd) {
             Log.d(LOG_TAG, "ad show requested count=${attempt.logContext.countAfter}")
             val deferred = CompletableDeferred<AdManager.InterstitialAttemptResult>()
@@ -605,6 +609,10 @@ class AiTranslatorViewModel(
                     "free_limit_check feature=translate event=limit_reached dayKey=${attempt.logContext.dayKey} count=${attempt.logContext.countAfter}"
                 )
             }
+        }
+
+        if (shouldPromptUpsell) {
+            _events.emit(TranslatorEvent.ShowUpsell)
         }
 
         if (attempt.reachedLimitAfterAttempt) {
