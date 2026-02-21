@@ -1,0 +1,314 @@
+[
+  {
+    "id": "greeting_1",
+    "category": { "en": "Greetings", "ja": "挨拶" },
+    "ceb": "Maayong buntag",
+    "pronunciation": "MAA-yong BOON-tag",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Good morning" },
+      "ja": { "meaning": "おはようございます" }
+    }
+  },
+  {
+    "id": "greeting_2",
+    "category": { "en": "Greetings", "ja": "挨拶" },
+    "ceb": "Maayong hapon",
+    "pronunciation": "MAA-yong HA-pon",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Good afternoon" },
+      "ja": { "meaning": "こんにちは" }
+    },
+    "description": {
+      "en": "Greeting used for afternoon.",
+      "ja": "午後限定の挨拶。時間帯を問わず使うならKumustaを使いましょう。"
+    }
+  },
+  {
+    "id": "greeting_3",
+    "category": { "en": "Greetings", "ja": "挨拶" },
+    "ceb": "Maayong gabii",
+    "pronunciation": "MAA-yong GA-bee",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Good evening" },
+      "ja": { "meaning": "こんばんは" }
+    }
+  },
+  {
+    "id": "greeting_4",
+    "category": { "en": "Greetings", "ja": "挨拶" },
+    "ceb": "Kumusta ka",
+    "pronunciation": "koo-MOOS-ta ka",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "How are you" },
+      "ja": { "meaning": "元気ですか" }
+    },
+    "description": {
+      "en": "A versatile greeting you can use any time.",
+      "ja": "汎用挨拶。時間帯を問わずいつでも使える便利な表現です。"
+    }
+  },
+  {
+    "id": "greeting_5",
+    "category": { "en": "Greetings", "ja": "挨拶" },
+    "ceb": "Salamat",
+    "pronunciation": "sa-LA-mat",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Thank you" },
+      "ja": { "meaning": "ありがとう" }
+    }
+  },
+
+  {
+    "id": "basic_1",
+    "category": { "en": "Basics", "ja": "基本会話" },
+    "ceb": "Oo",
+    "pronunciation": "OH-oh",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Yes" },
+      "ja": { "meaning": "はい" }
+    }
+  },
+  {
+    "id": "basic_2",
+    "category": { "en": "Basics", "ja": "基本会話" },
+    "ceb": "Dili",
+    "pronunciation": "DEE-lee",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "No" },
+      "ja": { "meaning": "いいえ" }
+    }
+  },
+  {
+    "id": "basic_3",
+    "category": { "en": "Basics", "ja": "基本会話" },
+    "ceb": "Palihug",
+    "pronunciation": "pa-LEE-hoog",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Please" },
+      "ja": { "meaning": "お願いします" }
+    }
+  },
+  {
+    "id": "basic_4",
+    "category": { "en": "Basics", "ja": "基本会話" },
+    "ceb": "Pasensya na",
+    "pronunciation": "pa-SEN-sha na",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Sorry" },
+      "ja": { "meaning": "ごめんなさい" }
+    }
+  },
+  {
+    "id": "basic_5",
+    "category": { "en": "Basics", "ja": "基本会話" },
+    "ceb": "Unsaon nimo",
+    "pronunciation": "oon-SA-on NEE-mo",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "How do you" },
+      "ja": { "meaning": "どうやって" }
+    }
+  },
+
+  {
+    "id": "shopping_1",
+    "category": { "en": "Shopping", "ja": "買い物" },
+    "ceb": "Palit",
+    "pronunciation": "pa-LIT",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Buy" },
+      "ja": { "meaning": "買う" }
+    }
+  },
+  {
+    "id": "shopping_2",
+    "category": { "en": "Shopping", "ja": "買い物" },
+    "ceb": "Pila",
+    "pronunciation": "PEE-la",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "How much" },
+      "ja": { "meaning": "いくら" }
+    }
+  },
+  {
+    "id": "shopping_3",
+    "category": { "en": "Shopping", "ja": "買い物" },
+    "ceb": "Kwarta",
+    "pronunciation": "KWAHR-ta",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Money" },
+      "ja": { "meaning": "お金" }
+    }
+  },
+  {
+    "id": "shopping_4",
+    "category": { "en": "Shopping", "ja": "買い物" },
+    "ceb": "Barato",
+    "pronunciation": "ba-RAH-to",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Cheap" },
+      "ja": { "meaning": "安い" }
+    }
+  },
+  {
+    "id": "shopping_5",
+    "category": { "en": "Shopping", "ja": "買い物" },
+    "ceb": "Mahal",
+    "pronunciation": "ma-HAHL",
+    "difficulty": 1,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Expensive" },
+      "ja": { "meaning": "高い" }
+    }
+  },
+
+  {
+    "id": "food_1",
+    "category": { "en": "Food", "ja": "食べ物" },
+    "ceb": "Kaon",
+    "pronunciation": "KA-on",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Eat" },
+      "ja": { "meaning": "食べる" }
+    }
+  },
+  {
+    "id": "food_2",
+    "category": { "en": "Food", "ja": "食べ物" },
+    "ceb": "Inom",
+    "pronunciation": "EE-nom",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Drink" },
+      "ja": { "meaning": "飲む" }
+    }
+  },
+  {
+    "id": "food_3",
+    "category": { "en": "Food", "ja": "食べ物" },
+    "ceb": "Tubig",
+    "pronunciation": "TOO-big",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Water" },
+      "ja": { "meaning": "水" }
+    }
+  },
+  {
+    "id": "food_4",
+    "category": { "en": "Food", "ja": "食べ物" },
+    "ceb": "Bugas",
+    "pronunciation": "BOO-gas",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Rice" },
+      "ja": { "meaning": "米" }
+    }
+  },
+  {
+    "id": "food_5",
+    "category": { "en": "Food", "ja": "食べ物" },
+    "ceb": "Isda",
+    "pronunciation": "EES-da",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Fish" },
+      "ja": { "meaning": "魚" }
+    }
+  },
+
+  {
+    "id": "place_1",
+    "category": { "en": "Places", "ja": "場所" },
+    "ceb": "Balay",
+    "pronunciation": "BAH-lie",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "House" },
+      "ja": { "meaning": "家" }
+    }
+  },
+  {
+    "id": "place_2",
+    "category": { "en": "Places", "ja": "場所" },
+    "ceb": "Eskwelahan",
+    "pronunciation": "es-kweh-LA-han",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "School" },
+      "ja": { "meaning": "学校" }
+    }
+  },
+  {
+    "id": "place_3",
+    "category": { "en": "Places", "ja": "場所" },
+    "ceb": "Merkado",
+    "pronunciation": "mer-KA-do",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Market" },
+      "ja": { "meaning": "市場" }
+    }
+  },
+  {
+    "id": "place_4",
+    "category": { "en": "Places", "ja": "場所" },
+    "ceb": "Simbahan",
+    "pronunciation": "sim-BAH-han",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Church" },
+      "ja": { "meaning": "教会" }
+    }
+  },
+  {
+    "id": "place_5",
+    "category": { "en": "Places", "ja": "場所" },
+    "ceb": "Ospital",
+    "pronunciation": "os-PEE-tal",
+    "difficulty": 2,
+    "isPremium": false,
+    "translations": {
+      "en": { "meaning": "Hospital" },
+      "ja": { "meaning": "病院" }
+    }
+  }
+]
