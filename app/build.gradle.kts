@@ -57,8 +57,8 @@ android {
     signingConfigs {
         create("release") {
             val keystorePath = localProperties.getProperty("RELEASE_STORE_FILE")
-                ?: "C:/BisayaSpeakAI/bisaya-speak-ai.jks"
-            storeFile = file(keystorePath)
+                ?: "bisaya-speak-ai.jks"
+            storeFile = file("../$keystorePath")
             storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD") ?: ""
             keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS") ?: "bisaya-speak-ai"
             keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD") ?: ""
