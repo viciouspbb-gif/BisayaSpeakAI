@@ -153,7 +153,8 @@ class MainActivity : ComponentActivity() {
                         val isDebugWhitelistedUser = BuildConfig.DEBUG &&
                             currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
                         // effectivePro は isPremiumUser のみを唯一の判定基準とする
-                        val effectivePro = isPremiumUser
+                        // デバッグビルドでは強制的にtrueにする
+                        val effectivePro = if (BuildConfig.DEBUG) true else isPremiumUser
 
                         // 課金状態の即時反映を確保
                         app.isProVersion = effectivePro
