@@ -60,6 +60,7 @@ import com.bisayaspeak.ai.ui.viewmodel.TranslationCandidate
 @Composable
 fun DictionaryScreen(
     onBack: () -> Unit,
+    isProVersion: Boolean = false,
     viewModel: DictionaryViewModel = viewModel(factory = DictionaryViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()

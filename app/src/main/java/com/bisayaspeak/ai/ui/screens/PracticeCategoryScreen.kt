@@ -42,6 +42,7 @@ fun PracticeCategoryScreen(
     onNavigateBack: () -> Unit,
     onCategorySelected: (String) -> Unit,
     onNavigateToUpgrade: () -> Unit = {},
+    isProVersion: Boolean = false,
     userPlan: UserPlan = UserPlan.LITE,
     viewModel: PracticeViewModel = viewModel(),
     modifier: Modifier = Modifier

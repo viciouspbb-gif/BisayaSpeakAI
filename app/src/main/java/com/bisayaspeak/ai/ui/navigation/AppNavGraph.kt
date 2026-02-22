@@ -349,7 +349,8 @@ fun AppNavGraph(
 
         composable(AppRoute.Dictionary.route) {
             DictionaryScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                isProVersion = isProVersion
             )
         }
 
@@ -445,7 +446,8 @@ fun AppNavGraph(
         composable(AppRoute.Flashcards.route) {
             BannerScreenContainer(isProVersion = isProVersion) {
                 FlashcardScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    isProVersion = isProVersion
                 )
             }
         }
@@ -458,13 +460,11 @@ fun AppNavGraph(
                     onCategorySelected = { category ->
                         navController.navigate("practice/quiz/$category")
                     },
-                    userPlan = if (isProVersion) UserPlan.PREMIUM else UserPlan.LITE,
-                    onNavigateToUpgrade = { navController.navigate(AppRoute.Upgrade.route) }
+                    isProVersion = isProVersion
                 )
             }
         }
 
-        // Practice Quiz
         composable(
             route = "practice/quiz/{category}",
             arguments = listOf(navArgument("category") { type = NavType.StringType })
@@ -519,7 +519,8 @@ fun AppNavGraph(
             com.bisayaspeak.ai.ui.screens.ListeningScreen(
                 navController = navController,
                 level = level,
-                viewModel = viewModel
+                viewModel = viewModel,
+                isProVersion = isProVersion
             )
         }
 

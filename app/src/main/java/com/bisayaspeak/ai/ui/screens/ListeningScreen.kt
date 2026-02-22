@@ -95,7 +95,8 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
 fun ListeningScreen(
     navController: NavHostController,
     level: Int,
-    viewModel: ListeningViewModel
+    viewModel: ListeningViewModel,
+    isProVersion: Boolean = false
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
