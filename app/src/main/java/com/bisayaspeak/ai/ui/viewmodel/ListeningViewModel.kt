@@ -362,7 +362,20 @@ class ListeningViewModel(
     }
 
     fun processHintRequest() {
-        playAudio()
+        if (_isProUser.value) {
+            // Pro users get unlimited hints
+            performAudioPlayback()
+        } else {
+            if (_voiceHintRemaining.value > 0) {
+                _voiceHintRemaining.value = (_voiceHintRemaining.value - 1).coerceAtLeast(0)
+                saveHintCount()
+                performAudioPlayback()
+            } else {
+                // No hints remaining - show recovery dialog
+                _showHintRecoveryDialog.value = true
+                startAdReloading()
+            }
+        }
     }
 
     fun requestHintPlayback() {

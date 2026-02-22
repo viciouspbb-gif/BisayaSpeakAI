@@ -322,12 +322,7 @@ fun ListeningScreen(
                             contentScale = ContentScale.Fit
                         )
                         val adsEnabled = AdsPolicy.areAdsEnabled
-                        val hintButtonEnabled = !isPlaying && (
-                                voiceHintRemaining > 0 ||
-                                        rewardedAdState == ListeningViewModel.RewardAdState.READY ||
-                                        rewardedAdState == ListeningViewModel.RewardAdState.FAILED ||
-                                        !adsEnabled
-                                )
+                        val hintButtonEnabled = !isPlaying  // CEO指示：押した時に「広告がない」とトーストを出すため常に有効化
                         val hintLabelEn = when {
                             voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining, voiceHintRemaining)
                             rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad)
@@ -343,14 +338,7 @@ fun ListeningScreen(
                         val (hintPrimaryText, hintSecondaryText) = localize(hintLabelEn, hintLabelJa, preferJapanese)
                         Button(
                             onClick = {
-                                when {
-                                    voiceHintRemaining > 0 -> requestHintPlayback()
-                                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> executeAdPlaybackIfReady(activity, context, viewModel, true)
-                                    else -> {
-                                        // CEO指示：「広告を見せないなら、ヒントも出さない」
-                                        Toast.makeText(context, "現在、広告の準備ができていません。しばらくしてからお試しください", Toast.LENGTH_LONG).show()
-                                    }
-                                }
+                                viewModel.processHintRequest()  // CEO指示：ViewModelのprocessHintRequest()に統一
                             },
                             enabled = hintButtonEnabled,
                             colors = ButtonDefaults.buttonColors(
