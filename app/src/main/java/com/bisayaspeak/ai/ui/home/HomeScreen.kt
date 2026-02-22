@@ -147,10 +147,7 @@ fun HomeScreen(
                 icon = Icons.Default.ViewList,
                 color = MaterialTheme.colorScheme.primary,
                 onClick = { 
-                    // デバッグビルドでは完全に無条件でタリ散歩に遷移
-                    if (BuildConfig.DEBUG) {
-                        onClickFeature(FeatureId.ROLE_PLAY)
-                    } else if (effectivePremiumPlan || effectiveProUnlocked) {
+                    if (effectivePremiumPlan || effectiveProUnlocked) {
                         onClickFeature(FeatureId.ROLE_PLAY)
                     } else {
                         showProDialog = true
