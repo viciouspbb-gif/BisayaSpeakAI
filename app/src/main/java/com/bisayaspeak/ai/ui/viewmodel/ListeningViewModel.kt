@@ -190,6 +190,14 @@ class ListeningViewModel(
     private val _showHintRecoveryDialog = MutableStateFlow(false)
     val showHintRecoveryDialog: StateFlow<Boolean> = _showHintRecoveryDialog.asStateFlow()
 
+    // 即座広告実行フラグ
+    private val _shouldShowAdImmediately = MutableStateFlow(false)
+    val shouldShowAdImmediately: StateFlow<Boolean> = _shouldShowAdImmediately.asStateFlow()
+
+    fun clearShouldShowAdImmediately() {
+        _shouldShowAdImmediately.value = false
+    }
+
     // リワード広告のプリロード状態
     enum class RewardAdState { LOADING, READY, FAILED, NOT_READY }
     private val _rewardedAdLoaded = MutableStateFlow(false)
@@ -327,12 +335,12 @@ class ListeningViewModel(
         // 実際の復活処理は広告視聴コールバックで行うため、ここでは何もしない
     }
 
-    // 広告視聴完了によるヒント復活（実際の復活処理）
+    // 広告視聴完了によるヒント復活（商売の心臓部）
     fun recoverHintsThroughAd() {
-        _voiceHintRemaining.value = 3  // CEO指示：広告視聴完了後、0から3へリセット
-        saveHintCount()
+        _voiceHintRemaining.value = 3  // 物理的に3を書き込み
+        saveHintCount()  // SharedPreferencesに即時保存
         _showHintRecoveryDialog.value = false
-        Log.d("ListeningViewModel", "Hints recovered through ad watching: reset to 3 hints")
+        Log.d("ListeningViewModel", "商売の心臓部: hints recovered through ad watching: reset to 3 hints")
     }
 
     // 広告カウンターを更新（レッスンキャンセル時用）
@@ -371,9 +379,9 @@ class ListeningViewModel(
                 saveHintCount()
                 performAudioPlayback()
             } else {
-                // No hints remaining - show recovery dialog
-                _showHintRecoveryDialog.value = true
-                startAdReloading()
+                // ヒントが0になったら即座に広告を実行 - 二段構えの確認を廃止
+                _showHintRecoveryDialog.value = false // ダイアログを出さない
+                _shouldShowAdImmediately.value = true // 即座広告実行フラグ
             }
         }
     }
