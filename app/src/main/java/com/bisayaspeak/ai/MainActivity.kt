@@ -155,12 +155,16 @@ class MainActivity : ComponentActivity() {
                         // effectivePro は isPremiumUser のみを唯一の判定基準とする
                         val effectivePro = isPremiumUser
 
+                        // 課金状態の即時反映を確保
+                        app.isProVersion = effectivePro
+
                         androidx.compose.runtime.SideEffect {
                             logEffectiveProState(
                                 isPremiumUser = isPremiumUser,
                                 isDebugWhitelistedUser = isDebugWhitelistedUser,
                                 effectivePro = effectivePro
                             )
+                            // 二重設定は問題ないが、念のため
                             app.isProVersion = effectivePro
                         }
 
