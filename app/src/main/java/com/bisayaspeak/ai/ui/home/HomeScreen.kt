@@ -120,19 +120,53 @@ fun HomeScreen(
         }
 
         // PRO機能リスト
-        ProFeaturesSection(
-            onClickFeature = onClickFeature,
-            onRequireUpgrade = { onClickFeature(FeatureId.UPGRADE) },
-            isTariComingSoon = isTariComingSoon,
-            onComingSoon = {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.home_new_feature_message),
-                    Toast.LENGTH_SHORT
-                ).show()
-            },
-            isLiteRestricted = AdsPolicy.areAdsEnabled
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // AI翻訳機
+            ProFeatureItem(
+                title = stringResource(R.string.home_feature_ai_translator_title),
+                subtitle = stringResource(R.string.home_feature_ai_translator_subtitle),
+                icon = Icons.Default.Translate,
+                color = Color(0xFFD4A017),
+                onClick = { onClickFeature(FeatureId.AI_TRANSLATOR) },
+                modifier = Modifier.weight(1f)
+            )
+
+            // タリと散歩道
+            ProFeatureItem(
+                title = stringResource(R.string.home_feature_tari_walk_title),
+                subtitle = stringResource(R.string.home_feature_tari_walk_subtitle),
+                icon = Icons.Default.ViewList,
+                color = MaterialTheme.colorScheme.primary,
+                onClick = { 
+                    if (isPremiumPlan || isProUnlocked) {
+                        onClickFeature(FeatureId.ROLE_PLAY)
+                    } else {
+                        showProDialog = true
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            // カミングスーン（リリース） / タリ道場（デバッグ）
+            val dojoTitle = stringResource(R.string.home_feature_dojo_title_master)
+            val dojoSubtitle = stringResource(R.string.home_feature_dojo_subtitle_master)
+            val dojoIllustration = R.drawable.taridoujo
+
+            ProFeatureItem(
+                title = dojoTitle,
+                subtitle = dojoSubtitle,
+                icon = Icons.Default.Psychology,
+                color = Color(0xFFCD7F32),
+                illustration = dojoIllustration,
+                onClick = { onClickFeature(FeatureId.UPGRADE) },
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -332,74 +366,6 @@ fun LearningSection(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun ProFeaturesSection(
-    onClickFeature: (FeatureId) -> Unit,
-    onRequireUpgrade: () -> Unit,
-    isTariComingSoon: Boolean,
-    onComingSoon: () -> Unit,
-    isLiteRestricted: Boolean
-) {
-    val context = LocalContext.current
-    var showDojoInfo by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // AI翻訳機
-        ProFeatureItem(
-            title = stringResource(R.string.home_feature_ai_translator_title),
-            subtitle = stringResource(R.string.home_feature_ai_translator_subtitle),
-            icon = Icons.Default.Translate,
-            color = Color(0xFFD4A017),
-            onClick = { onClickFeature(FeatureId.AI_TRANSLATOR) },
-            modifier = Modifier.weight(1f)
-        )
-
-        // タリと散歩道
-        ProFeatureItem(
-            title = stringResource(R.string.home_feature_tari_walk_title),
-            subtitle = stringResource(R.string.home_feature_tari_walk_subtitle),
-            icon = Icons.Default.ViewList,
-            color = MaterialTheme.colorScheme.primary,
-            onClick = { onClickFeature(FeatureId.ROLE_PLAY) },
-            modifier = Modifier.weight(1f)
-        )
-
-        // カミングスーン（リリース） / タリ道場（デバッグ）
-        val dojoTitle = stringResource(R.string.home_feature_dojo_title_master)
-        val dojoSubtitle = stringResource(R.string.home_feature_dojo_subtitle_master)
-        val dojoIllustration = R.drawable.taridoujo
-
-        ProFeatureItem(
-            title = dojoTitle,
-            subtitle = dojoSubtitle,
-            icon = Icons.Default.Psychology,
-            color = Color(0xFFCD7F32),
-            illustration = dojoIllustration,
-
-            onClick = { showDojoInfo = true },
-            modifier = Modifier.weight(1f)
-        )
-    }
-
-    if (showDojoInfo) {
-        AlertDialog(
-            onDismissRequest = { showDojoInfo = false },
-            title = { Text(text = stringResource(R.string.home_feature_dojo_placeholder_title)) },
-            text = { Text(text = stringResource(R.string.home_feature_dojo_placeholder_message)) },
-            confirmButton = {
-                TextButton(onClick = { showDojoInfo = false }) {
-                    Text(text = stringResource(R.string.home_feature_dojo_placeholder_cta))
-                }
-            }
-        )
     }
 }
 
