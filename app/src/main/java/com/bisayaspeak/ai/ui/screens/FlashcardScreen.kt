@@ -53,7 +53,8 @@ import com.bisayaspeak.ai.ui.viewmodel.PracticeViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FlashcardScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    isProVersion: Boolean = false
 ) {
     val isLiteBuild = BuildConfig.IS_LITE_BUILD
     val context = LocalContext.current
