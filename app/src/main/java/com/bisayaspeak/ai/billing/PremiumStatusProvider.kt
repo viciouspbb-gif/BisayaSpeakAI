@@ -10,14 +10,14 @@ import com.bisayaspeak.ai.BuildConfig
  * hasPremiumAI / isProUnlocked / subscriptionActive のいずれかが true であれば
  * isPremiumUser も true になる。
  * 
- * 初期値はフレーバーで決定：
- * - Pro版デバッグ：最初からtrue（テスト用）
- * - その他：false（実際の課金状態を待つ）
+ * 描画の第一フレームから正しい状態を保証するため、
+ * オブジェクト生成時にBuildConfigを参照して即座に初期値を決定する。
  */
 object PremiumStatusProvider {
 
-    // フレーバーに応じた初期値を設定
-    private val initialValue = BuildConfig.FLAVOR == "pro" && BuildConfig.DEBUG
+    // 描画の第一フレームからtrueである状態を保証
+    // Pro版デバッグ：最初からtrue、その他：false
+    private val initialValue: Boolean = BuildConfig.FLAVOR == "pro" && BuildConfig.DEBUG
     private val _isPremiumUser = MutableStateFlow(initialValue)
     val isPremiumUser: StateFlow<Boolean> = _isPremiumUser.asStateFlow()
 

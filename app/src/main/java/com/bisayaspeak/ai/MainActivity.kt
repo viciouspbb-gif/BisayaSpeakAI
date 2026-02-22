@@ -151,6 +151,14 @@ class MainActivity : ComponentActivity() {
                         val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
                         val observedPro by app.proVersionState.collectAsState()
 
+                        // 同期的初期化：Flowを待つのではなく、その瞬間の確定値を計算
+                        val isProFlavor = BuildConfig.FLAVOR == "pro"
+                        val effectivePro = if (isProFlavor && BuildConfig.DEBUG) {
+                            true  // Pro版デバッグ：描画の第一フレームからtrue
+                        } else {
+                            isPremiumUser  // その他：Flowの現在値
+                        }
+
                         val debugAuth = remember { FirebaseAuth.getInstance() }
                         val currentUser = remember { mutableStateOf(debugAuth.currentUser) }
 
@@ -165,15 +173,6 @@ class MainActivity : ComponentActivity() {
                         val isDebugWhitelistedUser = BuildConfig.DEBUG &&
                             currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
                         
-                        // effectivePro はフレーバーと課金状態を考慮した最終判定
-                        // Pro版デバッグ：強制的に有効化、それ以外は課金状態を使用
-                        val isProFlavor = BuildConfig.FLAVOR == "pro"
-                        val effectivePro = if (isProFlavor && BuildConfig.DEBUG) {
-                            true
-                        } else {
-                            isPremiumUser
-                        }
-
                         // 課金状態の即時反映を確保 - collect内で設定することで競合状態を排除
                         app.isProVersion = effectivePro
 
