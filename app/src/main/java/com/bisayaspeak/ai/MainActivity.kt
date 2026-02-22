@@ -93,6 +93,10 @@ class MainActivity : ComponentActivity() {
                     isProUnlocked = isProUnlocked,
                     subscriptionActive = subscriptionActive
                 )
+                
+                // 競合状態を完全に排除するため、collect内で直接app.isProVersionを設定
+                val effectivePro = if (BuildConfig.DEBUG) true else (hasPremiumAI || isProUnlocked || subscriptionActive)
+                app.isProVersion = effectivePro
             }.collect { }
         }
 
@@ -152,11 +156,12 @@ class MainActivity : ComponentActivity() {
 
                         val isDebugWhitelistedUser = BuildConfig.DEBUG &&
                             currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
+                        
                         // effectivePro は isPremiumUser のみを唯一の判定基準とする
                         // デバッグビルドでは強制的にtrueにする
                         val effectivePro = if (BuildConfig.DEBUG) true else isPremiumUser
 
-                        // 課金状態の即時反映を確保
+                        // 課金状態の即時反映を確保 - collect内で設定することで競合状態を排除
                         app.isProVersion = effectivePro
 
                         androidx.compose.runtime.SideEffect {
@@ -165,7 +170,7 @@ class MainActivity : ComponentActivity() {
                                 isDebugWhitelistedUser = isDebugWhitelistedUser,
                                 effectivePro = effectivePro
                             )
-                            // 二重設定は問題ないが、念のため
+                            // collect内での設定を最優先するため、SideEffectでも設定（二重保障）
                             app.isProVersion = effectivePro
                         }
 
