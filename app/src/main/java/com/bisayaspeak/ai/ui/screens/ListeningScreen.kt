@@ -79,6 +79,8 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
             },
             onAdClosed = {
                 Log.d("ListeningScreen", "Reward ad closed")
+                // 広告終了＝即リロード
+                AdManager.loadReward(activity)
             }
         )
     } else {
@@ -105,6 +107,7 @@ fun ListeningScreen(
     val comboCount by viewModel.comboCount.collectAsState()
     val voiceHintRemaining by viewModel.voiceHintRemaining.collectAsState()
     val showHintRecoveryDialog by viewModel.showHintRecoveryDialog.collectAsState()
+    val shouldShowAdImmediately by viewModel.shouldShowAdImmediately.collectAsState()
     val rewardedAdLoaded by viewModel.rewardedAdLoaded.collectAsState()
     val rewardedAdState by viewModel.rewardedAdState.collectAsState()
     val selectedWords by viewModel.selectedWords.collectAsState()
@@ -332,10 +335,8 @@ fun ListeningScreen(
                             enabled = hintButtonEnabled,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = when {
-                                    voiceHintRemaining > 0 -> Color(0xFF2D3246)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.READY -> Color(0xFFFFA726)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> Color(0xFF4E342E)
-                                    else -> Color(0xFF333333)
+                                    voiceHintRemaining > 0 -> Color(0xFF2D3246)  // 残数あり→紺色
+                                    else -> Color(0xFFFFA726)  // 残数0→常に黄色（広告アイコン）
                                 },
                                 disabledContainerColor = Color(0xFF333333)
                             ),
@@ -488,6 +489,28 @@ fun ListeningScreen(
                     }
                 }
             }
+        }
+    }
+
+    // 即座広告実行フラグを監視
+    LaunchedEffect(shouldShowAdImmediately) {
+        if (shouldShowAdImmediately) {
+            if (activity != null) {
+                AdManager.showRewardAd(
+                    activity = activity,
+                    onRewardEarned = {
+                        viewModel.recoverHintsThroughAd()
+                        Log.d("ListeningScreen", "Reward earned, hints recovered through ad watching")
+                    },
+                    onAdClosed = {
+                        Log.d("ListeningScreen", "Reward ad closed")
+                        // 広告終了＝即リロード
+                        AdManager.loadReward(activity)
+                    }
+                )
+            }
+            // フラグをリセット
+            viewModel.clearShouldShowAdImmediately()
         }
     }
 
