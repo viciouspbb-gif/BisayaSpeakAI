@@ -44,9 +44,7 @@ class BillingManager(private val context: Context) {
         }
         
         // 開発者アカウント（常にプレミアム扱い）
-        private val DEVELOPER_EMAILS = setOf(
-            "vicious.pbb@gmail.com"
-        )
+        private val DEVELOPER_EMAILS = emptySet<String>()
     }
     
     private var billingClient: BillingClient? = null
@@ -86,43 +84,12 @@ class BillingManager(private val context: Context) {
     /**
      * 開発者アカウントかチェック
      */
-    private fun isDeveloperAccount(): Boolean {
-        try {
-            val accountManager = android.accounts.AccountManager.get(context)
-            val accounts = accountManager.getAccountsByType("com.google")
-            
-            Log.d(TAG, "Checking ${accounts.size} Google accounts")
-            for (account in accounts) {
-                Log.d(TAG, "Found account: ${account.name}")
-                if (account.name in DEVELOPER_EMAILS) {
-                    Log.d(TAG, "✅ Developer account detected: ${account.name}")
-                    return true
-                }
-            }
-            Log.d(TAG, "❌ No developer account found")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to check developer account", e)
-        }
-        return false
-    }
+    private fun isDeveloperAccount(): Boolean = false
 
     /**
      * 開発者の実機かどうかを判定
      */
-    private fun isMyDevice(): Boolean {
-        val manufacturer = android.os.Build.MANUFACTURER.orEmpty()
-        val brand = android.os.Build.BRAND.orEmpty()
-        val model = android.os.Build.MODEL.orEmpty()
-
-        Log.d(
-            TAG,
-            "Device check => manufacturer: $manufacturer / brand: $brand / model: $model"
-        )
-
-        return manufacturer.equals("SHARP", ignoreCase = true) ||
-            brand.equals("SHARP", ignoreCase = true) ||
-            model.contains("sense9", ignoreCase = true)
-    }
+    private fun isMyDevice(): Boolean = false
     
     /**
      * Billing Clientを初期化

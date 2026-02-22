@@ -540,6 +540,21 @@ class AiTranslatorViewModel(
         val countAfter = afterStatus?.usedCount ?: (countBefore + 1)
         val maxCount = afterStatus?.maxCount ?: FreeUsageRepository.MAX_TRANSLATE_PER_DAY
         val shouldShowAd = countAfter in listOf(2, 4)
+        val isBeyondLimit = countAfter > maxCount
+
+        if (isBeyondLimit) {
+            publishDebugState(
+                snapshot = UsageSnapshot(dayKeyAfter, countAfter, maxCount),
+                isPremiumUser = false,
+                shouldShowAd = false,
+                adAttempted = false,
+                adResult = "beyond_limit",
+                skipReason = "beyond_limit"
+            )
+            _uiState.value = TranslatorUiState.Error("本日の無料翻訳は上限に達しました")
+            _events.emit(TranslatorEvent.ShowUpsell)
+            return null
+        }
 
         val logContext = TranslateAdLogContext(
             isPremiumUser = false,

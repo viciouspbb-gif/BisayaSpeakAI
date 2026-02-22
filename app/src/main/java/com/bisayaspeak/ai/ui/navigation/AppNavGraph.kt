@@ -178,11 +178,10 @@ fun AppNavGraph(
                             FeatureId.ACCOUNT -> navController.navigate(AppRoute.Account.route)
                             FeatureId.UPGRADE -> navController.navigate(AppRoute.Upgrade.route)
                             FeatureId.ROLE_PLAY -> {
-                                // Allow Pro users to access Sanpo, show toast for Lite users
                                 if (isProVersion) {
                                     navController.navigate(AppRoute.RolePlayList.route)
                                 } else {
-                                    Toast.makeText(context, "タリ散歩はPro版限定です。まずはAI翻訳機を体験してみましょう！", Toast.LENGTH_LONG).show()
+                                    navController.navigate(AppRoute.Upgrade.route)
                                 }
                             }
 
