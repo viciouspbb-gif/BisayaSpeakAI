@@ -79,6 +79,10 @@ fun HomeScreen(
     val context = LocalContext.current
     val isTariComingSoon = !BuildConfig.DEBUG
 
+    // デバッグビルドでは強制的にプレミアムとして扱う
+    val effectivePremiumPlan = if (BuildConfig.DEBUG) true else isPremiumPlan
+    val effectiveProUnlocked = if (BuildConfig.DEBUG) true else isProUnlocked
+
     var showProDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -143,7 +147,7 @@ fun HomeScreen(
                 icon = Icons.Default.ViewList,
                 color = MaterialTheme.colorScheme.primary,
                 onClick = { 
-                    if (isPremiumPlan || isProUnlocked) {
+                    if (effectivePremiumPlan || effectiveProUnlocked) {
                         onClickFeature(FeatureId.ROLE_PLAY)
                     } else {
                         showProDialog = true
