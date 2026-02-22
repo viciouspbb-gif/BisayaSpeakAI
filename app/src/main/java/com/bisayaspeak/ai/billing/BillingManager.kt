@@ -8,11 +8,12 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.QueryPurchasesParams
+import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchasesParams
+import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.data.model.UserPlan
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -204,12 +205,16 @@ class BillingManager(private val context: Context) {
                 }
 
                 _hasPremiumAI.value = hasPremiumAI
-                if (hasPremiumAI) {
+                // CTO指示：プロデバッグ版では強制的にpremium=trueにする
+                val isProDebug = BuildConfig.DEBUG && !BuildConfig.IS_LITE_BUILD
+                val finalPremiumStatus = hasPremiumAI || isProDebug
+                
+                if (finalPremiumStatus) {
                     _isPremium.value = true
                 } else if (!_isProUnlocked.value) {
                     _isPremium.value = false
                 }
-                Log.d(TAG, "Premium AI status: $hasPremiumAI (${purchases.size} subs)")
+                Log.d(TAG, "Premium AI status: $finalPremiumStatus (${purchases.size} subs) - ProDebug: $isProDebug")
                 refreshUserPlan()
             } else {
                 Log.w(TAG, "Failed to query subs purchases: ${billingResult.debugMessage}")
