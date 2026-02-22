@@ -1651,18 +1651,9 @@ class ListeningViewModel(
                 AdManager.loadReward(context)
                 scheduleRewardTimeout()
 
-                // 広告の準備を待機（最大10秒）
-                var waited = 0
-                while (waited < 10 && !_rewardedAdLoaded.value) {
-                    kotlinx.coroutines.delay(1000)
-                    waited++
-                    Log.d("ListeningViewModel", "Waiting for ad to load... ${waited}s")
-                }
-
-                if (!_rewardedAdLoaded.value) {
-                    Log.w("ListeningViewModel", "Ad reload timeout - keeping NOT READY state")
-                    _rewardedAdState.value = RewardAdState.FAILED
-                }
+                // 現場報告対応：偽の読み込みステータスを廃止
+                // 広告の準備待機を削除し、即座に試行する
+                _rewardedAdState.value = RewardAdState.NOT_READY
 
             } catch (e: Exception) {
                 Log.e("ListeningViewModel", "Failed to reload ad: ${e.message}")
