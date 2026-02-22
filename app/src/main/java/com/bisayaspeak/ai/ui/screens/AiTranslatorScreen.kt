@@ -98,6 +98,7 @@ import com.bisayaspeak.ai.util.findActivityOrNull
 fun AiTranslatorScreen(
     onBack: () -> Unit,
     onNavigateToUpgrade: () -> Unit = {},
+    isProVersion: Boolean = false,
     viewModel: AiTranslatorViewModel = viewModel()
 ) {
     val inputText by viewModel.inputText.collectAsState()
@@ -107,14 +108,15 @@ fun AiTranslatorScreen(
     val usageStatus by viewModel.usageStatus.collectAsState()
     val candidates by viewModel.candidates.collectAsState()
     val explanation by viewModel.explanation.collectAsState()
-    val isPremiumUser by PremiumStatusProvider.isPremiumUser.collectAsState()
+    // 渡されたisProVersionを最優先で使用
+    val effectiveIsPremium = isProVersion
 
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val isDebugProBuild = BuildConfig.DEBUG && !BuildConfig.IS_LITE_BUILD
     val voiceService = remember { GeminiVoiceService(context) }
 
-    val limitReached = !isPremiumUser && (usageStatus?.canUse == false)
+    val limitReached = !effectiveIsPremium && (usageStatus?.canUse == false)
     val limitKey = if (limitReached) {
         listOfNotNull(usageStatus?.dayKey, usageStatus?.usedCount?.toString()).joinToString(":")
     } else null
@@ -258,7 +260,7 @@ fun AiTranslatorScreen(
             TranslateActionButton(
                 isTranslating = uiState is TranslatorUiState.Loading,
                 limitReached = limitReached,
-                onTranslate = { viewModel.translate(isPremiumUser) },
+                onTranslate = { viewModel.translate(effectiveIsPremium) },
                 onLimitReached = { showTranslatorUpsell = true }
             )
 
