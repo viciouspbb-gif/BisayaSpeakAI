@@ -345,10 +345,11 @@ fun ListeningScreen(
                             onClick = {
                                 when {
                                     voiceHintRemaining > 0 -> requestHintPlayback()
-                                    !adsEnabled -> viewModel.forceHintPlaybackWithoutAds()
                                     rewardedAdState == ListeningViewModel.RewardAdState.READY -> executeAdPlaybackIfReady(activity, context, viewModel, true)
-                                    rewardedAdState == ListeningViewModel.RewardAdState.FAILED -> viewModel.forceHintPlaybackWithoutAds()
-                                    else -> Log.d("ListeningScreen", "Hint button pressed but ad still loading")
+                                    else -> {
+                                        // CEO指示：「広告を見せないなら、ヒントも出さない」
+                                        Toast.makeText(context, "現在、広告の準備ができていません。しばらくしてからお試しください", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             },
                             enabled = hintButtonEnabled,

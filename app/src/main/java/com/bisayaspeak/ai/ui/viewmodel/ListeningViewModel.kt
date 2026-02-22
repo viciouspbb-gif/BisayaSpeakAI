@@ -181,7 +181,7 @@ class ListeningViewModel(
     val shouldShowAd: StateFlow<Boolean> = _shouldShowAd.asStateFlow()
 
     // 音声ヒント関連
-    private val _voiceHintRemaining = MutableStateFlow(0)
+    private val _voiceHintRemaining = MutableStateFlow(3)  // CEO指示：最初の3回分はユーザーへのギフト
     val voiceHintRemaining: StateFlow<Int> = _voiceHintRemaining.asStateFlow()
 
     private val _isProUser = MutableStateFlow(bisayaSpeakApp.isProVersion)
@@ -329,10 +329,10 @@ class ListeningViewModel(
 
     // 広告視聴完了によるヒント復活（実際の復活処理）
     fun recoverHintsThroughAd() {
-        _voiceHintRemaining.value = (_voiceHintRemaining.value + 3).coerceAtMost(MAX_VOICE_HINTS)
+        _voiceHintRemaining.value = 3  // CEO指示：広告視聴完了後、0から3へリセット
         saveHintCount()
         _showHintRecoveryDialog.value = false
-        Log.d("ListeningViewModel", "Hints recovered through ad watching: +3 hints, total: ${_voiceHintRemaining.value}")
+        Log.d("ListeningViewModel", "Hints recovered through ad watching: reset to 3 hints")
     }
 
     // 広告カウンターを更新（レッスンキャンセル時用）
@@ -495,13 +495,7 @@ class ListeningViewModel(
         }
     }
 
-    fun forceHintPlaybackWithoutAds() {
-        Log.w("ListeningViewModel", "Force-playing hint without ads")
-        _showHintRecoveryDialog.value = false
-        performAudioPlayback()
-        startAdReloading()
-    }
-
+    
     fun requestLevel(level: Int) {
         Log.d("ListeningViewModel", "requestLevel(level=$level)")
         requestedLevel = level
@@ -629,7 +623,7 @@ class ListeningViewModel(
     }
 
     private fun loadHintCount() {
-        val savedCount = sharedPreferences.getInt(HINT_COUNT_KEY, 0)
+        val savedCount = sharedPreferences.getInt(HINT_COUNT_KEY, 3)  // CEO指示：最初の3回分はユーザーへのギフト
         _voiceHintRemaining.value = savedCount
         Log.d("ListeningViewModel", "Loaded hint count from SharedPreferences: $savedCount")
     }
