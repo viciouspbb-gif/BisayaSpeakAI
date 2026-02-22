@@ -8,6 +8,7 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -86,8 +87,9 @@ private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, view
             Log.e("ListeningScreen", "Activity is null, cannot show ad")
         }
     } else {
-        // If not yellow, do nothing (no misleading behavior)
-        Log.w("ListeningScreen", "Ad not ready - button should be disabled, no action taken")
+        // AdMobがNOT_READYの場合は、絶対にヒントを出さずにブロック
+        Log.w("ListeningScreen", "Ad not ready - showing blocking toast")
+        Toast.makeText(context, "広告を準備中です。もう少々お待ちください！", Toast.LENGTH_LONG).show()
     }
 }
 
