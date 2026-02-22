@@ -31,7 +31,7 @@ android {
             useSupportLibrary = true
         }
 
-        // APIキーをBuildConfigに追加（← defaultConfig の中に入れる）
+        // APIキーをBuildConfigに追加（local.propertiesから読み込み）
         val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
 
@@ -42,12 +42,16 @@ android {
             ?: "https://bisaya-speak-ai-server-1.onrender.com"
         buildConfigField("String", "SERVER_BASE_URL", "\"$serverBaseUrl\"")
 
-        // デフォルトのAdMob App ID / 広告ユニットID（ビルドタイプで上書き）
-        buildConfigField("String", "ADMOB_APP_ID", "\"\"")
-        buildConfigField("String", "AD_UNIT_ID", "\"\"")
-        buildConfigField("String", "BANNER_AD_UNIT_ID", "\"\"")
-        buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"\"")
-        buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"\"")
+        // AdMob設定（local.propertiesから読み込み、デフォルト値は空文字）
+        buildConfigField("String", "ADMOB_APP_ID", "\"${localProperties.getProperty("ADMOB_APP_ID")}\"")
+        buildConfigField("String", "AD_UNIT_ID", "\"${localProperties.getProperty("AD_UNIT_ID")}\"")
+        buildConfigField("String", "BANNER_AD_UNIT_ID", "\"${localProperties.getProperty("BANNER_AD_UNIT_ID")}\"")
+        buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"${localProperties.getProperty("INTERSTITIAL_AD_UNIT_ID")}\"")
+        buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"${localProperties.getProperty("REWARDED_AD_UNIT_ID")}\"")
+
+        // デバッグモード設定
+        val debugMode = localProperties.getProperty("DEBUG_MODE", "false").toBoolean()
+        buildConfigField("boolean", "DEBUG_MODE", "$debugMode")
     }
 
     signingConfigs {
@@ -79,12 +83,19 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
 
-            manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-2676999942952051~8841279040"
-            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-2676999942952051~8841279040\"")
-            buildConfigField("String", "AD_UNIT_ID", "\"ca-app-pub-2676999942952051/3507292281\"")
-            buildConfigField("String", "BANNER_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/3507292281\"")
-            buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/2023179674\"")
-            buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"ca-app-pub-2676999942952051/7348562506\"")
+            // AdMob設定をlocal.propertiesから読み込み
+            val admobAppId = localProperties.getProperty("ADMOB_APP_ID_RELEASE") ?: ""
+            val adUnitId = localProperties.getProperty("AD_UNIT_ID_RELEASE") ?: ""
+            val bannerAdUnitId = localProperties.getProperty("BANNER_AD_UNIT_ID_RELEASE") ?: ""
+            val interstitialAdUnitId = localProperties.getProperty("INTERSTITIAL_AD_UNIT_ID_RELEASE") ?: ""
+            val rewardedAdUnitId = localProperties.getProperty("REWARDED_AD_UNIT_ID_RELEASE") ?: ""
+
+            manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
+            buildConfigField("String", "ADMOB_APP_ID", "\"$admobAppId\"")
+            buildConfigField("String", "AD_UNIT_ID", "\"$adUnitId\"")
+            buildConfigField("String", "BANNER_AD_UNIT_ID", "\"$bannerAdUnitId\"")
+            buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"$interstitialAdUnitId\"")
+            buildConfigField("String", "REWARDED_AD_UNIT_ID", "\"$rewardedAdUnitId\"")
         }
     }
 
