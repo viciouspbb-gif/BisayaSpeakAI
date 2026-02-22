@@ -67,29 +67,22 @@ import java.util.Locale
  * Universal rule: yellow ad button means ready to play immediately
  */
 private fun executeAdPlaybackIfReady(activity: Activity?, context: Context, viewModel: ListeningViewModel, rewardedAdLoaded: Boolean) {
-    // Universal rule: yellow = ready = play immediately
-    if (rewardedAdLoaded) {
-        Log.d("ListeningScreen", "Ad ready - executing immediate playback (universal rule)")
-
-        if (activity != null) {
-            AdManager.showRewardAd(
-                activity = activity,
-                onRewardEarned = {
-                    // Recover hints only after reward is earned
-                    viewModel.recoverHintsThroughAd()
-                    Log.d("ListeningScreen", "Reward earned, hints recovered through ad watching")
-                },
-                onAdClosed = {
-                    Log.d("ListeningScreen", "Reward ad closed")
-                }
-            )
-        } else {
-            Log.e("ListeningScreen", "Activity is null, cannot show ad")
-        }
+    // 現場報告対応：読み込み中なのに広告が出る矛盾を解消
+    // 常に即座に広告を試行し、在庫がない場合はonAdClosedが呼ばれる
+    if (activity != null) {
+        AdManager.showRewardAd(
+            activity = activity,
+            onRewardEarned = {
+                // Recover hints only after reward is earned
+                viewModel.recoverHintsThroughAd()
+                Log.d("ListeningScreen", "Reward earned, hints recovered through ad watching")
+            },
+            onAdClosed = {
+                Log.d("ListeningScreen", "Reward ad closed")
+            }
+        )
     } else {
-        // AdMobがNOT_READYの場合は、絶対にヒントを出さずにブロック
-        Log.w("ListeningScreen", "Ad not ready - showing blocking toast")
-        Toast.makeText(context, "広告を準備中です。もう少々お待ちください！", Toast.LENGTH_LONG).show()
+        Log.e("ListeningScreen", "Activity is null, cannot show ad")
     }
 }
 
@@ -325,15 +318,11 @@ fun ListeningScreen(
                         val hintButtonEnabled = !isPlaying  // CEO指示：押した時に「広告がない」とトーストを出すため常に有効化
                         val hintLabelEn = when {
                             voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining, voiceHintRemaining)
-                            rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad)
-                            rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> stringResource(R.string.listening_hint_view)
-                            else -> stringResource(R.string.listening_ad_loading)
+                            else -> stringResource(R.string.listening_hint_recover_by_ad)  // 3回使い切ったら固定
                         }
                         val hintLabelJa = when {
                             voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining_ja, voiceHintRemaining)
-                            rewardedAdState == ListeningViewModel.RewardAdState.READY && adsEnabled -> stringResource(R.string.listening_hint_recover_by_ad_ja)
-                            rewardedAdState == ListeningViewModel.RewardAdState.FAILED || !adsEnabled -> stringResource(R.string.listening_hint_view_ja)
-                            else -> stringResource(R.string.listening_ad_loading_ja)
+                            else -> stringResource(R.string.listening_hint_recover_by_ad_ja)  // 3回使い切ったら固定
                         }
                         val (hintPrimaryText, hintSecondaryText) = localize(hintLabelEn, hintLabelJa, preferJapanese)
                         Button(
@@ -523,45 +512,24 @@ fun ListeningScreen(
             onDismissRequest = { viewModel.dismissHintRecoveryDialog() },
             confirmButton = {
                 val (confirmPrimary, confirmSecondary) = localize(
-                    en = if (rewardedAdLoaded) {
-                        stringResource(R.string.listening_recover_hint_watch_video)
-                    } else {
-                        stringResource(R.string.listening_ad_loading)
-                    },
-                    ja = if (rewardedAdLoaded) {
-                        stringResource(R.string.listening_recover_hint_watch_video_ja)
-                    } else {
-                        stringResource(R.string.listening_ad_loading_ja)
-                    },
+                    en = stringResource(R.string.listening_recover_hint_watch_video),
+                    ja = stringResource(R.string.listening_recover_hint_watch_video_ja),
                     preferJaFirst = preferJapanese
                 )
                 TextButton(onClick = {
                     if (activity != null) {
-                        if (rewardedAdLoaded) {
-                            // If the ad is preloaded, show immediately
-                            AdManager.showRewardAd(
-                                activity = activity,
-                                onRewardEarned = {
-                                    // Recover hints only after reward is earned
-                                    viewModel.recoverHintsThroughAd()
-                                    Log.d("ListeningScreen", "Hint recovery ad watched (preloaded)")
-
-                                    // After watching: recover hints only (no auto playback)
-                                },
-                                onAdClosed = {}
-                            )
-                        } else {
-                            // If the ad is not ready, show on-demand
-                            AdManager.showRewardAd(
-                                activity = activity,
-                                onRewardEarned = {
-                                    // Recover hints only after reward is earned
-                                    viewModel.recoverHintsThroughAd()
-                                    Log.d("ListeningScreen", "Hint recovery ad watched (on-demand)")
-                                },
-                                onAdClosed = {}
-                            )
-                        }
+                        // 現場報告対応：常に即座に広告を試行
+                        AdManager.showRewardAd(
+                            activity = activity,
+                            onRewardEarned = {
+                                // Recover hints only after reward is earned
+                                viewModel.recoverHintsThroughAd()
+                                Log.d("ListeningScreen", "Reward earned, hints recovered through ad watching")
+                            },
+                            onAdClosed = {
+                                Log.d("ListeningScreen", "Reward ad closed")
+                            }
+                        )
                     }
                 }) {
                     Column(horizontalAlignment = Alignment.Start) {
