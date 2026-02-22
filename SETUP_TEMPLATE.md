@@ -10,8 +10,8 @@
 # ======================
 # 署名鍵関連 (必須)
 # ======================
-# 署名鍵ファイルの絶対パスを指定
-RELEASE_STORE_FILE=C:/BisayaSpeakAI/bisaya-speak-ai.jks
+# 署名鍵ファイルのパスを指定（プロジェクト直下に配置）
+RELEASE_STORE_FILE=bisaya-speak-ai.jks
 # 署名鍵のパスワード
 RELEASE_STORE_PASSWORD=Bisaya2025
 # キーのエイリアス
@@ -64,6 +64,7 @@ DEBUG_MODE=false
 # ======================
 # 1. このファイルは .gitignore に含まれており、GitHubにはアップロードされません
 # 2. APIキーなどの機密情報は安全に管理してください
-# 3. 署名鍵ファイル (.jks) も .gitignore に含まれています
-# 4. google-services.json ファイルも手動コピーが必要です (app/ ディレクトリに配置)
-# 5. 設定完了後、プロジェクトルートで ./gradlew :app:bundleProRelease を実行してビルドテストしてください
+# 3. 署名鍵ファイル (.jks) はプロジェクトのルート直下に配置してください
+# 4. 署名鍵ファイルも .gitignore に含まれています
+# 5. google-services.json ファイルも手動コピーが必要です (app/ ディレクトリに配置)
+# 6. 設定完了後、プロジェクトルートで ./gradlew :app:bundleProRelease を実行してビルドテストしてください
