@@ -168,9 +168,10 @@ class AiTranslatorViewModel(
         viewModelScope.launch {
             var attemptContext: TranslateAttemptContext? = null
             val isLiteFreeUser = BuildConfig.IS_LITE_BUILD && !isPremiumUser
-            if (isLiteFreeUser) {
-                attemptContext = prepareTranslateAttempt() ?: return@launch
-            } else {
+            
+            // VIPを一般列に並ばせない - 優先順位を逆転
+            if (!isLiteFreeUser) {
+                // Proユーザー：即座に翻訳実行、prepareTranslateAttemptを1ミリも通さない
                 val premiumSnapshot = usageSnapshot()
                 publishDebugState(
                     snapshot = premiumSnapshot,
@@ -180,30 +181,40 @@ class AiTranslatorViewModel(
                     adResult = "skipped",
                     skipReason = "premium"
                 )
-                Log.d(LOG_TAG, "premium skip translate quota=true")
-            }
+                
+                try {
+                    _uiState.value = TranslatorUiState.Loading
+                    val result = translateWithOpenAi(text, _direction.value)
+                    _translatedText.value = result
+                    _uiState.value = TranslatorUiState.Success
+                    Log.d(LOG_TAG, "translate completed successfully for premium user")
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "translate failed", e)
+                    _uiState.value = TranslatorUiState.Error(e.message ?: "Translation failed")
+                }
+            } else {
+                // 無料ユーザー：通常の制限処理
+                attemptContext = prepareTranslateAttempt() ?: return@launch
 
-            _uiState.value = TranslatorUiState.Loading
-            var translationFailed = false
-            try {
-                val direction = _direction.value
-                val raw = translateWithOpenAi(text, direction)
-                val payload = parseTranslatorPayload(raw)
-                _candidates.value = payload.candidates
-                _explanation.value = payload.explanation
-                val primary = payload.candidates.firstOrNull()?.bisaya.orEmpty()
-                _translatedText.value = if (primary.isNotBlank()) primary else sanitizeTranslation(raw, direction)
-                _uiState.value = TranslatorUiState.Success
-                Log.d(LOG_TAG, "translate success candidates=${payload.candidates.size}")
-            } catch (e: Exception) {
-                translationFailed = true
-                Log.e(LOG_TAG, "translate failed", e)
-                _uiState.value =
-                    TranslatorUiState.Error(e.message ?: "Translation failed")
-            }
+                _uiState.value = TranslatorUiState.Loading
+                var translationFailed = false
+                try {
+                    val direction = _direction.value
+                    val raw = translateWithOpenAi(text, direction)
+                    val payload = parseTranslatorPayload(raw)
+                    _candidates.value = payload.candidates
+                    _explanation.value = payload.explanation
+                    val primary = payload.candidates.firstOrNull()?.bisaya.orEmpty()
+                    _translatedText.value = if (primary.isNotBlank()) primary else sanitizeTranslation(raw, direction)
+                    _uiState.value = TranslatorUiState.Success
+                    Log.d(LOG_TAG, "translate success candidates=${payload.candidates.size}")
+                } catch (e: Exception) {
+                    translationFailed = true
+                    Log.e(LOG_TAG, "translate failed", e)
+                    _uiState.value = TranslatorUiState.Error(e.message ?: "Translation failed")
+                }
 
-            if (isLiteFreeUser) {
-                attemptContext?.let {
+                attemptContext.let {
                     handleTranslateAttemptCompletion(
                         attempt = it,
                         translationFailed = translationFailed
@@ -585,7 +596,8 @@ class AiTranslatorViewModel(
         translationFailed: Boolean
     ) {
         val attemptCount = attempt.logContext.countAfter
-        val shouldPromptUpsell = attemptCount in listOf(2, 4) || attempt.reachedLimitAfterAttempt
+        // ShowUpsellは上限（5回目）に達した時だけに変更 - ゴミ仕様を排除
+        val shouldPromptUpsell = attempt.reachedLimitAfterAttempt
         if (attempt.shouldShowAd) {
             Log.d(LOG_TAG, "ad show requested count=${attempt.logContext.countAfter}")
             val deferred = CompletableDeferred<AdManager.InterstitialAttemptResult>()
