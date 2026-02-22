@@ -175,7 +175,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             AppNavGraph(
                                 navController = navController,
-                                isProVersion = observedPro,
+                                isProVersion = isPremiumUser,
                                 showPremiumTestToggle = false,
                                 onTogglePremiumTest = {},
                                 listeningViewModelFactory = listeningViewModelFactory,
