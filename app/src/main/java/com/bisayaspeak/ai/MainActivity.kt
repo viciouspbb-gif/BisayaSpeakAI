@@ -194,7 +194,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             AppNavGraph(
                                 navController = navController,
-                                isProVersion = isPremiumUser,
+                                isProVersion = effectivePro, // isPremiumUser(false) ではなく確定した effectivePro を渡す
                                 showPremiumTestToggle = false,
                                 onTogglePremiumTest = {},
                                 listeningViewModelFactory = listeningViewModelFactory,
