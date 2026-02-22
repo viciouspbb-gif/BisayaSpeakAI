@@ -158,10 +158,22 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             )
 
-            // カミングスーン（リリース） / タリ道場（デバッグ）
-            val dojoTitle = stringResource(R.string.home_feature_dojo_title_master)
-            val dojoSubtitle = stringResource(R.string.home_feature_dojo_subtitle_master)
-            val dojoIllustration = R.drawable.taridoujo
+            // カミングスーン（リリース） / タリ道場準備中（デバッグ統一）
+            val dojoTitle = if (BuildConfig.DEBUG) {
+                stringResource(R.string.home_feature_dojo_placeholder_title)
+            } else {
+                stringResource(R.string.home_feature_dojo_title_master)
+            }
+            val dojoSubtitle = if (BuildConfig.DEBUG) {
+                stringResource(R.string.home_new_feature_message)
+            } else {
+                stringResource(R.string.home_feature_dojo_subtitle_master)
+            }
+            val dojoIllustration = if (BuildConfig.DEBUG) {
+                R.drawable.char_owl
+            } else {
+                R.drawable.taridoujo
+            }
 
             ProFeatureItem(
                 title = dojoTitle,
@@ -169,7 +181,14 @@ fun HomeScreen(
                 icon = Icons.Default.Psychology,
                 color = Color(0xFFCD7F32),
                 illustration = dojoIllustration,
-                onClick = { onClickFeature(FeatureId.UPGRADE) },
+                onClick = { 
+                    // デバッグ版では準備中ダイアログ、リリース版ではアップセル
+                    if (BuildConfig.DEBUG) {
+                        // 準備中 - 何もしない
+                    } else {
+                        onClickFeature(FeatureId.UPGRADE)
+                    }
+                },
                 modifier = Modifier.weight(1f)
             )
         }

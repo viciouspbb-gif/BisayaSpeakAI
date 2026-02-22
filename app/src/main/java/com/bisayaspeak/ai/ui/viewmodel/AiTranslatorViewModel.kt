@@ -185,7 +185,11 @@ class AiTranslatorViewModel(
                 try {
                     _uiState.value = TranslatorUiState.Loading
                     val result = translateWithOpenAi(text, _direction.value)
-                    _translatedText.value = result
+                    val payload = parseTranslatorPayload(result)
+                    _candidates.value = payload.candidates
+                    _explanation.value = payload.explanation
+                    val primary = payload.candidates.firstOrNull()?.bisaya.orEmpty()
+                    _translatedText.value = if (primary.isNotBlank()) primary else sanitizeTranslation(result, _direction.value)
                     _uiState.value = TranslatorUiState.Success
                     Log.d(LOG_TAG, "translate completed successfully for premium user")
                 } catch (e: Exception) {
