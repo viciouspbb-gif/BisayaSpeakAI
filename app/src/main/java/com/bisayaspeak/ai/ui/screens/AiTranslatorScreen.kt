@@ -303,12 +303,6 @@ fun AiTranslatorScreen(
                     }
                 }
             )
-
-            if (uiState is TranslatorUiState.Error) {
-                ErrorBanner(
-                    message = (uiState as TranslatorUiState.Error).message
-                )
-            }
         }
     }
 
@@ -468,23 +462,6 @@ private fun buildContextNotes(candidate: TranslatorCandidate?): List<String> {
     return notes.take(4)
 }
 
-@Composable
-private fun ErrorBanner(message: String) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        color = Color(0xFF421920),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Text(
-            text = message,
-            color = Color(0xFFFFB4C8),
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
-
 private fun launchSpeechRecognizer(
     direction: TranslationDirection,
     launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
@@ -538,7 +515,13 @@ private fun TranslateActionButton(
             }
             else -> {
                 Button(
-                    onClick = { onTranslate() },
+                    onClick = { 
+                        if (limitReached) {
+                            onLimitReached() // 4回使い切った後：ダイアログ（アップセル）を出すだけ
+                        } else {
+                            onTranslate()
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
                 ) {
                     Text(
