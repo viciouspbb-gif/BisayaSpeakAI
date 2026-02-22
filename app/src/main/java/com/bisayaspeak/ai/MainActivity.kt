@@ -95,7 +95,15 @@ class MainActivity : ComponentActivity() {
                 )
                 
                 // 競合状態を完全に排除するため、collect内で直接app.isProVersionを設定
-                val effectivePro = if (BuildConfig.DEBUG) true else (hasPremiumAI || isProUnlocked || subscriptionActive)
+                // フレーバー判別：Pro版はデバッグでも課金状態を優先、Lite版は常に課金チェック結果を使用
+                val isProFlavor = BuildConfig.FLAVOR == "pro"
+                val effectivePro = if (isProFlavor && BuildConfig.DEBUG) {
+                    // Pro版デバッグ：強制的に有効化
+                    true
+                } else {
+                    // Pro版リリース or Lite版：実際の課金状態を使用
+                    hasPremiumAI || isProUnlocked || subscriptionActive
+                }
                 app.isProVersion = effectivePro
             }.collect { }
         }
@@ -157,9 +165,14 @@ class MainActivity : ComponentActivity() {
                         val isDebugWhitelistedUser = BuildConfig.DEBUG &&
                             currentUser.value?.email?.equals("vicious.pbb@gmail.com", ignoreCase = true) == true
                         
-                        // effectivePro は isPremiumUser のみを唯一の判定基準とする
-                        // デバッグビルドでは強制的にtrueにする
-                        val effectivePro = if (BuildConfig.DEBUG) true else isPremiumUser
+                        // effectivePro はフレーバーと課金状態を考慮した最終判定
+                        // Pro版デバッグ：強制的に有効化、それ以外は課金状態を使用
+                        val isProFlavor = BuildConfig.FLAVOR == "pro"
+                        val effectivePro = if (isProFlavor && BuildConfig.DEBUG) {
+                            true
+                        } else {
+                            isPremiumUser
+                        }
 
                         // 課金状態の即時反映を確保 - collect内で設定することで競合状態を排除
                         app.isProVersion = effectivePro

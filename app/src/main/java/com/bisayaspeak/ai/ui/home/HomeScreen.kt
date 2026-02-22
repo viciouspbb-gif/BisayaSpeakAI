@@ -79,9 +79,11 @@ fun HomeScreen(
     val context = LocalContext.current
     val isTariComingSoon = !BuildConfig.DEBUG
 
-    // デバッグビルドでは強制的にプレミアムとして扱う
-    val effectivePremiumPlan = if (BuildConfig.DEBUG) true else isPremiumPlan
-    val effectiveProUnlocked = if (BuildConfig.DEBUG) true else isProUnlocked
+    // フレーバーに応じたプレミアム判定
+    // Pro版デバッグ：強制的に有効化、それ以外は実際の課金状態を使用
+    val isProFlavor = BuildConfig.FLAVOR == "pro"
+    val effectivePremiumPlan = if (isProFlavor && BuildConfig.DEBUG) true else isPremiumPlan
+    val effectiveProUnlocked = if (isProFlavor && BuildConfig.DEBUG) true else isProUnlocked
 
     var showProDialog by remember { mutableStateOf(false) }
 
