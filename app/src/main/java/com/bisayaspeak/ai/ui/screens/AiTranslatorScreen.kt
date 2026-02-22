@@ -538,7 +538,7 @@ private fun TranslateActionButton(
             }
             else -> {
                 Button(
-                    onClick = { if (limitReached) onLimitReached() else onTranslate() },
+                    onClick = { onTranslate() },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
                 ) {
                     Text(
