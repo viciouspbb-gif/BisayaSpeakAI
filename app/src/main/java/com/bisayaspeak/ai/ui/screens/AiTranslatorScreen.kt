@@ -565,8 +565,14 @@ private fun TranslatorUnifiedResultCard(
     onCopy: (String) -> Unit,
     onSpeak: (String) -> Unit
 ) {
-    val bisayaText = candidateDisplay?.candidate?.bisaya?.takeIf { it.isNotBlank() }
-    val japaneseText = candidateDisplay?.candidate?.japanese?.takeIf { it.isNotBlank() }
+    val candidate = candidateDisplay?.candidate
+    val bisayaText = candidate?.bisaya?.takeIf { it.isNotBlank() }
+    val japaneseText = candidate?.japanese?.takeIf { it.isNotBlank() }
+    val politenessText = candidate?.politeness?.takeIf { it.isNotBlank() }
+    val situationText = candidate?.situation?.takeIf { it.isNotBlank() }
+    val nuanceText = candidate?.nuance?.takeIf { it.isNotBlank() }
+    val englishText = candidate?.english?.takeIf { it.isNotBlank() }
+    
     val placeholder = stringResource(R.string.translator_result_language_placeholder)
     val bisayaDisplay = bisayaText ?: stringResource(R.string.translator_result_placeholder)
     val japaneseDisplay = japaneseText ?: placeholder
@@ -575,46 +581,179 @@ private fun TranslatorUnifiedResultCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF10213A)),
-        shape = RoundedCornerShape(28.dp)
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // Bisaya Text Section
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = bisayaDisplay,
+                    text = "Bisaya",
                     color = Color(0xFF4ADE80),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 1.sp
                 )
-                IconButton(onClick = { if (isCopyEnabled) onCopy(bisayaDisplay) }, enabled = isCopyEnabled) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = stringResource(R.string.translator_copy_desc),
-                        tint = Color.White
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = bisayaDisplay,
+                        color = Color(0xFF4ADE80),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                        lineHeight = 28.sp
                     )
-                }
-                if (canSpeak && isCopyEnabled) {
-                    IconButton(onClick = { onSpeak(bisayaDisplay) }) {
+                    IconButton(onClick = { if (isCopyEnabled) onCopy(bisayaDisplay) }, enabled = isCopyEnabled) {
                         Icon(
-                            imageVector = Icons.Default.VolumeUp,
-                            contentDescription = stringResource(R.string.translator_tap_to_play_bisaya),
-                            tint = Color(0xFF38BDF8)
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = stringResource(R.string.translator_copy_desc),
+                            tint = Color.White
                         )
+                    }
+                    if (canSpeak && isCopyEnabled) {
+                        IconButton(onClick = { onSpeak(bisayaDisplay) }) {
+                            Icon(
+                                imageVector = Icons.Default.VolumeUp,
+                                contentDescription = stringResource(R.string.translator_tap_to_play_bisaya),
+                                tint = Color(0xFF38BDF8)
+                            )
+                        }
                     }
                 }
             }
 
-            Text(
-                text = japaneseDisplay,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Japanese Text Section
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Japanese",
+                    color = Color(0xFFE2E8F0),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = japaneseDisplay,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = 24.sp
+                )
+            }
+
+            // English Text Section (if available)
+            englishText?.let { english ->
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "English",
+                        color = Color(0xFFE2E8F0),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = english,
+                        color = Color(0xFF94A3B8),
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+
+            // Context Information Cards
+            if (politenessText != null || situationText != null || nuanceText != null) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Context Information",
+                        color = Color(0xFFFCD34D),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                    
+                    // Politeness Card
+                    politenessText?.let { politeness ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Politeness Level",
+                                    color = Color(0xFFFCD34D),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = politeness,
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Situation Card
+                    situationText?.let { situation ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Usage Situation",
+                                    color = Color(0xFF38BDF8),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = situation,
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Nuance Card
+                    nuanceText?.let { nuance ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Cultural Nuance",
+                                    color = Color(0xFFFB7185),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = nuance,
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
