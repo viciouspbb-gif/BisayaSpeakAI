@@ -1,8 +1,8 @@
 package com.bisayaspeak.ai.ui.ads
 
 import android.util.Log
-import com.bisayaspeak.ai.BisayaSpeakApp
 import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.billing.PremiumStatusProvider
 
 /**
  * 広告表示ポリシーを集約。
@@ -17,15 +17,11 @@ object AdsPolicy {
 
     val areAdsEnabled: Boolean
         get() {
-            val baseEnabled = !BisayaSpeakApp.instance.isProVersion
-            val enabled = when {
-                BuildConfig.DEBUG && BuildConfig.IS_LITE_BUILD -> true
-                BuildConfig.DEBUG -> baseEnabled
-                else -> baseEnabled
-            }
+            val isPremiumUser = PremiumStatusProvider.currentValue()
+            val enabled = BuildConfig.IS_LITE_BUILD && !isPremiumUser
             Log.d(
                 TAG,
-                "areAdsEnabled=$enabled flavor=${BuildConfig.FLAVOR} debug=${BuildConfig.DEBUG} basePro=${BisayaSpeakApp.instance.isProVersion}"
+                "areAdsEnabled=$enabled flavor=${BuildConfig.FLAVOR} debug=${BuildConfig.DEBUG} premium=$isPremiumUser"
             )
             return enabled
         }
