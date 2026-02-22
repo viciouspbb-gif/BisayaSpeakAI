@@ -568,9 +568,6 @@ private fun TranslatorUnifiedResultCard(
     val candidate = candidateDisplay?.candidate
     val bisayaText = candidate?.bisaya?.takeIf { it.isNotBlank() }
     val japaneseText = candidate?.japanese?.takeIf { it.isNotBlank() }
-    val politenessText = candidate?.politeness?.takeIf { it.isNotBlank() }
-    val situationText = candidate?.situation?.takeIf { it.isNotBlank() }
-    val nuanceText = candidate?.nuance?.takeIf { it.isNotBlank() }
     val englishText = candidate?.english?.takeIf { it.isNotBlank() }
     
     val placeholder = stringResource(R.string.translator_result_language_placeholder)
@@ -661,97 +658,6 @@ private fun TranslatorUnifiedResultCard(
                         fontSize = 14.sp,
                         lineHeight = 20.sp
                     )
-                }
-            }
-
-            // Context Information Cards
-            if (politenessText != null || situationText != null || nuanceText != null) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = "Context Information",
-                        color = Color(0xFFFCD34D),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-                    
-                    // Politeness Card
-                    politenessText?.let { politeness ->
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "Politeness Level",
-                                    color = Color(0xFFFCD34D),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = politeness,
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    lineHeight = 18.sp
-                                )
-                            }
-                        }
-                    }
-                    
-                    // Situation Card
-                    situationText?.let { situation ->
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "Usage Situation",
-                                    color = Color(0xFF38BDF8),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = situation,
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    lineHeight = 18.sp
-                                )
-                            }
-                        }
-                    }
-                    
-                    // Nuance Card
-                    nuanceText?.let { nuance ->
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "Cultural Nuance",
-                                    color = Color(0xFFFB7185),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = nuance,
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    lineHeight = 18.sp
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
