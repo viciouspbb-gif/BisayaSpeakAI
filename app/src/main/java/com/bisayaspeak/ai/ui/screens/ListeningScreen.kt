@@ -320,10 +320,12 @@ fun ListeningScreen(
                         val adsEnabled = AdsPolicy.areAdsEnabled
                         val hintButtonEnabled = !isPlaying  // CEO指示：押した時に「広告がない」とトーストを出すため常に有効化
                         val hintLabelEn = when {
+                            isProVersion -> stringResource(R.string.listening_hint_unlimited)  // プロ版：無制限
                             voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining, voiceHintRemaining)
                             else -> stringResource(R.string.listening_hint_recover_by_ad)  // 3回使い切ったら固定
                         }
                         val hintLabelJa = when {
+                            isProVersion -> stringResource(R.string.listening_hint_unlimited_ja)  // プロ版：無制限
                             voiceHintRemaining > 0 -> stringResource(R.string.listening_hint_remaining_ja, voiceHintRemaining)
                             else -> stringResource(R.string.listening_hint_recover_by_ad_ja)  // 3回使い切ったら固定
                         }
@@ -335,6 +337,7 @@ fun ListeningScreen(
                             enabled = hintButtonEnabled,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = when {
+                                    isProVersion -> Color(0xFF2D3246)  // プロ版：常に紺色
                                     voiceHintRemaining > 0 -> Color(0xFF2D3246)  // 残数あり→紺色
                                     else -> Color(0xFFFFA726)  // 残数0→常に黄色（広告アイコン）
                                 },

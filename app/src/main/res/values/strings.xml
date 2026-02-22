@@ -128,6 +128,8 @@
     <string name="use_voice_hint_prompt">Want a hint? Use the voice hint to check.</string>
     <string name="listening_hint_remaining">Hint (%1$d)</string>
     <string name="listening_hint_remaining_ja">ヒント（残り%1$d）</string>
+    <string name="listening_hint_unlimited">Unlimited hints</string>
+    <string name="listening_hint_unlimited_ja">ヒント（無制限）</string>
     <string name="listening_hint_recover_by_ad">Recover with ad</string>
     <string name="listening_hint_recover_by_ad_ja">動画視聴で回復</string>
     <string name="listening_hint_view">View hint</string>
