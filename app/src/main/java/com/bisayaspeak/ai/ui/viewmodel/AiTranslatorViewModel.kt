@@ -166,64 +166,32 @@ class AiTranslatorViewModel(
         Log.d(LOG_TAG, "translate start premium=$isPremiumUser direction=${_direction.value}")
 
         viewModelScope.launch {
-            var attemptContext: TranslateAttemptContext? = null
-            val isLiteFreeUser = BuildConfig.IS_LITE_BUILD && !isPremiumUser
-            
-            // VIPを一般列に並ばせない - 優先順位を逆転
-            if (!isLiteFreeUser) {
-                // Proユーザー：即座に翻訳実行、prepareTranslateAttemptを1ミリも通さない
-                val premiumSnapshot = usageSnapshot()
-                publishDebugState(
-                    snapshot = premiumSnapshot,
-                    isPremiumUser = true,
-                    shouldShowAd = false,
-                    adAttempted = false,
-                    adResult = "skipped",
-                    skipReason = "premium"
+            // 全ユーザーをprepareTranslateAttempt経由に統一
+            val attemptContext = prepareTranslateAttempt(isPremiumUser) ?: return@launch
+
+            _uiState.value = TranslatorUiState.Loading
+            var translationFailed = false
+            try {
+                val direction = _direction.value
+                val raw = translateWithOpenAi(text, direction)
+                val payload = parseTranslatorPayload(raw)
+                _candidates.value = payload.candidates
+                _explanation.value = payload.explanation
+                val primary = payload.candidates.firstOrNull()?.bisaya.orEmpty()
+                _translatedText.value = if (primary.isNotBlank()) primary else sanitizeTranslation(raw, direction)
+                _uiState.value = TranslatorUiState.Success
+                Log.d(LOG_TAG, "translate success candidates=${payload.candidates.size}")
+            } catch (e: Exception) {
+                translationFailed = true
+                Log.e(LOG_TAG, "translate failed", e)
+                _uiState.value = TranslatorUiState.Error(e.message ?: "Translation failed")
+            }
+
+            attemptContext.let {
+                handleTranslateAttemptCompletion(
+                    attempt = it,
+                    translationFailed = translationFailed
                 )
-                
-                try {
-                    _uiState.value = TranslatorUiState.Loading
-                    val result = translateWithOpenAi(text, _direction.value)
-                    val payload = parseTranslatorPayload(result)
-                    _candidates.value = payload.candidates
-                    _explanation.value = payload.explanation
-                    val primary = payload.candidates.firstOrNull()?.bisaya.orEmpty()
-                    _translatedText.value = if (primary.isNotBlank()) primary else sanitizeTranslation(result, _direction.value)
-                    _uiState.value = TranslatorUiState.Success
-                    Log.d(LOG_TAG, "translate completed successfully for premium user")
-                } catch (e: Exception) {
-                    Log.e(LOG_TAG, "translate failed", e)
-                    _uiState.value = TranslatorUiState.Error(e.message ?: "Translation failed")
-                }
-            } else {
-                // 無料ユーザー：通常の制限処理
-                attemptContext = prepareTranslateAttempt() ?: return@launch
-
-                _uiState.value = TranslatorUiState.Loading
-                var translationFailed = false
-                try {
-                    val direction = _direction.value
-                    val raw = translateWithOpenAi(text, direction)
-                    val payload = parseTranslatorPayload(raw)
-                    _candidates.value = payload.candidates
-                    _explanation.value = payload.explanation
-                    val primary = payload.candidates.firstOrNull()?.bisaya.orEmpty()
-                    _translatedText.value = if (primary.isNotBlank()) primary else sanitizeTranslation(raw, direction)
-                    _uiState.value = TranslatorUiState.Success
-                    Log.d(LOG_TAG, "translate success candidates=${payload.candidates.size}")
-                } catch (e: Exception) {
-                    translationFailed = true
-                    Log.e(LOG_TAG, "translate failed", e)
-                    _uiState.value = TranslatorUiState.Error(e.message ?: "Translation failed")
-                }
-
-                attemptContext.let {
-                    handleTranslateAttemptCompletion(
-                        attempt = it,
-                        translationFailed = translationFailed
-                    )
-                }
             }
         }
     }
@@ -343,7 +311,6 @@ class AiTranslatorViewModel(
         raw: String,
         direction: TranslationDirection
     ): String {
-        if (BuildConfig.DEBUG) return raw
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return trimmed
 
@@ -514,20 +481,41 @@ class AiTranslatorViewModel(
         )
     }
 
-    private suspend fun prepareTranslateAttempt(): TranslateAttemptContext? {
+    private suspend fun prepareTranslateAttempt(isPremiumUser: Boolean): TranslateAttemptContext? {
         FreeUsageManager.resetIfNewDay()
         refreshUsageStatus()
         val statusBefore = _usageStatus.value
         val snapshotBefore = usageSnapshot()
         publishDebugState(
             snapshot = snapshotBefore,
-            isPremiumUser = false,
+            isPremiumUser = isPremiumUser,
             shouldShowAd = false,
             adAttempted = false,
             adResult = "pending",
             skipReason = null
         )
 
+        // プロユーザーは制限なし
+        if (isPremiumUser) {
+            val dayKey = FreeUsageManager.currentDayKey()
+            val maxCount = FreeUsageRepository.MAX_TRANSLATE_PER_DAY
+            return TranslateAttemptContext(
+                snapshotBefore = snapshotBefore,
+                snapshotAfter = UsageSnapshot(dayKey, 0, maxCount),
+                logContext = TranslateAdLogContext(
+                    isPremiumUser = true,
+                    dayKey = dayKey,
+                    countBefore = 0,
+                    countAfter = 0,
+                    maxCount = maxCount,
+                    shouldShowAd = false
+                ),
+                shouldShowAd = false,
+                reachedLimitAfterAttempt = false
+            )
+        }
+
+        // 無料ユーザーの制限処理
         if (statusBefore != null && !statusBefore.canUse) {
             publishDebugState(
                 snapshot = snapshotBefore.copy(count = statusBefore.usedCount),
@@ -548,8 +536,10 @@ class AiTranslatorViewModel(
         val dayKeyBefore = statusBefore?.dayKey ?: FreeUsageManager.dayKey() ?: FreeUsageManager.currentDayKey()
         val countBefore = statusBefore?.usedCount ?: 0
 
+        // 先行消費の徹底：消費直後に保存完了
         FreeUsageManager.consumeTranslate()
-        refreshUsageStatus()
+        refreshUsageStatus() // 即時更新
+        
         val afterStatus = _usageStatus.value
         val dayKeyAfter = afterStatus?.dayKey ?: dayKeyBefore
         val countAfter = afterStatus?.usedCount ?: (countBefore + 1)
@@ -601,15 +591,16 @@ class AiTranslatorViewModel(
     ) {
         val attemptCount = attempt.logContext.countAfter
         // ShowUpsellは上限（5回目）に達した時だけに変更 - ゴミ仕様を排除
-        val shouldPromptUpsell = attempt.reachedLimitAfterAttempt
-        if (attempt.shouldShowAd) {
+        val shouldPromptUpsell = attempt.reachedLimitAfterAttempt && !attempt.logContext.isPremiumUser
+        
+        if (attempt.shouldShowAd && !attempt.logContext.isPremiumUser) {
             Log.d(LOG_TAG, "ad show requested count=${attempt.logContext.countAfter}")
             val deferred = CompletableDeferred<AdManager.InterstitialAttemptResult>()
             pendingAdLog?.deferred?.complete(AdManager.InterstitialAttemptResult.FAILED)
             pendingAdLog = PendingAdLog(attempt.logContext, deferred)
             publishDebugState(
                 snapshot = attempt.snapshotAfter,
-                isPremiumUser = false,
+                isPremiumUser = attempt.logContext.isPremiumUser,
                 shouldShowAd = true,
                 adAttempted = true,
                 adResult = "awaiting_show",
@@ -629,7 +620,7 @@ class AiTranslatorViewModel(
             logTranslationUsage(attempt.logContext, adAttempted = false, adResult = adResultLabel)
             publishDebugState(
                 snapshot = attempt.snapshotAfter,
-                isPremiumUser = false,
+                isPremiumUser = attempt.logContext.isPremiumUser,
                 shouldShowAd = false,
                 adAttempted = false,
                 adResult = if (translationFailed) "failed_early" else "skipped",
@@ -644,10 +635,6 @@ class AiTranslatorViewModel(
 
         if (shouldPromptUpsell) {
             _events.emit(TranslatorEvent.ShowUpsell)
-        }
-
-        if (attempt.reachedLimitAfterAttempt) {
-            _events.emit(TranslatorEvent.ShowToast(R.string.translator_usage_limit_finished_toast))
         }
     }
 

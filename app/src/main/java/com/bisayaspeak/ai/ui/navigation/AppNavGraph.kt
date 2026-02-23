@@ -161,13 +161,8 @@ fun AppNavGraph(
                     onClickFeature = { feature ->
                         when (feature) {
                             FeatureId.AI_CHAT -> {
-                                if (isProVersion) {
-                                    // Proユーザー：準備中トースト
-                                    Toast.makeText(context, "道場は準備中です。もう少々お待ちください！", Toast.LENGTH_LONG).show()
-                                } else {
-                                    // 無料ユーザー：アップセル（Upgradeへ遷移）
-                                    navController.navigate(AppRoute.Upgrade.route)
-                                }
+                                // 道場は常に準備中（ProFeatureGateに従う）
+                                Toast.makeText(context, "道場は準備中です。もう少々お待ちください！", Toast.LENGTH_LONG).show()
                             }
 
                             FeatureId.AI_TRANSLATOR -> {

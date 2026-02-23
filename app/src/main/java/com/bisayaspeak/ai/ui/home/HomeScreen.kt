@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.feature.ProFeatureGate
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.ads.AdsPolicy
@@ -80,10 +81,9 @@ fun HomeScreen(
     val isTariComingSoon = !BuildConfig.DEBUG
 
     // フレーバーに応じたプレミアム判定
-    // Pro版デバッグ：強制的に有効化、それ以外は実際の課金状態を使用
-    val isProFlavor = BuildConfig.FLAVOR == "pro"
-    val effectivePremiumPlan = if (isProFlavor && BuildConfig.DEBUG) true else isPremiumPlan
-    val effectiveProUnlocked = if (isProFlavor && BuildConfig.DEBUG) true else isProUnlocked
+    // ProFeatureGateに一本化
+    val effectivePremiumPlan = ProFeatureGate.isProFeatureEnabled(isPremiumPlan)
+    val effectiveProUnlocked = ProFeatureGate.isProFeatureEnabled(isProUnlocked)
 
     var showProDialog by remember { mutableStateOf(false) }
 
@@ -158,22 +158,10 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             )
 
-            // カミングスーン（リリース） / タリ道場準備中（デバッグ統一）
-            val dojoTitle = if (BuildConfig.DEBUG) {
-                stringResource(R.string.home_feature_dojo_placeholder_title)
-            } else {
-                stringResource(R.string.home_feature_dojo_title_master)
-            }
-            val dojoSubtitle = if (BuildConfig.DEBUG) {
-                stringResource(R.string.home_new_feature_message)
-            } else {
-                stringResource(R.string.home_feature_dojo_subtitle_master)
-            }
-            val dojoIllustration = if (BuildConfig.DEBUG) {
-                R.drawable.char_owl
-            } else {
-                R.drawable.taridoujo
-            }
+            // 道場は常に準備中表示
+            val dojoTitle = stringResource(R.string.home_feature_dojo_placeholder_title)
+            val dojoSubtitle = stringResource(R.string.home_feature_dojo_placeholder_message)
+            val dojoIllustration = R.drawable.char_owl
 
             ProFeatureItem(
                 title = dojoTitle,
@@ -182,12 +170,7 @@ fun HomeScreen(
                 color = Color(0xFFCD7F32),
                 illustration = dojoIllustration,
                 onClick = { 
-                    // デバッグ版では準備中ダイアログ、リリース版ではアップセル
-                    if (BuildConfig.DEBUG) {
-                        // 準備中 - 何もしない
-                    } else {
-                        onClickFeature(FeatureId.UPGRADE)
-                    }
+                    // 常に準備中 - 何もしない
                 },
                 modifier = Modifier.weight(1f)
             )

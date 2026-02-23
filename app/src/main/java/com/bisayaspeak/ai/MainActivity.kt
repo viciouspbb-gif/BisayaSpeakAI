@@ -30,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.billing.BillingManager
 import com.bisayaspeak.ai.billing.PremiumStatusProvider
+import com.bisayaspeak.ai.feature.ProFeatureGate
 import com.bisayaspeak.ai.AppStartupState
 import com.bisayaspeak.ai.data.PurchaseStore
 import com.bisayaspeak.ai.ui.navigation.AppNavGraph
@@ -85,25 +86,16 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             combine(
                 billingManager.hasPremiumAI,
-                billingManager.isProUnlocked,
                 billingManager.isPremium
-            ) { hasPremiumAI, isProUnlocked, subscriptionActive ->
+            ) { hasPremiumAI, isPremium ->
                 PremiumStatusProvider.updateStatus(
                     hasPremiumAI = hasPremiumAI,
-                    isProUnlocked = isProUnlocked,
-                    subscriptionActive = subscriptionActive
+                    isProUnlocked = false, // 買い切りは削除
+                    subscriptionActive = isPremium
                 )
                 
-                // 競合状態を完全に排除するため、collect内で直接app.isProVersionを設定
-                // フレーバー判別：Pro版はデバッグでも課金状態を優先、Lite版は常に課金チェック結果を使用
-                val isProFlavor = BuildConfig.FLAVOR == "pro"
-                val effectivePro = if (isProFlavor && BuildConfig.DEBUG) {
-                    // Pro版デバッグ：強制的に有効化
-                    true
-                } else {
-                    // Pro版リリース or Lite版：実際の課金状態を使用
-                    hasPremiumAI || isProUnlocked || subscriptionActive
-                }
+                // ProFeatureGateに一本化
+                val effectivePro = ProFeatureGate.getEffectiveProStatus(hasPremiumAI || isPremium)
                 app.isProVersion = effectivePro
             }.collect { }
         }
@@ -152,12 +144,7 @@ class MainActivity : ComponentActivity() {
                         val observedPro by app.proVersionState.collectAsState()
 
                         // 同期的初期化：Flowを待つのではなく、その瞬間の確定値を計算
-                        val isProFlavor = BuildConfig.FLAVOR == "pro"
-                        val effectivePro = if (isProFlavor && BuildConfig.DEBUG) {
-                            true  // Pro版デバッグ：描画の第一フレームからtrue
-                        } else {
-                            isPremiumUser  // その他：Flowの現在値
-                        }
+                        val effectivePro = ProFeatureGate.getEffectiveProStatus(isPremiumUser)
 
                         val debugAuth = remember { FirebaseAuth.getInstance() }
                         val currentUser = remember { mutableStateOf(debugAuth.currentUser) }
@@ -331,15 +318,12 @@ class MainActivity : ComponentActivity() {
      * 購入状態をDataStoreに同期
      */
     private suspend fun syncPurchaseStatus() {
-        val isProUnlocked = billingManager.isProUnlocked.value
         val hasPremiumAI = billingManager.hasPremiumAI.value
         
-        if (isProUnlocked) {
-            purchaseStore.setProUnlocked(true)
-        }
         if (hasPremiumAI) {
             purchaseStore.setPremiumAI(true)
         }
+        // isProUnlockedは削除
     }
     
     override fun onResume() {
