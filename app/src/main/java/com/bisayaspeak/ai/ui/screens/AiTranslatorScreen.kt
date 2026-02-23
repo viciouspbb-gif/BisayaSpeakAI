@@ -81,6 +81,7 @@ import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.billing.PremiumStatusProvider
 import com.bisayaspeak.ai.data.model.TranslationDirection
+import com.bisayaspeak.ai.feature.ProFeatureGate
 import com.bisayaspeak.ai.ui.viewmodel.AiTranslatorViewModel
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorCandidate
 import com.bisayaspeak.ai.ui.viewmodel.TranslatorCandidateDisplay
@@ -108,13 +109,13 @@ fun AiTranslatorScreen(
     val usageStatus by viewModel.usageStatus.collectAsState()
     val candidates by viewModel.candidates.collectAsState()
     val explanation by viewModel.explanation.collectAsState()
-    // 渡されたisProVersionを最優先で使用
-    val effectiveIsPremium = isProVersion
 
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
-    val isDebugProBuild = BuildConfig.DEBUG && !BuildConfig.IS_LITE_BUILD
     val voiceService = remember { GeminiVoiceService(context) }
+
+    // 初期値はfalse、ProFeatureGateの確定値を使用
+    val effectiveIsPremium = ProFeatureGate.getEffectiveProStatus(isProVersion)
 
     val limitReached = !effectiveIsPremium && (usageStatus?.canUse == false)
     val limitKey = if (limitReached) {
@@ -164,8 +165,8 @@ fun AiTranslatorScreen(
         }
     }
 
-    LaunchedEffect(isDebugProBuild) {
-        if (isDebugProBuild) {
+    LaunchedEffect(effectiveIsPremium) {
+        if (effectiveIsPremium) {
             return@LaunchedEffect
         }
         AdManager.loadInterstitial(context.applicationContext)
@@ -501,6 +502,8 @@ private fun TranslateActionButton(
     onLimitReached: () -> Unit
 ) {
     val gradient = Brush.horizontalGradient(listOf(Color(0xFF00C896), Color(0xFF0EB5E0)))
+    val isButtonDisabled = isTranslating || limitReached
+    
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -522,7 +525,12 @@ private fun TranslateActionButton(
                             onTranslate()
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isButtonDisabled,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White
+                    )
                 ) {
                     Text(
                         text = stringResource(R.string.translator_translate_button),

@@ -65,12 +65,10 @@ class BillingManager(private val context: Context) {
         }
     }
     
+    // === StateFlow定義（買い切りを削除しシンプルに） ===
     private val _isPremium = MutableStateFlow(false)
     val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
-    
-    private val _isProUnlocked = MutableStateFlow(false)
-    val isProUnlocked: StateFlow<Boolean> = _isProUnlocked.asStateFlow()
-    
+
     private val _hasPremiumAI = MutableStateFlow(false)
     val hasPremiumAI: StateFlow<Boolean> = _hasPremiumAI.asStateFlow()
     
@@ -81,6 +79,25 @@ class BillingManager(private val context: Context) {
     
     // 購入成功コールバック
     var onPurchaseSuccess: ((String) -> Unit)? = null
+    
+    /**
+     * 鉄壁の判定関数：ここが唯一の「正解」を決める場所
+     */
+    private fun syncOverallPremiumStatus() {
+        // サブスク購入状態 OR デバッグ中かつPro
+        _isPremium.value = _hasPremiumAI.value || isProDebug()
+    }
+
+    private fun isProDebug(): Boolean {
+        return if (BuildConfig.DEBUG) {
+            // デバッグ時のみProフレーバーを許可
+            BuildConfig.FLAVOR == "pro"
+        } else {
+            // リリースビルド（本番）は、問答無用で false。
+            // これにより、LITE版ユーザーがプロ化する道は物理的に閉ざされる。
+            false
+        }
+    }
     
     /**
      * 開発者アカウントかチェック
@@ -185,64 +202,37 @@ class BillingManager(private val context: Context) {
     }
     
     /**
-     * プレミアムステータスを確認
+     * 購入状態をチェック
      */
     fun checkPremiumStatus() {
         val client = billingClient ?: return
+        if (!isClientReady) {
+            Log.w(TAG, "BillingClient not ready. Cannot check premium status")
+            return
+        }
 
-        // サブスクリプションを確認
+        // サブスクリプションのみ確認
         val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
         client.queryPurchasesAsync(subsParams) { billingResult, purchases ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val hasPremiumAI = purchases.any { purchase ->
+                val hasSubs = purchases.any { purchase ->
                     logPurchaseSnapshot("subs_query", purchase)
                     purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
                         purchase.isAcknowledged &&
                         purchase.products.any { isPremiumSubscriptionSku(it) }
                 }
-
-                _hasPremiumAI.value = hasPremiumAI
-                // CTO指示：プロデバッグ版では強制的にpremium=trueにする
-                val isProDebug = BuildConfig.DEBUG && !BuildConfig.IS_LITE_BUILD
-                val finalPremiumStatus = hasPremiumAI || isProDebug
+                _hasPremiumAI.value = hasSubs
                 
-                if (finalPremiumStatus) {
-                    _isPremium.value = true
-                } else if (!_isProUnlocked.value) {
-                    _isPremium.value = false
-                }
-                Log.d(TAG, "Premium AI status: $finalPremiumStatus (${purchases.size} subs) - ProDebug: $isProDebug")
+                Log.d(TAG, "Premium AI status: $hasSubs (${purchases.size} subs)")
+                
+                // 判定を更新
+                syncOverallPremiumStatus()
                 refreshUserPlan()
             } else {
                 Log.w(TAG, "Failed to query subs purchases: ${billingResult.debugMessage}")
-            }
-        }
-
-        // 買い切り商品を確認
-        val inAppParams = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.INAPP)
-            .build()
-
-        client.queryPurchasesAsync(inAppParams) { billingResult, purchases ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val hasProUnlock = purchases.any { purchase ->
-                    logPurchaseSnapshot("inapp_query", purchase)
-                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
-                        purchase.isAcknowledged &&
-                        purchase.products.contains(PRO_UNLOCK_SKU)
-                }
-
-                _isProUnlocked.value = hasProUnlock
-                if (hasProUnlock) {
-                    _isPremium.value = true
-                }
-                Log.d(TAG, "Pro Unlock status: $hasProUnlock (${purchases.size} in-app)")
-                refreshUserPlan()
-            } else {
-                Log.w(TAG, "Failed to query in-app purchases: ${billingResult.debugMessage}")
             }
         }
     }
@@ -315,20 +305,15 @@ class BillingManager(private val context: Context) {
             val onAcknowledged = {
                 recognizedProducts.forEach { productId ->
                     when (productId) {
-                        PRO_UNLOCK_SKU -> {
-                            _isProUnlocked.value = true
-                            _isPremium.value = true
-                            onPurchaseSuccess?.invoke(productId)
-                            Log.d(TAG, "Pro Unlock activated")
-                        }
                         PREMIUM_AI_MONTHLY_SKU, PREMIUM_AI_YEARLY_SKU -> {
                             _hasPremiumAI.value = true
-                            _isPremium.value = true
                             onPurchaseSuccess?.invoke(productId)
                             Log.d(TAG, "Premium AI activated product=$productId")
                         }
+                        // PRO_UNLOCK_SKUは削除
                     }
                 }
+                syncOverallPremiumStatus()
                 refreshUserPlan()
             }
 
@@ -342,7 +327,7 @@ class BillingManager(private val context: Context) {
 
     private fun refreshUserPlan() {
         _userPlan.value = UserPlan.fromFlags(
-            isProUnlocked = _isProUnlocked.value,
+            isProUnlocked = false, // 買い切りは削除
             hasPremiumAI = _hasPremiumAI.value
         )
     }
@@ -370,7 +355,7 @@ class BillingManager(private val context: Context) {
     }
 
     private fun isRecognizedProduct(productId: String): Boolean {
-        return productId == PRO_UNLOCK_SKU || isPremiumSubscriptionSku(productId)
+        return isPremiumSubscriptionSku(productId) // サブスクのみ
     }
 
     private fun logPurchaseSnapshot(source: String, purchase: Purchase) {

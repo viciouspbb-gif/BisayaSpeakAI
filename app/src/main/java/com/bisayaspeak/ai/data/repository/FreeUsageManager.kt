@@ -29,7 +29,10 @@ object FreeUsageManager {
 
     suspend fun canUseTranslate(): Boolean = mutex.withLock { repository.canUseTranslate() }
 
-    suspend fun consumeTranslate() = mutex.withLock { repository.consumeTranslate() }
+    suspend fun consumeTranslate() = mutex.withLock { 
+        Log.d("FreeUsage", "Count Incremented BEFORE Ad")
+        repository.consumeTranslate() 
+    }
 
     suspend fun canUseTalkTurn(): Boolean = mutex.withLock { repository.canUseTalkTurn() }
 

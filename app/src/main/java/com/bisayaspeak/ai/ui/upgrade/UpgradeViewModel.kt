@@ -43,15 +43,12 @@ class UpgradeViewModel(application: Application) : AndroidViewModel(application)
         billingManager.onPurchaseSuccess = { productId ->
             viewModelScope.launch {
                 when (productId) {
-                    BillingManager.PRO_UNLOCK_SKU -> {
-                        purchaseStore.setProUnlocked(true)
-                        _showPurchaseSuccess.value = "Pro Unlock"
-                    }
                     BillingManager.PREMIUM_AI_MONTHLY_SKU,
                     BillingManager.PREMIUM_AI_YEARLY_SKU -> {
                         purchaseStore.setPremiumAI(true)
                         _showPurchaseSuccess.value = "Premium AI"
                     }
+                    // PRO_UNLOCK_SKUは削除
                 }
                 syncPurchaseStatus()
             }
@@ -60,13 +57,11 @@ class UpgradeViewModel(application: Application) : AndroidViewModel(application)
         // 購入状態を監視
         viewModelScope.launch {
             combine(
-                billingManager.isProUnlocked,
                 billingManager.hasPremiumAI,
-                purchaseStore.isProUnlocked,
                 purchaseStore.hasPremiumAI
-            ) { billingPro, billingPremium, storePro, storePremium ->
+            ) { billingPremium, storePremium ->
                 UpgradeUiState(
-                    isProUnlocked = billingPro || storePro,
+                    isProUnlocked = false, // 買い切りは削除
                     hasPremiumAI = billingPremium || storePremium,
                     isLoading = false
                 )
@@ -80,22 +75,19 @@ class UpgradeViewModel(application: Application) : AndroidViewModel(application)
      * 購入状態を同期
      */
     private suspend fun syncPurchaseStatus() {
-        val isProUnlocked = billingManager.isProUnlocked.value
         val hasPremiumAI = billingManager.hasPremiumAI.value
         
-        if (isProUnlocked) {
-            purchaseStore.setProUnlocked(true)
-        }
         if (hasPremiumAI) {
             purchaseStore.setPremiumAI(true)
         }
+        // isProUnlockedは削除
     }
     
     /**
-     * Pro Unlockを購入
+     * Premium AIを購入
      */
-    fun purchaseProUnlock(activity: Activity) {
-        billingManager.launchPurchaseFlowByProductId(activity, BillingManager.PRO_UNLOCK_SKU)
+    fun purchasePremiumAI(activity: Activity, productId: String) {
+        billingManager.launchPurchaseFlowByProductId(activity, productId)
     }
     
     /**
