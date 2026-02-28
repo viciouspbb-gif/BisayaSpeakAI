@@ -17,6 +17,7 @@ class PreferencesManager(private val context: Context) {
     companion object {
         private val AI_CONVERSATION_COUNT = intPreferencesKey("ai_conversation_count")
         private val FREE_TRIAL_USED = booleanPreferencesKey("free_trial_used")
+        private val IS_PREMIUM_USER = booleanPreferencesKey("is_premium_user")
     }
 
     val aiConversationCount: Flow<Int> = context.dataStore.data
@@ -50,5 +51,26 @@ class PreferencesManager(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[FREE_TRIAL_USED] = false
         }
+    }
+    
+    // プレミアムユーザー管理
+    val isPremiumUser: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[IS_PREMIUM_USER] ?: false
+        }
+    
+    suspend fun setPremiumUser(isPremium: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[IS_PREMIUM_USER] = isPremium
+        }
+    }
+    
+    // 同期用のメソッド（通知システム用）
+    suspend fun isPremiumUser(): Boolean {
+        var result = false
+        context.dataStore.data.map { preferences ->
+            preferences[IS_PREMIUM_USER] ?: false
+        }.collect { result = it }
+        return result
     }
 }
