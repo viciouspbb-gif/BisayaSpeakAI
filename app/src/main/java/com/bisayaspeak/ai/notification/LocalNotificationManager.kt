@@ -10,11 +10,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.bisayaspeak.ai.BuildConfig
+import com.bisayaspeak.ai.MainActivity
 import com.bisayaspeak.ai.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.*
@@ -74,20 +76,26 @@ class LocalNotificationManager @Inject constructor(
      * 通知を表示
      */
     fun showNotification(content: NotificationContent) {
+        // MainActivityを起動するインテントを作成
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("from_notification", true)
+        }
+        
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(content.title)
             .setContentText(content.body)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    Intent(Intent.ACTION_VIEW, Uri.parse(content.deepLink)),
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-            )
+            .setContentIntent(pendingIntent)
             .build()
         
         notificationManager.notify(NOTIFICATION_ID, notification)
@@ -158,7 +166,11 @@ class NotificationScheduler @Inject constructor(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 if (!alarmManager.canScheduleExactAlarms()) {
-                    // 権限がない場合はフォールバック（多少遅れる可能性あり）
+                    // 権限がない場合は設定画面へ誘導
+                    Log.e("NotificationScheduler", "SCHEDULE_EXACT_ALARM権限なし、設定画面へ誘導します")
+                    requestExactAlarmPermission()
+                    
+                    // フォールバック（多少遅れる可能性あり）
                     alarmManager.setAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         triggerTime,
@@ -175,6 +187,10 @@ class NotificationScheduler @Inject constructor(
                         triggerTime,
                         pendingIntent
                     )
+                    
+                    if (BuildConfig.DEBUG) {
+                        Log.d("NotificationScheduler", "SCHEDULE_EXACT_ALARM権限あり、正確なアラームを設定")
+                    }
                 }
             } else {
                 // Android 11以前はそのまま使用
@@ -227,6 +243,53 @@ class NotificationScheduler @Inject constructor(
         
         if (BuildConfig.DEBUG) {
             android.util.Log.d("NotificationScheduler", "18:00頃通知予約をキャンセル")
+        }
+    }
+    
+    /**
+     * Android 12+で正確なアラーム権限を要求
+     */
+    private fun requestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                
+                // ContextがActivityでない場合はFLAG_ACTIVITY_NEW_TASKを追加
+                val flags = if (context is android.app.Activity) {
+                    0
+                } else {
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                
+                context.startActivity(intent.addFlags(flags))
+                
+                Log.d("NotificationScheduler", "正確なアラーム権限の設定画面を起動しました")
+                
+            } catch (e: Exception) {
+                Log.e("NotificationScheduler", "正確なアラーム権限の設定画面起動に失敗", e)
+                
+                // フォールバック：アプリ設定画面へ誘導
+                try {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                    }
+                    
+                    val flags = if (context is android.app.Activity) {
+                        0
+                    } else {
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    
+                    context.startActivity(intent.addFlags(flags))
+                    
+                    Log.d("NotificationScheduler", "アプリ設定画面を起動しました（フォールバック）")
+                    
+                } catch (fallbackException: Exception) {
+                    Log.e("NotificationScheduler", "アプリ設定画面の起動にも失敗", fallbackException)
+                }
+            }
         }
     }
 }

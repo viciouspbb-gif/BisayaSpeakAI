@@ -26,12 +26,15 @@ class BootReceiver : BroadcastReceiver() {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     // EntryPoint経由で安全に取得
-                    val entryPoint = getAppEntryPoint(context.applicationContext as Application)
-                    val scheduler = entryPoint.getNotificationScheduler()
-                    scheduler.scheduleDailyNotification()
+                    val app = context.applicationContext as? Application
+                    if (app != null) {
+                        val entryPoint = getAppEntryPoint(app)
+                        val scheduler = entryPoint.getNotificationScheduler()
+                        scheduler.scheduleDailyNotification()
                     
-                    if (BuildConfig.DEBUG) {
-                        Log.d("BootReceiver", "18:00頃通知の再スケジュール完了")
+                        if (BuildConfig.DEBUG) {
+                            Log.d("BootReceiver", "18:00頃通知の再スケジュール完了")
+                        }
                     }
                 } catch (e: Exception) {
                     if (BuildConfig.DEBUG) {

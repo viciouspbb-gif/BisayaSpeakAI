@@ -265,6 +265,10 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.48")
     ksp("com.google.dagger:hilt-android-compiler:2.48")
 
+    hilt {
+        enableAggregatingTask = true
+    }
+
     // Gemini AI
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("io.ktor:ktor-client-core:2.3.7")
