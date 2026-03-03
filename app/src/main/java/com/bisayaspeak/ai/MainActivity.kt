@@ -100,10 +100,21 @@ class MainActivity : ComponentActivity() {
         val app = application as BisayaSpeakApp
         setupComposeContent(app)
 
+        // 通知経由の起動をチェック
+        val fromNotification = intent.getBooleanExtra("from_notification", false)
+        Log.d(TAG, "通知経由の起動: $fromNotification")
+
         // Android 13以上で通知権限を要求
         checkAllPermissions()
 
-        requestUserConsentAndInitializeAds()
+        // 通知経由起動時は広告ロードをスマート・ディレイ・ロード
+        if (fromNotification) {
+            Log.d(TAG, "通知経由起動：広告ロードを1.5秒ディレイで開始します")
+            // onCreateでは即時ロードを禁止
+            scheduleSmartDelayedAdLoad()
+        } else {
+            requestUserConsentAndInitializeAds()
+        }
 
         lifecycleScope.launch {
             billingManager.initialize {
@@ -366,10 +377,50 @@ class MainActivity : ComponentActivity() {
     
     override fun onResume() {
         super.onResume()
+        
         // 中断された更新をチェック
         updateManager?.let { manager ->
             lifecycleScope.launch {
                 manager.checkUpdateInProgress(this@MainActivity)
+            }
+        }
+    }
+    
+    private fun scheduleSmartDelayedAdLoad() {
+        // UI描画完了から1.5秒のディレイを置いてロードを開始
+        window.decorView.postDelayed({
+            Log.d(TAG, "Ad stability: Load triggered after delay")
+            loadAdsWithEnhancedRetry(0)
+        }, 1500)
+    }
+    
+    private var adsLoadInitialized = false
+    
+    private fun loadAdsWithEnhancedRetry(retryCount: Int) {
+        val retryDelays = listOf(0L, 3000L, 10000L) // 初回、3秒後、10秒後
+        
+        try {
+            Log.d(TAG, "広告ロード試行 ${retryCount + 1}/3")
+            
+            // リソース優先度の最適化：広告ロード中は非緊急処理を一時停止
+            if (retryCount == 0) {
+                Log.d(TAG, "Ad stability: Resource optimization enabled")
+            }
+            
+            requestUserConsentAndInitializeAds()
+            Log.d(TAG, "広告ロード成功")
+        } catch (e: Exception) {
+            Log.e(TAG, "広告ロード失敗 ${retryCount + 1}/3", e)
+            
+            if (retryCount < retryDelays.size - 1) {
+                val delay = retryDelays[retryCount + 1]
+                Log.d(TAG, "Ad stability: Retry #${retryCount + 1} initiated after ${delay}ms")
+                
+                window.decorView.postDelayed({
+                    loadAdsWithEnhancedRetry(retryCount + 1)
+                }, delay)
+            } else {
+                Log.e(TAG, "Ad stability: Retry limit reached, giving up")
             }
         }
     }

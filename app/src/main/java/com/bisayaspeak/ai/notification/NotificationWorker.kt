@@ -44,39 +44,40 @@ class NotificationWorker @AssistedInject constructor(
             val isProVersion = BuildConfig.FLAVOR == "pro"
             Log.d(TAG, "ビルドバリアントによる課金判定: ${BuildConfig.FLAVOR} -> PRO=$isProVersion")
             
-            // 通知内容を生成
-            Log.d(TAG, "ジェネレータ呼び出し")
-            val content = notificationContentGenerator.generateNotificationContent(isProVersion)
-            
-            if (content == null) {
-                Log.w(TAG, "通知内容生成失敗: contentがnullです")
-                Log.d(TAG, "デフォルト・ビサヤ語フレーズで通知を表示します")
-                
-                // デフォルト・ビサヤ語フレーズを生成
-                val fallbackContent = NotificationContent(
-                    title = if (isProVersion) "タリからのメッセージ" else "今日のビサヤ語",
-                    body = if (isProVersion) {
-                        "Kumusta ka! 元気ですか？今日も一緒にビサヤ語を学びましょう！"
-                    } else {
-                        "Kumusta ka - 元気ですか？"
-                    },
+            // 通知内容を最終固定
+            val content = if (isProVersion) {
+                // PRO版（タリモード）- 固定フレーズ
+                NotificationContent(
+                    title = "タリからのメッセージ",
+                    body = "今日の散歩どうする？",
                     deepLink = "app://study/main_lesson"
                 )
-                
-                Log.d(TAG, "表示関数を呼びます（デフォルトコンテンツ）")
-                localNotificationManager.showNotification(fallbackContent)
-                Log.d(TAG, "デフォルト通知表示完了: ${fallbackContent.title}")
             } else {
-                Log.d(TAG, "通知内容生成成功: title=${content.title}, body=${content.body}")
+                // LITE版（教材モード）- JSONから取得
+                Log.d(TAG, "ジェネレータ呼び出し（LITE版）")
+                val generatedContent = notificationContentGenerator.generateNotificationContent(false)
                 
-                // 通知を表示
-                Log.d(TAG, "表示関数を呼びます")
-                localNotificationManager.showNotification(content)
-                
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "通知表示完了: ${content.title}")
+                if (generatedContent != null) {
+                    generatedContent.copy(
+                        title = "今日のビサヤ語",
+                        body = "Kumusta ka - わかりますか？" // 固定形式で表示
+                    )
+                } else {
+                    // フォールバック
+                    NotificationContent(
+                        title = "今日のビサヤ語",
+                        body = "Kumusta ka - わかりますか？",
+                        deepLink = "app://study/main_lesson"
+                    )
                 }
             }
+            
+            Log.d(TAG, "通知内容確定: title=${content.title}, body=${content.body}")
+            
+            // 通知を表示
+            Log.d(TAG, "表示関数を呼びます")
+            localNotificationManager.showNotification(content)
+            Log.d(TAG, "通知表示完了: ${content.title}")
             
             // 次の日の通知を再スケジュール
             Log.d(TAG, "次回通知のスケジュールを開始")
