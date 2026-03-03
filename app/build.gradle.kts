@@ -25,8 +25,8 @@ android {
         applicationId = "com.bisayaspeak.ai"
         minSdk = 24
         targetSdk = 35
-        versionCode = 81
-        versionName = "1.0.81"
+        versionCode = 82
+        versionName = "1.0.82"
 
         // MultiDex有効化（クラスローダー競合回避）
         multiDexEnabled = true
