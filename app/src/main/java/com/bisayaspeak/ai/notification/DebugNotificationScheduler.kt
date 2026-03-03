@@ -51,8 +51,8 @@ class DebugNotificationScheduler @Inject constructor(
         )
         
         try {
-            // 確実に発火
-            alarmManager.setExactAndAllowWhileIdle(
+            // ポリシー準拠のアラーム設定
+            alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 triggerTime,
                 pendingIntent

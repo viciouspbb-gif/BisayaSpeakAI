@@ -181,20 +181,20 @@ class NotificationScheduler @Inject constructor(
                         Log.w("NotificationScheduler", "SCHEDULE_EXACT_ALARM権限なし、setAndAllowWhileIdleでフォールバック（18:00頃に通知）")
                     }
                 } else {
-                    // 権限がある場合は正確なアラームを使用
-                    alarmManager.setExactAndAllowWhileIdle(
+                    // 権限がある場合もsetAndAllowWhileIdleを使用（ポリシー準拠）
+                    alarmManager.setAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
                     
                     if (BuildConfig.DEBUG) {
-                        Log.d("NotificationScheduler", "SCHEDULE_EXACT_ALARM権限あり、正確なアラームを設定")
+                        Log.d("NotificationScheduler", "setAndAllowWhileIdleでアラームを設定（18:00頃に通知）")
                     }
                 }
             } else {
-                // Android 11以前はそのまま使用
-                alarmManager.setExactAndAllowWhileIdle(
+                // Android 11以前もsetAndAllowWhileIdleを使用（ポリシー準拠）
+                alarmManager.setAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     triggerTime,
                     pendingIntent
