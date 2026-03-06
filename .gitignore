@@ -13,3 +13,9 @@
 *.p12
 google-services.json
 SETUP_TEMPLATE.md
+
+# Security: Prevent API keys and binary files from being committed
+*.aab
+*.apk
+google-services.json
+local.properties
