@@ -71,7 +71,7 @@ import com.bisayaspeak.ai.ui.screens.SignInScreen
 import com.bisayaspeak.ai.ui.screens.SignUpScreen
 import com.bisayaspeak.ai.ui.screens.TranslateScreen
 import com.bisayaspeak.ai.ui.screens.TariDojoScreen
-import com.bisayaspeak.ai.ui.screens.ComingSoonScreen
+import com.bisayaspeak.ai.ui.screens.ListeningDataManagementScreen
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModel
 import com.bisayaspeak.ai.ui.viewmodel.ListeningViewModelFactory
 import com.bisayaspeak.ai.voice.GeminiVoiceService
@@ -99,7 +99,8 @@ enum class AppRoute(val route: String) {
     MissionTalk("mission/talk/{missionId}"),
     AiTranslator("ai/translator"),
     Dictionary("dictionary"),
-    TariDojo("tari_dojo")
+    TariDojo("tari_dojo"),
+    ListeningDataManagement("listening_data_management")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -517,6 +518,10 @@ fun AppNavGraph(
                 viewModel = viewModel,
                 isProVersion = isProVersion
             )
+        }
+
+        composable(AppRoute.ListeningDataManagement.route) {
+            ListeningDataManagementScreen()
         }
 
         composable(

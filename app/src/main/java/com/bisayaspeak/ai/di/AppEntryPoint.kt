@@ -2,9 +2,11 @@ package com.bisayaspeak.ai.di
 
 import android.content.Context
 import com.bisayaspeak.ai.data.preferences.PreferencesManager
+import com.bisayaspeak.ai.data.repository.TimeReleaseRepository
 import com.bisayaspeak.ai.notification.LocalNotificationManager
 import com.bisayaspeak.ai.notification.NotificationContentGenerator
 import com.bisayaspeak.ai.notification.NotificationScheduler
+import com.bisayaspeak.ai.work.LevelReleaseScheduler
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -20,6 +22,9 @@ interface AppEntryPoint {
     fun getNotificationContentGenerator(): NotificationContentGenerator
     fun getPreferencesManager(): PreferencesManager
     fun getLocalNotificationManager(): LocalNotificationManager
+    fun getTimeReleaseRepository(): TimeReleaseRepository
+    fun getLevelReleaseScheduler(): LevelReleaseScheduler
+    fun inject(worker: com.bisayaspeak.ai.work.LevelReleaseNotificationWorker)
 }
 
 /**

@@ -63,6 +63,17 @@ class NotificationContentGenerator @Inject constructor(
     }
     
     /**
+     * LV31データ追加完了後の通知内容を生成
+     */
+    suspend fun generateLevel31CompleteNotification(): NotificationContent {
+        return NotificationContent(
+            title = "リスニングデータ更新完了 / Listening Data Updated",
+            body = "LV31の新しいリスニング練習データが追加されました！ / New LV31 listening practice data has been added!",
+            deepLink = "app://study/main_lesson"
+        )
+    }
+    
+    /**
      * 無料ユーザー向け通知内容を生成（レガシー互換）
      */
     suspend fun generateFreeUserContent(): NotificationContent? {

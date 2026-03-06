@@ -217,7 +217,6 @@ class MainActivity : ComponentActivity() {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .systemBarsPadding()
                         ) {
                             AppNavGraph(
                                 navController = navController,

@@ -24,6 +24,7 @@ import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
+import com.bisayaspeak.ai.data.repository.TimeReleaseRepository
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +37,7 @@ fun LevelSelectionScreen(
     val context = LocalContext.current
     var refreshTrigger by remember { mutableStateOf(0) }
     var showAdDialogForLevel by remember { mutableStateOf<Int?>(null) }
+    val timeReleaseRepository = remember { TimeReleaseRepository() }
     val sectionHeaders = listOf(
         1 to stringResource(R.string.level_section_1_title),
         6 to stringResource(R.string.level_section_2_title),
@@ -84,34 +86,59 @@ fun LevelSelectionScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = modifier.padding(padding)
             ) {
-                for (level in 1..30) {
-                    sectionHeaders[level]?.let { title ->
-                        item(span = { GridItemSpan(maxLineSpan) }) {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
+                for (level in 1..35) {
+                    // タイムリリースチェック
+                    val isReleased = timeReleaseRepository.isLevelReleased(level)
+                    
+                    if (level > 30) {
+                        // LV31-35はタイムリリース専用のセクションヘッダー
+                        if (level == 31) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Text(
+                                    text = "タイムリリースレベル",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        // LV1-30は既存のセクションヘッダー
+                        sectionHeaders[level]?.let { title ->
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
                         }
                     }
 
-                    val status = LessonStatusManager.getLessonStatus(context, level, isPro)
+                    val status = if (isReleased) {
+                        LessonStatusManager.getLessonStatus(context, level, isPro)
+                    } else {
+                        LessonStatusManager.Status.LOCKED
+                    }
 
                     item {
                         LevelButton(
                             level = level,
                             status = status,
+                            isReleased = isReleased,
+                            timeUntilRelease = timeReleaseRepository.getTimeUntilRelease(level),
                             onClick = {
-                                when (status) {
-                                    LessonStatusManager.Status.OPEN,
-                                    LessonStatusManager.Status.CLEARED -> {
-                                        startLevel(level)
-                                    }
-                                    LessonStatusManager.Status.NEED_AD -> {
-                                        showAdDialogForLevel = level
-                                    }
-                                    LessonStatusManager.Status.LOCKED -> {
-                                        android.util.Log.d("LevelSelection", "Level locked - need to clear previous level")
+                                if (isReleased) {
+                                    when (status) {
+                                        LessonStatusManager.Status.OPEN,
+                                        LessonStatusManager.Status.CLEARED -> {
+                                            startLevel(level)
+                                        }
+                                        LessonStatusManager.Status.NEED_AD -> {
+                                            showAdDialogForLevel = level
+                                        }
+                                        LessonStatusManager.Status.LOCKED -> {
+                                            android.util.Log.d("LevelSelection", "Level locked - need to clear previous level")
+                                        }
                                     }
                                 }
                             }
@@ -159,13 +186,17 @@ fun LevelSelectionScreen(
 fun LevelButton(
     level: Int,
     status: LessonStatusManager.Status,
+    isReleased: Boolean = true,
+    timeUntilRelease: String? = null,
     onClick: () -> Unit
 ) {
-    val (bgColor, icon, label) = when (status) {
-        LessonStatusManager.Status.LOCKED -> Triple(Color.Gray, Icons.Default.Lock, "LOCKED")
-        LessonStatusManager.Status.NEED_AD -> Triple(MaterialTheme.colorScheme.secondary, Icons.Default.Videocam, "GET")
-        LessonStatusManager.Status.OPEN -> Triple(MaterialTheme.colorScheme.primary, Icons.Default.PlayArrow, "START")
-        LessonStatusManager.Status.CLEARED -> Triple(MaterialTheme.colorScheme.tertiary, Icons.Default.Star, "CLEAR")
+    val (bgColor, icon, label) = when {
+        !isReleased -> Triple(Color.Gray, Icons.Default.Lock, "LOCKED")
+        status == LessonStatusManager.Status.LOCKED -> Triple(Color.Gray, Icons.Default.Lock, "LOCKED")
+        status == LessonStatusManager.Status.NEED_AD -> Triple(MaterialTheme.colorScheme.secondary, Icons.Default.Videocam, "GET")
+        status == LessonStatusManager.Status.OPEN -> Triple(MaterialTheme.colorScheme.primary, Icons.Default.PlayArrow, "START")
+        status == LessonStatusManager.Status.CLEARED -> Triple(MaterialTheme.colorScheme.tertiary, Icons.Default.Star, "CLEAR")
+        else -> Triple(Color.Gray, Icons.Default.Lock, "LOCKED")
     }
 
     Button(
@@ -173,7 +204,7 @@ fun LevelButton(
         colors = ButtonDefaults.buttonColors(containerColor = bgColor),
         modifier = Modifier.height(90.dp),
         shape = RoundedCornerShape(16.dp),
-        enabled = true
+        enabled = isReleased
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
@@ -186,6 +217,13 @@ fun LevelButton(
                 contentDescription = label,
                 modifier = Modifier.size(20.dp)
             )
+            if (!isReleased && timeUntilRelease != null) {
+                Text(
+                    text = timeUntilRelease,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

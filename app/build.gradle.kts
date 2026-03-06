@@ -25,8 +25,8 @@ android {
         applicationId = "com.bisayaspeak.ai"
         minSdk = 24
         targetSdk = 35
-        versionCode = 83
-        versionName = "1.0.83"
+        versionCode = 84
+        versionName = "1.0.84"
 
         // MultiDex有効化（クラスローダー競合回避）
         multiDexEnabled = true
@@ -178,9 +178,10 @@ android {
 
 dependencies {
     // Core Android
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("androidx.activity:activity:1.9.3")
 
     // Compose
     implementation(platform("androidx.compose:compose-bom:2023.10.01"))
@@ -217,6 +218,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
 
     // reCAPTCHA Enterprise - セキュリティ脆弱性対応（18.4.0以上必須）
     implementation("com.google.android.recaptcha:recaptcha:18.6.1")
