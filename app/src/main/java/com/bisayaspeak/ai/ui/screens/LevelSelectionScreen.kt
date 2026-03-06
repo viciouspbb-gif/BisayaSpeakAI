@@ -95,7 +95,7 @@ fun LevelSelectionScreen(
                         if (level == 31) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
                                 Text(
-                                    text = "タイムリリースレベル",
+                                    text = "第7章：タリとの深い会話（順次公開）",
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     modifier = Modifier.padding(vertical = 8.dp)
                                 )
