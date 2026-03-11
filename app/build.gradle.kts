@@ -207,6 +207,7 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     // AdMob
     implementation("com.google.android.gms:play-services-ads:23.6.0")
@@ -217,6 +218,8 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-config-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
     // reCAPTCHA Enterprise - セキュリティ脆弱性対応（18.4.0以上必須）
     implementation("com.google.android.recaptcha:recaptcha:18.6.1")

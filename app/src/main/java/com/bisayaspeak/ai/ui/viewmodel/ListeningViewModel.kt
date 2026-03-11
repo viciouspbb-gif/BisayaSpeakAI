@@ -250,7 +250,7 @@ class ListeningViewModel(
         private const val ORDERING_COUNT = 3
         private const val MAX_PANEL_COUNT = 8
         private const val MAX_VOICE_HINTS = 3
-        private const val MAX_LEVEL = 30
+        private const val MAX_LEVEL = 35
 
         // 称号連動型音声スピード設定
         private const val PITCH_FIXED = 0.8f // ピッチは固定
@@ -1062,7 +1062,7 @@ class ListeningViewModel(
                 val mentorLine = getOwlMasterIntro(userLevel, isJapanese)
                 val message = if (passed) {
                     when {
-                        userLevel == 30 -> mentorLine + localText(isJapanese,
+                        userLevel == 35 -> mentorLine + localText(isJapanese,
                             "見事じゃ！ジンベエザメと泳ぐ達人になったな！ここからが本番じゃ。プレミアムな世界を覗いてみるか？",
                             "Outstanding! You're a whale-shark-level master now. Ready to peek into the premium world?"
                         )
@@ -1399,7 +1399,7 @@ class ListeningViewModel(
     private fun rebuildDatabaseFromSeed(seedData: List<String>) {
         try {
             // 各レベル（1-30）をシードデータから構築
-            for (level in 1..30) {
+            for (level in 1..35) {
                 val levelQuestions = generateQuestionsForLevel(seedData, level)
                 // Repository経由でデータを挿入（仮実装）
                 Log.d("ListeningViewModel", "Rebuilt level $level with ${levelQuestions.size} questions")

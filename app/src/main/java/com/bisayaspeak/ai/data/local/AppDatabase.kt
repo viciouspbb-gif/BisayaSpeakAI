@@ -8,11 +8,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.bisayaspeak.ai.data.repository.DbSeedStateRepository
+import com.bisayaspeak.ai.data.repository.LevelConfigRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@Database(entities = [Question::class, UserProgress::class], version = 4, exportSchema = false)
+@Database(entities = [Question::class, UserProgress::class], version = 31, exportSchema = false)
 @TypeConverters(AppTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun questionDao(): QuestionDao
@@ -55,7 +56,8 @@ abstract class AppDatabase : RoomDatabase() {
                 DatabaseInitializer.initialize(
                     context = context,
                     database = database,
-                    seedStateRepository = DbSeedStateRepository(context)
+                    seedStateRepository = DbSeedStateRepository(context),
+                    levelConfigRepository = LevelConfigRepository(context)
                 )
             }
         }
@@ -67,7 +69,8 @@ abstract class AppDatabase : RoomDatabase() {
                 DatabaseInitializer.initialize(
                     context = context,
                     database = database,
-                    seedStateRepository = DbSeedStateRepository(context)
+                    seedStateRepository = DbSeedStateRepository(context),
+                    levelConfigRepository = LevelConfigRepository(context)
                 )
             }
         }

@@ -22,6 +22,9 @@ interface QuestionDao {
     @Query("SELECT COUNT(*) FROM (SELECT DISTINCT * FROM questions)")
     suspend fun countDistinctQuestions(): Int
 
+    @Query("SELECT MAX(level) FROM questions")
+    suspend fun getMaxLevel(): Int?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuestions(questions: List<Question>)
 

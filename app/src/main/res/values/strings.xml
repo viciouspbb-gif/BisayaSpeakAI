@@ -18,8 +18,12 @@
     <string name="level_section_4_title">Chapter 4: Daily Phrases</string>
     <string name="level_section_5_title">Chapter 5: Future Plans</string>
     <string name="level_section_6_title">Chapter 6: Past Stories</string>
+    <string name="level_section_7_title">Chapter 7: Vision &amp; Leadership</string>
+    <string name="level_section_dynamic_title">Chapter %1$d</string>
     <string name="level_unlock_dialog_title">Unlock Lv.%1$d?</string>
     <string name="level_unlock_dialog_message">Watch a short video ad to unlock this lesson?</string>
+    <string name="level_release_notification_title">New level unlocked!</string>
+    <string name="level_release_notification_body">Level %1$d is now available. Jump back in!</string>
     
     <!-- Practice Screen -->
     <string name="practice_title_format">%s - Practice</string>
@@ -324,13 +328,18 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_new_feature_message">Master Tari Dojo is coming soon. In the meantime, enjoy AI Translator and Tari Walk!</string>
     <string name="home_feature_ai_translator_title">AI Translator</string>
     <string name="home_feature_ai_translator_subtitle">Native-grade translations</string>
+    <string name="home_feature_ai_translator_plan">Your private interpreter decoding Bisaya in real time.</string>
     <string name="home_feature_tari_walk_title">Tari Walk</string>
     <string name="home_feature_tari_walk_subtitle">Free conversation journeys</string>
+    <string name="home_feature_tari_walk_plan">Gather living street phrases while you roam the city.</string>
     <string name="home_feature_dojo_title_master">Master Tari Dojo</string>
     <string name="home_feature_dojo_subtitle_master">Strict roleplay training</string>
+    <string name="home_feature_dojo_plan">Coming soon: master pronunciation and sculpt your voice.</string>
     <string name="home_feature_dojo_placeholder_title">Tari Dojo is getting ready</string>
     <string name="home_feature_dojo_placeholder_message">Hi, it’s Tari! Master Tari Dojo will open soon. For now, please enjoy AI Translator and Tari Walk.</string>
     <string name="home_feature_dojo_placeholder_cta">OK, I’ll try those</string>
+    <string name="home_feature_locked_snackbar">This feature will be unlocked in the next update.</string>
+    <string name="home_feature_locked_icon_desc">Locked feature</string>
     <string name="home_owl_description">Owl mentor illustration</string>
     <string name="home_tarsier_description">Tarsier illustration</string>
     <string name="home_pro_dialog_title">Upgrade to PRO</string>

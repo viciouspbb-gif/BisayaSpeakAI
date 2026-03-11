@@ -9,10 +9,12 @@ import androidx.hilt.work.HiltWorkerFactory
 import com.bisayaspeak.ai.data.local.AppDatabase
 import com.bisayaspeak.ai.data.local.DatabaseInitializer
 import com.bisayaspeak.ai.data.repository.DbSeedStateRepository
+import com.bisayaspeak.ai.data.repository.LevelConfigRepository
 import com.bisayaspeak.ai.data.repository.QuestionRepository
 import com.bisayaspeak.ai.data.repository.UserProgressRepository
 import com.bisayaspeak.ai.di.getAppEntryPoint
 import com.bisayaspeak.ai.feature.ProFeatureGate
+import com.bisayaspeak.ai.remote.RemoteLevelConfigManager
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -52,6 +54,9 @@ class BisayaSpeakApp : Application(), Configuration.Provider {
     lateinit var dbSeedStateRepository: DbSeedStateRepository
         private set
 
+    private lateinit var levelConfigRepository: LevelConfigRepository
+    private lateinit var remoteLevelConfigManager: RemoteLevelConfigManager
+
     private val _proVersionState = MutableStateFlow(false)
     val proVersionState: StateFlow<Boolean> = _proVersionState.asStateFlow()
 
@@ -76,6 +81,7 @@ class BisayaSpeakApp : Application(), Configuration.Provider {
         Log.e("APP_CLASS", "appClass=" + this::class.java.name)
         instance = this
         _proVersionState.value = false
+        levelConfigRepository = LevelConfigRepository(this)
 
         if (FirebaseApp.getApps(this).isEmpty()) {
             FirebaseApp.initializeApp(this)
@@ -116,7 +122,8 @@ class BisayaSpeakApp : Application(), Configuration.Provider {
         // DB初期化もIOスレッドで実行
         applicationScope.launch(Dispatchers.IO) {
             try {
-                initializeDatabase()
+                initializeRemoteConfig()
+        initializeDatabase()
                 Log.d("BisayaSpeakApp", "データベース初期化完了")
             } catch (e: Exception) {
                 Log.e("BisayaSpeakApp", "データベース初期化失敗", e)
@@ -183,6 +190,20 @@ class BisayaSpeakApp : Application(), Configuration.Provider {
             initializeCoreDependencies()
         }
     }
+
+    private fun initializeRemoteConfig() {
+        applicationScope.launch(Dispatchers.IO) {
+            try {
+                levelConfigRepository.ensureInitialized()
+                remoteLevelConfigManager = RemoteLevelConfigManager(levelConfigRepository)
+                remoteLevelConfigManager.initialize()
+                remoteLevelConfigManager.fetchAndActivate()
+                Log.d("BisayaSpeakApp", "Remote Config fetched successfully")
+            } catch (e: Exception) {
+                Log.e("BisayaSpeakApp", "Remote Config fetch failed", e)
+            }
+        }
+    }
     
     private fun initializeAds() {
         // MobileAds.initializeをIOスレッドで実行
@@ -218,7 +239,8 @@ class BisayaSpeakApp : Application(), Configuration.Provider {
             DatabaseInitializer.initialize(
                 context = applicationContext,
                 database = database,
-                seedStateRepository = dbSeedStateRepository
+                seedStateRepository = dbSeedStateRepository,
+                levelConfigRepository = levelConfigRepository
             )
         }
     }

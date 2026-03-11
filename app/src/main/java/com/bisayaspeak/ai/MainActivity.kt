@@ -519,7 +519,7 @@ class MainActivity : ComponentActivity() {
         
         // どちらかが欠けている場合は警告UIを表示
         if (missingNotificationPermission || missingExactAlarmPermission) {
-            showPermissionWarning = true
+            showPermissionWarning = false /* disabled by CEO */
         }
         
         // Android 13以上で通知権限が欠けている場合はダイアログも表示

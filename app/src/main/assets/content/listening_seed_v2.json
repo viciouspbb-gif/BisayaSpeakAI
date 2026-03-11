@@ -5568,5 +5568,525 @@
         "meaning": "I've eaten kinilaw"
       }
     }
+  },
+  {
+    "id": 301,
+    "level": 31,
+    "native": "Magplano ko ug online store",
+    "words": [
+      "Magplano",
+      "ko",
+      "ug",
+      "online",
+      "store"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "オンラインストアを企画中です"
+      },
+      "en": {
+        "meaning": "I'm planning an online store"
+      }
+    }
+  },
+  {
+    "id": 302,
+    "level": 31,
+    "native": "Magtuon ko og bagong language",
+    "words": [
+      "Magtuon",
+      "ko",
+      "og",
+      "bagong",
+      "language"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "新しい言語を学ぶ予定です"
+      },
+      "en": {
+        "meaning": "I'll learn a new language"
+      }
+    }
+  },
+  {
+    "id": 303,
+    "level": 31,
+    "native": "Magpraktis ko og budgeting",
+    "words": [
+      "Magpraktis",
+      "ko",
+      "og",
+      "budgeting"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "家計管理を練習します"
+      },
+      "en": {
+        "meaning": "I'll practice budgeting"
+      }
+    }
+  },
+  {
+    "id": 304,
+    "level": 31,
+    "native": "Magandam ko ug meal prep kada semana",
+    "words": [
+      "Magandam",
+      "ko",
+      "ug",
+      "meal",
+      "prep",
+      "kada",
+      "semana"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "毎週ミールプレップをします"
+      },
+      "en": {
+        "meaning": "I'll do meal prep every week"
+      }
+    }
+  },
+  {
+    "id": 305,
+    "level": 31,
+    "native": "Mag volunteer ko sa weekend cleanup",
+    "words": [
+      "Mag",
+      "volunteer",
+      "ko",
+      "sa",
+      "weekend",
+      "cleanup"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "週末の清掃に参加します"
+      },
+      "en": {
+        "meaning": "I'll volunteer for weekend cleanups"
+      }
+    }
+  },
+  {
+    "id": 306,
+    "level": 32,
+    "native": "Nag research ko sa travel insurance",
+    "words": [
+      "Nag",
+      "research",
+      "ko",
+      "sa",
+      "travel",
+      "insurance"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "旅行保険を調べています"
+      },
+      "en": {
+        "meaning": "I'm researching travel insurance"
+      }
+    }
+  },
+  {
+    "id": 307,
+    "level": 32,
+    "native": "Nag set ko og itinerary template",
+    "words": [
+      "Nag",
+      "set",
+      "ko",
+      "ug",
+      "itinerary",
+      "template"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "旅程テンプレを作りました"
+      },
+      "en": {
+        "meaning": "I set up an itinerary template"
+      }
+    }
+  },
+  {
+    "id": 308,
+    "level": 32,
+    "native": "Nag learn ko basic phrases sa lokal nga pinulongan",
+    "words": [
+      "Nag",
+      "learn",
+      "ko",
+      "basic",
+      "phrases",
+      "sa",
+      "lokal",
+      "nga",
+      "pinulongan"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "現地語の基本フレーズを覚えています"
+      },
+      "en": {
+        "meaning": "I'm learning basic local phrases"
+      }
+    }
+  },
+  {
+    "id": 309,
+    "level": 32,
+    "native": "Gibutang namo ang emergency contacts",
+    "words": [
+      "Gibutang",
+      "namo",
+      "ang",
+      "emergency",
+      "contacts"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "緊急連絡先をまとめました"
+      },
+      "en": {
+        "meaning": "We organized our emergency contacts"
+      }
+    }
+  },
+  {
+    "id": 310,
+    "level": 32,
+    "native": "Naglista ko sa must-try foods",
+    "words": [
+      "Naglista",
+      "ko",
+      "sa",
+      "must-try",
+      "foods"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "現地で食べたい物をリスト化しました"
+      },
+      "en": {
+        "meaning": "I listed the must-try foods"
+      }
+    }
+  },
+  {
+    "id": 311,
+    "level": 33,
+    "native": "Nag design ko sa corporate deck",
+    "words": [
+      "Nag",
+      "design",
+      "ko",
+      "sa",
+      "corporate",
+      "deck"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "企業向け資料をデザインしました"
+      },
+      "en": {
+        "meaning": "I designed the corporate deck"
+      }
+    }
+  },
+  {
+    "id": 312,
+    "level": 33,
+    "native": "Nag facilitate ko sa sprint retrospective",
+    "words": [
+      "Nag",
+      "facilitate",
+      "ko",
+      "sa",
+      "sprint",
+      "retrospective"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "スプリント振り返りを進行しました"
+      },
+      "en": {
+        "meaning": "I facilitated the sprint retrospective"
+      }
+    }
+  },
+  {
+    "id": 313,
+    "level": 33,
+    "native": "Nag mentor ko sa bagong hire",
+    "words": [
+      "Nag",
+      "mentor",
+      "ko",
+      "sa",
+      "bagong",
+      "hire"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "新入社員をメンタリングしました"
+      },
+      "en": {
+        "meaning": "I mentored the new hire"
+      }
+    }
+  },
+  {
+    "id": 314,
+    "level": 33,
+    "native": "Nag automate ko sa reporting workflow",
+    "words": [
+      "Nag",
+      "automate",
+      "ko",
+      "sa",
+      "reporting",
+      "workflow"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "レポート作業を自動化しました"
+      },
+      "en": {
+        "meaning": "I automated the reporting workflow"
+      }
+    }
+  },
+  {
+    "id": 315,
+    "level": 33,
+    "native": "Nag share ko sa quarterly results",
+    "words": [
+      "Nag",
+      "share",
+      "ko",
+      "sa",
+      "quarterly",
+      "results"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "四半期の結果を共有しました"
+      },
+      "en": {
+        "meaning": "I shared the quarterly results"
+      }
+    }
+  },
+  {
+    "id": 316,
+    "level": 34,
+    "native": "Nagtukod ko ug health routine",
+    "words": [
+      "Nagtukod",
+      "ko",
+      "ug",
+      "health",
+      "routine"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "健康習慣を作りました"
+      },
+      "en": {
+        "meaning": "I built a health routine"
+      }
+    }
+  },
+  {
+    "id": 317,
+    "level": 34,
+    "native": "Nag meditate ko matag buntag",
+    "words": [
+      "Nag",
+      "meditate",
+      "ko",
+      "matag",
+      "buntag"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "毎朝瞑想しています"
+      },
+      "en": {
+        "meaning": "I meditate every morning"
+      }
+    }
+  },
+  {
+    "id": 318,
+    "level": 34,
+    "native": "Naglimit ko sa screen time",
+    "words": [
+      "Naglimit",
+      "ko",
+      "sa",
+      "screen",
+      "time"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "スクリーン時間を制限しています"
+      },
+      "en": {
+        "meaning": "I limit my screen time"
+      }
+    }
+  },
+  {
+    "id": 319,
+    "level": 34,
+    "native": "Nag set ko ug digital detox weekend",
+    "words": [
+      "Nag",
+      "set",
+      "ko",
+      "ug",
+      "digital",
+      "detox",
+      "weekend"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "デジタル断食の週末を作りました"
+      },
+      "en": {
+        "meaning": "I scheduled a digital detox weekend"
+      }
+    }
+  },
+  {
+    "id": 320,
+    "level": 34,
+    "native": "Nag track ko sa hydration",
+    "words": [
+      "Nag",
+      "track",
+      "ko",
+      "sa",
+      "hydration"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "水分補給を記録しています"
+      },
+      "en": {
+        "meaning": "I track my hydration"
+      }
+    }
+  },
+  {
+    "id": 321,
+    "level": 35,
+    "native": "Nag mentor ko sa mga bagong leader",
+    "words": [
+      "Nag",
+      "mentor",
+      "ko",
+      "sa",
+      "mga",
+      "bagong",
+      "leader"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "新リーダーたちを指導しています"
+      },
+      "en": {
+        "meaning": "I mentor new leaders"
+      }
+    }
+  },
+  {
+    "id": 322,
+    "level": 35,
+    "native": "Nag host ko sa strategic summit",
+    "words": [
+      "Nag",
+      "host",
+      "ko",
+      "sa",
+      "strategic",
+      "summit"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "戦略サミットを主催しました"
+      },
+      "en": {
+        "meaning": "I hosted a strategic summit"
+      }
+    }
+  },
+  {
+    "id": 323,
+    "level": 35,
+    "native": "Nag launch ko ug innovation program",
+    "words": [
+      "Nag",
+      "launch",
+      "ko",
+      "ug",
+      "innovation",
+      "program"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "イノベーションプログラムを立ち上げました"
+      },
+      "en": {
+        "meaning": "I launched an innovation program"
+      }
+    }
+  },
+  {
+    "id": 324,
+    "level": 35,
+    "native": "Nag coordinate ko sa multi-team project",
+    "words": [
+      "Nag",
+      "coordinate",
+      "ko",
+      "sa",
+      "multi-team",
+      "project"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "複数チームのプロジェクトを調整しました"
+      },
+      "en": {
+        "meaning": "I coordinated a multi-team project"
+      }
+    }
+  },
+  {
+    "id": 325,
+    "level": 35,
+    "native": "Naghatag ko ug keynote speech",
+    "words": [
+      "Naghatag",
+      "ko",
+      "ug",
+      "keynote",
+      "speech"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "基調講演を行いました"
+      },
+      "en": {
+        "meaning": "I delivered a keynote speech"
+      }
+    }
   }
 ]

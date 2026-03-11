@@ -5568,5 +5568,600 @@
         "meaning": "I've eaten kinilaw"
       }
     }
+  },
+  {
+    "id": 301,
+    "level": 31,
+    "native": "Tari, kumusta ka man?",
+    "words": [
+      "Tari",
+      "kumusta",
+      "ka",
+      "man"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "タリ、元気ですか？"
+      },
+      "en": {
+        "meaning": "Tari, how are you?"
+      }
+    }
+  },
+  {
+    "id": 302,
+    "level": 31,
+    "native": "Nindot kaayo ang imo awit",
+    "words": [
+      "Nindot",
+      "kaayo",
+      "ang",
+      "imo",
+      "awit"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたの歌はとても美しいです"
+      },
+      "en": {
+        "meaning": "Your song is very beautiful"
+      }
+    }
+  },
+  {
+    "id": 303,
+    "level": 31,
+    "native": "Unsa ang imong gusto na makit-an?",
+    "words": [
+      "Unsa",
+      "ang",
+      "imong",
+      "gusto",
+      "na",
+      "makit-an"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたが見たいものは何ですか？"
+      },
+      "en": {
+        "meaning": "What do you want to see?"
+      }
+    }
+  },
+  {
+    "id": 304,
+    "level": 31,
+    "native": "Dili ko makatuon sa akong gipakita",
+    "words": [
+      "Dili",
+      "ko",
+      "makatuon",
+      "sa",
+      "akong",
+      "gipakita"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私が見せたものを信じられない"
+      },
+      "en": {
+        "meaning": "I can't believe what I showed you"
+      }
+    }
+  },
+  {
+    "id": 305,
+    "level": 31,
+    "native": "Sige lang, padayon ta",
+    "words": [
+      "Sige",
+      "lang",
+      "padayon",
+      "ta"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "よし、続けましょう"
+      },
+      "en": {
+        "meaning": "Alright, let's continue"
+      }
+    }
+  },
+  {
+    "id": 306,
+    "level": 31,
+    "native": "Ang gugma alang kanato",
+    "words": [
+      "Ang",
+      "gugma",
+      "alang",
+      "kanato"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "愛は私たちのためにあります"
+      },
+      "en": {
+        "meaning": "Love is for us"
+      }
+    }
+  },
+  {
+    "id": 307,
+    "level": 31,
+    "native": "Kung diin ka man lakaw",
+    "words": [
+      "Kung",
+      "diin",
+      "ka",
+      "man",
+      "lakaw"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたがどこへ行こうとも"
+      },
+      "en": {
+        "meaning": "Wherever you go"
+      }
+    }
+  },
+  {
+    "id": 308,
+    "level": 31,
+    "native": "Ako kanimo, kanako ikaw",
+    "words": [
+      "Ako",
+      "kanimo",
+      "kanako",
+      "ikaw"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私はあなたのもの、あなたは私のもの"
+      },
+      "en": {
+        "meaning": "I am yours, you are mine"
+      }
+    }
+  },
+  {
+    "id": 309,
+    "level": 31,
+    "native": "Higugma ko ikaw palayo",
+    "words": [
+      "Higugma",
+      "ko",
+      "ikaw",
+      "palayo"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私は遠くからでもあなたを愛しています"
+      },
+      "en": {
+        "meaning": "I love you from afar"
+      }
+    }
+  },
+  {
+    "id": 310,
+    "level": 31,
+    "native": "Sumpaan sa atong kasingkasing",
+    "words": [
+      "Sumpaan",
+      "sa",
+      "atong",
+      "kasingkasing"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "私たちの心の誓い"
+      },
+      "en": {
+        "meaning": "Vow of our hearts"
+      }
+    }
+  },
+  {
+    "id": 311,
+    "level": 32,
+    "native": "Ang kalibutan nag-usab na",
+    "words": [
+      "Ang",
+      "kalibutan",
+      "nag-usab",
+      "na"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "世界はもう変わってしまった"
+      },
+      "en": {
+        "meaning": "The world has already changed"
+      }
+    }
+  },
+  {
+    "id": 312,
+    "level": 32,
+    "native": "Kinsa ang nagbuhat sa kini?",
+    "words": [
+      "Kinsa",
+      "ang",
+      "nagbuhat",
+      "sa",
+      "kini"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "誰がこれを作ったのですか？"
+      },
+      "en": {
+        "meaning": "Who made this?"
+      }
+    }
+  },
+  {
+    "id": 313,
+    "level": 32,
+    "native": "Mahal kaayo ang pag-ila",
+    "words": [
+      "Mahal",
+      "kaayo",
+      "ang",
+      "pag-ila"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "自己認識は非常に高価です"
+      },
+      "en": {
+        "meaning": "Self-awareness is very expensive"
+      }
+    }
+  },
+  {
+    "id": 314,
+    "level": 32,
+    "native": "Huna-hunaon kini sa taas nga panahon",
+    "words": [
+      "Huna-hunaon",
+      "kini",
+      "sa",
+      "taas",
+      "nga",
+      "panahon"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "これを長い時間考える必要がある"
+      },
+      "en": {
+        "meaning": "This needs to be thought about for a long time"
+      }
+    }
+  },
+  {
+    "id": 315,
+    "level": 32,
+    "native": "Ang kalisud makapahimungaw",
+    "words": [
+      "Ang",
+      "kalisud",
+      "makapahimungaw"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "苦しみは静けさをもたらす"
+      },
+      "en": {
+        "meaning": "Hardship brings peace"
+      }
+    }
+  },
+  {
+    "id": 316,
+    "level": 33,
+    "native": "Way laing makapahimuut kundili ang gugma",
+    "words": [
+      "Way",
+      "laing",
+      "makapahimuut",
+      "kundili",
+      "ang",
+      "gugma"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "愛以外に喜びをもたらすものはない"
+      },
+      "en": {
+        "meaning": "Nothing brings joy except love"
+      }
+    }
+  },
+  {
+    "id": 317,
+    "level": 33,
+    "native": "Ang tanan naay katapusan",
+    "words": [
+      "Ang",
+      "tanan",
+      "naay",
+      "katapusan"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "すべてには終わりがある"
+      },
+      "en": {
+        "meaning": "Everything has an end"
+      }
+    }
+  },
+  {
+    "id": 318,
+    "level": 33,
+    "native": "Dili mo kini malimtan",
+    "words": [
+      "Dili",
+      "mo",
+      "kini",
+      "malimtan"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたはこれを忘れることはない"
+      },
+      "en": {
+        "meaning": "You will never forget this"
+      }
+    }
+  },
+  {
+    "id": 319,
+    "level": 33,
+    "native": "Ang kahayag moabut sa katapusan",
+    "words": [
+      "Ang",
+      "kahayag",
+      "moabut",
+      "sa",
+      "katapusan"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "光は終わりに届く"
+      },
+      "en": {
+        "meaning": "Light reaches the end"
+      }
+    }
+  },
+  {
+    "id": 320,
+    "level": 33,
+    "native": "Kung unsa ang kinabuhi, wala koy kasabot",
+    "words": [
+      "Kung",
+      "unsa",
+      "ang",
+      "kinabuhi",
+      "wala",
+      "koy",
+      "kasabot"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "人生とは何か、私には理解できない"
+      },
+      "en": {
+        "meaning": "What life is, I don't understand"
+      }
+    }
+  },
+  {
+    "id": 321,
+    "level": 34,
+    "native": "Ang kalipay makit-an sa katawhan",
+    "words": [
+      "Ang",
+      "kalipay",
+      "makit-an",
+      "sa",
+      "katawhan"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "喜びは人々の中に見つかる"
+      },
+      "en": {
+        "meaning": "Happiness is found among people"
+      }
+    }
+  },
+  {
+    "id": 322,
+    "level": 34,
+    "native": "Ang gugma ang kinabuhing gahum",
+    "words": [
+      "Ang",
+      "gugma",
+      "ang",
+      "kinabuhing",
+      "gahum"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "愛は人生の力です"
+      },
+      "en": {
+        "meaning": "Love is the power of life"
+      }
+    }
+  },
+  {
+    "id": 323,
+    "level": 34,
+    "native": "Sa diha nga walay katapusan",
+    "words": [
+      "Sa",
+      "diha",
+      "nga",
+      "walay",
+      "katapusan"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "終わりのない場所で"
+      },
+      "en": {
+        "meaning": "In a place without end"
+      }
+    }
+  },
+  {
+    "id": 324,
+    "level": 34,
+    "native": "Ang kalisud magpabiling kusog",
+    "words": [
+      "Ang",
+      "kalisud",
+      "magpabiling",
+      "kusog"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "苦しみは強さをもたらす"
+      },
+      "en": {
+        "meaning": "Hardship brings strength"
+      }
+    }
+  },
+  {
+    "id": 325,
+    "level": 34,
+    "native": "Ang paglaum moingon sa hangin",
+    "words": [
+      "Ang",
+      "paglaum",
+      "moingon",
+      "sa",
+      "hangin"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "希望は風に語りかける"
+      },
+      "en": {
+        "meaning": "Hope speaks to the wind"
+      }
+    }
+  },
+  {
+    "id": 326,
+    "level": 35,
+    "native": "Ang kinabuhi usa ka dako nga biyahe",
+    "words": [
+      "Ang",
+      "kinabuhi",
+      "usa",
+      "ka",
+      "dako",
+      "nga",
+      "biyahe"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "人生は大きな旅です"
+      },
+      "en": {
+        "meaning": "Life is a big journey"
+      }
+    }
+  },
+  {
+    "id": 327,
+    "level": 35,
+    "native": "Ang tanan mahimong posible kung magtinuuron ka",
+    "words": [
+      "Ang",
+      "tanan",
+      "mahimong",
+      "posible",
+      "kung",
+      "magtinuuron",
+      "ka"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "あなたが忍耐すればすべて可能になる"
+      },
+      "en": {
+        "meaning": "Everything becomes possible if you persevere"
+      }
+    }
+  },
+  {
+    "id": 328,
+    "level": 35,
+    "native": "Ang gugma walay bayad",
+    "words": [
+      "Ang",
+      "gugma",
+      "walay",
+      "bayad"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "愛は無料です"
+      },
+      "en": {
+        "meaning": "Love is free"
+      }
+    }
+  },
+  {
+    "id": 329,
+    "level": 35,
+    "native": "Sa katapusan, tanan mahimong maayo",
+    "words": [
+      "Sa",
+      "katapusan",
+      "tanan",
+      "mahimong",
+      "maayo"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "最終的に、すべては良くなる"
+      },
+      "en": {
+        "meaning": "In the end, everything will be fine"
+      }
+    }
+  },
+  {
+    "id": 330,
+    "level": 35,
+    "native": "Dako nga pasalamat sa imong tabang",
+    "words": [
+      "Tari",
+      "salamat",
+      "sa",
+      "tanan"
+    ],
+    "translations": {
+      "ja": {
+        "meaning": "タリ、すべてに感謝します"
+      },
+      "en": {
+        "meaning": "Tari, thank you for everything"
+      }
+    }
   }
 ]

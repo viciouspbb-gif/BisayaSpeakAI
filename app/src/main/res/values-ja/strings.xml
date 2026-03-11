@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">LearnBisaya</string>
     
@@ -18,6 +18,9 @@
     <string name="level_section_4_title">第4章: 日常フレーズ</string>
     <string name="level_section_5_title">第5章: 未来の予定</string>
     <string name="level_section_6_title">第6章: 過去の出来事</string>
+    <string name="level_section_7_title">第7章</string>
+    <string name="level_release_notification_title">新しいレベルが解放されました！</string>
+    <string name="level_release_notification_body">レベル%1$dがプレイ可能になりました。さっそく挑戦しよう！</string>
     <string name="level_unlock_dialog_title">Lv.%1$d を解放しますか？</string>
     <string name="level_unlock_dialog_message">短い動画広告を視聴してこのレッスンを解放しますか？</string>
     
@@ -290,13 +293,18 @@
     <string name="home_new_feature_message">新機能を準備中です。もう少しお待ちください！</string>
     <string name="home_feature_ai_translator_title">AI翻訳機</string>
     <string name="home_feature_ai_translator_subtitle">ネイティブ翻訳</string>
+    <string name="home_feature_ai_translator_plan">リアルタイムでビサヤ語を解析する、あなたの専属通訳。</string>
     <string name="home_feature_tari_walk_title">タリと散歩道</string>
     <string name="home_feature_tari_walk_subtitle">自由な会話の旅</string>
+    <string name="home_feature_tari_walk_plan">街を歩きながら、現地の生きた言葉を拾い集める。</string>
     <string name="home_feature_dojo_title_master">マスタータリ道場</string>
     <string name="home_feature_dojo_subtitle_master">厳格ロールプレイ訓練</string>
+    <string name="home_feature_dojo_plan">（準備中）発音の極意を学び、己の声を磨く場所。</string>
     <string name="home_feature_dojo_placeholder_title">タリ道場は準備中です</string>
     <string name="home_feature_dojo_placeholder_message">タリだよ！マスタータリ道場はもうすぐ公開予定。今はAI翻訳機とタリ散歩を楽しんでね。</string>
     <string name="home_feature_dojo_placeholder_cta">うん、やってみる</string>
+    <string name="home_feature_locked_snackbar">この機能は次回アップデートで解放予定です。</string>
+    <string name="home_feature_locked_icon_desc">ロック中の機能</string>
     <string name="home_owl_description">フクロウ先生のイラスト</string>
     <string name="home_tarsier_description">タルシエのイラスト</string>
     <string name="home_pro_dialog_title">PROプランへアップグレード</string>

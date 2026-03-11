@@ -23,8 +23,14 @@ import androidx.compose.ui.unit.dp
 import com.bisayaspeak.ai.LessonStatusManager
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
+import com.bisayaspeak.ai.data.local.AppDatabase
+import com.bisayaspeak.ai.data.repository.LevelConfigRepository
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+const val CHAPTER_SIZE = 5
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,14 +42,22 @@ fun LevelSelectionScreen(
     val context = LocalContext.current
     var refreshTrigger by remember { mutableStateOf(0) }
     var showAdDialogForLevel by remember { mutableStateOf<Int?>(null) }
-    val sectionHeaders = listOf(
-        1 to stringResource(R.string.level_section_1_title),
-        6 to stringResource(R.string.level_section_2_title),
-        11 to stringResource(R.string.level_section_3_title),
-        16 to stringResource(R.string.level_section_4_title),
-        21 to stringResource(R.string.level_section_5_title),
-        26 to stringResource(R.string.level_section_6_title)
-    ).associate { it }
+    val totalLevels by produceState(initialValue = LevelConfigRepository.DEFAULT_MAX_LEVEL, key1 = refreshTrigger) {
+        value = withContext(Dispatchers.IO) {
+            val db = AppDatabase.getInstance(context)
+            val dao = db.questionDao()
+            val dbMax = dao.getMaxLevel() ?: 0
+            val configRepo = LevelConfigRepository(context)
+            val remoteMax = runCatching { configRepo.getLatestMaxLevel() }.getOrElse { LevelConfigRepository.DEFAULT_MAX_LEVEL }
+            maxOf(LevelConfigRepository.DEFAULT_MAX_LEVEL, dbMax, remoteMax)
+        }
+    }
+    val sectionHeaders = remember(totalLevels) {
+        (1..totalLevels step CHAPTER_SIZE).associateWith { level ->
+            val chapterIndex = ((level - 1) / CHAPTER_SIZE) + 1
+            context.getString(R.string.level_section_dynamic_title, chapterIndex)
+        }
+    }
     val activity = context as? Activity
 
     fun startLevel(level: Int) {
@@ -84,7 +98,8 @@ fun LevelSelectionScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = modifier.padding(padding)
             ) {
-                for (level in 1..30) {
+                for (level in 1..totalLevels) {
+
                     sectionHeaders[level]?.let { title ->
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Text(
