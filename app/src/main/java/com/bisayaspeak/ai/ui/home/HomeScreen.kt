@@ -43,7 +43,7 @@ import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import com.bisayaspeak.ai.ui.ads.AdsPolicy
 
-// --- 必須定義 ---
+// --- 髯滂ｽ｢郢晢ｽｻ繝ｻ・ｰ闔・･繝ｻ・ｮ陞溘ｑ・ｽ・ｾ繝ｻ・ｩ ---
 enum class FeatureId {
     AI_CHAT,
     ROLE_PLAY,
@@ -65,7 +65,7 @@ data class FeatureItem(
     val isLocked: Boolean = false
 )
 
-// --- メイン画面 ---
+// --- 驛｢譎｢・ｽ・｡驛｢・ｧ繝ｻ・､驛｢譎｢・ｽ・ｳ鬨ｾ蛹・ｽｽ・ｻ鬯ｮ・ｱ繝ｻ・｢ ---
 @Composable
 fun HomeScreen(
     homeStatus: HomeStatus? = null,
@@ -80,8 +80,8 @@ fun HomeScreen(
     val context = LocalContext.current
     val isTariComingSoon = !BuildConfig.DEBUG
 
-    // フレーバーに応じたプレミアム判定
-    // ProFeatureGateに一本化
+    // 驛｢譎・ｽｼ驥・ｨ抵ｽｹ譎｢・ｽ・ｼ驛｢譎√・郢晢ｽｻ驍ｵ・ｺ繝ｻ・ｫ髯滂ｽ｢隲帷腸・ｧ驍ｵ・ｺ雋・･繝ｻ驛｢譎｢・ｽ・ｬ驛｢譎・ｽｺ蛟･・樣Δ譎｢・｣・ｰ髯具ｽｻ繝ｻ・､髯橸ｽｳ郢晢ｽｻ
+    // ProFeatureGate驍ｵ・ｺ繝ｻ・ｫ髣包ｽｳ・つ髫ｴ蟷｢・ｽ・ｬ髯具ｽｹ郢晢ｽｻ
     val effectivePremiumPlan = ProFeatureGate.isProFeatureEnabled(isPremiumPlan)
     val effectiveProUnlocked = ProFeatureGate.isProFeatureEnabled(isProUnlocked)
 
@@ -94,12 +94,12 @@ fun HomeScreen(
             .statusBarsPadding()
             .verticalScroll(scrollState)
     ) {
-        // ヘッダー
+        // 驛｢譎渉・･郢晢ｽ｣驛｢謨鳴驛｢譎｢・ｽ・ｼ
         HomeHeader(onClickProfile)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 学習セクション（称号・レッスン導線）
+        // 髯昴・・ｽ・ｦ鬩怜雀繝ｻ邵ｺ譎会ｽｹ・ｧ繝ｻ・ｯ驛｢・ｧ繝ｻ・ｷ驛｢譎｢・ｽ・ｧ驛｢譎｢・ｽ・ｳ郢晢ｽｻ髢ｧ・ｲ繝ｻ・ｧ繝ｻ・ｰ髯ｷ・ｿ繝ｻ・ｷ驛｢譎｢・ｽ・ｻ驛｢譎｢・ｽ・ｬ驛｢譏ｴ繝ｻ邵ｺ蟶ｷ・ｹ譎｢・ｽ・ｳ髯昴・・ｮ闌ｨ・ｽ・ｷ陞滂ｽｲ繝ｻ・ｼ郢晢ｽｻ
         LearningSection(
             status = homeStatus,
             onStartLearning = onStartLearning
@@ -107,7 +107,7 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // PRO機能セクション
+        // PRO髫ｶ蛹・ｽｺ・ｯ郢晢ｽｻ驛｢・ｧ繝ｻ・ｻ驛｢・ｧ繝ｻ・ｯ驛｢・ｧ繝ｻ・ｷ驛｢譎｢・ｽ・ｧ驛｢譎｢・ｽ・ｳ
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,14 +125,14 @@ fun HomeScreen(
             }
         }
 
-        // PRO機能リスト
+        // PRO髫ｶ蛹・ｽｺ・ｯ郢晢ｽｻ驛｢譎｢・ｽ・ｪ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // AI翻訳機
+            // AI鬩怜遜・ｽ・ｻ鬮ｫ・ｪ繝ｻ・ｳ髫ｶ謔ｶ繝ｻ
             ProFeatureItem(
                 title = stringResource(R.string.home_feature_ai_translator_title),
                 subtitle = stringResource(R.string.home_feature_ai_translator_subtitle),
@@ -142,7 +142,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             )
 
-            // タリと散歩道
+            // 驛｢・ｧ繝ｻ・ｿ驛｢譎｢・ｽ・ｪ驍ｵ・ｺ繝ｻ・ｨ髫ｰ・ｨ繝ｻ・｣髮弱・・ｽ・ｩ鬯ｩ霈斐・
             ProFeatureItem(
                 title = stringResource(R.string.home_feature_tari_walk_title),
                 subtitle = stringResource(R.string.home_feature_tari_walk_subtitle),
@@ -158,7 +158,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             )
 
-            // 道場は常に準備中表示
+            // 鬯ｩ諷閉ｧ繝ｻ・ｰ繝ｻ・ｴ驍ｵ・ｺ繝ｻ・ｯ髯晢ｽｶ繝ｻ・ｸ驍ｵ・ｺ繝ｻ・ｫ髮九・鞫ｩ繝ｻ蜻ｵ蜿峨・・ｭ鬮ｯ・ｦ繝ｻ・ｨ鬩穂ｼ夲ｽｽ・ｺ
             val dojoTitle = stringResource(R.string.home_feature_dojo_placeholder_title)
             val dojoSubtitle = stringResource(R.string.home_feature_dojo_placeholder_message)
             val dojoIllustration = R.drawable.char_owl
@@ -170,7 +170,7 @@ fun HomeScreen(
                 color = Color(0xFFCD7F32),
                 illustration = dojoIllustration,
                 onClick = { 
-                    // 常に準備中 - 何もしない
+                    // 髯晢ｽｶ繝ｻ・ｸ驍ｵ・ｺ繝ｻ・ｫ髮九・鞫ｩ繝ｻ蜻ｵ蜿峨・・ｭ - 髣厄ｽｴ髴郁ｲｻ・ｽ繧会ｽｸ・ｺ陷会ｽｱ遶企・・ｸ・ｺ郢晢ｽｻ
                 },
                 modifier = Modifier.weight(1f)
             )
@@ -178,10 +178,7 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 広告バナー
-        if (AdsPolicy.areAdsEnabled) {
-            AdMobBanner(adUnitId = AdUnitIds.BANNER_MAIN)
-        }
+        // 髯溷ｼｱ繝ｻ騾ｶ・ｸ驛｢譎√・郢晢ｽｪ驛｢譎｢・ｽ・ｼ
 
         Spacer(modifier = Modifier.height(80.dp))
     }
@@ -254,7 +251,7 @@ fun LearningSection(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        // 1. 青いカード（フクロウ画像）
+        // 1. 鬯ｮ・ｱ陋幢ｽｵ繝ｻ讓抵ｽｹ・ｧ繝ｻ・ｫ驛｢譎｢・ｽ・ｼ驛｢譏懶ｽｼ螟ｲ・ｽ・ｼ陋ｹ・ｻ郢晢ｽｵ驛｢・ｧ繝ｻ・ｯ驛｢譎｢・ｽ・ｭ驛｢・ｧ繝ｻ・ｦ鬨ｾ蛹・ｽｽ・ｻ髯ｷ蜻亥ｾ励・・ｼ郢晢ｽｻ
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -303,7 +300,7 @@ fun LearningSection(
                     )
                 }
 
-                // フクロウの画像表示 (正しいリソースID: char_owl)
+                // 驛｢譎・ｽｼ譁撰ｿ驛｢譎｢・ｽ・ｭ驛｢・ｧ繝ｻ・ｦ驍ｵ・ｺ繝ｻ・ｮ鬨ｾ蛹・ｽｽ・ｻ髯ｷ雋櫁㊥繝ｻ・｡繝ｻ・ｨ鬩穂ｼ夲ｽｽ・ｺ (髮弱・・ｽ・｣驍ｵ・ｺ陷会ｽｱ繝ｻ讓抵ｽｹ譎｢・ｽ・ｪ驛｢・ｧ繝ｻ・ｽ驛｢譎｢・ｽ・ｼ驛｢・ｧ繝ｻ・ｹID: char_owl)
                 Image(
                     painter = painterResource(id = R.drawable.char_owl),
                     contentDescription = stringResource(R.string.home_owl_description),
@@ -315,7 +312,7 @@ fun LearningSection(
             }
         }
 
-        // 2. 緑のカード（タルシエ画像）
+        // 2. 鬩搾ｽｱ闔会ｽ｣郢晢ｽｻ驛｢・ｧ繝ｻ・ｫ驛｢譎｢・ｽ・ｼ驛｢譏懶ｽｼ螟ｲ・ｽ・ｼ陋ｹ・ｻ邵ｺ・｡驛｢譎｢・ｽ・ｫ驛｢・ｧ繝ｻ・ｷ驛｢・ｧ繝ｻ・ｨ鬨ｾ蛹・ｽｽ・ｻ髯ｷ蜻亥ｾ励・・ｼ郢晢ｽｻ
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -363,7 +360,7 @@ fun LearningSection(
                     }
                 }
 
-                // タルシエの画像表示 (正しいリソースID: char_tarsier)
+                // 驛｢・ｧ繝ｻ・ｿ驛｢譎｢・ｽ・ｫ驛｢・ｧ繝ｻ・ｷ驛｢・ｧ繝ｻ・ｨ驍ｵ・ｺ繝ｻ・ｮ鬨ｾ蛹・ｽｽ・ｻ髯ｷ雋櫁㊥繝ｻ・｡繝ｻ・ｨ鬩穂ｼ夲ｽｽ・ｺ (髮弱・・ｽ・｣驍ｵ・ｺ陷会ｽｱ繝ｻ讓抵ｽｹ譎｢・ｽ・ｪ驛｢・ｧ繝ｻ・ｽ驛｢譎｢・ｽ・ｼ驛｢・ｧ繝ｻ・ｹID: char_tarsier)
                 Image(
                     painter = painterResource(id = R.drawable.char_tarsier),
                     contentDescription = stringResource(R.string.home_tarsier_description),
