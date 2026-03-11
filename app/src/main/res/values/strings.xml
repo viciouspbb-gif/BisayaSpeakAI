@@ -332,13 +332,15 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_feature_tari_walk_title">Tari Walk</string>
     <string name="home_feature_tari_walk_subtitle">Free conversation journeys</string>
     <string name="home_feature_tari_walk_plan">Gather living street phrases while you roam the city.</string>
+    <string name="home_feature_tari_walk_locked_hint">Premium unlock: Follow Tari through Cebu and harvest real street dialogues.</string>
     <string name="home_feature_dojo_title_master">Master Tari Dojo</string>
     <string name="home_feature_dojo_subtitle_master">Strict roleplay training</string>
     <string name="home_feature_dojo_plan">Coming soon: master pronunciation and sculpt your voice.</string>
+    <string name="home_feature_dojo_locked_hint">Premium unlock: Train your voice with AI sensei and receive tailored feedback.</string>
     <string name="home_feature_dojo_placeholder_title">Tari Dojo is getting ready</string>
     <string name="home_feature_dojo_placeholder_message">Hi, it’s Tari! Master Tari Dojo will open soon. For now, please enjoy AI Translator and Tari Walk.</string>
     <string name="home_feature_dojo_placeholder_cta">OK, I’ll try those</string>
-    <string name="home_feature_locked_snackbar">This feature will be unlocked in the next update.</string>
+    <string name="home_feature_locked_snackbar">Upgrade to Premium to unlock this feature early.</string>
     <string name="home_feature_locked_icon_desc">Locked feature</string>
     <string name="home_owl_description">Owl mentor illustration</string>
     <string name="home_tarsier_description">Tarsier illustration</string>

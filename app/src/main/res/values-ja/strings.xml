@@ -297,13 +297,15 @@
     <string name="home_feature_tari_walk_title">タリと散歩道</string>
     <string name="home_feature_tari_walk_subtitle">自由な会話の旅</string>
     <string name="home_feature_tari_walk_plan">街を歩きながら、現地の生きた言葉を拾い集める。</string>
+    <string name="home_feature_tari_walk_locked_hint">Premiumで解放：タリと一緒にセブの街を歩き、生きた会話を採集しよう。</string>
     <string name="home_feature_dojo_title_master">マスタータリ道場</string>
     <string name="home_feature_dojo_subtitle_master">厳格ロールプレイ訓練</string>
     <string name="home_feature_dojo_plan">（準備中）発音の極意を学び、己の声を磨く場所。</string>
+    <string name="home_feature_dojo_locked_hint">Premiumで解放：AI師範があなたの声を分析し、専用フィードバックを届けます。</string>
     <string name="home_feature_dojo_placeholder_title">タリ道場は準備中です</string>
     <string name="home_feature_dojo_placeholder_message">タリだよ！マスタータリ道場はもうすぐ公開予定。今はAI翻訳機とタリ散歩を楽しんでね。</string>
     <string name="home_feature_dojo_placeholder_cta">うん、やってみる</string>
-    <string name="home_feature_locked_snackbar">この機能は次回アップデートで解放予定です。</string>
+    <string name="home_feature_locked_snackbar">Premiumにアップグレードして先行解放しましょう。</string>
     <string name="home_feature_locked_icon_desc">ロック中の機能</string>
     <string name="home_owl_description">フクロウ先生のイラスト</string>
     <string name="home_tarsier_description">タルシエのイラスト</string>

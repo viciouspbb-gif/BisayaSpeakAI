@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -51,6 +52,12 @@ enum class FeatureId {
     UPGRADE
 }
 
+data class ProDialogFeature(
+    val icon: ImageVector,
+    val titleRes: Int,
+    val descriptionRes: Int
+)
+
 // --- 驛｢譎｢・ｽ・｡驛｢・ｧ繝ｻ・､驛｢譎｢・ｽ・ｳ鬨ｾ蛹・ｽｽ・ｻ鬯ｮ・ｱ繝ｻ・｢ ---
 @Composable
 fun HomeScreen(
@@ -72,14 +79,31 @@ fun HomeScreen(
     val effectiveProUnlocked = ProFeatureGate.isProFeatureEnabled(isProUnlocked)
 
     var showProDialog by remember { mutableStateOf(false) }
-    var lockedMessage by remember { mutableStateOf<String?>(null) }
+    var proDialogDescription by remember { mutableStateOf(Int.MIN_VALUE) }
+    var proDialogFeatures by remember { mutableStateOf<List<ProDialogFeature>>(emptyList()) }
 
-    LaunchedEffect(lockedMessage) {
-        lockedMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            lockedMessage = null
-        }
+    val aiTranslatorDetail = remember {
+        ProDialogFeature(
+            icon = Icons.Default.Translate,
+            titleRes = R.string.home_feature_ai_translator_title,
+            descriptionRes = R.string.home_feature_ai_translator_plan
+        )
     }
+    val tariWalkDetail = remember {
+        ProDialogFeature(
+            icon = Icons.Default.ViewList,
+            titleRes = R.string.home_feature_tari_walk_title,
+            descriptionRes = R.string.home_feature_tari_walk_plan
+        )
+    }
+    val dojoDetail = remember {
+        ProDialogFeature(
+            icon = Icons.Default.Psychology,
+            titleRes = R.string.home_feature_dojo_placeholder_title,
+            descriptionRes = R.string.home_feature_dojo_plan
+        )
+    }
+    val defaultProFeatures = remember { listOf(aiTranslatorDetail, tariWalkDetail, dojoDetail) }
 
     Box(
         modifier = Modifier
@@ -92,7 +116,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
         ) {
-            val lockedSnackMessage = stringResource(R.string.home_feature_locked_snackbar)
             // 驛｢譎渉・･郢晢ｽ｣驛｢謨鳴驛｢譎｢・ｽ・ｼ
             HomeHeader(onClickProfile)
 
@@ -119,7 +142,11 @@ fun HomeScreen(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                TextButton(onClick = { showProDialog = true }) {
+                TextButton(onClick = {
+                    proDialogDescription = R.string.home_pro_dialog_message
+                    proDialogFeatures = defaultProFeatures
+                    showProDialog = true
+                }) {
                     Text(text = stringResource(R.string.home_pro_dialog_action))
                 }
             }
@@ -154,12 +181,15 @@ fun HomeScreen(
                     isLocked = isTariLocked,
                     onClick = {
                         if (isTariLocked) {
-                            lockedMessage = lockedSnackMessage
+                            proDialogDescription = R.string.home_feature_tari_walk_plan
+                            proDialogFeatures = listOf(tariWalkDetail, aiTranslatorDetail, dojoDetail)
+                            showProDialog = true
                         } else {
                             onClickFeature(FeatureId.ROLE_PLAY)
                         }
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    lockedHint = stringResource(R.string.home_feature_tari_walk_locked_hint)
                 )
 
                 // 鬯ｩ諷閉ｧ繝ｻ・ｰ繝ｻ・ｴ驍ｵ・ｺ繝ｻ・ｯ髯晢ｽｶ繝ｻ・ｸ驍ｵ・ｺ繝ｻ・ｫ髮九・鞫ｩ繝ｻ蜻ｵ蜿峨・・ｭ鬮ｯ・ｦ繝ｻ・ｨ鬩穂ｼ夲ｽｽ・ｺ
@@ -176,9 +206,12 @@ fun HomeScreen(
                     illustration = dojoIllustration,
                     isLocked = true,
                     onClick = {
-                        lockedMessage = lockedSnackMessage
+                        proDialogDescription = R.string.home_feature_dojo_plan
+                        proDialogFeatures = listOf(dojoDetail, aiTranslatorDetail, tariWalkDetail)
+                        showProDialog = true
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    lockedHint = stringResource(R.string.home_feature_dojo_locked_hint)
                 )
             }
 
@@ -194,7 +227,17 @@ fun HomeScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 24.dp)
-        )
+        ) { data ->
+            Snackbar(
+                action = {
+                    TextButton(onClick = { onClickFeature(FeatureId.UPGRADE) }) {
+                        Text(text = stringResource(R.string.home_pro_dialog_action))
+                    }
+                }
+            ) {
+                Text(text = data.visuals.message)
+            }
+        }
     }
 
     if (showProDialog) {
@@ -203,7 +246,9 @@ fun HomeScreen(
             onViewPlans = {
                 showProDialog = false
                 onClickFeature(FeatureId.UPGRADE)
-            }
+            },
+            description = if (proDialogDescription == Int.MIN_VALUE) null else proDialogDescription,
+            features = proDialogFeatures.ifEmpty { defaultProFeatures }
         )
     }
 }
@@ -265,8 +310,69 @@ fun LearningSection(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        // 1. 鬯ｮ・ｱ陋幢ｽｵ繝ｻ讓抵ｽｹ・ｧ繝ｻ・ｫ驛｢譎｢・ｽ・ｼ驛｢譏懶ｽｼ螟ｲ・ｽ・ｼ陋ｹ・ｻ郢晢ｽｵ驛｢・ｧ繝ｻ・ｯ驛｢譎｢・ｽ・ｭ驛｢・ｧ繝ｻ・ｦ鬨ｾ蛹・ｽｽ・ｻ髯ｷ蜻亥ｾ励・・ｼ郢晢ｽｻ
-        // 2. 鬩搾ｽｱ闔会ｽ｣郢晢ｽｻ驛｢・ｧ繝ｻ・ｫ驛｢譎｢・ｽ・ｼ驛｢譏懶ｽｼ螟ｲ・ｽ・ｼ陋ｹ・ｻ邵ｺ・｡驛｢譎｢・ｽ・ｫ驛｢・ｧ繝ｻ・ｷ驛｢・ｧ繝ｻ・ｨ鬨ｾ蛹・ｽｽ・ｻ髯ｷ蜻亥ｾ励・・ｼ郢晢ｽｻ
+        // 1. 称号バー（フクロウ先生の進捗カード）
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF5856D6))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.home_honor_level_label, level),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = honorTitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                    honorNickname?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(50)),
+                        trackColor = Color.White.copy(alpha = 0.2f),
+                        color = Color(0xFFFFD700)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = nextLessonMessage,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                }
+
+                Image(
+                    painter = painterResource(id = R.drawable.char_owl),
+                    contentDescription = stringResource(R.string.home_owl_description),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                )
+            }
+        }
+
+        // 2. レッスン開始カード
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -339,7 +445,8 @@ fun ProFeatureItem(
     modifier: Modifier = Modifier,
     badgeText: String? = null,
     illustration: Int? = null,
-    isLocked: Boolean = false
+    isLocked: Boolean = false,
+    lockedHint: String? = null
 ) {
     Card(
         modifier = modifier
@@ -405,6 +512,14 @@ fun ProFeatureItem(
                         color = Color.White.copy(alpha = 0.9f),
                         maxLines = 2
                     )
+                    if (isLocked && !lockedHint.isNullOrBlank()) {
+                        Text(
+                            text = lockedHint,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            maxLines = 2
+                        )
+                    }
                     if (illustration != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Image(
@@ -441,12 +556,65 @@ fun ProFeatureItem(
 @Composable
 fun ProDialog(
     onDismiss: () -> Unit,
-    onViewPlans: () -> Unit
+    onViewPlans: () -> Unit,
+    description: Int?,
+    features: List<ProDialogFeature>
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.home_pro_dialog_title)) },
-        text = { Text(stringResource(R.string.home_pro_dialog_message)) },
+        text = {
+            val messageRes = description ?: R.string.home_pro_dialog_message
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(messageRes),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                features.forEach { feature ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                                shape = RoundedCornerShape(14.dp)
+                            )
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = feature.icon,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = stringResource(feature.titleRes),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = stringResource(feature.descriptionRes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        },
         confirmButton = {
             Button(onClick = onViewPlans) {
                 Text(stringResource(R.string.home_pro_dialog_action))
