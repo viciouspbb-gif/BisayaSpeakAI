@@ -21,10 +21,12 @@ import com.bisayaspeak.ai.data.model.DifficultyLevel
 import com.bisayaspeak.ai.data.model.LessonResult
 import com.bisayaspeak.ai.data.local.Question
 import com.bisayaspeak.ai.data.repository.DbSeedStateRepository
+import com.bisayaspeak.ai.data.repository.DailyMissionType
 import com.bisayaspeak.ai.data.repository.QuestionRepository
 import com.bisayaspeak.ai.data.repository.UsageRepository
 import com.bisayaspeak.ai.data.repository.UserProgressRepository
 import com.bisayaspeak.ai.domain.honor.HonorLevelManager
+import com.bisayaspeak.ai.domain.xp.XpRewards
 import com.bisayaspeak.ai.ads.AdManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -994,6 +996,7 @@ class ListeningViewModel(
                 val newLessons = if (passed) lessonsBefore + 1 else lessonsBefore
                 if (passed) {
                     usageRepository.incrementTotalLessonsCompleted()
+                    rewardListeningMission()
                 }
 
                 val owlLevelBefore = calculateOwlLevel(lessonsBefore)
@@ -1113,6 +1116,24 @@ class ListeningViewModel(
             totalQuestions = totalQuestions,
             leveledUp = leveledUp
         )
+    }
+
+    private suspend fun rewardListeningMission() {
+        try {
+            val missionUpdate = usageRepository.incrementDailyMission(DailyMissionType.LISTENING)
+            var xpGained = 0
+            if (missionUpdate.justCompleted) {
+                xpGained += XpRewards.LISTENING
+            }
+            if (missionUpdate.fallbackCompleted) {
+                xpGained += XpRewards.LISTENING_FALLBACK
+            }
+            if (xpGained > 0) {
+                usageRepository.addXp(xpGained)
+            }
+        } catch (t: Throwable) {
+            Log.e("ListeningViewModel", "Failed to reward listening mission", t)
+        }
     }
 
     private fun calculateOwlLevel(totalLessonsCompleted: Int): Int {

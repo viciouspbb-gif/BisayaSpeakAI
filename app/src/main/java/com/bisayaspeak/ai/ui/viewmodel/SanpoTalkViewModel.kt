@@ -1,8 +1,13 @@
 package com.bisayaspeak.ai.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bisayaspeak.ai.BisayaSpeakApp
+import com.bisayaspeak.ai.data.repository.DailyMissionType
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
+import com.bisayaspeak.ai.data.repository.UsageRepository
+import com.bisayaspeak.ai.domain.xp.XpRewards
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,16 +24,33 @@ private const val FAREWELL_PHASE_TURN = 10
  */
 class SanpoTalkViewModel(
     private val chatRepository: OpenAiChatRepository = OpenAiChatRepository(),
-    private val baseSystemPrompt: String = DEFAULT_SANPO_SYSTEM_PROMPT
+    private val baseSystemPrompt: String = DEFAULT_SANPO_SYSTEM_PROMPT,
+    private val usageRepository: UsageRepository = UsageRepository(BisayaSpeakApp.instance)
 ) : ViewModel() {
 
     private var turnCount = 0
+    private var sanpoRewardGranted = false
 
     private val _uiState = MutableStateFlow(SanpoTalkUiState())
     val uiState: StateFlow<SanpoTalkUiState> = _uiState.asStateFlow()
 
     fun onInputChange(text: String) {
         _uiState.update { it.copy(inputText = text) }
+    }
+
+    private fun rewardSanpoMission() {
+        if (sanpoRewardGranted) return
+        sanpoRewardGranted = true
+        viewModelScope.launch {
+            try {
+                val mission = usageRepository.incrementDailyMission(DailyMissionType.SANPO)
+                if (mission.justCompleted) {
+                    usageRepository.addXp(XpRewards.SANPO)
+                }
+            } catch (t: Throwable) {
+                Log.e("SanpoTalkViewModel", "Failed to reward Sanpo mission", t)
+            }
+        }
     }
 
     fun dismissError() {
@@ -50,6 +72,7 @@ class SanpoTalkViewModel(
                     isSessionEnded = true
                 )
             }
+            rewardSanpoMission()
             return
         }
 
@@ -99,6 +122,10 @@ class SanpoTalkViewModel(
                         isSending = false,
                         isSessionEnded = state.isSessionEnded || shouldEnd
                     )
+                }
+
+                if (shouldEnd) {
+                    rewardSanpoMission()
                 }
 
             } catch (t: Throwable) {

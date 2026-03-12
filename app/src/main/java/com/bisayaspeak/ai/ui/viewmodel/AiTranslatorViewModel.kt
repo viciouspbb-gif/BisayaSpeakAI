@@ -4,14 +4,18 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bisayaspeak.ai.BisayaSpeakApp
 import com.bisayaspeak.ai.BuildConfig
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.data.model.TranslationDirection
+import com.bisayaspeak.ai.data.repository.DailyMissionType
 import com.bisayaspeak.ai.data.repository.FreeUsageManager
 import com.bisayaspeak.ai.data.repository.FreeUsageRepository
 import com.bisayaspeak.ai.data.repository.OpenAiChatRepository
 import com.bisayaspeak.ai.data.repository.PromptProvider
+import com.bisayaspeak.ai.data.repository.UsageRepository
+import com.bisayaspeak.ai.domain.xp.XpRewards
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,6 +95,8 @@ class AiTranslatorViewModel(
     private val promptProvider: PromptProvider? = null
 ) : ViewModel() {
 
+    private val usageRepository = UsageRepository(BisayaSpeakApp.instance)
+
     private val _inputText = MutableStateFlow("")
     val inputText: StateFlow<String> = _inputText.asStateFlow()
 
@@ -127,6 +133,17 @@ class AiTranslatorViewModel(
         viewModelScope.launch {
             FreeUsageManager.resetIfNewDay()
             refreshUsageStatus()
+        }
+    }
+
+    private suspend fun rewardTranslatorMission() {
+        try {
+            val mission = usageRepository.incrementDailyMission(DailyMissionType.TRANSLATOR)
+            if (mission.justCompleted) {
+                usageRepository.addXp(XpRewards.TRANSLATOR)
+            }
+        } catch (t: Throwable) {
+            Log.e(LOG_TAG, "Failed to reward translator mission", t)
         }
     }
 
@@ -180,6 +197,7 @@ class AiTranslatorViewModel(
                 val primary = payload.candidates.firstOrNull()?.bisaya.orEmpty()
                 _translatedText.value = if (primary.isNotBlank()) primary else sanitizeTranslation(raw, direction)
                 _uiState.value = TranslatorUiState.Success
+                rewardTranslatorMission()
                 Log.d(LOG_TAG, "translate success candidates=${payload.candidates.size}")
             } catch (e: Exception) {
                 translationFailed = true

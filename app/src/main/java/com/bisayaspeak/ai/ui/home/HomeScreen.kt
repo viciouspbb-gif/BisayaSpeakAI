@@ -1,17 +1,20 @@
 package com.bisayaspeak.ai.ui.home
 
 import android.widget.Toast
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.draw.clip
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Lock
@@ -19,11 +22,30 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.ViewList
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -32,11 +54,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+
 import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.feature.ProFeatureGate
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
-import com.bisayaspeak.ai.ui.ads.AdsPolicy
 
 // --- 髯滂ｽ｢郢晢ｽｻ繝ｻ・ｰ闔・･繝ｻ・ｮ陞溘ｑ・ｽ・ｾ繝ｻ・ｩ ---
 enum class FeatureId {
@@ -170,7 +193,7 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 )
 
-                // 驛｢・ｧ繝ｻ・ｿ驛｢譎｢・ｽ・ｪ驍ｵ・ｺ繝ｻ・ｨ髫ｰ・ｨ繝ｻ・｣髮弱・・ｽ・ｩ鬯ｩ霈斐・
+                // 驛｢・ｧ繝ｻ・ｿ驛｢譎｢・ｽ・ｪ驍ｵ・ｺ繝ｻ・ｨ髫ｰ・ｨ繝ｻ・｣髮弱・・ｽ・｣驍ｵ・ｺ陷会ｽｱ繝ｻ讓抵ｽｹ譎｢・ｽ・ｪ驛｢・ｧ繝ｻ・ｽ驛｢譎｢・ｽ・ｼ驛｢・ｧ繝ｻ・ｹID: char_tarsier)
                 val isTariLocked = !(effectivePremiumPlan || effectiveProUnlocked)
                 ProFeatureItem(
                     title = stringResource(R.string.home_feature_tari_walk_title),
@@ -292,10 +315,10 @@ fun LearningSection(
     onStartLearning: () -> Unit
 ) {
     val level = status?.currentLevel ?: 1
+
     val honorTitle = status?.honorTitle?.takeIf { it.isNotBlank() }
         ?: stringResource(R.string.home_honor_unlock_prompt)
     val honorNickname = status?.honorNickname?.takeIf { it.isNotBlank() }
-    val progress = status?.progressToNextLevel ?: 0f
     val nextLessonMessage = status?.let {
         when {
             it.lessonsRemainingToNext <= 0 -> stringResource(R.string.home_honor_reached)
@@ -305,6 +328,37 @@ fun LearningSection(
             )
         }
     } ?: stringResource(R.string.home_honor_unlock_hint)
+
+    val xpProgressTarget = status?.xpProgressFraction ?: 0f
+    val animatedXpProgress by animateFloatAsState(
+        targetValue = xpProgressTarget,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
+        label = "xpProgress"
+    )
+
+    val glowAnim = remember { Animatable(0f) }
+    val owlAnim = remember { Animatable(1f) }
+    val highlightTrigger = status?.xpHighlightTick ?: 0
+    val levelUpTrigger = status?.xpLevelUpTick ?: 0
+
+    LaunchedEffect(highlightTrigger) {
+        if (highlightTrigger == 0) return@LaunchedEffect
+        glowAnim.snapTo(0.9f)
+        glowAnim.animateTo(0f, animationSpec = tween(durationMillis = 450))
+    }
+
+    LaunchedEffect(levelUpTrigger) {
+        if (levelUpTrigger == 0) return@LaunchedEffect
+        owlAnim.snapTo(0.9f)
+        owlAnim.animateTo(
+            1.2f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessLow)
+        )
+        owlAnim.animateTo(
+            1f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMedium)
+        )
+    }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -344,15 +398,33 @@ fun LearningSection(
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    LinearProgressIndicator(
-                        progress = progress,
+                    val baseColor = Color(0xFFFFD700)
+                    val glowColor = Color(0xFFFFF7B0)
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(50)),
-                        trackColor = Color.White.copy(alpha = 0.2f),
-                        color = Color(0xFFFFD700)
-                    )
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.White.copy(alpha = 0.12f))
+                    ) {
+                        LinearProgressIndicator(
+                            progress = animatedXpProgress,
+                            modifier = Modifier.matchParentSize(),
+                            trackColor = Color.Transparent,
+                            color = baseColor
+                        )
+                        if (glowAnim.value > 0.01f) {
+                            LinearProgressIndicator(
+                                progress = animatedXpProgress,
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .graphicsLayer { alpha = glowAnim.value },
+                                trackColor = Color.Transparent,
+                                color = glowColor
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = nextLessonMessage,
@@ -368,6 +440,11 @@ fun LearningSection(
                     modifier = Modifier
                         .fillMaxHeight()
                         .aspectRatio(1f)
+                        .graphicsLayer {
+                            val scale = owlAnim.value
+                            scaleX = scale
+                            scaleY = scale
+                        }
                 )
             }
         }
