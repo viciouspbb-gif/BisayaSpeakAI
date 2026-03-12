@@ -3,13 +3,22 @@ package com.bisayaspeak.ai.ui.home
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.bisayaspeak.ai.BisayaSpeakApp
+import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.data.repository.FreeUsageManager
+import com.bisayaspeak.ai.data.repository.MissionDescriptor
+import com.bisayaspeak.ai.data.repository.MissionRepository
 import com.bisayaspeak.ai.data.repository.UsageRepository
 import com.bisayaspeak.ai.domain.xp.XpProgressManager
+import com.bisayaspeak.ai.ui.screens.CHAPTER_SIZE
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 
 data class HomeStatus(
     val currentLevel: Int = 1,
@@ -25,12 +34,18 @@ data class HomeStatus(
     val xpRequired: Int = 100,
     val xpProgressFraction: Float = 0f,
     val xpHighlightTick: Int = 0,
-    val xpLevelUpTick: Int = 0
+    val xpLevelUpTick: Int = 0,
+    val listeningChapterTitle: String = "",
+    val listeningLessonLabel: String = "",
+    val dailyMissions: List<MissionDescriptor> = emptyList()
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val usageRepository = UsageRepository(application)
+    private val missionRepository = MissionRepository(application)
+    private val bisayaSpeakApp: BisayaSpeakApp
+        get() = getApplication()
 
     private val lessonsFlow = usageRepository.getTotalLessonsCompleted()
     private var lastXpLevel = 1
@@ -71,9 +86,25 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = XpUiState()
         )
 
-    val homeStatus: StateFlow<HomeStatus> = combine(lessonsFlow, xpFlow) { lessonsCompleted, xp ->
+    private val missionFlow = usageRepository.getDailyMissionProgress()
+        .mapLatest { progress ->
+            val translatorAvailable = withContext(Dispatchers.IO) {
+                FreeUsageManager.canUseTranslate()
+            }
+            missionRepository.describeMissions(
+                progress = progress,
+                translatorAvailable = translatorAvailable,
+                isProUser = bisayaSpeakApp.isProVersion
+            )
+        }
+
+    val homeStatus: StateFlow<HomeStatus> = combine(lessonsFlow, xpFlow, missionFlow) { lessonsCompleted, xp, missions ->
         val honor = LevelHonorHelper.getHonorInfo(application.applicationContext, xp.level)
         val xpRemaining = (xp.requiredXp - xp.currentXp).coerceAtLeast(0)
+        val nextLessonLevel = (lessonsCompleted + 1).coerceAtLeast(1)
+        val chapterIndex = ((nextLessonLevel - 1) / CHAPTER_SIZE) + 1
+        val chapterTitle = application.getString(R.string.level_section_dynamic_title, chapterIndex)
+        val lessonLabel = application.getString(R.string.home_listening_next_lesson_label, nextLessonLevel)
         HomeStatus(
             currentLevel = xp.level,
             totalLessonsCompleted = lessonsCompleted,
@@ -88,7 +119,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             xpRequired = xp.requiredXp,
             xpProgressFraction = xp.progressFraction,
             xpHighlightTick = xp.highlightTick,
-            xpLevelUpTick = xp.levelUpTick
+            xpLevelUpTick = xp.levelUpTick,
+            listeningChapterTitle = chapterTitle,
+            listeningLessonLabel = lessonLabel,
+            dailyMissions = missions
         )
     }.stateIn(
         scope = viewModelScope,

@@ -18,7 +18,7 @@
     <string name="level_section_4_title">第4章: 日常フレーズ</string>
     <string name="level_section_5_title">第5章: 未来の予定</string>
     <string name="level_section_6_title">第6章: 過去の出来事</string>
-    <string name="level_section_7_title">第7章</string>
+    <string name="level_section_7_title">第7章: ビジョンとリーダーシップ</string>
     <string name="level_release_notification_title">新しいレベルが解放されました！</string>
     <string name="level_release_notification_body">レベル%1$dがプレイ可能になりました。さっそく挑戦しよう！</string>
     <string name="level_unlock_dialog_title">Lv.%1$d を解放しますか？</string>

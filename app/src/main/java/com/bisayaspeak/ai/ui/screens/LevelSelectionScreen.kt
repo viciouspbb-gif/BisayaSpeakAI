@@ -1,10 +1,13 @@
 package com.bisayaspeak.ai.ui.screens
 
 import android.app.Activity
+import android.content.Context
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -25,12 +28,34 @@ import com.bisayaspeak.ai.R
 import com.bisayaspeak.ai.ads.AdManager
 import com.bisayaspeak.ai.data.local.AppDatabase
 import com.bisayaspeak.ai.data.repository.LevelConfigRepository
+import com.bisayaspeak.ai.data.repository.LevelReleasePolicy
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.min
 
 const val CHAPTER_SIZE = 5
+
+data class LevelAvailability(
+    val totalLevels: Int,
+    val releasedMaxLevel: Int
+)
+
+private fun resolveChapterTitle(context: Context, chapterIndex: Int): String {
+    val resId = when (chapterIndex) {
+        1 -> R.string.level_section_1_title
+        2 -> R.string.level_section_2_title
+        3 -> R.string.level_section_3_title
+        4 -> R.string.level_section_4_title
+        5 -> R.string.level_section_5_title
+        6 -> R.string.level_section_6_title
+        7 -> R.string.level_section_7_title
+        else -> null
+    }
+    return resId?.let { context.getString(it) }
+        ?: context.getString(R.string.level_section_dynamic_title, chapterIndex)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,22 +67,34 @@ fun LevelSelectionScreen(
     val context = LocalContext.current
     var refreshTrigger by remember { mutableStateOf(0) }
     var showAdDialogForLevel by remember { mutableStateOf<Int?>(null) }
-    val totalLevels by produceState(initialValue = LevelConfigRepository.DEFAULT_MAX_LEVEL, key1 = refreshTrigger) {
+    val levelAvailability by produceState(
+        initialValue = LevelAvailability(LevelConfigRepository.DEFAULT_MAX_LEVEL, LevelConfigRepository.DEFAULT_MAX_LEVEL),
+        key1 = refreshTrigger
+    ) {
         value = withContext(Dispatchers.IO) {
             val db = AppDatabase.getInstance(context)
             val dao = db.questionDao()
             val dbMax = dao.getMaxLevel() ?: 0
             val configRepo = LevelConfigRepository(context)
-            val remoteMax = runCatching { configRepo.getLatestMaxLevel() }.getOrElse { LevelConfigRepository.DEFAULT_MAX_LEVEL }
-            maxOf(LevelConfigRepository.DEFAULT_MAX_LEVEL, dbMax, remoteMax)
+            val releasedMax = runCatching { configRepo.getLatestMaxLevel() }
+                .getOrElse { LevelConfigRepository.DEFAULT_MAX_LEVEL }
+            val scheduleCap = LevelReleasePolicy.currentReleasedMax()
+            LevelAvailability(
+                totalLevels = maxOf(LevelConfigRepository.DEFAULT_MAX_LEVEL, dbMax, releasedMax),
+                releasedMaxLevel = min(releasedMax, scheduleCap)
+            )
         }
     }
+    val totalLevels = levelAvailability.totalLevels
+    val releasedMaxLevel = levelAvailability.releasedMaxLevel
+
     val sectionHeaders = remember(totalLevels) {
         (1..totalLevels step CHAPTER_SIZE).associateWith { level ->
             val chapterIndex = ((level - 1) / CHAPTER_SIZE) + 1
-            context.getString(R.string.level_section_dynamic_title, chapterIndex)
+            resolveChapterTitle(context, chapterIndex)
         }
     }
+
     val activity = context as? Activity
 
     fun startLevel(level: Int) {
@@ -99,7 +136,6 @@ fun LevelSelectionScreen(
                 modifier = modifier.padding(padding)
             ) {
                 for (level in 1..totalLevels) {
-
                     sectionHeaders[level]?.let { title ->
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Text(
@@ -110,7 +146,12 @@ fun LevelSelectionScreen(
                         }
                     }
 
-                    val status = LessonStatusManager.getLessonStatus(context, level, isPro)
+                    val status = LessonStatusManager.getLessonStatus(
+                        context = context,
+                        level = level,
+                        isPro = isPro,
+                        releasedMaxLevel = releasedMaxLevel
+                    )
 
                     item {
                         LevelButton(

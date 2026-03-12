@@ -17,6 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
@@ -46,7 +49,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -54,9 +56,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.vector.ImageVector
 import kotlinx.coroutines.delay
 
 import com.bisayaspeak.ai.R
+import com.bisayaspeak.ai.data.repository.DailyMissionType
+import com.bisayaspeak.ai.data.repository.MissionDescriptor
 import com.bisayaspeak.ai.feature.ProFeatureGate
 import com.bisayaspeak.ai.ui.ads.AdMobBanner
 import com.bisayaspeak.ai.ui.ads.AdUnitIds
@@ -96,7 +101,7 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    // 驛｢譎・ｽｼ驥・ｨ抵ｽｹ譎｢・ｽ・ｼ驛｢譎√・郢晢ｽｻ驍ｵ・ｺ繝ｻ・ｫ髯滂ｽ｢隲帷腸・ｧ驍ｵ・ｺ雋・･繝ｻ驛｢譎｢・ｽ・ｬ驛｢譎・ｽｺ蛟･・樣Δ譎｢・｣・ｰ髯具ｽｻ繝ｻ・､髯橸ｽｳ郢晢ｽｻ
+    // 驛｢譎・ｽｼ驥・ｨ抵ｽｹ譎｢・ｽ・ｼ驛｢譎√・郢晢ｽｻ驍ｵ・ｺ繝ｻ・ｨ髫ｰ・ｨ繝ｻ・｣髮弱・・ｽ・｣驍ｵ・ｺ陷会ｽｱ繝ｻ讓抵ｽｹ譎｢・ｽ・ｪ驛｢・ｧ繝ｻ・ｽ驛｢譎｢・ｽ・ｼ驛｢・ｧ繝ｻ・ｹID: char_tarsier)
     // ProFeatureGate驍ｵ・ｺ繝ｻ・ｫ髣包ｽｳ・つ髫ｴ蟷｢・ｽ・ｬ髯具ｽｹ郢晢ｽｻ
     val effectivePremiumPlan = ProFeatureGate.isProFeatureEnabled(isPremiumPlan)
     val effectiveProUnlocked = ProFeatureGate.isProFeatureEnabled(isProUnlocked)
@@ -149,6 +154,12 @@ fun HomeScreen(
                 status = homeStatus,
                 onStartLearning = onStartLearning
             )
+
+            val missions = homeStatus?.dailyMissions.orEmpty()
+            if (missions.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                MissionBridgeSection(missions = missions)
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -328,6 +339,8 @@ fun LearningSection(
             )
         }
     } ?: stringResource(R.string.home_honor_unlock_hint)
+    val listeningChapter = status?.listeningChapterTitle?.takeIf { it.isNotBlank() }
+    val listeningLessonLabel = status?.listeningLessonLabel?.takeIf { it.isNotBlank() }
 
     val xpProgressTarget = status?.xpProgressFraction ?: 0f
     val animatedXpProgress by animateFloatAsState(
@@ -474,6 +487,20 @@ fun LearningSection(
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.9f)
                     )
+                    listeningChapter?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.85f)
+                        )
+                    }
+                    listeningLessonLabel?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.75f)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -625,6 +652,145 @@ fun ProFeatureItem(
                         .padding(12.dp)
                         .size(18.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MissionBridgeSection(missions: List<MissionDescriptor>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.home_daily_mission_section_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White,
+            modifier = Modifier
+                .background(Color(0xFF24304D), RoundedCornerShape(12.dp))
+                .padding(horizontal = 14.dp, vertical = 8.dp)
+        )
+
+        missions.forEachIndexed { index, descriptor ->
+            MissionBridgeCard(
+                descriptor = descriptor,
+                delayMultiplier = index
+            )
+        }
+    }
+}
+
+@Composable
+private fun MissionBridgeCard(
+    descriptor: MissionDescriptor,
+    delayMultiplier: Int
+) {
+    val appearAnim = remember { Animatable(0f) }
+    LaunchedEffect(descriptor.title, descriptor.progressLabel, descriptor.isCompleted) {
+        appearAnim.snapTo(0f)
+        appearAnim.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+    }
+
+    val missionIcon = when (descriptor.type) {
+        DailyMissionType.LISTENING -> Icons.Default.Headphones
+        DailyMissionType.TRANSLATOR -> Icons.Default.Translate
+        DailyMissionType.SANPO -> Icons.Default.DirectionsWalk
+        null -> Icons.Default.CheckCircle
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                translationY = (1f - appearAnim.value) * (35f + delayMultiplier * 6)
+                alpha = appearAnim.value
+            },
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2A44))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(Color.White.copy(alpha = 0.12f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = missionIcon,
+                    contentDescription = null,
+                    tint = Color(0xFFFFD700)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = descriptor.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    text = descriptor.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.85f)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = descriptor.progressFraction,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    trackColor = Color.White.copy(alpha = 0.15f),
+                    color = Color(0xFFFFD700)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = descriptor.progressLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = stringResource(R.string.home_daily_mission_xp_reward, descriptor.xpReward),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFFD700),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                descriptor.note?.let { note ->
+                    Text(
+                        text = note,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFFF7B0),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
             }
         }
     }

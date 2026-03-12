@@ -325,6 +325,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_start_learning_title">Start Learning</string>
     <string name="home_start_learning_desc">Start from todays recommended lesson</string>
     <string name="home_start_learning_cta">Study now</string>
+    <string name="home_listening_next_lesson_label">Next lesson: Lv.%1$d</string>
     <string name="home_new_feature_message">Master Tari Dojo is coming soon. In the meantime, enjoy AI Translator and Tari Walk!</string>
     <string name="home_feature_ai_translator_title">AI Translator</string>
     <string name="home_feature_ai_translator_subtitle">Native-grade translations</string>
@@ -337,6 +338,28 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_feature_dojo_subtitle_master">Strict roleplay training</string>
     <string name="home_feature_dojo_plan">Coming soon: master pronunciation and sculpt your voice.</string>
     <string name="home_feature_dojo_locked_hint">Premium unlock: Train your voice with AI sensei and receive tailored feedback.</string>
+    <string name="home_feature_dojo_badge">Coming soon</string>
+    <string name="home_feature_dojo_title_coming">Tari Dojo (Soon)</string>
+    <string name="home_feature_dojo_title_debug">Tari Dojo (Debug)</string>
+    <string name="home_feature_dojo_subtitle_coming">Roleplay dojo opens shortly</string>
+    <string name="home_feature_dojo_subtitle_debug">Internal build playground</string>
+
+    <string name="home_daily_mission_section_title">Daily Mission</string>
+    <string name="home_daily_mission_listening_title">Listening Drills</string>
+    <string name="home_daily_mission_listening_subtitle">Complete %1$d listening sessions</string>
+    <string name="home_daily_mission_listening_fallback_title">Listening Rescue</string>
+    <string name="home_daily_mission_listening_fallback_subtitle">Complete %1$d listening sessions today</string>
+    <string name="home_daily_mission_listening_fallback_note">Translator quota used. Focus on ear power!</string>
+    <string name="home_daily_mission_translator_title">AI Translator</string>
+    <string name="home_daily_mission_translator_subtitle">Use the translator %1$d time</string>
+    <string name="home_daily_mission_translator_fallback">Fallback granted from Listening mission</string>
+    <string name="home_daily_mission_sanpo_title">Tari Walk</string>
+    <string name="home_daily_mission_sanpo_subtitle">Finish one walk session</string>
+    <string name="home_daily_mission_progress">Progress: %1$d / %2$d</string>
+    <string name="home_daily_mission_progress_done">Mission completed!</string>
+    <string name="home_daily_mission_all_clear_title">All missions clear</string>
+    <string name="home_daily_mission_all_clear_subtitle">Come back tomorrow for new challenges</string>
+    <string name="home_daily_mission_xp_reward">+%1$d XP</string>
     <string name="home_feature_dojo_placeholder_title">Tari Dojo is getting ready</string>
     <string name="home_feature_dojo_placeholder_message">Hi, it’s Tari! Master Tari Dojo will open soon. For now, please enjoy AI Translator and Tari Walk.</string>
     <string name="home_feature_dojo_placeholder_cta">OK, I’ll try those</string>
@@ -344,6 +367,7 @@ Main updates: Bug fixes and UI improvements</string>
     <string name="home_feature_locked_icon_desc">Locked feature</string>
     <string name="home_owl_description">Owl mentor illustration</string>
     <string name="home_tarsier_description">Tarsier illustration</string>
+    <string name="roleplay_mic_desc">Microphone button for role play</string>
     <string name="home_pro_dialog_title">Upgrade to PRO</string>
     <string name="home_pro_dialog_message">This feature is available in the PRO plan. Enjoy unlimited access to all features!</string>
     <string name="home_pro_dialog_action">View Plans</string>

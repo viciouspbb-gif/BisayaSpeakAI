@@ -15,8 +15,17 @@ object LessonStatusManager {
         CLEARED
     }
 
-    fun getLessonStatus(context: Context, level: Int, isPro: Boolean): Status {
+    fun getLessonStatus(
+        context: Context,
+        level: Int,
+        isPro: Boolean,
+        releasedMaxLevel: Int = Int.MAX_VALUE
+    ): Status {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+
+        if (level > releasedMaxLevel) {
+            return Status.LOCKED
+        }
 
         // Pro users get all content unlocked
         if (isPro) {

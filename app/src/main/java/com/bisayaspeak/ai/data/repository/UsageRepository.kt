@@ -32,10 +32,10 @@ class UsageRepository(private val context: Context) {
         // リワード視聴ごとに +2 回の診断権を付与
         private const val BONUS_PER_AD = 2
         private const val MAX_AD_WATCH = 3
-        private const val LISTENING_TARGET = 2
-        private const val LISTENING_FALLBACK_THRESHOLD = 3
-        private const val LISTENING_MAX_TRACKED = LISTENING_FALLBACK_THRESHOLD
-        private const val TRANSLATOR_TARGET = 1
+        internal const val LISTENING_TARGET = 2
+        internal const val LISTENING_FALLBACK_THRESHOLD = 3
+        internal const val LISTENING_MAX_TRACKED = LISTENING_FALLBACK_THRESHOLD
+        internal const val TRANSLATOR_TARGET = 1
 
         private fun currentDayKey(): String = LocalDate.now(ZoneId.systemDefault()).toString()
     }
@@ -172,7 +172,9 @@ class UsageRepository(private val context: Context) {
         var fallbackCompleted = false
         context.dataStore.edit { preferences ->
             val baseline = resolveDailyMissionProgress(preferences)
-            var adjusted = when (type) {
+            var adjusted = baseline
+
+            adjusted = when (type) {
                 DailyMissionType.LISTENING -> {
                     val newCount = (baseline.listeningCount + increment).coerceAtMost(LISTENING_MAX_TRACKED)
                     justCompleted = baseline.listeningCount < LISTENING_TARGET && newCount >= LISTENING_TARGET
@@ -190,8 +192,9 @@ class UsageRepository(private val context: Context) {
                 }
 
                 DailyMissionType.SANPO -> {
-                    justCompleted = !baseline.sanpoCompleted
-                    baseline.copy(sanpoCompleted = true)
+                    val completed = if (increment > 0) true else baseline.sanpoCompleted
+                    justCompleted = !baseline.sanpoCompleted && completed
+                    baseline.copy(sanpoCompleted = completed)
                 }
             }
 
